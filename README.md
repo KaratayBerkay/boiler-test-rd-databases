@@ -28,6 +28,11 @@ clusters, poolers and proxies), loads the same deterministic dataset into each, 
 Everything is driven by one Python harness (`harness/`, `uv run rdlab ...`) and summarised in `results/SUMMARY.md`
 (rendered with charts in `docs/report.html`, interpreted in `docs/findings.md`).
 
+## Results at a glance
+
+![Query performance](docs/charts/query_performance.png)
+![Capabilities](docs/charts/capabilities.png)
+
 ## Layout
 ```
 stacks/<engine>/compose.yaml + lab.yaml   one directory per engine: compose file, init scripts, proxy configs, harness metadata
