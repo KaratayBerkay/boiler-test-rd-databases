@@ -1,0 +1,107 @@
+# Percona XtraDB Cluster 8.4 — 3-node Galera cluster (synchronous, virtually-synchronous multi-master certification)
+# + HAProxy round-robin. Every node accepts writes; conflicting writes on different nodes fail at commit (deadlock 1213).
+#
+# Backup strategy (`rdlab run pxc --phases backup`): Percona XtraBackup 8.4 (bundled in the image for SST) full + incremental
+#   into the shared `pxc-backups` volume, prepared and started standalone (wsrep off) in a scratch container; mysqldump.
+# Logging strategy (conf/lab.cnf): slow log with Percona log_slow_verbosity=full, error log, audit_log plugin in JSON
+#   restricted to DDL commands -> one `pxcN-logs` volume per node; Docker json-file rotation everywhere.
+name: rdlab-pxc
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-pxc: &pxc
+  image: percona/percona-xtradb-cluster:8.4
+  logging: *logging
+  environment:
+    MYSQL_ROOT_PASSWORD: rootpass
+    CLUSTER_NAME: labcluster
+    XTRABACKUP_PASSWORD: xtrapass
+  volumes:
+    - ./conf/lab.cnf:/etc/percona-xtradb-cluster.conf.d/lab.cnf:ro
+  healthcheck:
+    # TCP on purpose: the entrypoint's temporary init server only listens on the socket, and a joiner must not
+    # start its SST from that temporary server
+    test: ["CMD-SHELL", "mysql -h127.0.0.1 -uroot -prootpass -e \"SHOW STATUS LIKE 'wsrep_local_state_comment'\" 2>/dev/null | grep -q Synced"]
+    interval: 5s
+    timeout: 5s
+    retries: 60
+    start_period: 30s
+
+services:
+  volumes-init:
+    image: percona/percona-xtradb-cluster:8.4
+    container_name: rdlab-pxc-volumes-init
+    user: root
+    entrypoint: ["sh", "-c", "chmod 1777 /backups /logs1 /logs2 /logs3 && echo volumes ready"]
+    volumes: [pxc-backups:/backups, pxc1-logs:/logs1, pxc2-logs:/logs2, pxc3-logs:/logs3]
+    logging: *logging
+    restart: "no"
+  pxc1:
+    <<: *pxc
+    container_name: rdlab-pxc-1
+    hostname: pxc1
+    volumes:
+      - ./conf/lab.cnf:/etc/percona-xtradb-cluster.conf.d/lab.cnf:ro
+      - ./init:/docker-entrypoint-initdb.d:ro
+      - pxc1:/var/lib/mysql
+      - pxc-backups:/backups
+      - pxc1-logs:/var/log/mysql
+    ports: ["13326:3306"]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+  pxc2:
+    <<: *pxc
+    container_name: rdlab-pxc-2
+    hostname: pxc2
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      CLUSTER_NAME: labcluster
+      CLUSTER_JOIN: pxc1
+      XTRABACKUP_PASSWORD: xtrapass
+    volumes:
+      - ./conf/lab.cnf:/etc/percona-xtradb-cluster.conf.d/lab.cnf:ro
+      - pxc2:/var/lib/mysql
+      - pxc-backups:/backups
+      - pxc2-logs:/var/log/mysql
+    ports: ["13327:3306"]
+    depends_on:
+      pxc1: { condition: service_healthy }
+  pxc3:
+    <<: *pxc
+    container_name: rdlab-pxc-3
+    hostname: pxc3
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      CLUSTER_NAME: labcluster
+      CLUSTER_JOIN: pxc1,pxc2
+      XTRABACKUP_PASSWORD: xtrapass
+    volumes:
+      - ./conf/lab.cnf:/etc/percona-xtradb-cluster.conf.d/lab.cnf:ro
+      - pxc3:/var/lib/mysql
+      - pxc-backups:/backups
+      - pxc3-logs:/var/log/mysql
+    ports: ["13328:3306"]
+    depends_on:
+      pxc2: { condition: service_healthy }
+  haproxy:
+    image: haproxy:lts
+    container_name: rdlab-pxc-haproxy
+    logging: *logging
+    volumes: ["./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"]
+    ports: ["13329:3306"]
+    depends_on:
+      pxc3: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pxc1:
+  pxc2:
+  pxc3:
+  pxc-backups:
+  pxc1-logs:
+  pxc2-logs:
+  pxc3-logs:

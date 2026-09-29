@@ -1,0 +1,12 @@
+Sort  (cost=690.45..695.22 rows=1910 width=524)
+  Sort Key: tree.path
+  CTE tree
+    ->  Recursive Union  (cost=23.07..548.16 rows=1910 width=540)
+          ->  Seq Scan on categories  (cost=23.07..34.78 rows=10 width=540)
+                Storage Filter: (parent_id IS NULL)
+          ->  Hash Join  (cost=26.32..47.52 rows=190 width=540)
+                Hash Cond: (c.parent_id = t.id)
+                ->  Seq Scan on categories c  (cost=23.07..39.72 rows=200 width=20)
+                ->  Hash  (cost=2.00..2.00 rows=100 width=524)
+                      ->  WorkTable Scan on tree t  (cost=0.00..2.00 rows=100 width=524)
+  ->  CTE Scan on tree  (cost=0.00..38.20 rows=1910 width=524)

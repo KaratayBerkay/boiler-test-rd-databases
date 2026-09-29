@@ -1,0 +1,37 @@
+display: Oracle 26ai Free
+category: row-store OLTP
+dialect: oracle
+driver: oracledb
+image: gvenzl/oracle-free:23-slim-faststart
+project: rdlab-oracle
+scale: 1
+notes: >-
+  Oracle AI Database 26ai Free, release 23.26.3 (the `23-slim-faststart` image; slim: no Oracle Text, so full-text search falls back to LIKE) in FREEPDB1 (user lab). Free edition caps: 2 CPU threads, 2 GB SGA/PGA,
+  12 GB data. Data Guard (physical standby) is not available in Free, so no replica in this stack.
+docs:
+  - https://github.com/gvenzl/oci-oracle-free
+  - https://docs.oracle.com/en/database/oracle/oracle-database/23/tgsql/
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 11521
+    user: lab
+    password: labpass
+    database: FREEPDB1
+    service: FREEPDB1
+    container: rdlab-oracle
+backup:
+  dir: /backups
+  volume: oracle-backups
+  pdb: FREEPDB1
+  admin_user: system
+  admin_password: rootpass
+  strategies: [datapump, rman, flashback]
+logging:
+  pdb: FREEPDB1
+  slow_ms: 100
+features:
+  settle_seconds: 5
+  connection_storm: true

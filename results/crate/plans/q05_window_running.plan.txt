@@ -1,0 +1,8 @@
+Eval[d, daily, sum(daily) OVER (ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, lag(daily, 1) OVER (ORDER BY d ASC) AS prev_day] (rows=22177)
+  └ OrderBy[d ASC] (rows=22177)
+    └ WindowAgg[d, daily, sum(daily) OVER (ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)] | [lag(daily, 1) OVER (ORDER BY d ASC)] (rows=22177)
+      └ WindowAgg[d, daily] | [sum(daily) OVER (ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)] (rows=22177)
+        └ Rename[d, daily] AS s (rows=22177)
+          └ Eval[date_trunc('day', ordered_at) AS d, sum(total_amount) AS daily] (rows=22177)
+            └ GroupHashAggregate[date_trunc('day', ordered_at) | sum(total_amount)] (rows=22177)
+              └ Collect[doc.orders | [total_amount, date_trunc('day', ordered_at)] | ((ordered_at >= 1735689600000::bigint) AND (ordered_at < 1743465600000::bigint))] (rows=22177)

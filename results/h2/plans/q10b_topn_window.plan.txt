@@ -1,0 +1,28 @@
+SELECT
+    "customer_id",
+    "id" AS "order_id",
+    "ordered_at",
+    "total_amount"
+FROM (
+    SELECT
+        "customer_id",
+        "id",
+        "ordered_at",
+        "total_amount",
+        ROW_NUMBER() OVER (PARTITION BY "customer_id" ORDER BY "ordered_at" DESC, "id" DESC) AS "rn"
+    FROM "public"."orders"
+    WHERE "customer_id" <= 100
+) "t"
+    /* SELECT
+        customer_id,
+        id,
+        ordered_at,
+        total_amount,
+        ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn
+    FROM public.orders
+        /* public.CONSTRAINT_INDEX_C3: customer_id <= 100 */
+    WHERE customer_id <= 100
+    QUALIFY ?1 IS NOT DISTINCT FROM ?1: rn <= CAST(3 AS BIGINT)
+     */
+WHERE "rn" <= CAST(3 AS BIGINT)
+ORDER BY 1, 3 DESC

@@ -1,0 +1,3 @@
+source: https://github.com/ClickHouse/agent-skills/tree/main/skills/infra-postgres
+license: Apache-2.0
+vendored: 2026-09-13

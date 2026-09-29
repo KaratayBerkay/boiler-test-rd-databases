@@ -1,0 +1,160 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260912-213001-cd07a0",
+  "started": "2026-09-12T18:30:01+00:00",
+  "scale": 1.0,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "capabilities": {
+      "materialized_view": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(13,)]",
+        "ms": 40.6
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "",
+        "ms": 20.8
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 20.6
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 25.5
+      },
+      "returning": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 7)]",
+        "ms": 24.9
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 25.1
+      },
+      "arrays": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([1, 2, 3, 4],)]",
+        "ms": 19.8
+      },
+      "vector_type": {
+        "status": "supported",
+        "note": "requires pgvector extension",
+        "sample": "[(2.449489742783178,)]",
+        "ms": 30.7
+      },
+      "statement_timeout": {
+        "status": "supported",
+        "note": "expects SQLSTATE 57014",
+        "error_code": "57014",
+        "detail": "QueryCanceled: canceling statement due to statement timeout",
+        "ms": 220.1
+      },
+      "filter_clause": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(140042,)]",
+        "ms": 43.9
+      },
+      "distinct_on": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 160238), (2, 72786)]",
+        "ms": 24.8
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "SyntaxError: syntax error at or near \"ROW_NUMBER\" LINE 1: SELECT id FROM orders QUALIFY ROW_NUMBER() OVER (ORDER BY id... ^",
+        "error_code": "42601",
+        "ms": 22.5
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23514",
+        "detail": "CheckViolation: new row for relation \"ck_lab\" violates check constraint \"ck_lab_v_check\" DETAIL: Failing row contains (0).",
+        "ms": 28.5
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23503",
+        "detail": "ForeignKeyViolation: insert or update on table \"order_items\" violates foreign key constraint \"order_items_product_id_fkey\" DETAIL: Key (product_id)=(999999999) is not present in table \"products\".",
+        "ms": 26.0
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "expects 1",
+        "sample": "[(1,)]",
+        "ms": 32.5
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "time-travel",
+        "error": "SyntaxError: syntax error at or near \"SYSTEM\" LINE 1: SELECT COUNT(*) FROM orders AS OF SYSTEM TIME '-5s' ^",
+        "error_code": "42601",
+        "ms": 22.8
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([{'id': 1, 'name': 'Category 1'}, {'id': 2, 'name': 'Category 2'}, {'id': 3, 'name': 'Category 3'}],)]",
+        "ms": 24.1
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 22.3
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 21.9
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 21.1
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(477,)]",
+        "ms": 25.9
+      },
+      "cte_dml": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(0,)]",
+        "ms": 20.8
+      },
+      "server_cursor": {
+        "status": "supported",
+        "note": "in-transaction cursor",
+        "ms": 23.4
+      },
+      "_seconds": 0.8
+    }
+  },
+  "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "finished": "2026-09-12T18:30:02+00:00"
+}

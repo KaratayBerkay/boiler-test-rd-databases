@@ -1,0 +1,10 @@
+-> Sort: tree.`path`  (cost=883..883 rows=420)
+    -> Table scan on tree  (cost=467..475 rows=420)
+        -> Materialize recursive CTE tree  (cost=467..467 rows=420)
+            -> Filter: (categories.parent_id is null)  (cost=20.2 rows=20)
+                -> Table scan on categories  (cost=20.2 rows=200)
+            -> Repeat until convergence
+                -> Inner hash join (c.parent_id = t.id)  (cost=405 rows=400)
+                    -> Table scan on c  (cost=0.114 rows=200)
+                    -> Hash
+                        -> Scan new records on t  (cost=4.75 rows=20)

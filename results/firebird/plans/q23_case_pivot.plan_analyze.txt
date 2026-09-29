@@ -1,0 +1,9 @@
+Select Expression
+    -> Aggregate
+        -> Sort (record length: 134, key length: 16)
+            -> Filter
+                -> Hash Join (inner)
+                    -> Table "ORDERS" as "O" Full Scan
+                    -> Record Buffer (record length: 41)
+                        -> Table "CUSTOMERS" as "C" Full Scan
+fetches=23981443 reads=8326

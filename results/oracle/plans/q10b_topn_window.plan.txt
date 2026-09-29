@@ -1,0 +1,18 @@
+Plan hash value: 2475404981
+ 
+-----------------------------------------------------------------------------------
+| Id  | Operation                | Name   | Rows  | Bytes | Cost (%CPU)| Time     |
+-----------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT         |        |  1000 | 39000 |   309   (1)| 00:00:01 |
+|*  1 |  VIEW                    |        |  1000 | 39000 |   309   (1)| 00:00:01 |
+|*  2 |   WINDOW SORT PUSHED RANK|        |  1000 | 26000 |   309   (1)| 00:00:01 |
+|*  3 |    TABLE ACCESS FULL     | ORDERS |  1000 | 26000 |   308   (1)| 00:00:01 |
+-----------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   1 - filter("RN"<=3)
+   2 - filter(ROW_NUMBER() OVER ( PARTITION BY "CUSTOMER_ID" ORDER BY 
+              "ORDERED_AT" DESC ,"ID" DESC )<=3)
+   3 - filter("CUSTOMER_ID"<=100)

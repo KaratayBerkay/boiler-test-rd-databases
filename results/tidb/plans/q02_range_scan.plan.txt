@@ -1,0 +1,6 @@
+Projection_8 | 500.00 | root |  | lab.orders.id, lab.orders.customer_id, lab.orders.status, lab.orders.total_amount
+└─TopN_9 | 500.00 | root |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:500
+  └─TableReader_19 | 500.00 | root |  | data:TopN_18
+    └─TopN_18 | 500.00 | cop[tikv] |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:500
+      └─Selection_17 | 1356.40 | cop[tikv] |  | eq(lab.orders.status, "delivered"), ge(lab.orders.ordered_at, 2025-03-01 00:00:00), lt(lab.orders.ordered_at, 2025-03-08 00:00:00)
+        └─TableFullScan_16 | 200000.00 | cop[tikv] | table:orders | keep order:false, stats:partial[fk_1:unInitialized, ix_orders_customer_id:unInitialized]

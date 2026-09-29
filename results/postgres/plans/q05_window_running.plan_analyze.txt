@@ -1,0 +1,21 @@
+WindowAgg  (cost=1981.87..2367.24 rows=7342 width=104) (actual time=14.204..17.664 rows=90.00 loops=1)
+  Window: w2 AS (ORDER BY (date_trunc('day'::text, orders.ordered_at)))
+  Storage: Memory  Maximum Storage: 17kB
+  Buffers: shared hit=592
+  ->  WindowAgg  (cost=1981.82..2257.11 rows=7342 width=72) (actual time=14.141..17.532 rows=90.00 loops=1)
+        Window: w1 AS (ORDER BY (date_trunc('day'::text, orders.ordered_at)) ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+        Storage: Memory  Maximum Storage: 17kB
+        Buffers: shared hit=592
+        ->  GroupAggregate  (cost=1981.78..2146.98 rows=7342 width=40) (actual time=14.091..17.371 rows=90.00 loops=1)
+              Group Key: (date_trunc('day'::text, orders.ordered_at))
+              Buffers: shared hit=592
+              ->  Sort  (cost=1981.78..2000.14 rows=7342 width=14) (actual time=14.033..14.944 rows=7394.00 loops=1)
+                    Sort Key: (date_trunc('day'::text, orders.ordered_at))
+                    Sort Method: quicksort  Memory: 424kB
+                    Buffers: shared hit=592
+                    ->  Seq Scan on orders  (cost=0.00..1510.36 rows=7342 width=14) (actual time=0.020..11.921 rows=7394.00 loops=1)
+                          Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-04-01 00:00:00'::timestamp without time zone))
+                          Rows Removed by Filter: 52606
+                          Buffers: shared hit=592
+Planning Time: 0.112 ms
+Execution Time: 17.725 ms

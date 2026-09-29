@@ -1,0 +1,7 @@
+2 | 0 | 0 | CO-ROUTINE t
+5 | 2 | 0 | CO-ROUTINE (subquery-3)
+9 | 5 | 0 | SEARCH orders USING INDEX ix_orders_customer_id (customer_id<?)
+31 | 5 | 0 | USE TEMP B-TREE FOR RIGHT PART OF ORDER BY
+55 | 2 | 0 | SCAN (subquery-3)
+106 | 0 | 0 | SCAN t
+118 | 0 | 0 | USE TEMP B-TREE FOR ORDER BY

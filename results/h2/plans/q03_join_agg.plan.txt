@@ -1,0 +1,26 @@
+SELECT
+    "c"."country_code",
+    DATE_TRUNC(MONTH, "o"."ordered_at") AS "month_start",
+    COUNT(DISTINCT "o"."id") AS "orders",
+    SUM("oi"."qty" * "oi"."unit_price") AS "revenue"
+FROM "public"."customers" "c"
+    /* public.customers.tableScan */
+INNER JOIN "public"."orders" "o"
+    /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */
+    ON 1=1
+    /* WHERE (c.id = o.customer_id)
+        AND (o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00')
+        AND (o.ordered_at < TIMESTAMP '2025-07-01 00:00:00')
+        AND (o.status = 'delivered')
+    */
+INNER JOIN "public"."order_items" "oi"
+    /* public.CONSTRAINT_INDEX_7: order_id = o.id */
+    ON 1=1
+WHERE (("o"."ordered_at" < TIMESTAMP '2025-07-01 00:00:00')
+    AND ("o"."status" = 'delivered')
+    AND ("o"."ordered_at" >= TIMESTAMP '2025-01-01 00:00:00'))
+    AND ("oi"."order_id" = "o"."id")
+    AND ("c"."id" = "o"."customer_id")
+GROUP BY "c"."country_code", DATE_TRUNC(MONTH, "o"."ordered_at")
+ORDER BY 4 DESC, 1, 2
+FETCH FIRST 50 ROWS ONLY

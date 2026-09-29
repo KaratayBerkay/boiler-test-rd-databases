@@ -1,0 +1,360 @@
+{
+  "engine": "h2",
+  "display": "H2 2.x",
+  "category": "embedded / Java server",
+  "dialect": "h2",
+  "driver": "psycopg",
+  "image": "rdlab/h2:2.3.232 (eclipse-temurin:21-jre + h2 jar)",
+  "run_id": "20260914-145935-029d2a",
+  "started": "2026-09-14T11:59:35+00:00",
+  "scale": 1.0,
+  "notes": "H2 in server mode using its PostgreSQL-protocol emulation (MODE=PostgreSQL); accessed with psycopg. The PG emulation is partial (no COPY, limited pg_catalog), so loading uses executemany. Single node; H2 has no replication (clustering mode is deprecated).",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 3.32,
+          "rows_per_s": 6032,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.05,
+          "rows_per_s": 4360,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.8,
+          "rows_per_s": 6285,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 29.23,
+          "rows_per_s": 6843,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 62.92,
+          "rows_per_s": 7749,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 151.1,
+          "rows_per_s": 6618,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 2.57,
+          "rows_per_s": 7769,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs VARCHAR(2000),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description VARCHAR(4000) NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs VARCHAR(2000),\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload VARCHAR(2000),\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.88,
+      "load_seconds": 250.29,
+      "fts_setup": [
+        "FAILED CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description)): Syntax error in SQL statement \"CREATE INDEX ix_products_fts ON products USING [*]GIN (to_tsvector('english', description))\"; expected \"BTREE, HASH, RTREE\"; SQL statement:\nCREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description)) [42001-232]\nDETAIL:  org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement \"CREATE INDEX ix_products_fts ON products USING [*]GIN (to_tsvector('english', description))\"; expected \"BTREE, HASH, RTREE\"; SQL statement:\nCREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description)) [42001-232]"
+      ],
+      "after_load": [
+        "ANALYZE TABLE customers",
+        "ANALYZE TABLE categories",
+        "ANALYZE TABLE products",
+        "ANALYZE TABLE orders",
+        "ANALYZE TABLE order_items",
+        "ANALYZE TABLE events",
+        "ANALYZE TABLE inventory"
+      ],
+      "post_seconds": 0.63,
+      "server_version": "PostgreSQL 8.2.23 server protocol using H2 2.3.232 (2024-08-11)",
+      "_seconds": 251.9
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "backup_zip": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP TO 'lab.zip' + org.h2.tools.Restore",
+          "backup_seconds": 29.19,
+          "backup_bytes": 157449362,
+          "backup_mb": 150.2,
+          "restore_seconds": 7.68,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 3.05
+          },
+          "pitr": {},
+          "notes": "online zip of the .mv.db file taken by the server; the Restore tool unpacks it under a new database name",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.zip /data/lab_restore.mv.db /data/lab_restore.trace.db",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": ""
+            },
+            {
+              "name": "BACKUP TO",
+              "cmd": "BACKUP TO '/backups/lab.zip'",
+              "rc": 0,
+              "seconds": 29.19,
+              "out": ""
+            },
+            {
+              "name": "org.h2.tools.Restore",
+              "cmd": "java -cp /opt/h2.jar org.h2.tools.Restore -file /backups/lab.zip -dir /data -db lab_restore",
+              "rc": 0,
+              "seconds": 7.68,
+              "out": ""
+            }
+          ],
+          "seconds": 40.2,
+          "description": "online zip of the database file restored under a new name"
+        },
+        "script": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "SCRIPT TO / RUNSCRIPT FROM",
+          "backup_seconds": 5.81,
+          "backup_bytes": 158583968,
+          "backup_mb": 151.2,
+          "restore_seconds": 19.57,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 4.33
+          },
+          "pitr": {},
+          "notes": "SQL script (DDL + INSERTs) replayed into a fresh database through the same connection type",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.sql /data/lab_script.mv.db /data/lab_script.trace.db",
+              "rc": 0,
+              "seconds": 0.13,
+              "out": ""
+            },
+            {
+              "name": "SCRIPT TO",
+              "cmd": "SCRIPT TO '/backups/lab.sql'",
+              "rc": 0,
+              "seconds": 5.79,
+              "out": ""
+            },
+            {
+              "name": "RUNSCRIPT FROM (new db)",
+              "cmd": "RUNSCRIPT FROM '/backups/lab.sql'",
+              "rc": 0,
+              "seconds": 19.57,
+              "out": ""
+            }
+          ],
+          "seconds": 29.9,
+          "description": "SQL script replayed into a new database"
+        }
+      },
+      "order": [
+        "backup_zip",
+        "script"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "a09b6ef969b801ce72f4c97a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "d4b190320472f02e5320b032"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "8404af509146dd29000a59f2"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 4.71,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "backup_zip",
+          "script"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 74.9
+    },
+    "logging": {
+      "sink": "INFORMATION_SCHEMA.QUERY_STATISTICS (SET QUERY_STATISTICS TRUE) + trace file (SET TRACE_LEVEL_FILE 2, t:<ms> per statement)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "trace_level_file": 1,
+        "query_statistics": true,
+        "info.VERSION": "2.3.232 (2024-08-11)",
+        "MODE": "PostgreSQL"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "INFORMATION_SCHEMA.QUERY_STATISTICS (SET QUERY_STATISTICS TRUE) + trace file (SET TRACE_LEVEL_FILE 2, t:<ms> per statement)",
+        "slow_query_ms": 282.7,
+        "slow_logged": true,
+        "seen_after_s": 0.04,
+        "sample": "count=1 max_ms=238.641908 avg_ms=238.641908 rows=1 sql=SELECT COUNT(*) AS rdlab_mk_82e2c73d68 FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer",
+        "duration_ms": 238.641908,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "trace file level 2 (every statement, DDL included)",
+        "setup": "SET TRACE_LEVEL_FILE 2",
+        "event_found": true,
+        "seen_after_s": 0.11,
+        "sample": "/*SQL */CREATE TABLE audit_rdlab_mk_a73a53a20b (id INTEGER);",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 196,
+          "p50_ms": 41.0149245,
+          "p99_ms": 50.009131399998374,
+          "errors": 0
+        },
+        "full_logging": "SET TRACE_LEVEL_FILE 2 (every statement with its time written to /data/lab.trace.db)",
+        "full": {
+          "qps": 196,
+          "p50_ms": 41.009968,
+          "p99_ms": 48.93962248999838,
+          "errors": 0
+        },
+        "log_bytes_written": 110461,
+        "bytes_per_statement": 140.9,
+        "overhead_pct": 0.0,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-h2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 202,
+          "docker_logs_lines": 3
+        }
+      },
+      "extra": {
+        "query_statistics_top5": [
+          {
+            "sql": "SELECT id, name, email FROM customers WHERE id = $1",
+            "calls": 1959,
+            "avg_ms": 0.1483263874425729
+          },
+          {
+            "sql": "SET DEFAULT_NULL_ORDERING HIGH",
+            "calls": 24,
+            "avg_ms": 0.04226120833333333
+          },
+          {
+            "sql": "set search_path = public, pg_catalog",
+            "calls": 24,
+            "avg_ms": 0.030113708333333336
+          },
+          {
+            "sql": "SET MODE PostgreSQL",
+            "calls": 24,
+            "avg_ms": 0.02820475
+          },
+          {
+            "sql": "SET TRACE_LEVEL_FILE 1",
+            "calls": 3,
+            "avg_ms": 0.012812
+          }
+        ]
+      },
+      "collected": [
+        "results/h2/logs/h2__data_lab.trace.db"
+      ],
+      "_seconds": 19.6
+    }
+  },
+  "harness_log": "results/logs/h2/20260914-145935-029d2a.log",
+  "server_version": "PostgreSQL 8.2.23 server protocol using H2 2.3.232 (2024-08-11)",
+  "finished": "2026-09-14T12:05:23+00:00"
+}

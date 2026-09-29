@@ -1,0 +1,10 @@
+Sort  (cost=6788.62..6789.37 rows=300 width=22)
+  Sort Key: c.id, o2.ordered_at DESC
+  ->  Nested Loop  (cost=77.86..6776.27 rows=300 width=22)
+        ->  Seq Scan on customers c  (cost=23.09..1292.45 rows=100 width=4)
+              Storage Filter: (id <= 100)
+        ->  Limit  (cost=54.77..54.78 rows=3 width=18)
+              ->  Sort  (cost=54.77..54.80 rows=10 width=18)
+                    Sort Key: o2.ordered_at DESC, o2.id DESC
+                    ->  Index Scan using ix_orders_customer_id on orders o2  (cost=52.19..54.64 rows=10 width=18)
+                          Index Cond: (customer_id = c.id)

@@ -1,0 +1,34 @@
+display: QuestDB
+category: time-series
+dialect: questdb
+driver: questdb
+image: questdb/questdb:latest
+project: rdlab-questdb
+scale: 1
+notes: >-
+  Append-optimised time-series engine with a PostgreSQL wire endpoint. Tables with a designated timestamp are partitioned
+  by month (WAL). No primary keys / foreign keys / UPDATE-heavy workloads; replication is an Enterprise feature.
+docs:
+  - https://questdb.io/docs/reference/sql/overview/
+  - https://questdb.io/docs/concept/sql-execution-order/
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 18812
+    user: admin
+    password: quest
+    database: qdb
+    container: rdlab-questdb
+backup:
+  dir: /backups
+  volume: questdb-backups
+  root: /var/lib/questdb
+  restore_port: 18813
+  strategies: [checkpoint]
+logging:
+  slow_ms: 100
+features:
+  http: http://127.0.0.1:19009
+  connection_storm: true

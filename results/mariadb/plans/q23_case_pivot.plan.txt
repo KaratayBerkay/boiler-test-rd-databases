@@ -1,0 +1,2 @@
+1 | SIMPLE | c | ALL | PRIMARY | None | None | None | 20041 | Using temporary; Using filesort
+1 | SIMPLE | o | ref | ix_orders_customer_id | ix_orders_customer_id | 4 | lab.c.id | 9 | 

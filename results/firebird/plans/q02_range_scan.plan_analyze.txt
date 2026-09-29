@@ -1,0 +1,7 @@
+Select Expression
+    -> First N Records
+        -> Refetch
+            -> Sort (record length: 44, key length: 20)
+                -> Filter
+                    -> Table "ORDERS" Full Scan
+fetches=832292 reads=878

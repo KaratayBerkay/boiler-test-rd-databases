@@ -1,0 +1,13 @@
+Sub-query
+    -> Singularity Check
+        -> Aggregate
+            -> Filter
+                -> Table "PRODUCTS" as "P2" Access By ID
+                    -> Bitmap
+                        -> Index "RDB$FOREIGN4" Range Scan (full match)
+Select Expression
+    -> First N Records
+        -> Filter
+            -> Table "PRODUCTS" as "P" Access By ID
+                -> Index "RDB$PRIMARY3" Full Scan
+fetches=11015981 reads=7608

@@ -1,0 +1,97 @@
+physical_plan | ┌───────────────────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│__internal_decompress_integ│
+│     ral_integer(#1, 1)    │
+│             #2            │
+│                           │
+│          ~0 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│ lab.main.orders.ordered_at│
+│             ASC           │
+│   lab.main.orders.id ASC  │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│__internal_compress_integra│
+│     l_usmallint(#1, 1)    │
+│             #2            │
+│                           │
+│          ~0 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             id            │
+│        customer_id        │
+│         ordered_at        │
+│                           │
+│          ~0 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│      Join Type: SEMI      │
+│                           │
+│        Conditions:        ├──────────────┐
+│       rowid = rowid       │              │
+│                           │              │
+│          ~0 rows          │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│          SEQ_SCAN         ││           TOP_N           │
+│    ────────────────────   ││    ────────────────────   │
+│           Table:          ││          Top: 50          │
+│      lab.main.orders      ││                           │
+│                           ││         Order By:         │
+│   Type: Sequential Scan   ││ lab.main.orders.ordered_at│
+│                           ││             ASC           │
+│        Projections:       ││   lab.main.orders.id ASC  │
+│         ordered_at        ││                           │
+│             id            ││                           │
+│        customer_id        ││                           │
+│                           ││                           │
+│       ~200,064 rows       ││                           │
+└───────────────────────────┘└─────────────┬─────────────┘
+                             ┌─────────────┴─────────────┐
+                             │         PROJECTION        │
+                             │    ────────────────────   │
+                             │             id            │
+                             │         ordered_at        │
+                             │           rowid           │
+                             │                           │
+                             │        ~40,012 rows       │
+                             └─────────────┬─────────────┘
+                             ┌─────────────┴─────────────┐
+                             │           FILTER          │
+                             │    ────────────────────   │
+                             │ ("row"(ordered_at, id) > (│
+                             │   '2025-01-01 00:00:00':  │
+                             │      :TIMESTAMP, 0))      │
+                             │                           │
+                             │        ~40,012 rows       │
+                             └─────────────┬─────────────┘
+                             ┌─────────────┴─────────────┐
+                             │          SEQ_SCAN         │
+                             │    ────────────────────   │
+                             │           Table:          │
+                             │      lab.main.orders      │
+                             │                           │
+                             │   Type: Sequential Scan   │
+                             │                           │
+                             │        Projections:       │
+                             │         ordered_at        │
+                             │             id            │
+                             │                           │
+                             │          Filters:         │
+                             │ optional: Dynamic Filter  │
+                             │        (ordered_at)       │
+                             │                           │
+                             │       ~200,064 rows       │
+                             └───────────────────────────┘

@@ -1,0 +1,128 @@
+{
+  "engine": "oracle",
+  "display": "Oracle 23ai Free",
+  "category": "row-store OLTP",
+  "dialect": "oracle",
+  "driver": "oracledb",
+  "image": "gvenzl/oracle-free:23-slim-faststart",
+  "run_id": "20260914-131952-694be9",
+  "started": "2026-09-14T10:19:52+00:00",
+  "scale": 0.3,
+  "notes": "Oracle Database 23ai Free (slim image: no Oracle Text, so full-text search falls back to LIKE) in FREEPDB1 (user lab). Free edition caps: 2 CPU threads, 2 GB SGA/PGA, 12 GB data. Data Guard (physical standby) is not available in Free, so no replica in this stack.",
+  "phases": {
+    "logging": {
+      "sink": "session SQL trace (DBMS_SESSION.SESSION_TRACE_ENABLE -> .trc) + V$SQL elapsed_time/executions",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "Diag Trace": "/opt/oracle/diag/rdbms/free/FREE/trace",
+        "Diag Alert": "/opt/oracle/diag/rdbms/free/FREE/alert",
+        "Default Trace File": "/opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_2429.trc",
+        "timed_statistics": "TRUE",
+        "log_archive_dest_1": "",
+        "undo_retention": "900",
+        "unified_audit_common_systemlog": "",
+        "audit_trail": "NONE",
+        "sql_trace": "FALSE",
+        "statistics_level": "TYPICAL",
+        "log_mode": "NOARCHIVELOG",
+        "unified_auditing": "TRUE"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "session SQL trace (DBMS_SESSION.SESSION_TRACE_ENABLE -> .trc) + V$SQL elapsed_time/executions",
+        "slow_query_ms": 127.9,
+        "slow_logged": false,
+        "seen_after_s": 25.51,
+        "sample": "SELECT COUNT(*) AS rdlab_mk_e1cd95069b FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer_id WHERE e1.id < 40000 AND e2.id < 40000\nEND OF STMT\nPARSE #140626071794912:c=6253,e=5860,p=0,cr=4,cu=0,mis=1,r=0,dep=0,og=1,plh=1077804998,tim=335309000073\nWAIT #140626071794912: nam='Allocate UGA memory from OS' ela=12 Bytes=131072 where=1 p3=0 obj#=4294967295 tim=335309000179",
+        "trace_elapsed_ms": null,
+        "v$sql": {
+          "executions": 1,
+          "elapsed_ms_total": 83.8,
+          "sql": "SELECT COUNT(*) AS rdlab_mk_e1cd95069b FROM events e1 JOIN events e2 ON e1.customer_id = e"
+        },
+        "duration_ms": 83.8,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "unified auditing: AUDIT POLICY rdlab_pol (CREATE/DROP TABLE, DELETE ON lab.inventory) -> UNIFIED_AUDIT_TRAIL",
+        "setup": "CREATE AUDIT POLICY rdlab_pol ACTIONS CREATE TABLE, DROP TABLE, DELETE ON lab.inventory; AUDIT POLICY rdlab_pol",
+        "event_found": true,
+        "seen_after_s": 0.22,
+        "sample": "10:20:19.027 LAB CREATE TABLE LAB.AUDIT_RDLAB_MK_EA37B7DD2E",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 6488,
+          "p50_ms": 0.460011,
+          "p99_ms": 1.213014239999998,
+          "errors": 0
+        },
+        "full_logging": "DBMS_MONITOR.DATABASE_TRACE_ENABLE (SQL trace for every session -> one .trc per server process)",
+        "full": {
+          "qps": 17105,
+          "p50_ms": 0.448508,
+          "p99_ms": 0.7730454000000003,
+          "errors": 0
+        },
+        "log_bytes_written": 412088,
+        "bytes_per_statement": 6.0,
+        "overhead_pct": -163.6,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-oracle": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 27130,
+          "docker_logs_lines": 486
+        }
+      },
+      "extra": {
+        "v$sql_top5": [
+          {
+            "executions": "125634",
+            "elapsed_ms": "3496",
+            "sql": "SELECT id, name, email FROM customers WHERE id = :1"
+          },
+          {
+            "executions": "2",
+            "elapsed_ms": "11",
+            "sql": "SELECT value FROM v$diag_info WHERE name = 'Default Trace File'"
+          },
+          {
+            "executions": "2",
+            "elapsed_ms": "8",
+            "sql": "BEGIN DBMS_SESSION.SESSION_TRACE_ENABLE(waits => TRUE, binds => FALSE); END;"
+          },
+          {
+            "executions": "2",
+            "elapsed_ms": "2",
+            "sql": "BEGIN DBMS_SESSION.SESSION_TRACE_DISABLE; END;"
+          }
+        ],
+        "unified_audit_rows": "6"
+      },
+      "collected": [
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_alert_FREE.log",
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_FREE_ora_1589_rdlab.trc",
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_FREE_ora_1591_rdlab.trc",
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_FREE_ora_2458_rdlab.trc",
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_FREE_ora_2460_rdlab.trc"
+      ],
+      "_seconds": 45.7
+    }
+  },
+  "harness_log": "results/logs/oracle/20260914-131952-694be9.log",
+  "server_version": "Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free\nVersion 23.26.3.0.0",
+  "finished": "2026-09-14T10:20:37+00:00"
+}

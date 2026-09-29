@@ -1,0 +1,7 @@
+4 | 0 | 0 | CO-ROUTINE (subquery-3)
+6 | 4 | 0 | CO-ROUTINE s
+12 | 6 | 0 | SCAN orders
+18 | 6 | 0 | USE TEMP B-TREE FOR GROUP BY
+59 | 4 | 0 | SCAN s
+71 | 4 | 0 | USE TEMP B-TREE FOR ORDER BY
+90 | 0 | 0 | SCAN (subquery-3)

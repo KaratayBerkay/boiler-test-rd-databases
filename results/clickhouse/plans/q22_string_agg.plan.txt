@@ -1,0 +1,73 @@
+Output: id, arrayStringConcat(arraySort(groupArray(sku)), ',')
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: id ASC
+└──Aggregating
+   │  Keys: id
+   │  Aggregates: groupArray(sku)
+   │  Skip merging: 0
+   └──Join (JOIN FillRightFirst)
+      │  p[1500] ⋈ (oi[1225] ⋈ o[499])
+      │  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)
+      │  Result rows: 506
+      │  Join conditions: id = product_id
+      │  Output:
+      │    Left:  sku
+      │    Right: id
+      ├──ReadFromMergeTree (lab.products)
+      │     Read type: Default
+      │     Parts: 1 | Granules: 1
+      │     Output: id, sku
+      │     Runtime filters: RF2(id, product_id)
+      │     Indexes:
+      │       PrimaryKey
+      │         Condition: true
+      │         Parts: 1/1
+      │         Granules: 1/1
+      │       Ranges: 1
+      └──BuildRuntimeFilter (Build runtime join filter on product_id)
+         │  Filter id: RF2
+         └──Join (JOIN FillRightFirst)
+            │  oi[1225] ⋈ o[499]
+            │  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)
+            │  Result rows: 499
+            │  Join conditions: order_id = id
+            │  Output:
+            │    Left:  product_id
+            │    Right: id
+            ├──ReadFromMergeTree (lab.order_items)
+            │     Read type: Default
+            │     Parts: 1 | Granules: 12
+            │     Output: order_id, product_id
+            │     Prewhere filter
+            │     Prewhere filter column:  order_id <= 500
+            │     Runtime filters: RF1(order_id, id from lab.orders)
+            │     Indexes:
+            │       Statistics
+            │         Keys:
+            │           order_id
+            │         Parts: 1/2
+            │         Granules: 12/18
+            │       PrimaryKey
+            │         Condition: true
+            │         Parts: 1/1
+            │         Granules: 12/12
+            │       Ranges: 1
+            └──BuildRuntimeFilter (Build runtime join filter on id)
+               │  Filter id: RF1
+               │  Source table: lab.orders
+               └──Filter ((WHERE + Change column names to column identifiers))
+                  │  Filter column: id <= 500
+                  └──ReadFromMergeTree (lab.orders)
+                        Read type: Default
+                        Parts: 1 | Granules: 1
+                        Output: id
+                        Indexes:
+                          PrimaryKey
+                            Keys:
+                              id
+                            Condition: (id in (-Inf, 500])
+                            Parts: 1/1
+                            Granules: 1/7
+                            Search Algorithm: binary search
+                          Ranges: 1

@@ -1,0 +1,18 @@
+Limit  (cost=100.57..100.70 rows=50 width=24) (actual time=0.124..0.130 rows=50.00 loops=1)
+  Buffers: shared hit=66
+  ->  Sort  (cost=100.57..100.79 rows=85 width=24) (actual time=0.123..0.126 rows=50.00 loops=1)
+        Sort Key: id
+        Sort Method: quicksort  Memory: 31kB
+        Buffers: shared hit=66
+        ->  Bitmap Heap Scan on products  (cost=7.41..97.85 rows=85 width=24) (actual time=0.061..0.109 rows=91.00 loops=1)
+              Recheck Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)
+              Heap Blocks: exact=61
+              Buffers: shared hit=66
+              ->  Bitmap Index Scan on ix_products_fts  (cost=0.00..7.39 rows=85 width=0) (actual time=0.050..0.050 rows=91.00 loops=1)
+                    Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)
+                    Index Searches: 1
+                    Buffers: shared hit=5
+Planning:
+  Buffers: shared hit=1
+Planning Time: 0.067 ms
+Execution Time: 0.148 ms

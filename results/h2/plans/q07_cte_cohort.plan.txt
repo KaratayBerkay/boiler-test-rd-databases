@@ -1,0 +1,53 @@
+WITH "first_orders"("customer_id", "first_at") AS (
+    SELECT
+        "customer_id",
+        MIN("ordered_at") AS "first_at"
+    FROM "public"."orders"
+    GROUP BY "customer_id"
+),
+"cohorts"("customer_id", "cohort") AS (
+    SELECT
+        "customer_id",
+        DATE_TRUNC(MONTH, "first_at") AS "cohort"
+    FROM "first_orders" "first_orders"
+),
+"activity"("customer_id", "m") AS (
+    SELECT
+        "o"."customer_id",
+        DATE_TRUNC(MONTH, "o"."ordered_at") AS "m"
+    FROM "public"."orders" "o"
+    GROUP BY "o"."customer_id", DATE_TRUNC(MONTH, "o"."ordered_at")
+)
+SELECT
+    "c"."cohort",
+    COUNT(DISTINCT "c"."customer_id") AS "cohort_size",
+    COUNT(DISTINCT "a"."customer_id") AS "active_later"
+FROM "cohorts" "c"
+    /* SELECT
+        customer_id,
+        DATE_TRUNC(MONTH, first_at) AS cohort
+    FROM first_orders first_orders
+        /* SELECT
+            customer_id,
+            MIN(ordered_at) AS first_at
+        FROM public.orders
+            /* public.CONSTRAINT_INDEX_C3 */
+        GROUP BY customer_id
+        /* group sorted */
+         */
+     */
+LEFT OUTER JOIN "activity" "a"
+    /* SELECT
+        o.customer_id,
+        DATE_TRUNC(MONTH, o.ordered_at) AS m
+    FROM public.orders o
+        /* public.CONSTRAINT_INDEX_C3: customer_id IS NOT DISTINCT FROM ?1 */
+    WHERE (o.customer_id IS NOT DISTINCT FROM ?1)
+        AND (DATE_TRUNC(MONTH, o.ordered_at) >= ?2)
+    GROUP BY o.customer_id, DATE_TRUNC(MONTH, o.ordered_at): customer_id = c.customer_id
+        AND m > c.cohort
+     */
+    ON ("a"."customer_id" = "c"."customer_id")
+    AND ("a"."m" > "c"."cohort")
+GROUP BY "c"."cohort"
+ORDER BY 1

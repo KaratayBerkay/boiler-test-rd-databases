@@ -1,0 +1,36 @@
+Limit  (cost=768.71..29651.01 rows=500 width=42) (actual time=15.566..660.101 rows=500 loops=1)
+  ->  Result  (cost=768.71..245228.46 rows=4232 width=42) (actual time=15.563..659.441 rows=500 loops=1)
+        ->  Sort  (cost=768.71..779.29 rows=4232 width=14) (actual time=14.207..14.613 rows=500 loops=1)
+              Sort Key: p.id
+              Sort Method: top-N heapsort  Memory: 65kB
+              ->  Seq Scan on products p  (cost=23.08..557.84 rows=4232 width=14) (actual time=2.000..9.080 rows=4232 loops=1)
+                    Storage Filter: active
+                    Storage Table Read Requests: 5
+                    Storage Table Read Execution Time: 1.902 ms
+                    Storage Table Read Ops: 5
+                    Storage Table Rows Scanned: 5000
+        SubPlan 1
+          ->  Aggregate  (cost=57.74..57.75 rows=1 width=32) (actual time=1.283..1.283 rows=1 loops=500)
+                ->  Index Scan using ix_products_category_id on products p2  (cost=52.16..57.68 rows=25 width=6) (actual time=1.155..1.215 rows=26 loops=500)
+                      Index Cond: (category_id = p.category_id)
+                      Storage Table Read Requests: 1
+                      Storage Table Read Execution Time: 0.341 ms
+                      Storage Table Read Ops: 1
+                      Storage Table Rows Scanned: 26
+                      Storage Index Read Requests: 1
+                      Storage Index Read Execution Time: 0.663 ms
+                      Storage Index Read Ops: 1
+                      Storage Index Rows Scanned: 26
+Planning Time: 0.335 ms
+Execution Time: 660.833 ms
+Storage Read Requests: 1005
+Storage Read Execution Time: 503.650 ms
+Storage Read Ops: 1005
+Storage Rows Scanned: 31250
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 503.650 ms
+Peak Memory Usage: 248 kB

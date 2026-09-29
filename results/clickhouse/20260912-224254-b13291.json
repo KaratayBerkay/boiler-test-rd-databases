@@ -1,0 +1,1061 @@
+{
+  "engine": "clickhouse",
+  "display": "ClickHouse",
+  "category": "analytical (columnar)",
+  "dialect": "clickhouse",
+  "driver": "clickhouse-connect",
+  "image": "clickhouse/clickhouse-server:latest",
+  "run_id": "20260912-224254-b13291",
+  "started": "2026-09-12T19:42:54+00:00",
+  "scale": 1.0,
+  "notes": "Two replicas of one shard using ReplicatedMergeTree with ClickHouse Keeper; DDL runs ON CLUSTER. No transactions, no foreign keys; secondary \"indexes\" are data-skipping (bloom filter) indexes; UPDATE/DELETE are asynchronous mutations.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.46,
+          "rows_per_s": 43484,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.1,
+          "rows_per_s": 1914,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.22,
+          "rows_per_s": 23151,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 3.43,
+          "rows_per_s": 58358,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 2.97,
+          "rows_per_s": 164071,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 17.65,
+          "rows_per_s": 56664,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.31,
+          "rows_per_s": 64219,
+          "method": "client.insert (native batches)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers ON CLUSTER lab_cluster (\n  id Int32,\n  name String,\n  email String,\n  country_code String,\n  tier String,\n  created_at DateTime64(6),\n  attrs Nullable(String)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/customers', '{replica}') ORDER BY (id)",
+        "CREATE TABLE categories ON CLUSTER lab_cluster (\n  id Int32,\n  parent_id Nullable(Int32),\n  name String,\n  depth Int32\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/categories', '{replica}') ORDER BY (id)",
+        "CREATE TABLE products ON CLUSTER lab_cluster (\n  id Int32,\n  category_id Int32,\n  sku String,\n  name String,\n  description String,\n  price Decimal(12,2),\n  attrs Nullable(String),\n  active Bool\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/products', '{replica}') ORDER BY (id)",
+        "CREATE TABLE orders ON CLUSTER lab_cluster (\n  id Int32,\n  customer_id Int32,\n  status String,\n  ordered_at DateTime64(6),\n  total_amount Decimal(14,2),\n  shipping_country String\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/orders', '{replica}') ORDER BY (id)",
+        "CREATE TABLE order_items ON CLUSTER lab_cluster (\n  id Int32,\n  order_id Int32,\n  product_id Int32,\n  qty Int32,\n  unit_price Decimal(12,2)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/order_items', '{replica}') ORDER BY (id)",
+        "CREATE TABLE events ON CLUSTER lab_cluster (\n  id Int64,\n  customer_id Int32,\n  event_type String,\n  occurred_at DateTime64(6),\n  payload Nullable(String),\n  value_num Decimal(12,4)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/events', '{replica}') ORDER BY (id)",
+        "CREATE TABLE inventory ON CLUSTER lab_cluster (\n  product_id Int32,\n  warehouse_id Int32,\n  qty Int32,\n  updated_at DateTime64(6)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/inventory', '{replica}') ORDER BY (product_id, warehouse_id)",
+        "ALTER TABLE products ADD INDEX ix_products_category_id (category_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE orders ADD INDEX ix_orders_customer_id (customer_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE order_items ADD INDEX ix_order_items_order_id (order_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE order_items ADD INDEX ix_order_items_product_id (product_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE events ADD INDEX ix_events_customer_id (customer_id) TYPE bloom_filter GRANULARITY 4"
+      ],
+      "errors": [],
+      "schema_seconds": 2.06,
+      "load_seconds": 25.18,
+      "fts_setup": [],
+      "after_load": [],
+      "post_seconds": 0.0,
+      "server_version": "ClickHouse 26.8.2.7",
+      "_seconds": 27.3
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "supported",
+        "note": "incremental MV (insert trigger)",
+        "sample": "[(13,)]",
+        "ms": 46.9
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "",
+        "ms": 99.7
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 113.1
+      },
+      "identity": {
+        "status": "supported",
+        "note": "no identity columns (generateSerialID needs Keeper)",
+        "ms": 41.2
+      },
+      "returning": {
+        "status": "error",
+        "note": "",
+        "error": "DatabaseError: Received ClickHouse exception, code: 27, server response: Code: 27. DB::Exception: Cannot parse input: expected '(' before: 'RETURNING id': at row 1: While executing WaitForAsyncInsert. (CANNOT_PARSE_INPUT_ASSERTION_FAILED) (for url http://127.0.0.1:18123)",
+        "error_code": "27",
+        "ms": 101.5
+      },
+      "sequence": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Received ClickHouse exception, code: 62, server response: Code: 62. DB::Exception: Syntax error: failed at position 8 (SEQUENCE): SEQUENCE seq_lab. Expected one of: OR REPLACE, TEMPORARY, TABLE, DATABASE, sql security, DEFINER, SQL SECURITY, MATERIALIZED, VIEW, DICTIONARY, WINDOW, USE",
+        "error_code": "62",
+        "ms": 34.3
+      },
+      "arrays": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([1, 2, 3, 4],)]",
+        "ms": 33.9
+      },
+      "vector_type": {
+        "status": "supported",
+        "note": "Array(Float32) + distance functions",
+        "sample": "[(0.2142857313156128,)]",
+        "ms": 111.0
+      },
+      "statement_timeout": {
+        "status": "unsupported",
+        "note": "error 159 TIMEOUT_EXCEEDED",
+        "detail": "no error raised",
+        "ms": 2041.5
+      },
+      "filter_clause": {
+        "status": "supported",
+        "note": "countIf combinator (no FILTER clause)",
+        "sample": "[(140061,)]",
+        "ms": 47.1
+      },
+      "distinct_on": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 157974), (2, 70522)]",
+        "ms": 29.7
+      },
+      "qualify": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,), (2,)]",
+        "ms": 63.6
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "469",
+        "detail": "DatabaseError: Received ClickHouse exception, code: 469, server response: Code: 469. DB::Exception: Constraint `c1` for table lab.ck_lab (ebf7ddd7-ced9-4e19-9cfc-d62fbd203ea4) is violated at row 1. Expression: (v > 0). Column values: v = 0: While executing WaitForAsyncInsert. (VIOLATED_CONSTRAINT) (",
+        "ms": 104.0
+      },
+      "fk_enforced": {
+        "status": "unsupported",
+        "note": "",
+        "detail": "no error raised",
+        "ms": 154.3
+      },
+      "savepoint": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Received ClickHouse exception, code: 62, server response: Code: 62. DB::Exception: Syntax error: failed at position 1 (SAVEPOINT): SAVEPOINT s1. Expected one of: Query, Query with output, EXPLAIN, SELECT query, possibly with UNION, list of union elements, SELECT query, subquery, possi",
+        "error_code": "62",
+        "ms": 34.2
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Received ClickHouse exception, code: 62, server response: Code: 62. DB::Exception: Syntax error: failed at position 34 (SYSTEM) (line 1, col 34): SYSTEM TIME '-5s' FORMAT Native. Expected one of: FINAL, SAMPLE, STREAM, table, table function, subquery or list of joined tables, array jo",
+        "error_code": "62",
+        "ms": 39.5
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[('[[1,\"Category 1\"],[2,\"Category 2\"],[3,\"Category 3\"]]',)]",
+        "ms": 36.7
+      },
+      "isolation_serializable": {
+        "status": "unsupported",
+        "note": "no isolation levels",
+        "error": "DatabaseError: Received ClickHouse exception, code: 62, server response: Code: 62. DB::Exception: Syntax error: failed at position 17 (ISOLATION): ISOLATION LEVEL SERIALIZABLE. Expected SNAPSHOT. (SYNTAX_ERROR) (for url http://127.0.0.1:18123)",
+        "error_code": "62",
+        "ms": 30.9
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 37.2
+      },
+      "json_type": {
+        "status": "supported",
+        "note": "native JSON type",
+        "sample": "[('x',)]",
+        "ms": 114.9
+      },
+      "_seconds": 3.3
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 ",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.328,
+          "p50": 3.356,
+          "p90": 3.855,
+          "p95": 3.875,
+          "p99": 4.019,
+          "max": 4.078,
+          "mean": 3.261,
+          "stdev": 0.459,
+          "first_ms": 5.055
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: 1\n\nReadFromSystemOne",
+        "plan_analyze": "query_log: duration_ms=0 read_rows=1 read_bytes=1 memory=4296980 result_rows=1\n(Expression)\nExpressionTransform\n  (ReadFromSystemOne)"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 3.678,
+          "p50": 4.422,
+          "p90": 7.184,
+          "p95": 8.825,
+          "p99": 9.33,
+          "max": 9.488,
+          "mean": 5.032,
+          "stdev": 1.524,
+          "first_ms": 9.658
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, name, email, country_code, tier\n\nReadFromMergeTree (lab.customers)\n   Read type: Default\n   Parts: 1 | Granules: 1\n   Output: id, name, email, country_code, tier\n   Prewhere filter\n   Prewhere filter column:  id = 4403\n   Indexes:\n     PrimaryKey\n       Keys:\n         id\n       Condition: (id in [4403, 4403])\n       Parts: 1/1\n       Granules: 1/2\n       Search Algorithm: binary search\n     Ranges: 1",
+        "plan_analyze": "query_log: duration_ms=2 read_rows=8192 read_bytes=430293 memory=4348020 result_rows=1\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (ReadFromMergeTree)\n    MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= toDateTime64('2025-03-01 00:00:00', 6) AND ordered_at < toDateTime64('2025-03-08 00:00:00', 6) AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 26.682,
+          "p50": 29.146,
+          "p90": 30.26,
+          "p95": 31.29,
+          "p99": 32.113,
+          "max": 32.319,
+          "mean": 29.149,
+          "stdev": 1.429,
+          "first_ms": 33.721
+        },
+        "rows": 500,
+        "checksum": "6e2623fdc46c3b996bdf720e",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, customer_id, status, total_amount\n\nJoinLazyColumnsStep\n\u251c\u2500\u2500Limit (preliminary LIMIT)\n\u2502  \u2502  Limit 500\n\u2502  \u2502  Offset 0\n\u2502  \u2514\u2500\u2500Sorting (Sorting for ORDER BY)\n\u2502     \u2502  Sort description: ordered_at ASC, id ASC\n\u2502     \u2502  Limit 500\n\u2502     \u2514\u2500\u2500Filter\n\u2502        \u2502  Filter column: ordered_at >= '2025-03-01 00:00:00.000000' AND ordered_at < '2025-03-08 00:00:00.000000' AND status = 'delivered'\n\u2502        \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n\u2502              Read type: Default\n\u2502              Parts: 2 | Granules: 24\n\u2502              Output: ordered_at, _part_offset, _part_starting_offset, id, status\n\u2502              Prewhere filter\n\u2502              Prewhere filter column:  __topKFilter(ordered_at)\n\u2502              Indexes:\n\u2502                PrimaryKey\n\u2502                  Condition: true\n\u2502                  Parts: 2/2\n\u2502                  Granules: 24/24\n\u2502                Ranges: 2\n\u2514\u2500\u2500LazilyReadFromMergeTree\n      Lazily read columns: customer_id, total_amount",
+        "plan_analyze": "query_log: duration_ms=27 read_rows=400000 read_bytes=8718288 memory=13084315 result_rows=500\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (Expression)\n    ExpressionTransform\n      (JoinLazyColumnsStep)\n      LazyMaterializingTransform 2 \u2192 1\n        (Limit)\n        Limit\n          (Sorting)\n          MergingSortedTransform 2 \u2192 1\n            MergeSortingTransform \u00d7 2\n              LimitsCheckingTransform \u00d7 2\n                PartialSortingTransform \u00d7 2\n                  (Expression)\n                  ExpressionTransform \u00d7 2\n                    (Filter)\n                    FilterTransform \u00d7 6\n                      (Expression)\n                      ExpressionTransform \u00d7 2\n                        (ReadFromMergeTree)\n                        MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n        (LazilyReadFromMergeTree)\n        LazyReadFromMergeTreeSource 0 \u2192 1"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, toStartOfMonth(o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= toDateTime64('2025-01-01 00:00:00', 6) AND o.ordered_at < toDateTime64('2025-07-01 00:00:00', 6) GROUP BY c.country_code, toStartOfMonth(o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.635,
+          "p50": 66.786,
+          "p90": 89.385,
+          "p95": 111.501,
+          "p99": 129.193,
+          "max": 133.616,
+          "mean": 70.51,
+          "stdev": 24.523,
+          "first_ms": 71.995
+        },
+        "rows": 50,
+        "checksum": "f9b69014a7f6526338496e47",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: country_code, toStartOfMonth(ordered_at), uniqExact(id), sum(qty * unit_price)\n\nLimit (preliminary LIMIT)\n\u2502  Limit 50\n\u2502  Offset 0\n\u2514\u2500\u2500Sorting (Sorting for ORDER BY)\n   \u2502  Sort description: sum(qty * unit_price) DESC, country_code ASC, toStartOfMonth(ordered_at) ASC\n   \u2502  Limit 50\n   \u2514\u2500\u2500Aggregating\n      \u2502  Keys: country_code, toStartOfMonth(ordered_at)\n      \u2502  Aggregates: uniqExact(id), sum(qty * unit_price)\n      \u2502  Skip merging: 0\n      \u2514\u2500\u2500Join (JOIN FillRightFirst)\n         \u2502  oi[487606] \u22c8 (c[20000] \u22c8 o[9904])\n         \u2502  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n         \u2502  Result rows: 24367\n         \u2502  Join conditions: order_id = id\n         \u2502  Output:\n         \u2502    Left:  qty, unit_price\n         \u2502    Right: id, ordered_at, country_code\n         \u251c\u2500\u2500ReadFromMergeTree (lab.order_items)\n         \u2502     Read type: Default\n         \u2502     Parts: 1 | Granules: 60\n         \u2502     Output: order_id, qty, unit_price\n         \u2502     Runtime filters: RF2(order_id, id)\n         \u2502     Indexes:\n         \u2502       PrimaryKey\n         \u2502         Condition: true\n         \u2502         Parts: 1/1\n         \u2502         Granules: 60/60\n         \u2502       Ranges: 1\n         \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on id)\n            \u2502  Filter id: RF2\n            \u2514\u2500\u2500Join (JOIN FillRightFirst)\n               \u2502  c[20000] \u22c8 o[9904]\n               \u2502  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n               \u2502  Result rows: 9948\n               \u2502  Join conditions: id = customer_id\n               \u2502  Output:\n               \u2502    Left:  country_code\n               \u2502    Right: ordered_at, id\n               \u251c\u2500\u2500ReadFromMergeTree (lab.customers)\n               \u2502     Read type: Default\n               \u2502     Parts: 1 | Granules: 2\n               \u2502     Output: id, country_code\n               \u2502     Runtime filters: RF1(id, customer_id from lab.orders)\n               \u2502     Indexes:\n               \u2502       PrimaryKey\n               \u2502         Condition: true\n               \u2502         Parts: 1/1\n               \u2502         Granules: 2/2\n               \u2502       Ranges: 1\n               \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on customer_id)\n                  \u2502  Filter id: RF1\n                  \u2502  Source table: lab.orders\n                  \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n                        Read type: Default\n                        Parts: 2 | Granules: 24\n                        Output: ordered_at, id, customer_id\n                        Prewhere filter\n                        Prewhere filter column:  ordered_at < '2025-07-01 00:00:00.000000' AND ordered_at >= '2025-01-01 00:00:00.000000' AND status = 'delivered'\n                        Indexes:\n                          PrimaryKey\n                            Condition: true\n                            Parts: 2/2\n                            Granules: 24/24\n                          Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=64 read_rows=707606 read_bytes=13499984 memory=14030212 result_rows=50\n(Expression)\nExpressionTransform\n  (Limit)\n  Limit\n    (Sorting)\n    MergingSortedTransform 9 \u2192 1\n      MergeSortingTransform \u00d7 9\n        LimitsCheckingTransform \u00d7 9\n          PartialSortingTransform \u00d7 9\n            (Expression)\n            ExpressionTransform \u00d7 9\n              (Aggregating)\n              Resize 9 \u2192 9\n                AggregatingTransform \u00d7 9\n                  (Expression)\n                  ExpressionTransform \u00d7 9\n                    (Join)\n                    ColumnPermuteTransform \u00d7 9\n                      Resize 1 \u2192 9\n                        FillingRightJoinSide\n                          Resize 18 \u2192 9\n                            DelayedPorts 18 \u2192 18\n                              JoiningTransform 2 \u2192 1\n                                DelayedJoinedBlocksWorkerTransform\n                                  SimpleSquashingTransform\n                                    JoiningTransform 2 \u2192 1\n                                      DelayedJoinedBlocksWorkerTransform\n                                        SimpleSquashingTransform\n                                          JoiningTransform 2 \u2192 1\n                                            DelayedJoinedBlocksWorkerTransform\n                                              SimpleSquashingTransform\n                                                JoiningTransform 2 \u2192 1\n                                                  DelayedJoinedBlocksWorkerTransform\n                                                    SimpleSquashingTransform\n                                                      JoiningTransform 2 \u2192 1\n                                                        DelayedJoinedBlocksWorkerTransform\n                                                          SimpleSquashingTransform\n                                                            JoiningTransform 2 \u2192 1\n                                                              DelayedJoinedBlocksWorkerTransform\n                                                                SimpleSquashingTransform\n                                                                  JoiningTransform 2 \u2192 1\n                                                                    DelayedJoinedBlocksWorkerTransform\n                                                                      SimpleSquashingTransform\n                                                                        JoiningTransform 2 \u2192 1\n                                                                          DelayedJoinedBlocksWorkerTransform\n                                                                            SimpleSquashingTransform\n                                                                              JoiningTransform 2 \u2192 1\n                                                                                DelayedJoinedBlocksWorkerTransform\n                                                                                  SimpleSquashingTransform\n                                                                                    DelayedJoinedBlocksTransform 0 \u2192 9\n                                                                                      (Expression)\n                                                                                      ExpressionTransform \u00d7 9\n                                                                                        (Expression)\n                                                                                        ExpressionTransform \u00d7 9\n                                                                                          (ReadFromMergeTree)\n                                                                                          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 9 0 \u2192 1\n                                                                                      (Expression)\n                                                                                      ExpressionTransform\n                                                                                        (BuildRuntimeFilter)\n                                                                                        BuildRuntimeFilterTransform\n                                                                                          (Expression)\n                                                                                          ExpressionTransform\n                                                                                            (Join)\n                                                                                            ColumnPermuteTransform\n                                                                                              FillingRightJoinSide\n                                                                                                Resize \u00d7 2 2 \u2192 1\n                                                                                                  DelayedPorts 2 \u2192 2\n                                                                                                    JoiningTransform 2 \u2192 1\n                                                                                                      DelayedJoinedBlocksWorkerTransform\n                                                                                                        SimpleSquashingTransform\n                                                                                                          DelayedJoinedBlocksTransform 0 \u2192 1\n                                                                                                            (Expression)\n                                                                                                            ExpressionTransform\n                                                                                                              (Expression)\n                                                                "
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 30.219,
+          "p50": 33.091,
+          "p90": 40.64,
+          "p95": 65.465,
+          "p99": 85.325,
+          "max": 90.29,
+          "mean": 38.381,
+          "stdev": 17.368,
+          "first_ms": 37.417
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: category_id, product_id, sum(qty * unit_price), ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY sum(qty * unit_price) DESC, product_id ASC)\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: category_id ASC, ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY sum(qty * unit_price) DESC, product_id ASC) ASC\n\u2514\u2500\u2500Filter ((WHERE + (Change column names to column identifiers + (Project names + Projection))))\n   \u2502  Filter column: ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY sum(qty * unit_price) DESC, product_id ASC) <= 3\n   \u2514\u2500\u2500Window (Window step for window 'PARTITION BY category_id ORDER BY sum(multiply(qty, unit_price)) DESC, product_id ASC')\n      \u2502  Window: (PARTITION BY category_id ORDER BY sum(qty * unit_price) DESC, product_id ASC)\n      \u2502  Functions: ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY sum(qty * unit_price) DESC, product_id ASC)\n      \u2514\u2500\u2500Sorting (Sorting for window 'PARTITION BY category_id ORDER BY sum(multiply(qty, unit_price)) DESC, product_id ASC')\n         \u2502  Sort description: category_id ASC, sum(qty * unit_price) DESC, product_id ASC\n         \u2514\u2500\u2500Aggregating\n            \u2502  Keys: category_id, product_id\n            \u2502  Aggregates: sum(qty * unit_price)\n            \u2502  Skip merging: 0\n            \u2514\u2500\u2500Join (JOIN FillRightFirst)\n               \u2502  oi[487606] \u22c8 p[5000]\n               \u2502  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n               \u2502  Result rows: 498778\n               \u2502  Join conditions: product_id = id\n               \u2502  Output:\n               \u2502    Left:  product_id, qty, unit_price\n               \u2502    Right: category_id\n               \u251c\u2500\u2500ReadFromMergeTree (lab.order_items)\n               \u2502     Read type: Default\n               \u2502     Parts: 1 | Granules: 60\n               \u2502     Output: product_id, qty, unit_price\n               \u2502     Runtime filters: RF1(product_id, id from lab.products)\n               \u2502     Indexes:\n               \u2502       PrimaryKey\n               \u2502         Condition: true\n               \u2502         Parts: 1/1\n               \u2502         Granules: 60/60\n               \u2502       Ranges: 1\n               \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on id)\n                  \u2502  Filter id: RF1\n                  \u2502  Source table: lab.products\n                  \u2514\u2500\u2500ReadFromMergeTree (lab.products)\n                        Read type: Default\n                        Parts: 1 | Granules: 1\n                        Output: category_id, id\n                        Indexes:\n                          PrimaryKey\n                            Condition: true\n                            Parts: 1/1\n                            Granules: 1/1\n                          Ranges: 1",
+        "plan_analyze": "query_log: duration_ms=15 read_rows=492606 read_bytes=7841696 memory=16441973 result_rows=600\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 9 \u2192 1\n    MergeSortingTransform \u00d7 9\n      LimitsCheckingTransform \u00d7 9\n        PartialSortingTransform \u00d7 9\n          (Expression)\n          ExpressionTransform \u00d7 9\n            (Filter)\n            FilterTransform \u00d7 9\n              (Window)\n              Resize 9 \u2192 9\n                WindowTransform \u00d7 9\n                  (Sorting)\n                  MergeSortingTransform \u00d7 9\n                    LimitsCheckingTransform \u00d7 9\n                      PartialSortingTransform \u00d7 9\n                        Resize \u00d7 9 9 \u2192 1\n                          ScatterByPartitionTransform \u00d7 9 1 \u2192 9\n                            (Expression)\n                            ExpressionTransform \u00d7 9\n                              (Aggregating)\n                              Resize 9 \u2192 9\n                                AggregatingTransform \u00d7 9\n                                  (Expression)\n                                  ExpressionTransform \u00d7 9\n                                    (Join)\n                                    Resize 1 \u2192 9\n                                      FillingRightJoinSide\n                                        Resize 18 \u2192 9\n                                          DelayedPorts 18 \u2192 18\n                                            JoiningTransform 2 \u2192 1\n                                              DelayedJoinedBlocksWorkerTransform\n                                                SimpleSquashingTransform\n                                                  JoiningTransform 2 \u2192 1\n                                                    DelayedJoinedBlocksWorkerTransform\n                                                      SimpleSquashingTransform\n                                                        JoiningTransform 2 \u2192 1\n                                                          DelayedJoinedBlocksWorkerTransform\n                                                            SimpleSquashingTransform\n                                                              JoiningTransform 2 \u2192 1\n                                                                DelayedJoinedBlocksWorkerTransform\n                                                                  SimpleSquashingTransform\n                                                                    JoiningTransform 2 \u2192 1\n                                                                      DelayedJoinedBlocksWorkerTransform\n                                                                        SimpleSquashingTransform\n                                                                          JoiningTransform 2 \u2192 1\n                                                                            DelayedJoinedBlocksWorkerTransform\n                                                                              SimpleSquashingTransform\n                                                                                JoiningTransform 2 \u2192 1\n                                                                                  DelayedJoinedBlocksWorkerTransform\n                                                                                    SimpleSquashingTransform\n                                                                                      JoiningTransform 2 \u2192 1\n                                                                                        DelayedJoinedBlocksWorkerTransform\n                                                                                          SimpleSquashingTransform\n                                                                                            JoiningTransform 2 \u2192 1\n                                                                                              DelayedJoinedBlocksWorkerTransform\n                                                                                                SimpleSquashingTransform\n                                                                                                  DelayedJoinedBlocksTransform 0 \u2192 9\n                                                                                                    (Expression)\n                                                                                                    ExpressionTransform \u00d7 9\n                                                                                                      (Expression)\n                                                                                                      ExpressionTransform \u00d7 9\n                                                                                                        (ReadFromMergeTree)\n                                                                                                        MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 9 0 \u2192 1\n                                                                                                    (Expression)\n                                                                                                    ExpressionTransform\n                                                                                                      (BuildRuntimeFilter)\n                                                                                                      BuildRuntimeFilterTransform\n                                                                                                        (Expression)\n                                                                                                        ExpressionTransform\n                                                                                                          (ReadFromMergeTree)\n                                                                                                          MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT toDate(ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= toDateTime64('2025-01-01 00:00:00', 6) AND ordered_at < toDateTime64('2025-04-01 00:00:00', 6) GROUP BY toDate(ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.024,
+          "p50": 18.055,
+          "p90": 25.487,
+          "p95": 49.519,
+          "p99": 68.745,
+          "max": 73.551,
+          "mean": 21.783,
+          "stdev": 17.534,
+          "first_ms": 25.745
+        },
+        "rows": 90,
+        "checksum": "590ab4e80a4b9841b8ae196f",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: toDate(ordered_at), sum(total_amount), sum(sum(total_amount)) OVER (ORDER BY toDate(ordered_at) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), LAG(sum(total_amount), 1) OVER (ORDER BY toDate(ordered_at) ASC)\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: toDate(ordered_at) ASC\n\u2514\u2500\u2500Window (Window step for window 'ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW')\n   \u2502  Window: (ORDER BY toDate(ordered_at) ASC)\n   \u2502  Functions: sum(sum(total_amount)) OVER (ORDER BY toDate(ordered_at) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)\n   \u2514\u2500\u2500Window (Window step for window 'ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')\n      \u2502  Window: (ORDER BY toDate(ordered_at) ASC)\n      \u2502  Functions: LAG(sum(total_amount), 1) OVER (ORDER BY toDate(ordered_at) ASC)\n      \u2514\u2500\u2500Sorting (Sorting for window 'ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')\n         \u2502  Sort description: toDate(ordered_at) ASC\n         \u2514\u2500\u2500Aggregating\n            \u2502  Keys: toDate(ordered_at)\n            \u2502  Aggregates: sum(total_amount)\n            \u2502  Skip merging: 0\n            \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n                  Read type: Default\n                  Parts: 2 | Granules: 24\n                  Output: ordered_at, total_amount\n                  Prewhere filter\n                  Prewhere filter column:  ordered_at < '2025-04-01 00:00:00.000000' AND ordered_at >= '2025-01-01 00:00:00.000000'\n                  Indexes:\n                    PrimaryKey\n                      Condition: true\n                      Parts: 2/2\n                      Granules: 24/24\n                    Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=16 read_rows=200000 read_bytes=3200000 memory=6572268 result_rows=90\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    MergeSortingTransform \u00d7 2\n      LimitsCheckingTransform \u00d7 2\n        PartialSortingTransform \u00d7 2\n          (Expression)\n          ExpressionTransform \u00d7 2\n            (Window)\n            Resize 1 \u2192 2\n              WindowTransform\n                (Window)\n                WindowTransform\n                  (Sorting)\n                  MergingSortedTransform 2 \u2192 1\n                    MergeSortingTransform \u00d7 2\n                      LimitsCheckingTransform \u00d7 2\n                        PartialSortingTransform \u00d7 2\n                          (Expression)\n                          ExpressionTransform \u00d7 2\n                            (Aggregating)\n                            Resize 2 \u2192 2\n                              AggregatingTransform \u00d7 2\n                                (Expression)\n                                ExpressionTransform \u00d7 2\n                                  (Expression)\n                                  ExpressionTransform \u00d7 2\n                                    (ReadFromMergeTree)\n                                    MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree AS (SELECT id, parent_id, name, 0 AS depth, name AS path FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, concat(t.path, ' > ', c.name) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 27.346,
+          "p50": 30.202,
+          "p90": 33.04,
+          "p95": 36.606,
+          "p99": 39.459,
+          "max": 40.172,
+          "mean": 31.076,
+          "stdev": 3.304,
+          "first_ms": 22.879
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, depth, path\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: path ASC\n\u2514\u2500\u2500ReadFromRecursiveCTEStep ((WITH RECURSIVE tree AS ((SELECT id AS id, parent_id AS parent_id, name AS name, 0 AS depth, name AS path FROM lab.categories AS __table3 WHERE parent_id IS NULL) UNION ALL (SELECT id AS id, parent_id AS parent_id, name AS name, depth + 1 AS `plus(t.depth, 1)`, concat(path, ' > ', name) AS `concat(path, ' > ', name)` FROM lab.categories AS __table5 ALL INNER JOIN tree AS __table6 ON parent)",
+        "plan_analyze": "query_log: duration_ms=26 read_rows=1400 read_bytes=50176 memory=4944433 result_rows=200\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 28 \u2192 1\n    MergeSortingTransform \u00d7 28\n      LimitsCheckingTransform \u00d7 28\n        PartialSortingTransform \u00d7 28\n          (Expression)\n          ExpressionTransform \u00d7 28\n            (ReadFromRecursiveCTEStep)"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, toStartOfMonth(first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, toStartOfMonth(o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, toStartOfMonth(o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 60.104,
+          "p50": 108.163,
+          "p90": 118.39,
+          "p95": 137.223,
+          "p99": 152.289,
+          "max": 156.056,
+          "mean": 106.487,
+          "stdev": 22.483,
+          "first_ms": 113.927
+        },
+        "rows": 23,
+        "checksum": "7a2534790f72c0ea5b8e5d9c",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: toStartOfMonth(min(ordered_at)), uniqExact(customer_id), uniqExact(customer_id)\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: toStartOfMonth(min(ordered_at)) ASC\n\u2514\u2500\u2500Aggregating\n   \u2502  Keys: toStartOfMonth(min(ordered_at))\n   \u2502  Aggregates: uniqExact(customer_id), uniqExact(customer_id)\n   \u2502  Skip merging: 0\n   \u2514\u2500\u2500Join (JOIN FillRightFirst)\n      \u2502  a[200000] \u27d6 c[19910]\n      \u2502  Type: right | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n      \u2502  Result rows: 200000\n      \u2502  Join conditions: customer_id = customer_id\n      \u2502  Residual filter: greater(__table4.m, __table1.cohort)\n      \u2502  Output:\n      \u2502    Left:  customer_id\n      \u2502    Right: customer_id, cohort\n      \u251c\u2500\u2500Aggregating\n      \u2502  \u2502  Keys: customer_id, toStartOfMonth(ordered_at)\n      \u2502  \u2502  Skip merging: 0\n      \u2502  \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n      \u2502        Read type: Default\n      \u2502        Parts: 2 | Granules: 24\n      \u2502        Output: customer_id, ordered_at\n      \u2502        Runtime filters: RF1(customer_id, customer_id from lab.orders)\n      \u2502        Indexes:\n      \u2502          PrimaryKey\n      \u2502            Condition: true\n      \u2502            Parts: 2/2\n      \u2502            Granules: 24/24\n      \u2502          Ranges: 2\n      \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on customer_id)\n         \u2502  Filter id: RF1\n         \u2502  Source table: lab.orders\n         \u2514\u2500\u2500Aggregating\n            \u2502  Keys: customer_id\n            \u2502  Aggregates: min(ordered_at)\n            \u2502  Skip merging: 0\n            \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n                  Read type: Default\n                  Parts: 2 | Granules: 24\n                  Output: customer_id, ordered_at\n                  Indexes:\n                    PrimaryKey\n                      Condition: true\n                      Parts: 2/2\n                      Granules: 24/24\n                    Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=113 read_rows=400000 read_bytes=4800000 memory=26588012 result_rows=23\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 28 \u2192 1\n    MergeSortingTransform \u00d7 28\n      LimitsCheckingTransform \u00d7 28\n        PartialSortingTransform \u00d7 28\n          (Expression)\n          ExpressionTransform \u00d7 28\n            (Aggregating)\n            Resize 2 \u2192 28\n              AggregatingTransform \u00d7 2\n                (Expression)\n                ExpressionTransform \u00d7 2\n                  (Join)\n                  ColumnPermuteTransform \u00d7 2\n                    Resize 1 \u2192 2\n                      FillingRightJoinSide\n                        Resize \u00d7 2 4 \u2192 2\n                          DelayedPorts 4 \u2192 4\n                            JoiningTransform 2 \u2192 1\n                              DelayedJoinedBlocksWorkerTransform\n                                SimpleSquashingTransform\n                                  JoiningTransform 2 \u2192 1\n                                    DelayedJoinedBlocksWorkerTransform\n                                      SimpleSquashingTransform\n                                        DelayedJoinedBlocksTransform 0 \u2192 2\n                                          (Expression)\n                                          ExpressionTransform \u00d7 2\n                                            (Expression)\n                                            ExpressionTransform \u00d7 2\n                                              (Aggregating)\n                                              Resize 2 \u2192 2\n                                                AggregatingTransform \u00d7 2\n                                                  (Expression)\n                                                  ExpressionTransform \u00d7 2\n                                                    (ReadFromMergeTree)\n                                                    MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n                                          (Expression)\n                                          ExpressionTransform \u00d7 2\n                                            (BuildRuntimeFilter)\n                                            BuildRuntimeFilterTransform \u00d7 2\n                                              (Expression)\n                                              ExpressionTransform \u00d7 2\n                                                (Aggregating)\n                                                Resize 2 \u2192 2\n                                                  AggregatingTransform \u00d7 2\n                                                    (Expression)\n                                                    ExpressionTransform \u00d7 2\n                                                      (ReadFromMergeTree)\n                                                      MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= toDateTime64('2025-11-01 00:00:00', 6)) AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 27.769,
+          "p50": 44.188,
+          "p90": 48.823,
+          "p95": 48.969,
+          "p99": 49.085,
+          "max": 49.114,
+          "mean": 42.071,
+          "stdev": 7.213,
+          "first_ms": 61.919
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, email\n\nLimit (preliminary LIMIT)\n\u2502  Limit 200\n\u2502  Offset 0\n\u2514\u2500\u2500Sorting (Sorting for ORDER BY)\n   \u2502  Sort description: id ASC\n   \u2502  Limit 200\n   \u2514\u2500\u2500Join (JOIN FillRightFirst)\n      \u2502  events[142857] \u22ca\u0338 R1\n      \u2502  Type: right | Strictness: anti | Algorithm: SpillingHashJoin(HashJoin)\n      \u2502  Join conditions: customer_id = id\n      \u2502  Output:\n      \u2502    Left:  Empty\n      \u2502    Right: id, email\n      \u251c\u2500\u2500ReadFromMergeTree (lab.events)\n      \u2502     Read type: Default\n      \u2502     Parts: 5 | Granules: 122\n      \u2502     Output: customer_id\n      \u2502     Prewhere filter\n      \u2502     Prewhere filter column:  customer_id = customer_id AND event_type = 'churn'\n      \u2502     Runtime filters: RF2(customer_id, id)\n      \u2502     Indexes:\n      \u2502       PrimaryKey\n      \u2502         Condition: true\n      \u2502         Parts: 5/5\n      \u2502         Granules: 122/122\n      \u2502       Ranges: 5\n      \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on id)\n         \u2502  Filter id: RF2\n         \u2514\u2500\u2500Join (JOIN FillRightFirst)\n            \u2502  customers[20000] \u22c9 orders[cache~16560]\n            \u2502  Type: left | Strictness: semi | Algorithm: SpillingHashJoin(HashJoin)\n            \u2502  Result rows: 20000\n            \u2502  Join conditions: id = customer_id\n            \u2502  Output:\n            \u2502    Left:  id, email\n            \u2502    Right: Empty\n            \u251c\u2500\u2500ReadFromMergeTree (lab.customers)\n            \u2502     Read type: Default\n            \u2502     Parts: 1 | Granules: 2\n            \u2502     Output: id, email\n            \u2502     Runtime filters: RF1(id, customer_id from lab.orders)\n            \u2502     Indexes:\n            \u2502       PrimaryKey\n            \u2502         Condition: true\n            \u2502         Parts: 1/1\n            \u2502         Granules: 2/2\n            \u2502       Ranges: 1\n            \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on exists(__table2).id)\n               \u2502  Filter id: RF1\n               \u2502  Source table: lab.orders\n               \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n                     Read type: Default\n                     Parts: 2 | Granules: 24\n                     Output: customer_id\n                     Prewhere filter\n                     Prewhere filter column:  customer_id = customer_id AND ordered_at >= '2025-11-01 00:00:00.000000'\n                     Indexes:\n                       PrimaryKey\n                         Condition: true\n                         Parts: 2/2\n                         Granules: 24/24\n                       Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=23 read_rows=1220000 read_bytes=18568936 memory=11396596 result_rows=200\n(Expression)\nExpressionTransform\n  (Limit)\n  Limit\n    (Sorting)\n    MergingSortedTransform 18 \u2192 1\n      MergeSortingTransform \u00d7 18\n        LimitsCheckingTransform \u00d7 18\n          PartialSortingTransform \u00d7 18\n            (Expression)\n            ExpressionTransform \u00d7 18\n              (Join)\n              ColumnPermuteTransform \u00d7 18\n                Resize 1 \u2192 18\n                  FillingRightJoinSide\n                    Resize 36 \u2192 18\n                      DelayedPorts 36 \u2192 36\n                        JoiningTransform 2 \u2192 1\n                          DelayedJoinedBlocksWorkerTransform\n                            SimpleSquashingTransform\n                              JoiningTransform 2 \u2192 1\n                                DelayedJoinedBlocksWorkerTransform\n                                  SimpleSquashingTransform\n                                    JoiningTransform 2 \u2192 1\n                                      DelayedJoinedBlocksWorkerTransform\n                                        SimpleSquashingTransform\n                                          JoiningTransform 2 \u2192 1\n                                            DelayedJoinedBlocksWorkerTransform\n                                              SimpleSquashingTransform\n                                                JoiningTransform 2 \u2192 1\n                                                  DelayedJoinedBlocksWorkerTransform\n                                                    SimpleSquashingTransform\n                                                      JoiningTransform 2 \u2192 1\n                                                        DelayedJoinedBlocksWorkerTransform\n                                                          SimpleSquashingTransform\n                                                            JoiningTransform 2 \u2192 1\n                                                              DelayedJoinedBlocksWorkerTransform\n                                                                SimpleSquashingTransform\n                                                                  JoiningTransform 2 \u2192 1\n                                                                    DelayedJoinedBlocksWorkerTransform\n                                                                      SimpleSquashingTransform\n                                                                        JoiningTransform 2 \u2192 1\n                                                                          DelayedJoinedBlocksWorkerTransform\n                                                                            SimpleSquashingTransform\n                                                                              JoiningTransform 2 \u2192 1\n                                                                                DelayedJoinedBlocksWorkerTransform\n                                                                                  SimpleSquashingTransform\n                                                                                    JoiningTransform 2 \u2192 1\n                                                                                      DelayedJoinedBlocksWorkerTransform\n                                                                                        SimpleSquashingTransform\n                                                                                          JoiningTransform 2 \u2192 1\n                                                                                            DelayedJoinedBlocksWorkerTransform\n                                                                                              SimpleSquashingTransform\n                                                                                                JoiningTransform 2 \u2192 1\n                                                                                                  DelayedJoinedBlocksWorkerTransform\n                                                                                                    SimpleSquashingTransform\n                                                                                                      JoiningTransform 2 \u2192 1\n                                                                                                        DelayedJoinedBlocksWorkerTransform\n                                                                                                          SimpleSquashingTransform\n                                                                                                            JoiningTransform 2 \u2192 1\n                                                                                                              DelayedJoinedBlocksWorkerTransform\n                                                                                                                SimpleSquashingTransform\n                                                                                                                  JoiningTransform 2 \u2192 1\n                                                                                                                    DelayedJoinedBlocksWorkerTransform\n                                                                                                                      SimpleSquashingTransform\n                                                                                                                        JoiningTransform 2 \u2192 1\n                                                                                                                          DelayedJoinedBlocksWorkerTransform\n                                                                                                                            SimpleSquashingTransform\n                                                                                                                              JoiningTransform 2 \u2192 1\n                                                                                          "
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = true ORDER BY p.id LIMIT 500",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "DatabaseError: Received ClickHouse exception, code: 48, server response: Code: 48. DB::Exception: Current query is not supported yet, because can't find correlated column '__table3.category_id' in current header: __table3.id, __table3.price. (NOT_IMPLEMENTED) (for url http://127.0.0.1:18123)",
+        "error_code": null
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 15.622,
+          "p50": 19.734,
+          "p90": 20.682,
+          "p95": 21.287,
+          "p99": 21.771,
+          "max": 21.892,
+          "mean": 19.213,
+          "stdev": 1.877,
+          "first_ms": 16.677
+        },
+        "rows": 300,
+        "checksum": "835e3d96d2389f6062682155",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: customer_id, id, ordered_at, total_amount\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: customer_id ASC, ordered_at DESC\n\u2514\u2500\u2500Filter ((WHERE + (Change column names to column identifiers + (Project names + Projection))))\n   \u2502  Filter column: ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) <= 3\n   \u2514\u2500\u2500Window (Window step for window 'PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC')\n      \u2502  Window: (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC)\n      \u2502  Functions: ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC)\n      \u2514\u2500\u2500Sorting (Sorting for window 'PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC')\n         \u2502  Sort description: customer_id ASC, ordered_at DESC, id DESC\n         \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n               Read type: Default\n               Parts: 2 | Granules: 24\n               Output: customer_id, id, ordered_at, total_amount\n               Prewhere filter\n               Prewhere filter column:  customer_id <= 100\n               Indexes:\n                 PrimaryKey\n                   Condition: true\n                   Parts: 2/2\n                   Granules: 24/24\n                 Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=16 read_rows=200000 read_bytes=4800000 memory=5060582 result_rows=300\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    MergeSortingTransform \u00d7 2\n      LimitsCheckingTransform \u00d7 2\n        PartialSortingTransform \u00d7 2\n          (Expression)\n          ExpressionTransform \u00d7 2\n            (Filter)\n            FilterTransform \u00d7 2\n              (Window)\n              Resize 2 \u2192 2\n                WindowTransform \u00d7 2\n                  (Sorting)\n                  MergeSortingTransform \u00d7 2\n                    LimitsCheckingTransform \u00d7 2\n                      PartialSortingTransform \u00d7 2\n                        Resize \u00d7 2 2 \u2192 1\n                          ScatterByPartitionTransform \u00d7 2 1 \u2192 2\n                            (Expression)\n                            ExpressionTransform \u00d7 2\n                              (Expression)\n                              ExpressionTransform \u00d7 2\n                                (ReadFromMergeTree)\n                                MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= toDateTime64('2025-06-01 00:00:00', 6) AND ordered_at < toDateTime64('2025-09-01 00:00:00', 6) GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 24.554,
+          "p50": 28.399,
+          "p90": 30.609,
+          "p95": 34.071,
+          "p99": 36.841,
+          "max": 37.534,
+          "mean": 28.937,
+          "stdev": 3.19,
+          "first_ms": 83.102
+        },
+        "rows": 79,
+        "checksum": "7b7bbe8345a65e770adf8bee",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: shipping_country, status, count(), sum(total_amount)\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: shipping_country ASC, status ASC\n\u2514\u2500\u2500Aggregating\n   \u2502  Keys: shipping_country, status\n   \u2502  Aggregates: count(), sum(total_amount)\n   \u2502  Skip merging: 0\n   \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n         Read type: Default\n         Parts: 2 | Granules: 24\n         Output: shipping_country, status, total_amount\n         Prewhere filter\n         Prewhere filter column:  ordered_at < '2025-09-01 00:00:00.000000' AND ordered_at >= '2025-06-01 00:00:00.000000'\n         Indexes:\n           PrimaryKey\n             Condition: true\n             Parts: 2/2\n             Granules: 24/24\n           Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=23 read_rows=200000 read_bytes=6518288 memory=5280708 result_rows=79\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 28 \u2192 1\n    MergeSortingTransform \u00d7 28\n      LimitsCheckingTransform \u00d7 28\n        PartialSortingTransform \u00d7 28\n          (Expression)\n          ExpressionTransform \u00d7 28\n            (Aggregating)\n            Resize 3 \u2192 28\n              ExpressionTransform \u00d7 3\n                Resize \u00d7 3 2 \u2192 1\n                  AggregatingTransform \u00d7 6\n                    Copy \u00d7 2 1 \u2192 3\n                      (Expression)\n                      ExpressionTransform \u00d7 2\n                        (Expression)\n                        ExpressionTransform \u00d7 2\n                          (ReadFromMergeTree)\n                          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE JSONExtractString(attrs, 'color') = 'red' AND JSONExtractFloat(attrs, 'weight') > 10 ORDER BY id LIMIT 100",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 6.656,
+          "p50": 7.073,
+          "p90": 7.986,
+          "p95": 8.187,
+          "p99": 8.347,
+          "max": 8.387,
+          "mean": 7.171,
+          "stdev": 0.545,
+          "first_ms": 7.153
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, sku, price\n\nJoinLazyColumnsStep\n\u251c\u2500\u2500Limit (preliminary LIMIT)\n\u2502  \u2502  Limit 100\n\u2502  \u2502  Offset 0\n\u2502  \u2514\u2500\u2500Sorting (Sorting for ORDER BY)\n\u2502     \u2502  Prefix sort description: id ASC\n\u2502     \u2502  Result sort description: id ASC\n\u2502     \u2502  Limit 100\n\u2502     \u2514\u2500\u2500ReadFromMergeTree (lab.products)\n\u2502           Read type: InOrder\n\u2502           Parts: 1 | Granules: 1\n\u2502           Output: _part_offset, _part_starting_offset, id\n\u2502           Prewhere filter\n\u2502           Prewhere filter column:  JSONExtractFloat(attrs, 'weight') > 10 AND JSONExtractString(attrs, 'color') = 'red'\n\u2502           Virtual row conversions\n\u2502           Indexes:\n\u2502             PrimaryKey\n\u2502               Condition: true\n\u2502               Parts: 1/1\n\u2502               Granules: 1/1\n\u2502             Ranges: 1\n\u2514\u2500\u2500LazilyReadFromMergeTree\n      Lazily read columns: sku, price",
+        "plan_analyze": "query_log: duration_ms=5 read_rows=10000 read_bytes=648092 memory=5221740 result_rows=100\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (JoinLazyColumnsStep)\n    LazyMaterializingTransform 2 \u2192 1\n      (Limit)\n      Limit\n        (Sorting)\n        RemoveVirtualRowTransform\n          (Expression)\n          ExpressionTransform\n            (Expression)\n            ExpressionTransform\n              (ReadFromMergeTree)\n              VirtualRowTransform\n                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1\n      (LazilyReadFromMergeTree)\n      LazyReadFromMergeTreeSource 0 \u2192 1"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE hasToken(description, 'bluetooth') AND hasToken(description, 'waterproof') ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 9.783,
+          "p50": 11.379,
+          "p90": 13.112,
+          "p95": 13.16,
+          "p99": 13.199,
+          "max": 13.208,
+          "mean": 11.271,
+          "stdev": 1.242,
+          "first_ms": 16.011
+        },
+        "rows": 50,
+        "checksum": "13c3c7dd358069b0c82817de",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, name\n\nJoinLazyColumnsStep\n\u251c\u2500\u2500Limit (preliminary LIMIT)\n\u2502  \u2502  Limit 50\n\u2502  \u2502  Offset 0\n\u2502  \u2514\u2500\u2500Sorting (Sorting for ORDER BY)\n\u2502     \u2502  Prefix sort description: id ASC\n\u2502     \u2502  Result sort description: id ASC\n\u2502     \u2502  Limit 50\n\u2502     \u2514\u2500\u2500ReadFromMergeTree (lab.products)\n\u2502           Read type: InOrder\n\u2502           Parts: 1 | Granules: 1\n\u2502           Output: _part_offset, _part_starting_offset, id\n\u2502           Prewhere filter\n\u2502           Prewhere filter column:  hasToken(description, 'waterproof') AND hasToken(description, 'bluetooth')\n\u2502           Virtual row conversions\n\u2502           Indexes:\n\u2502             PrimaryKey\n\u2502               Condition: true\n\u2502               Parts: 1/1\n\u2502               Granules: 1/1\n\u2502             Ranges: 1\n\u2514\u2500\u2500LazilyReadFromMergeTree\n      Lazily read columns: name",
+        "plan_analyze": "query_log: duration_ms=7 read_rows=10000 read_bytes=1676459 memory=9823822 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (JoinLazyColumnsStep)\n    LazyMaterializingTransform 2 \u2192 1\n      (Limit)\n      Limit\n        (Sorting)\n        RemoveVirtualRowTransform\n          (Expression)\n          ExpressionTransform\n            (Expression)\n            ExpressionTransform\n              (ReadFromMergeTree)\n              VirtualRowTransform\n                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1\n      (LazilyReadFromMergeTree)\n      LazyReadFromMergeTreeSource 0 \u2192 1"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 22.913,
+          "p50": 27.505,
+          "p90": 32.81,
+          "p95": 37.062,
+          "p99": 40.463,
+          "max": 41.313,
+          "mean": 28.533,
+          "stdev": 5.008,
+          "first_ms": 63.486
+        },
+        "rows": 50,
+        "checksum": "1d31a0b23692bfada80c179d",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, customer_id, ordered_at\n\nJoinLazyColumnsStep\n\u251c\u2500\u2500Limit (preliminary LIMIT)\n\u2502  \u2502  Limit 50\n\u2502  \u2502  Offset 100000\n\u2502  \u2514\u2500\u2500Sorting (Sorting for ORDER BY)\n\u2502     \u2502  Sort description: ordered_at ASC, id ASC\n\u2502     \u2502  Limit 100050\n\u2502     \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n\u2502           Read type: Default\n\u2502           Parts: 2 | Granules: 24\n\u2502           Output: _part_offset, _part_starting_offset, id, ordered_at\n\u2502           Indexes:\n\u2502             PrimaryKey\n\u2502               Condition: true\n\u2502               Parts: 2/2\n\u2502               Granules: 24/24\n\u2502             Ranges: 2\n\u2514\u2500\u2500LazilyReadFromMergeTree\n      Lazily read columns: customer_id",
+        "plan_analyze": "query_log: duration_ms=27 read_rows=391808 read_bytes=4767232 memory=12785904 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (JoinLazyColumnsStep)\n    LazyMaterializingTransform 2 \u2192 1\n      (Limit)\n      Limit\n        (Sorting)\n        MergingSortedTransform 2 \u2192 1\n          MergeSortingTransform \u00d7 2\n            LimitsCheckingTransform \u00d7 2\n              PartialSortingTransform \u00d7 2\n                (Expression)\n                ExpressionTransform \u00d7 2\n                  (ReadFromMergeTree)\n                  MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n      (LazilyReadFromMergeTree)\n      LazyReadFromMergeTreeSource 0 \u2192 1"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > toDateTime64('2025-01-01 00:00:00', 6) OR (ordered_at = toDateTime64('2025-01-01 00:00:00', 6) AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 16.474,
+          "p50": 18.597,
+          "p90": 21.556,
+          "p95": 30.422,
+          "p99": 37.514,
+          "max": 39.287,
+          "mean": 20.154,
+          "stdev": 6.474,
+          "first_ms": 21.15
+        },
+        "rows": 50,
+        "checksum": "c2d92583f8210510eee2ac62",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, customer_id, ordered_at\n\nJoinLazyColumnsStep\n\u251c\u2500\u2500Limit (preliminary LIMIT)\n\u2502  \u2502  Limit 50\n\u2502  \u2502  Offset 0\n\u2502  \u2514\u2500\u2500Sorting (Sorting for ORDER BY)\n\u2502     \u2502  Sort description: ordered_at ASC, id ASC\n\u2502     \u2502  Limit 50\n\u2502     \u2514\u2500\u2500Filter\n\u2502        \u2502  Filter column: ordered_at > '2025-01-01 00:00:00.000000' OR ordered_at = '2025-01-01 00:00:00.000000' AND id > 0\n\u2502        \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n\u2502              Read type: Default\n\u2502              Parts: 2 | Granules: 24\n\u2502              Output: ordered_at, _part_offset, _part_starting_offset, id\n\u2502              Prewhere filter\n\u2502              Prewhere filter column:  __topKFilter(ordered_at)\n\u2502              Indexes:\n\u2502                PrimaryKey\n\u2502                  Condition: true\n\u2502                  Parts: 2/2\n\u2502                  Granules: 24/24\n\u2502                Ranges: 2\n\u2514\u2500\u2500LazilyReadFromMergeTree\n      Lazily read columns: customer_id",
+        "plan_analyze": "query_log: duration_ms=16 read_rows=375424 read_bytes=4701696 memory=4546298 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (Expression)\n    ExpressionTransform\n      (JoinLazyColumnsStep)\n      LazyMaterializingTransform 2 \u2192 1\n        (Limit)\n        Limit\n          (Sorting)\n          MergingSortedTransform 2 \u2192 1\n            MergeSortingTransform \u00d7 2\n              LimitsCheckingTransform \u00d7 2\n                PartialSortingTransform \u00d7 2\n                  (Expression)\n                  ExpressionTransform \u00d7 2\n                    (Filter)\n                    FilterTransform \u00d7 2\n                      (Expression)\n                      ExpressionTransform \u00d7 2\n                        (ReadFromMergeTree)\n                        MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n        (LazilyReadFromMergeTree)\n        LazyReadFromMergeTreeSource 0 \u2192 1"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= toDateTime64('2025-01-01 00:00:00', 6)",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 17.201,
+          "p50": 19.657,
+          "p90": 21.207,
+          "p95": 22.345,
+          "p99": 23.256,
+          "max": 23.484,
+          "mean": 19.72,
+          "stdev": 1.706,
+          "first_ms": 22.287
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: uniqExact(customer_id)\n\nAggregating\n\u2502  Keys:\n\u2502  Aggregates: uniqExact(customer_id)\n\u2502  Skip merging: 0\n\u2514\u2500\u2500ReadFromMergeTree (lab.events)\n      Read type: Default\n      Parts: 5 | Granules: 122\n      Output: customer_id\n      Prewhere filter\n      Prewhere filter column:  occurred_at >= '2025-01-01 00:00:00.000000'\n      Indexes:\n        PrimaryKey\n          Condition: true\n          Parts: 5/5\n          Granules: 122/122\n        Ranges: 5",
+        "plan_analyze": "query_log: duration_ms=12 read_rows=1000000 read_bytes=12000000 memory=14470660 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 18 \u2192 1\n    AggregatingTransform \u00d7 18\n      (Expression)\n      ExpressionTransform \u00d7 18\n        (Expression)\n        ExpressionTransform \u00d7 18\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 18 0 \u2192 1"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 6.293,
+          "p50": 6.584,
+          "p90": 7.371,
+          "p95": 7.391,
+          "p99": 7.408,
+          "max": 7.412,
+          "mean": 6.768,
+          "stdev": 0.411,
+          "first_ms": 6.487
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: id ASC\n\u2514\u2500\u2500Filter (WHERE)\n   \u2502  Filter column: 0\n   \u2514\u2500\u2500Join (JOIN FillRightFirst)\n      \u2502  p[0] \u22c8 oi[0]\n      \u2502  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n      \u2502  Result rows: 1\n      \u2502  Join conditions: id = product_id\n      \u2502  Output:\n      \u2502    Left:  id\n      \u2502    Right: Empty\n      \u251c\u2500\u2500Filter\n      \u2502  \u2502  Filter column: 0\n      \u2502  \u2514\u2500\u2500ReadFromMergeTree (lab.products)\n      \u2502        Read type: Default\n      \u2502        Output: id\n      \u2514\u2500\u2500Filter\n         \u2502  Filter column: 0\n         \u2514\u2500\u2500ReadFromMergeTree (lab.order_items)\n               Read type: Default\n               Output: product_id",
+        "plan_analyze": "query_log: duration_ms=3 read_rows=0 read_bytes=0 memory=4383980 result_rows=0\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergeSortingTransform\n    LimitsCheckingTransform\n      PartialSortingTransform\n        (Expression)\n        ExpressionTransform\n          (Filter)\n          FilterTransform\n            (Expression)\n            ExpressionTransform\n              (Join)\n              FillingRightJoinSide\n                Resize 2 \u2192 1\n                  DelayedPorts 2 \u2192 2\n                    JoiningTransform 2 \u2192 1\n                      DelayedJoinedBlocksWorkerTransform\n                        SimpleSquashingTransform\n                          DelayedJoinedBlocksTransform 0 \u2192 1\n                            (Expression)\n                            ExpressionTransform\n                              (Filter)\n                              FilterTransform\n                                (Expression)\n                                ExpressionTransform\n                                  (ReadFromMergeTree)\n                            (Expression)\n                            ExpressionTransform\n                              (Filter)\n                              FilterTransform\n                                (Expression)\n                                ExpressionTransform\n                                  (ReadFromMergeTree)"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 14.748,
+          "p50": 15.791,
+          "p90": 16.359,
+          "p95": 16.444,
+          "p99": 16.512,
+          "max": 16.53,
+          "mean": 15.762,
+          "stdev": 0.548,
+          "first_ms": 15.871
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: id ASC\n\u2514\u2500\u2500Join (JOIN FillRightFirst)\n   \u2502  order_items[160909] \u22ca\u0338 products[5000]\n   \u2502  Type: right | Strictness: anti | Algorithm: SpillingHashJoin(HashJoin)\n   \u2502  Result rows: 164595\n   \u2502  Join conditions: product_id = id\n   \u2502  Output:\n   \u2502    Left:  Empty\n   \u2502    Right: id\n   \u251c\u2500\u2500Filter\n   \u2502  \u2502  Filter column: product_id = product_id AND RF1(product_id, id from lab.products)\n   \u2502  \u2514\u2500\u2500ReadFromMergeTree (lab.order_items)\n   \u2502        Read type: Default\n   \u2502        Parts: 1 | Granules: 60\n   \u2502        Output: product_id\n   \u2502        Indexes:\n   \u2502          PrimaryKey\n   \u2502            Condition: true\n   \u2502            Parts: 1/1\n   \u2502            Granules: 60/60\n   \u2502          Ranges: 1\n   \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on id)\n      \u2502  Filter id: RF1\n      \u2502  Source table: lab.products\n      \u2514\u2500\u2500ReadFromMergeTree (lab.products)\n            Read type: Default\n            Parts: 1 | Granules: 1\n            Output: id\n            Indexes:\n              PrimaryKey\n                Condition: true\n                Parts: 1/1\n                Granules: 1/1\n              Ranges: 1",
+        "plan_analyze": "query_log: duration_ms=11 read_rows=492606 read_bytes=1970424 memory=6393454 result_rows=0\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 9 \u2192 1\n    MergeSortingTransform \u00d7 9\n      LimitsCheckingTransform \u00d7 9\n        PartialSortingTransform \u00d7 9\n          (Expression)\n          ExpressionTransform \u00d7 9\n            (Join)\n            ColumnPermuteTransform \u00d7 9\n              Resize 1 \u2192 9\n                FillingRightJoinSide\n                  Resize 18 \u2192 9\n                    DelayedPorts 18 \u2192 18\n                      JoiningTransform 2 \u2192 1\n                        DelayedJoinedBlocksWorkerTransform\n                          SimpleSquashingTransform\n                            JoiningTransform 2 \u2192 1\n                              DelayedJoinedBlocksWorkerTransform\n                                SimpleSquashingTransform\n                                  JoiningTransform 2 \u2192 1\n                                    DelayedJoinedBlocksWorkerTransform\n                                      SimpleSquashingTransform\n                                        JoiningTransform 2 \u2192 1\n                                          DelayedJoinedBlocksWorkerTransform\n                                            SimpleSquashingTransform\n                                              JoiningTransform 2 \u2192 1\n                                                DelayedJoinedBlocksWorkerTransform\n                                                  SimpleSquashingTransform\n                                                    JoiningTransform 2 \u2192 1\n                                                      DelayedJoinedBlocksWorkerTransform\n                                                        SimpleSquashingTransform\n                                                          JoiningTransform 2 \u2192 1\n                                                            DelayedJoinedBlocksWorkerTransform\n                                                              SimpleSquashingTransform\n                                                                JoiningTransform 2 \u2192 1\n                                                                  DelayedJoinedBlocksWorkerTransform\n                                                                    SimpleSquashingTransform\n                                                                      JoiningTransform 2 \u2192 1\n                                                                        DelayedJoinedBlocksWorkerTransform\n                                                                          SimpleSquashingTransform\n                                                                            DelayedJoinedBlocksTransform 0 \u2192 9\n                                                                              (Expression)\n                                                                              ExpressionTransform \u00d7 9\n                                                                                (Filter)\n                                                                                FilterTransform \u00d7 18\n                                                                                  (ReadFromMergeTree)\n                                                                                  MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 9 0 \u2192 1\n                                                                              (Expression)\n                                                                              ExpressionTransform\n                                                                                (BuildRuntimeFilter)\n                                                                                BuildRuntimeFilterTransform\n                                                                                  (Expression)\n                                                                                  ExpressionTransform\n                                                                                    (ReadFromMergeTree)\n                                                                                    MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR dateDiff('second', prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 32.8,
+          "p50": 35.415,
+          "p90": 42.689,
+          "p95": 52.758,
+          "p99": 60.814,
+          "max": 62.827,
+          "mean": 38.558,
+          "stdev": 8.39,
+          "first_ms": 36.398
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: customer_id, count()\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: customer_id ASC\n\u2514\u2500\u2500Aggregating\n   \u2502  Keys: customer_id\n   \u2502  Aggregates: count()\n   \u2502  Skip merging: 0\n   \u2514\u2500\u2500Filter ((WHERE + (Change column names to column identifiers + (Project names + (Projection + (Change column names to column identifiers + (Project names + Projection)))))))\n      \u2502  Filter column: if(0 OR dateDiff('second', LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC), occurred_at) > 1800, 1, 0) = 1\n      \u2514\u2500\u2500Window (Window step for window 'PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')\n         \u2502  Window: (PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC)\n         \u2502  Functions: LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC)\n         \u2514\u2500\u2500Sorting (Sorting for window 'PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')\n            \u2502  Sort description: customer_id ASC, occurred_at ASC, id ASC\n            \u2514\u2500\u2500ReadFromMergeTree (lab.events)\n                  Read type: Default\n                  Parts: 5 | Granules: 122\n                  Output: customer_id, occurred_at, id\n                  Prewhere filter\n                  Prewhere filter column:  customer_id <= 2000\n                  Indexes:\n                    PrimaryKey\n                      Condition: true\n                      Parts: 5/5\n                      Granules: 122/122\n                    Ranges: 5",
+        "plan_analyze": "query_log: duration_ms=34 read_rows=1000000 read_bytes=20000000 memory=9949715 result_rows=2000\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 18 \u2192 1\n    MergeSortingTransform \u00d7 18\n      LimitsCheckingTransform \u00d7 18\n        PartialSortingTransform \u00d7 18\n          (Expression)\n          ExpressionTransform \u00d7 18\n            (Aggregating)\n            Resize 18 \u2192 18\n              AggregatingTransform \u00d7 18\n                (Expression)\n                ExpressionTransform \u00d7 18\n                  (Filter)\n                  FilterTransform \u00d7 18\n                    (Window)\n                    Resize 18 \u2192 18\n                      WindowTransform \u00d7 18\n                        (Sorting)\n                        MergeSortingTransform \u00d7 18\n                          LimitsCheckingTransform \u00d7 18\n                            PartialSortingTransform \u00d7 18\n                              Resize \u00d7 18 18 \u2192 1\n                                ScatterByPartitionTransform \u00d7 18 1 \u2192 18\n                                  (Expression)\n                                  ExpressionTransform \u00d7 18\n                                    (Expression)\n                                    ExpressionTransform \u00d7 18\n                                      (ReadFromMergeTree)\n                                      MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 18 0 \u2192 1"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, quantileExact(0.5)(total_amount) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 13.17,
+          "p50": 18.945,
+          "p90": 20.365,
+          "p95": 20.653,
+          "p99": 20.884,
+          "max": 20.942,
+          "mean": 17.991,
+          "stdev": 2.551,
+          "first_ms": 25.954
+        },
+        "rows": 13,
+        "checksum": "2dd9c4b8cdd8e8fc3c65f2a1",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: shipping_country, quantileExact(0.5)(total_amount)\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: shipping_country ASC\n\u2514\u2500\u2500Aggregating\n   \u2502  Keys: shipping_country\n   \u2502  Aggregates: quantileExact(0.5)(total_amount)\n   \u2502  Skip merging: 0\n   \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n         Read type: Default\n         Parts: 2 | Granules: 24\n         Output: shipping_country, total_amount\n         Indexes:\n           PrimaryKey\n             Condition: true\n             Parts: 2/2\n             Granules: 24/24\n           Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=16 read_rows=200000 read_bytes=2600000 memory=9253078 result_rows=13\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    MergeSortingTransform \u00d7 2\n      LimitsCheckingTransform \u00d7 2\n        PartialSortingTransform \u00d7 2\n          (Expression)\n          ExpressionTransform \u00d7 2\n            (Aggregating)\n            Resize 2 \u2192 2\n              AggregatingTransform \u00d7 2\n                (Expression)\n                ExpressionTransform \u00d7 2\n                  (ReadFromMergeTree)\n                  MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, arrayStringConcat(arraySort(groupArray(p.sku)), ',') AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 9.874,
+          "p50": 14.677,
+          "p90": 16.653,
+          "p95": 17.066,
+          "p99": 17.397,
+          "max": 17.479,
+          "mean": 13.813,
+          "stdev": 2.76,
+          "first_ms": 15.477
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, arrayStringConcat(arraySort(groupArray(sku)), ',')\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: id ASC\n\u2514\u2500\u2500Aggregating\n   \u2502  Keys: id\n   \u2502  Aggregates: groupArray(sku)\n   \u2502  Skip merging: 0\n   \u2514\u2500\u2500Join (JOIN FillRightFirst)\n      \u2502  p[5000] \u22c8 (oi[1216] \u22c8 o[499])\n      \u2502  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n      \u2502  Result rows: 509\n      \u2502  Join conditions: id = product_id\n      \u2502  Output:\n      \u2502    Left:  sku\n      \u2502    Right: id\n      \u251c\u2500\u2500ReadFromMergeTree (lab.products)\n      \u2502     Read type: Default\n      \u2502     Parts: 1 | Granules: 1\n      \u2502     Output: id, sku\n      \u2502     Runtime filters: RF2(id, product_id)\n      \u2502     Indexes:\n      \u2502       PrimaryKey\n      \u2502         Condition: true\n      \u2502         Parts: 1/1\n      \u2502         Granules: 1/1\n      \u2502       Ranges: 1\n      \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on product_id)\n         \u2502  Filter id: RF2\n         \u2514\u2500\u2500Join (JOIN FillRightFirst)\n            \u2502  oi[1216] \u22c8 o[499]\n            \u2502  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n            \u2502  Result rows: 498\n            \u2502  Join conditions: order_id = id\n            \u2502  Output:\n            \u2502    Left:  product_id\n            \u2502    Right: id\n            \u251c\u2500\u2500ReadFromMergeTree (lab.order_items)\n            \u2502     Read type: Default\n            \u2502     Parts: 1 | Granules: 60\n            \u2502     Output: order_id, product_id\n            \u2502     Prewhere filter\n            \u2502     Prewhere filter column:  order_id <= 500\n            \u2502     Runtime filters: RF1(order_id, id from lab.orders)\n            \u2502     Indexes:\n            \u2502       PrimaryKey\n            \u2502         Condition: true\n            \u2502         Parts: 1/1\n            \u2502         Granules: 60/60\n            \u2502       Ranges: 1\n            \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on id)\n               \u2502  Filter id: RF1\n               \u2502  Source table: lab.orders\n               \u2514\u2500\u2500Filter ((WHERE + Change column names to column identifiers))\n                  \u2502  Filter column: id <= 500\n                  \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n                        Read type: Default\n                        Parts: 1 | Granules: 1\n                        Output: id\n                        Indexes:\n                          Statistics\n                            Keys:\n                              id\n                            Parts: 1/2\n                            Granules: 12/24\n                          PrimaryKey\n                            Keys:\n                              id\n                            Condition: (id in (-Inf, 500])\n                            Parts: 1/1\n                            Granules: 1/12\n                            Search Algorithm: binary search\n                          Ranges: 1",
+        "plan_analyze": "query_log: duration_ms=8 read_rows=500798 read_bytes=2078028 memory=7077204 result_rows=500\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergeSortingTransform\n    LimitsCheckingTransform\n      PartialSortingTransform\n        (Expression)\n        ExpressionTransform\n          (Aggregating)\n          AggregatingTransform\n            (Expression)\n            ExpressionTransform\n              (Join)\n              ColumnPermuteTransform\n                FillingRightJoinSide\n                  Resize \u00d7 2 2 \u2192 1\n                    DelayedPorts 2 \u2192 2\n                      JoiningTransform 2 \u2192 1\n                        DelayedJoinedBlocksWorkerTransform\n                          SimpleSquashingTransform\n                            DelayedJoinedBlocksTransform 0 \u2192 1\n                              (Expression)\n                              ExpressionTransform\n                                (Expression)\n                                ExpressionTransform\n                                  (ReadFromMergeTree)\n                                  MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1\n                              (Expression)\n                              ExpressionTransform \u00d7 9\n                                (BuildRuntimeFilter)\n                                BuildRuntimeFilterTransform \u00d7 9\n                                  (Expression)\n                                  ExpressionTransform \u00d7 9\n                                    (Join)\n                                    ColumnPermuteTransform \u00d7 9\n                                      Resize 1 \u2192 9\n                                        FillingRightJoinSide\n                                          Resize 18 \u2192 9\n                                            DelayedPorts 18 \u2192 18\n                                              JoiningTransform 2 \u2192 1\n                                                DelayedJoinedBlocksWorkerTransform\n                                                  SimpleSquashingTransform\n                                                    JoiningTransform 2 \u2192 1\n                                                      DelayedJoinedBlocksWorkerTransform\n                                                        SimpleSquashingTransform\n                                                          JoiningTransform 2 \u2192 1\n                                                            DelayedJoinedBlocksWorkerTransform\n                                                              SimpleSquashingTransform\n                                                                JoiningTransform 2 \u2192 1\n                                                                  DelayedJoinedBlocksWorkerTransform\n                                                                    SimpleSquashingTransform\n                                                                      JoiningTransform 2 \u2192 1\n                                                                        DelayedJoinedBlocksWorkerTransform\n                                                                          SimpleSquashingTransform\n                                                                            JoiningTransform 2 \u2192 1\n                                                                              DelayedJoinedBlocksWorkerTransform\n                                                                                SimpleSquashingTransform\n                                                                                  JoiningTransform 2 \u2192 1\n                                                                                    DelayedJoinedBlocksWorkerTransform\n                                                                                      SimpleSquashingTransform\n                                                                                        JoiningTransform 2 \u2192 1\n                                                                                          DelayedJoinedBlocksWorkerTransform\n                                                                                            SimpleSquashingTransform\n                                                                                              JoiningTransform 2 \u2192 1\n                                                                                                DelayedJoinedBlocksWorkerTransform\n                                                                                                  SimpleSquashingTransform\n                                                                                                    DelayedJoinedBlocksTransform 0 \u2192 9\n                                                                                                      (Expression)\n                                                                                                      ExpressionTransform \u00d7 9\n                                                                                                        (Expression)\n                                                                                                        ExpressionTransform \u00d7 9\n                                                                                                          (ReadFromMergeTree)\n                                                                                                          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 9 0 \u2192 1\n                                                                                                      (Expression)\n                                                                                                      ExpressionTransform\n                                                                                                        (BuildRuntimeFilter)\n                                                                                                        BuildRuntimeFilterTransform\n                                                                                                          (Filter)\n                  "
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 27.256,
+          "p50": 36.958,
+          "p90": 45.293,
+          "p95": 66.929,
+          "p99": 84.239,
+          "max": 88.566,
+          "mean": 40.647,
+          "stdev": 16.575,
+          "first_ms": 47.914
+        },
+        "rows": 13,
+        "checksum": "aead62a734254ac91c59d5af",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: country_code, countIf(status = 'delivered'), countIf(status = 'cancelled'), countIf(status = 'returned'), avg(total_amount)\n\nSorting (Sorting for ORDER BY)\n\u2502  Sort description: country_code ASC\n\u2514\u2500\u2500Aggregating\n   \u2502  Keys: country_code\n   \u2502  Aggregates: countIf(status = 'delivered'), countIf(status = 'cancelled'), countIf(status = 'returned'), avg(total_amount)\n   \u2502  Skip merging: 0\n   \u2514\u2500\u2500Join (JOIN FillRightFirst)\n      \u2502  o[200000] \u22c8 c[20000]\n      \u2502  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)\n      \u2502  Result rows: 200904\n      \u2502  Join conditions: customer_id = id\n      \u2502  Output:\n      \u2502    Left:  status, total_amount\n      \u2502    Right: country_code\n      \u251c\u2500\u2500ReadFromMergeTree (lab.orders)\n      \u2502     Read type: Default\n      \u2502     Parts: 2 | Granules: 24\n      \u2502     Output: customer_id, status, total_amount\n      \u2502     Runtime filters: RF1(customer_id, id from lab.customers)\n      \u2502     Indexes:\n      \u2502       PrimaryKey\n      \u2502         Condition: true\n      \u2502         Parts: 2/2\n      \u2502         Granules: 24/24\n      \u2502       Ranges: 2\n      \u2514\u2500\u2500BuildRuntimeFilter (Build runtime join filter on id)\n         \u2502  Filter id: RF1\n         \u2502  Source table: lab.customers\n         \u2514\u2500\u2500ReadFromMergeTree (lab.customers)\n               Read type: Default\n               Parts: 1 | Granules: 2\n               Output: country_code, id\n               Indexes:\n                 PrimaryKey\n                   Condition: true\n                   Parts: 1/1\n                   Granules: 2/2\n                 Ranges: 1",
+        "plan_analyze": "query_log: duration_ms=34 read_rows=220000 read_bytes=4898288 memory=14897852 result_rows=13\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    MergeSortingTransform \u00d7 2\n      LimitsCheckingTransform \u00d7 2\n        PartialSortingTransform \u00d7 2\n          (Expression)\n          ExpressionTransform \u00d7 2\n            (Aggregating)\n            Resize 2 \u2192 2\n              AggregatingTransform \u00d7 2\n                (Expression)\n                ExpressionTransform \u00d7 2\n                  (Join)\n                  ColumnPermuteTransform \u00d7 2\n                    Resize 1 \u2192 2\n                      FillingRightJoinSide\n                        Resize 4 \u2192 2\n                          DelayedPorts 4 \u2192 4\n                            JoiningTransform 2 \u2192 1\n                              DelayedJoinedBlocksWorkerTransform\n                                SimpleSquashingTransform\n                                  JoiningTransform 2 \u2192 1\n                                    DelayedJoinedBlocksWorkerTransform\n                                      SimpleSquashingTransform\n                                        DelayedJoinedBlocksTransform 0 \u2192 2\n                                          (Expression)\n                                          ExpressionTransform \u00d7 2\n                                            (Expression)\n                                            ExpressionTransform \u00d7 2\n                                              (ReadFromMergeTree)\n                                              MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n                                          (Expression)\n                                          ExpressionTransform\n                                            (BuildRuntimeFilter)\n                                            BuildRuntimeFilterTransform\n                                              (Expression)\n                                              ExpressionTransform\n                                                (ReadFromMergeTree)\n                                                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 5.594,
+          "p50": 10.184,
+          "p90": 10.695,
+          "p95": 10.918,
+          "p99": 10.934,
+          "max": 10.938,
+          "mean": 9.091,
+          "stdev": 1.768,
+          "first_ms": 10.321
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id\n\nSorting (Sorting for ORDER BY)\n\u2502  Prefix sort description: id ASC\n\u2502  Result sort description: id ASC\n\u2514\u2500\u2500Filter ((WHERE + Change column names to column identifiers))\n   \u2502  Filter column: customer_id = 14824 OR id = 146741\n   \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n         Read type: InOrder\n         Parts: 2 | Granules: 24\n         Output: id, customer_id\n         Virtual row conversions\n         Indexes:\n           PrimaryKey\n             Condition: true\n             Parts: 2/2\n             Granules: 24/24\n           Skip\n             Name: ix_orders_customer_id\n             Description: bloom_filter GRANULARITY 4\n             Parts: 2/2\n             Granules: 24/24\n           Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=3 read_rows=200000 read_bytes=1600000 memory=4655500 result_rows=13\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    BufferChunks \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Filter)\n        FilterTransform \u00d7 2\n          (ReadFromMergeTree)\n          VirtualRowTransform\n            MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1\n              VirtualRowTransform\n                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 14.235,
+          "p50": 22.95,
+          "p90": 23.95,
+          "p95": 24.086,
+          "p99": 24.196,
+          "max": 24.223,
+          "mean": 21.366,
+          "stdev": 3.547,
+          "first_ms": 14.673
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: id, total_amount\n\nSorting (Sorting for ORDER BY)\n\u2502  Prefix sort description: id ASC\n\u2502  Result sort description: id ASC\n\u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n      Read type: InOrder\n      Parts: 2 | Granules: 24\n      Output: id, total_amount\n      Prewhere filter\n      Prewhere filter column:  id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, ... 490 more)\n      Virtual row conversions\n      Indexes:\n        PrimaryKey\n          Keys:\n            id\n          Condition: (id in 500-element set)\n          Parts: 2/2\n          Granules: 24/24\n          Search Algorithm: generic exclusion search\n        Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=18 read_rows=200000 read_bytes=2400000 memory=6739673 result_rows=500\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    BufferChunks \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Expression)\n        ExpressionTransform \u00d7 2\n          (ReadFromMergeTree)\n          VirtualRowTransform\n            MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1\n              VirtualRowTransform\n                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE toYear(ordered_at) = 2025 AND toMonth(ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 14.881,
+          "p50": 16.112,
+          "p90": 21.162,
+          "p95": 35.872,
+          "p99": 47.64,
+          "max": 50.582,
+          "mean": 19.573,
+          "stdev": 10.362,
+          "first_ms": 15.488
+        },
+        "rows": 1,
+        "checksum": "da8216a446a3bca06ac6d7c6",
+        "error": null,
+        "error_code": null,
+        "plan": "Output: count()\n\nAggregating\n\u2502  Keys:\n\u2502  Aggregates: count()\n\u2502  Skip merging: 0\n\u2514\u2500\u2500Filter ((WHERE + Change column names to column identifiers))\n   \u2502  Filter column: ordered_at >= '2025-01-01 00:00:00' AND ordered_at < '2026-01-01 00:00:00' AND toMonth(ordered_at) = 5\n   \u2514\u2500\u2500ReadFromMergeTree (lab.orders)\n         Read type: Default\n         Parts: 2 | Granules: 24\n         Output: ordered_at\n         Indexes:\n           PrimaryKey\n             Condition: true\n             Parts: 2/2\n             Granules: 24/24\n           Ranges: 2",
+        "plan_analyze": "query_log: duration_ms=12 read_rows=200000 read_bytes=1600000 memory=4823574 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 2 \u2192 1\n    AggregatingTransform \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Filter)\n        FilterTransform \u00d7 6\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "ALTER TABLE customers UPDATE tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 17.05,
+          "p50": 22.809,
+          "p90": 28.716,
+          "p95": 33.316,
+          "p99": 33.402,
+          "max": 33.407,
+          "mean": 24.486,
+          "stdev": 4.091,
+          "first_ms": 32.9
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', now64(6), NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 64.556,
+          "p50": 76.254,
+          "p90": 81.272,
+          "p95": 84.126,
+          "p99": 85.31,
+          "max": 85.543,
+          "mean": 76.495,
+          "stdev": 4.691,
+          "first_ms": 84.517
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "_seconds": 37.8
+    }
+  },
+  "server_version": "ClickHouse 26.8.2.7",
+  "finished": "2026-09-12T19:44:02+00:00"
+}

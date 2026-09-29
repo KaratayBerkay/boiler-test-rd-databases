@@ -1,0 +1,20 @@
+Sort  (cost=1514.14..1514.64 rows=200 width=68) (actual time=7661.614..7661.616 rows=13.00 loops=1)
+  Sort Key: remote_scan.country_code
+  Sort Method: quicksort  Memory: 25kB
+  ->  HashAggregate  (cost=1500.00..1506.50 rows=200 width=68) (actual time=7661.573..7661.585 rows=13.00 loops=1)
+        Group Key: remote_scan.country_code
+        Batches: 1  Memory Usage: 32kB
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=76) (actual time=7661.405..7661.424 rows=312.00 loops=1)
+              Task Count: 24
+              Tuple data received from nodes: 15 kB
+              Tasks Shown: None, not supported for re-partition queries
+              ->  MapMergeJob
+                    Map Task Count: 32
+                    Merge Task Count: 24
+              ->  MapMergeJob
+                    Map Task Count: 32
+                    Merge Task Count: 24
+Planning:
+  Buffers: shared hit=31
+Planning Time: 57.866 ms
+Execution Time: 7661.696 ms

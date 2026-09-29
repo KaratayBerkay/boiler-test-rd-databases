@@ -1,0 +1,3 @@
+source: https://github.com/ericrisco/rsc-harness/tree/main/skills/mysql
+license: MIT
+vendored: 2026-09-13

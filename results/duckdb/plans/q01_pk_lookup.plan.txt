@@ -1,0 +1,19 @@
+physical_plan | ┌───────────────────────────┐
+│          SEQ_SCAN         │
+│    ────────────────────   │
+│           Table:          │
+│     lab.main.customers    │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│             id            │
+│            name           │
+│           email           │
+│        country_code       │
+│            tier           │
+│                           │
+│      Filters: id=4403     │
+│                           │
+│           ~1 row          │
+└───────────────────────────┘

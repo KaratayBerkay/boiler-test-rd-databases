@@ -1,0 +1,12 @@
+Eval[id, price, (SELECT avg(price) FROM (p2)) AS cat_avg] (rows=500)
+  └ Limit[500::bigint;0] (rows=500)
+    └ OrderBy[id ASC] (rows=4232)
+      └ Filter[true] (rows=4232)
+        └ CorrelatedJoin[id, price, category_id, (SELECT avg(price) FROM (p2))] (rows=4232)
+          └ Rename[id, price, category_id] AS p (rows=4232)
+            └ Collect[doc.products | [id, price, category_id] | (active = true)] (rows=4232)
+          └ SubPlan
+            └ Limit[2::bigint;0::bigint] (rows=1)
+              └ HashAggregate[avg(price)] (rows=1)
+                └ Rename[price] AS p2 (rows=25)
+                  └ Collect[doc.products | [price] | (category_id = category_id)] (rows=25)

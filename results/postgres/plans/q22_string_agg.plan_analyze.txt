@@ -1,0 +1,30 @@
+GroupAggregate  (cost=1213.79..1229.81 rows=519 width=36) (actual time=2.604..3.288 rows=500.00 loops=1)
+  Group Key: o.id
+  Buffers: shared hit=1658
+  ->  Sort  (cost=1213.79..1216.97 rows=1272 width=16) (actual time=2.599..2.712 rows=1276.00 loops=1)
+        Sort Key: o.id, p.sku
+        Sort Method: quicksort  Memory: 88kB
+        Buffers: shared hit=1658
+        ->  Hash Join  (cost=178.34..1148.20 rows=1272 width=16) (actual time=0.531..1.968 rows=1276.00 loops=1)
+              Hash Cond: (oi.product_id = p.id)
+              Buffers: shared hit=1658
+              ->  Nested Loop  (cost=0.58..967.10 rows=1272 width=8) (actual time=0.025..1.197 rows=1276.00 loops=1)
+                    Buffers: shared hit=1514
+                    ->  Index Only Scan using orders_pkey on orders o  (cost=0.29..17.67 rows=519 width=4) (actual time=0.019..0.139 rows=500.00 loops=1)
+                          Index Cond: (id <= 500)
+                          Heap Fetches: 500
+                          Index Searches: 1
+                          Buffers: shared hit=8
+                    ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=0.29..1.80 rows=3 width=8) (actual time=0.001..0.002 rows=2.55 loops=500)
+                          Index Cond: (order_id = o.id)
+                          Index Searches: 500
+                          Buffers: shared hit=1506
+              ->  Hash  (cost=159.00..159.00 rows=1500 width=16) (actual time=0.503..0.503 rows=1500.00 loops=1)
+                    Buckets: 2048  Batches: 1  Memory Usage: 87kB
+                    Buffers: shared hit=144
+                    ->  Seq Scan on products p  (cost=0.00..159.00 rows=1500 width=16) (actual time=0.006..0.270 rows=1500.00 loops=1)
+                          Buffers: shared hit=144
+Planning:
+  Buffers: shared hit=27
+Planning Time: 0.347 ms
+Execution Time: 3.357 ms

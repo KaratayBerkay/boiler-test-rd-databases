@@ -1,0 +1,28 @@
+Limit  (cost=29.74..29.87 rows=50 width=24) (actual time=89.043..89.062 rows=50 loops=1)
+  ->  Sort  (cost=29.74..30.42 rows=271 width=24) (actual time=89.041..89.045 rows=50 loops=1)
+        Sort Key: id
+        Sort Method: top-N heapsort  Memory: 31kB
+        ->  Index Scan using ix_products_fts on products  (cost=8.00..20.74 rows=271 width=24) (actual time=6.678..88.770 rows=308 loops=1)
+              Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)
+              Rows Removed by Index Recheck: 856
+              Storage Table Read Requests: 2
+              Storage Table Read Execution Time: 4.825 ms
+              Storage Table Read Ops: 2
+              Storage Table Rows Scanned: 1164
+              Storage Index Read Requests: 2
+              Storage Index Read Execution Time: 1.703 ms
+              Storage Index Read Ops: 2
+              Storage Index Rows Scanned: 1164
+Planning Time: 0.118 ms
+Execution Time: 89.187 ms
+Storage Read Requests: 4
+Storage Read Execution Time: 6.528 ms
+Storage Read Ops: 4
+Storage Rows Scanned: 2328
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 6.528 ms
+Peak Memory Usage: 1250 kB

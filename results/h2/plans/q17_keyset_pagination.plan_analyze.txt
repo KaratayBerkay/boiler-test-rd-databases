@@ -1,0 +1,12 @@
+SELECT
+    "id",
+    "customer_id",
+    "ordered_at"
+FROM "public"."orders"
+    /* public.orders.tableScan */
+    /* scanCount: 200001 */
+WHERE ("ordered_at" > TIMESTAMP '2025-01-01 00:00:00')
+    OR (("ordered_at" = TIMESTAMP '2025-01-01 00:00:00')
+    AND ("id" > 0))
+ORDER BY 3, 1
+FETCH FIRST 50 ROWS ONLY

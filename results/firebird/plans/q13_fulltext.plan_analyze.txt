@@ -1,0 +1,6 @@
+Select Expression
+    -> First N Records
+        -> Filter
+            -> Table "PRODUCTS" Access By ID
+                -> Index "RDB$PRIMARY3" Full Scan
+fetches=11060321 reads=7608

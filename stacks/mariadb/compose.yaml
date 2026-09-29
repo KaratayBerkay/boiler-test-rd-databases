@@ -1,0 +1,150 @@
+# MariaDB 11 LTS — primary + replica (GTID slave_pos, built into the official image's entrypoint) + MaxScale readwritesplit
+# with automatic failover (mariadbmon auto_failover/auto_rejoin).
+#
+# Backup strategy (`rdlab run mariadb --phases backup`): mariadb-dump, mariadb-backup full + incremental chain (prepared and
+#   started in a scratch container, then PITR by GTID replication from the primary) and mariadb-binlog --flashback
+#   (in-place undo from the ROW binlog) — all into the shared `mdb-backups` volume.
+# Logging strategy: slow log (long_query_time=0.1, log_slow_verbosity=query_plan,explain), error log, server_audit plugin
+#   (connections + DDL) -> shared `mdb-logs` volume; Docker json-file rotation on every container.
+name: rdlab-mariadb
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-mariadb-common: &mariadb-common
+  image: mariadb:11
+  ulimits:
+    nofile: { soft: 65536, hard: 65536 }
+  logging: *logging
+
+services:
+  volumes-init:
+    image: mariadb:11
+    container_name: rdlab-mdb-volumes-init
+    entrypoint: ["sh", "-c", "mkdir -p /backups /var/log/mysql && chmod 1777 /backups /var/log/mysql && echo volumes ready"]
+    volumes: [mdb-backups:/backups, mdb-logs:/var/log/mysql]
+    logging: *logging
+    restart: "no"
+
+  primary:
+    <<: *mariadb-common
+    container_name: rdlab-mdb-primary
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: lab
+      MARIADB_USER: lab
+      MARIADB_PASSWORD: labpass
+      MARIADB_REPLICATION_USER: repl
+      MARIADB_REPLICATION_PASSWORD: replpass
+    command:
+      - --server-id=1
+      - --log-bin=binlog
+      - --binlog-format=ROW
+      - --gtid-strict-mode=ON
+      - --gtid-domain-id=1
+      - --max-connections=1000
+      - --innodb-buffer-pool-size=2G
+      - --innodb-log-file-size=1G
+      - --innodb-flush-log-at-trx-commit=1
+      - --performance-schema=ON
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # logging strategy
+      - --slow-query-log=ON
+      - --long-query-time=0.1
+      - --log-slow-verbosity=query_plan,explain
+      - --slow-query-log-file=/var/log/mysql/slow.log
+      - --log-error=/var/log/mysql/error.log
+      - --log-warnings=3
+      - --innodb-print-all-deadlocks=ON
+      - --plugin-load-add=server_audit
+      - --server-audit-logging=ON
+      - --server-audit-events=CONNECT,QUERY_DDL
+      - --server-audit-output-type=file
+      - --server-audit-file-path=/var/log/mysql/audit.log
+      - --server-audit-file-rotate-size=100000000
+      - --server-audit-file-rotations=3
+    volumes:
+      - ./init-primary:/docker-entrypoint-initdb.d:ro
+      - mdb-primary:/var/lib/mysql
+      - mdb-backups:/backups
+      - mdb-logs:/var/log/mysql
+    ports:
+      - "13316:3306"
+    depends_on:
+      volumes-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  replica:
+    <<: *mariadb-common
+    container_name: rdlab-mdb-replica
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_MASTER_HOST: primary
+      MARIADB_REPLICATION_USER: repl
+      MARIADB_REPLICATION_PASSWORD: replpass
+      MARIADB_HEALTHCHECK_GRANTS: REPLICA MONITOR
+    command:
+      - --server-id=2
+      - --log-bin=binlog
+      - --binlog-format=ROW
+      - --gtid-strict-mode=ON
+      - --gtid-domain-id=1
+      - --log-slave-updates=ON
+      - --read-only=ON
+      - --max-connections=1000
+      - --innodb-buffer-pool-size=2G
+      - --innodb-log-file-size=1G
+      - --performance-schema=ON
+      - --slave-parallel-threads=4
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --slow-query-log=ON
+      - --long-query-time=0.1
+      - --slow-query-log-file=/var/log/mysql/replica-slow.log
+      - --log-error=/var/log/mysql/replica-error.log
+    volumes:
+      - ./init-replica:/docker-entrypoint-initdb.d:ro
+      - mdb-replica:/var/lib/mysql
+      - mdb-backups:/backups
+      - mdb-logs:/var/log/mysql
+    ports:
+      - "13317:3306"
+    depends_on:
+      primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--replication_io", "--replication_sql", "--replication"]
+      interval: 3s
+      timeout: 3s
+      retries: 60
+
+  maxscale:
+    image: mariadb/maxscale:latest
+    container_name: rdlab-mdb-maxscale
+    logging: *logging
+    volumes:
+      - ./maxscale/maxscale.cnf:/etc/maxscale.cnf.d/lab.cnf:ro
+    ports:
+      - "14006:4006"   # readwritesplit listener
+      - "18989:8989"   # REST API (admin:mariadb)
+    depends_on:
+      primary:
+        condition: service_healthy
+      replica:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "maxctrl list servers | grep -q Master"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  mdb-primary:
+  mdb-replica:
+  mdb-backups:
+  mdb-logs:

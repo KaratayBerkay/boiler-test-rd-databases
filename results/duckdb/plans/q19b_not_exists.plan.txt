@@ -1,0 +1,44 @@
+physical_plan | ┌───────────────────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_integ│
+│     ral_integer(#0, 1)    │
+│                           │
+│          ~0 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│          p.id ASC         │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_compress_integra│
+│     l_usmallint(#0, 1)    │
+│                           │
+│        ~1,000 rows        │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│   Join Type: RIGHT_ANTI   │
+│                           │
+│        Conditions:        ├──────────────┐
+│ id IS NOT DISTINCT FROM id│              │
+│                           │              │
+│        ~1,000 rows        │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│          SEQ_SCAN         ││          SEQ_SCAN         │
+│    ────────────────────   ││    ────────────────────   │
+│           Table:          ││           Table:          │
+│    lab.main.order_items   ││     lab.main.products     │
+│                           ││                           │
+│   Type: Sequential Scan   ││   Type: Sequential Scan   │
+│                           ││      Projections: id      │
+│        Projections:       ││                           │
+│         product_id        ││                           │
+│                           ││                           │
+│        ~97,546 rows       ││        ~5,000 rows        │
+└───────────────────────────┘└───────────────────────────┘

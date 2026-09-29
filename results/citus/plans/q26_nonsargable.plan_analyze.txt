@@ -1,0 +1,20 @@
+Aggregate  (cost=250.00..250.02 rows=1 width=8) (actual time=146.040..146.041 rows=1.00 loops=1)
+  ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=8) (actual time=146.027..146.030 rows=32.00 loops=1)
+        Task Count: 32
+        Tuple data received from nodes: 256 bytes
+        Tasks Shown: One of 32
+        ->  Task
+              Tuple data received from node: 8 bytes
+              Node: host=w2 port=5432 dbname=lab
+              ->  Aggregate  (cost=182.88..182.89 rows=1 width=8) (actual time=62.507..62.509 rows=1.00 loops=1)
+                    Buffers: shared hit=58
+                    ->  Seq Scan on orders_102073 orders  (cost=0.00..182.88 rows=1 width=0) (actual time=0.055..62.456 rows=271.00 loops=1)
+                          Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))
+                          Rows Removed by Filter: 5973
+                          Buffers: shared hit=58
+                  Planning Time: 0.121 ms
+                  Execution Time: 62.552 ms
+Planning:
+  Buffers: shared hit=5
+Planning Time: 0.634 ms
+Execution Time: 146.063 ms

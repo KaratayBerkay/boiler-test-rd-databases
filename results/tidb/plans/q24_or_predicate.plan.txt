@@ -1,0 +1,5 @@
+Projection_29 | 11.00 | root |  | lab.orders.id
+└─IndexMerge_37 | 11.00 | root |  | type: union
+  ├─IndexRangeScan_34(Build) | 10.00 | cop[tikv] | table:orders, index:fk_1(customer_id) | range:[14824,14824], keep order:true
+  ├─TableRangeScan_35(Build) | 1.00 | cop[tikv] | table:orders | range:[146741,146741], keep order:true
+  └─TableRowIDScan_36(Probe) | 11.00 | cop[tikv] | table:orders | keep order:false

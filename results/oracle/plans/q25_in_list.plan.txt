@@ -1,0 +1,63 @@
+Plan hash value: 2546562765
+ 
+--------------------------------------------------------------------------------------------
+| Id  | Operation                    | Name        | Rows  | Bytes | Cost (%CPU)| Time     |
+--------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT             |             |   500 |  5000 |   273   (0)| 00:00:01 |
+|   1 |  INLIST ITERATOR             |             |       |       |            |          |
+|   2 |   TABLE ACCESS BY INDEX ROWID| ORDERS      |   500 |  5000 |   273   (0)| 00:00:01 |
+|*  3 |    INDEX UNIQUE SCAN         | SYS_C008743 |   500 |       |   270   (0)| 00:00:01 |
+--------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   3 - access("ID"=47 OR "ID"=281 OR "ID"=457 OR "ID"=869 OR "ID"=942 OR "ID"=950 
+              OR "ID"=1298 OR "ID"=3027 OR "ID"=3073 OR "ID"=3269 OR "ID"=3737 OR "ID"=4023 OR 
+              "ID"=4216 OR "ID"=4413 OR "ID"=4589 OR "ID"=4762 OR "ID"=4833 OR "ID"=4939 OR 
+              "ID"=5265 OR "ID"=5718 OR "ID"=5897 OR "ID"=6511 OR "ID"=7606 OR "ID"=8169 OR 
+              "ID"=8453 OR "ID"=9031 OR "ID"=9687 OR "ID"=10378 OR "ID"=10923 OR "ID"=10974 OR 
+              "ID"=11327 OR "ID"=11479 OR "ID"=11859 OR "ID"=12255 OR "ID"=12654 OR "ID"=12840 OR 
+              "ID"=12970 OR "ID"=13207 OR "ID"=13312 OR "ID"=13532 OR "ID"=14258 OR "ID"=14524 OR 
+              "ID"=15081 OR "ID"=15902 OR "ID"=16269 OR "ID"=16854 OR "ID"=17034 OR "ID"=17315 OR 
+              "ID"=17465 OR "ID"=18380 OR "ID"=18540 OR "ID"=18983 OR "ID"=19173 OR "ID"=19517 OR 
+              "ID"=19560 OR "ID"=19706 OR "ID"=20028 OR "ID"=20045 OR "ID"=20117 OR "ID"=20309 OR 
+              "ID"=21123 OR "ID"=21953 OR "ID"=21992 OR "ID"=22037 OR "ID"=22147 OR "ID"=22148 OR 
+              "ID"=22307 OR "ID"=22507 OR "ID"=23218 OR "ID"=23452 OR "ID"=23529 OR "ID"=23673 OR 
+              "ID"=23781 OR "ID"=23817 OR "ID"=23880 OR "ID"=24103 OR "ID"=24275 OR "ID"=26089 OR 
+              "ID"=26663 OR "ID"=27468 OR "ID"=27504 OR "ID"=27862 OR "ID"=28693 OR "ID"=29538 OR 
+              "ID"=29583 OR "ID"=31065 OR "ID"=31390 OR "ID"=31469 OR "ID"=31696 OR "ID"=31898 OR 
+              "ID"=32998 OR "ID"=33358 OR "ID"=33374 OR "ID"=33876 OR "ID"=33963 OR "ID"=34032 OR 
+              "ID"=34762 OR "ID"=34890 OR "ID"=34981 OR "ID"=36326 OR "ID"=36519 OR "ID"=36595 OR 
+              "ID"=36627 OR "ID"=36886 OR "ID"=37157 OR "ID"=37714 OR "ID"=37946 OR "ID"=38647 OR 
+              "ID"=39038 OR "ID"=39156 OR "ID"=39181 OR "ID"=40699 OR "ID"=41297 OR "ID"=41699 OR 
+              "ID"=42323 OR "ID"=42378 OR "ID"=42795 OR "ID"=43866 OR "ID"=44765 OR "ID"=45796 OR 
+              "ID"=46636 OR "ID"=47487 OR "ID"=47593 OR "ID"=47962 OR "ID"=48063 OR "ID"=48589 OR 
+              "ID"=49665 OR "ID"=49768 OR "ID"=50439 OR "ID"=51313 OR "ID"=51981 OR "ID"=52069 OR 
+              "ID"=52233 OR "ID"=52686 OR "ID"=52893 OR "ID"=52991 OR "ID"=53330 OR "ID"=53797 OR 
+              "ID"=53968 OR "ID"=54493 OR "ID"=55008 OR "ID"=55052 OR "ID"=55237 OR "ID"=56409 OR 
+              "ID"=56614 OR "ID"=57068 OR "ID"=57113 OR "ID"=57679 OR "ID"=58303 OR "ID"=59915 OR 
+              "ID"=60180 OR "ID"=60278 OR "ID"=60487 OR "ID"=60656 OR "ID"=61030 OR "ID"=61548 OR 
+              "ID"=62505 OR "ID"=62565 OR "ID"=62686 OR "ID"=63495 OR "ID"=63986 OR "ID"=64081 OR 
+              "ID"=64110 OR "ID"=64404 OR "ID"=65059 OR "ID"=65131 OR "ID"=65359 OR "ID"=65654 OR 
+              "ID"=66112 OR "ID"=66379 OR "ID"=66569 OR "ID"=67003 OR "ID"=67042 OR "ID"=67727 OR 
+              "ID"=67793 OR "ID"=68202 OR "ID"=68303 OR "ID"=68632 OR "ID"=68655 OR "ID"=69008 OR 
+              "ID"=69152 OR "ID"=69251 OR "ID"=69325 OR "ID"=69615 OR "ID"=69617 OR "ID"=69660 OR 
+              "ID"=70218 OR "ID"=70427 OR "ID"=70458 OR "ID"=70497 OR "ID"=70527 OR "ID"=70842 OR 
+              "ID"=70896 OR "ID"=70916 OR "ID"=71047 OR "ID"=71283 OR "ID"=72131 OR "ID"=72750 OR 
+              "ID"=73120 OR "ID"=73155 OR "ID"=73288 OR "ID"=73568 OR "ID"=73859 OR "ID"=73908 OR 
+              "ID"=74496 OR "ID"=74854 OR "ID"=74875 OR "ID"=75028 OR "ID"=75319 OR "ID"=75914 OR 
+              "ID"=75978 OR "ID"=76012 OR "ID"=76247 OR "ID"=76824 OR "ID"=77452 OR "ID"=78060 OR 
+              "ID"=78551 OR "ID"=78863 OR "ID"=79155 OR "ID"=79756 OR "ID"=79802 OR "ID"=79956 OR 
+              "ID"=80684 OR "ID"=81147 OR "ID"=81704 OR "ID"=81787 OR "ID"=81794 OR "ID"=82734 OR 
+              "ID"=82858 OR "ID"=83700 OR "ID"=84813 OR "ID"=85079 OR "ID"=85495 OR "ID"=85734 OR 
+              "ID"=86227 OR "ID"=86855 OR "ID"=86973 OR "ID"=87251 OR "ID"=87906 OR "ID"=88658 OR 
+              "ID"=88677 OR "ID"=88907 OR "ID"=89642 OR "ID"=89838 OR "ID"=90090 OR "ID"=90168 OR 
+              "ID"=90965 OR "ID"=91109 OR "ID"=93477 OR "ID"=94255 OR "ID"=94410 OR "ID"=94558 OR 
+              "ID"=95458 OR "ID"=95732 OR "ID"=96550 OR "ID"=97576 OR "ID"=97872 OR "ID"=98594 OR 
+              "ID"=98729 OR "ID"=98794 OR "ID"=99846 OR "ID"=100042 OR "ID"=100286 OR "ID"=100359 
+              OR "ID"=100811 OR "ID"=101410 OR "ID"=102110 OR "ID"=102279 OR "ID"=102635 OR 
+              "ID"=102997 OR "ID"=103046 OR "ID"=103280 OR "ID"=103306 OR "ID"=103382 OR 
+              "ID"=104402 OR "ID"=104730 OR "ID"=104794 OR "ID"=104869 OR "ID"=106090 OR 
+              "ID"=106279 OR "ID"=106417 OR "ID"=106486 OR "ID"=107712 OR "ID"=108209 OR 
+              "ID"=108498 OR "ID"=108755 OR "ID")

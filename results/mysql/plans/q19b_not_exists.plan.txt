@@ -1,0 +1,3 @@
+-> Nested loop antijoin  (cost=53892 rows=518404)
+    -> Covering index scan on p using PRIMARY  (cost=710 rows=4864)
+    -> Covering index lookup on oi using ix_order_items_product_id (product_id = p.id)  (cost=29.6 rows=107)

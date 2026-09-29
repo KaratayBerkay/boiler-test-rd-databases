@@ -1,0 +1,4 @@
+Fetch[id, sku, price] (rows=8)
+  └ Limit[100::bigint;0] (rows=8)
+    └ OrderBy[id ASC] (rows=8)
+      └ Collect[doc.products | [_fetchid, id] | ((attrs['color'] = 'red') AND (attrs['weight'] > 10.0))] (rows=8)

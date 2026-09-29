@@ -1,0 +1,243 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260912-213913-c0e337",
+  "started": "2026-09-12T18:39:13+00:00",
+  "scale": 1.0,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "replication": {
+      "kind": "physical streaming (async, slot)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "172.18.0.4/32",
+                "streaming",
+                "async",
+                0.0,
+                null,
+                null,
+                null
+              ]
+            ],
+            "current_lsn": "0/5F71D900",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        },
+        "replica": {
+          "role_reported": "replica",
+          "role_configured": "replica",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": true,
+            "wal_receiver": [
+              "streaming",
+              "primary",
+              "0/5F71D900",
+              "0/5F71D900",
+              13.502012
+            ],
+            "last_replay_lsn": "0/5F71D900"
+          }
+        },
+        "pgbouncer": {
+          "role_reported": "primary",
+          "role_configured": "proxy",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "172.18.0.4/32",
+                "streaming",
+                "async",
+                0.0,
+                null,
+                null,
+                null
+              ]
+            ],
+            "current_lsn": "0/5F71D900",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        },
+        "haproxy-ro": {
+          "role_reported": "primary",
+          "role_configured": "proxy",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "172.18.0.4/32",
+                "streaming",
+                "async",
+                0.0,
+                null,
+                null,
+                null
+              ]
+            ],
+            "current_lsn": "0/5F71D900",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        }
+      },
+      "visibility_lag": {
+        "replica": {
+          "replica": "replica",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 0.44948598952032626,
+            "p50": 0.8455820061499253,
+            "p90": 2.4178333958843727,
+            "p95": 2.597095145029016,
+            "p99": 2.7358357288176194,
+            "max": 2.7918440173380077,
+            "mean": 1.2637829320738092,
+            "stdev": 0.7356691528778565
+          }
+        }
+      },
+      "write_rejection": {
+        "replica": {
+          "replica": "replica",
+          "writes_rejected": true,
+          "error_code": "25006",
+          "error": "ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 0.62,
+        "rows_per_s": 32105,
+        "catchup_ms_after_last_commit": {
+          "replica": 3.2
+        },
+        "samples": [
+          {
+            "t": 192471.533,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.000725
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.029905,
+              "last_replay_lsn": "0/5F742F18"
+            }
+          },
+          {
+            "t": 192471.851,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 68992.0,
+                "replay_lag_s": 0.000836
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.002705,
+              "last_replay_lsn": "0/5F897DC8"
+            }
+          }
+        ]
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 241295,
+          "qps": 60324,
+          "errors": 0,
+          "latency_ms": {
+            "n": 241295,
+            "min": 0.201431,
+            "p50": 0.498682,
+            "p90": 0.7318574000000001,
+            "p95": 0.817993,
+            "p99": 1.0429473999999999,
+            "max": 8.239085,
+            "mean": 0.5288846370956714,
+            "stdev": 0.1790595433336016
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "replica"
+          ],
+          "workers": 32,
+          "queries": 249574,
+          "qps": 62394,
+          "errors": 0,
+          "latency_ms": {
+            "n": 249574,
+            "min": 0.199363,
+            "p50": 0.4811355,
+            "p90": 0.7172446,
+            "p95": 0.8009411499999989,
+            "p99": 1.0021435299999997,
+            "max": 6.446226,
+            "mean": 0.5112337072411389,
+            "stdev": 0.17147727458051826
+          }
+        },
+        "gain": 1.03
+      },
+      "failover": {
+        "kind": "physical streaming (async, slot)",
+        "stopped_at": 0.0,
+        "old_primary_error": "OperationalError: connection failed: connection to server at \"127.0.0.1\", port 15432 failed: Connection refused Is the server running on that host and accepting TCP/IP connections?",
+        "promote_cmd": "pg_ctl promote -D /var/lib/postgresql/18/docker",
+        "promote_ms": 169.1,
+        "write_attempts_until_success": 1,
+        "last_error_before_success": null,
+        "downtime_ms": 511.9,
+        "new_primary": "replica",
+        "new_primary_role": "primary",
+        "new_primary_status": {
+          "in_recovery": false,
+          "pg_stat_replication": [],
+          "current_lsn": "0/5F9CC2A0",
+          "synchronous_standby_names": "",
+          "synchronous_commit": "on"
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 17.0
+    }
+  },
+  "finished": "2026-09-12T18:39:30+00:00"
+}

@@ -1,0 +1,192 @@
+{
+  "engine": "mysql",
+  "display": "MySQL 9",
+  "category": "row-store OLTP",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "mysql:9",
+  "run_id": "20260912-215655-adc949",
+  "started": "2026-09-12T18:56:55+00:00",
+  "scale": 1.0,
+  "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+  "phases": {
+    "replication": {
+      "kind": "GTID async (binlog row)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "9.7.2",
+          "status": {
+            "read_only": 0,
+            "replica_status": null,
+            "gtid_executed": "a146baef-aedb-11f1-89b3-ca6e7e1a5c45:1-14",
+            "replicas": [
+              {
+                "Server_Id": 2,
+                "Host": "",
+                "Port": 3306,
+                "Source_Id": 1,
+                "Replica_UUID": "a8d3a8ea-aedb-11f1-bf9e-46339a89dfae"
+              }
+            ]
+          }
+        },
+        "replica": {
+          "role_reported": "replica",
+          "role_configured": "replica",
+          "version": "9.7.2",
+          "status": {
+            "read_only": 1,
+            "replica_status": {
+              "Replica_IO_Running": "Yes",
+              "Replica_SQL_Running": "Yes",
+              "Seconds_Behind_Source": 0,
+              "Source_Host": "source",
+              "Executed_Gtid_Set": "a146baef-aedb-11f1-89b3-ca6e7e1a5c45:1-14,\na8d3a8ea-aedb-11f1-bf9e-46339a89dfae:1-5",
+              "Last_IO_Error": "",
+              "Last_SQL_Error": "",
+              "Last_Error": ""
+            },
+            "gtid_executed": "a146baef-aedb-11f1-89b3-ca6e7e1a5c45:1-14,\na8d3a8ea-aedb-11f1-bf9e-46339a89dfae:1-5",
+            "replicas": []
+          }
+        },
+        "proxysql": {
+          "role_reported": "replica",
+          "role_configured": "proxy",
+          "version": "9.7.2",
+          "status": {
+            "read_only": 1,
+            "replica_status": null,
+            "gtid_executed": "a146baef-aedb-11f1-89b3-ca6e7e1a5c45:1-14,\na8d3a8ea-aedb-11f1-bf9e-46339a89dfae:1-5",
+            "replicas": [
+              {
+                "Server_Id": 2,
+                "Host": "",
+                "Port": 3306,
+                "Source_Id": 1,
+                "Replica_UUID": "a8d3a8ea-aedb-11f1-bf9e-46339a89dfae"
+              }
+            ]
+          }
+        }
+      },
+      "visibility_lag": {
+        "replica": {
+          "replica": "replica",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 2.0257579744793475,
+            "p50": 2.574526995886117,
+            "p90": 2.708013402298093,
+            "p95": 2.764496504096314,
+            "p99": 2.8775829676305875,
+            "max": 2.9070489981677383,
+            "mean": 2.515828031270454,
+            "stdev": 0.20850323762486514
+          }
+        }
+      },
+      "write_rejection": {
+        "replica": {
+          "replica": "replica",
+          "writes_rejected": true,
+          "error_code": "1290",
+          "error": "OperationalError: (1290, 'The MySQL server is running with the --read-only option so it cannot execute this statement')"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 0.55,
+        "rows_per_s": 36057,
+        "catchup_ms_after_last_commit": {
+          "replica": 24.7
+        },
+        "samples": [
+          {
+            "t": 193533.008,
+            "primary": {},
+            "replica": {
+              "Seconds_Behind_Source": 0,
+              "Replica_IO_Running": "Yes",
+              "Replica_SQL_Running": "Yes"
+            }
+          },
+          {
+            "t": 193533.274,
+            "primary": {},
+            "replica": {
+              "Seconds_Behind_Source": 0,
+              "Replica_IO_Running": "Yes",
+              "Replica_SQL_Running": "Yes"
+            }
+          },
+          {
+            "t": 193533.531,
+            "primary": {},
+            "replica": {
+              "Seconds_Behind_Source": 0,
+              "Replica_IO_Running": "Yes",
+              "Replica_SQL_Running": "Yes"
+            }
+          }
+        ]
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 0,
+          "qps": 0,
+          "errors": 1632,
+          "latency_ms": {
+            "n": 0
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "replica"
+          ],
+          "workers": 32,
+          "queries": 0,
+          "qps": 0,
+          "errors": 1632,
+          "latency_ms": {
+            "n": 0
+          }
+        },
+        "gain": null
+      },
+      "failover": {
+        "kind": "GTID async (binlog row)",
+        "stopped_at": 0.0,
+        "old_primary_error": "OperationalError: (2003, \"Can't connect to MySQL server on '127.0.0.1' ([Errno 111] Connection refused)\")",
+        "promote_cmd": "STOP REPLICA; RESET REPLICA ALL; SET GLOBAL super_read_only = OFF; SET GLOBAL read_only = OFF",
+        "promote_ms": 14.3,
+        "write_attempts_until_success": 1,
+        "last_error_before_success": null,
+        "downtime_ms": 364.8,
+        "new_primary": "replica",
+        "new_primary_role": "primary",
+        "new_primary_status": {
+          "read_only": 0,
+          "replica_status": null,
+          "gtid_executed": "a146baef-aedb-11f1-89b3-ca6e7e1a5c45:1-85,\na8d3a8ea-aedb-11f1-bf9e-46339a89dfae:1-6",
+          "replicas": []
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 8.9
+    }
+  },
+  "finished": "2026-09-12T18:57:04+00:00"
+}

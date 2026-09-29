@@ -1,0 +1,34 @@
+distribution: full
+
+• group (streaming)
+│ estimated row count: 1
+│ group by: customer_id
+│ ordered: +customer_id
+│
+└── • sort
+    │ estimated row count: 1
+    │ order: +customer_id
+    │
+    └── • filter
+        │ estimated row count: 1
+        │ filter: new_session = 1
+        │
+        └── • render
+            │
+            └── • window
+                │ estimated row count: 98,054
+                │
+                └── • render
+                    │
+                    └── • index join
+                        │ estimated row count: 98,054
+                        │ table: events@events_pkey
+                        │
+                        └── • scan
+                              estimated row count: 98,054 (9.8% of the table; stats collected 4 minutes ago)
+                              table: events@ix_events_customer_id
+                              spans: [ - /2000]
+
+index recommendations: 1
+1. type: index replacement
+   SQL commands: CREATE INDEX ON lab.public.events (customer_id) STORING (occurred_at) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.events@ix_events_customer_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.events@ix_events_customer_id` */;

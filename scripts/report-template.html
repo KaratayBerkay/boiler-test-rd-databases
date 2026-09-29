@@ -1,0 +1,255 @@
+<title>Relational Database Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#F5F7F8; --panel:#FFFFFF; --ink:#18232C; --ink-2:#4F5F6C; --muted:#7D8B96; --line:#D8E0E5; --line-2:#EBF0F3;
+  --accent:#0F7C86; --accent-ink:#0B5F66; --accent-soft:#DDF0F1;
+  --ok:#2F8A5A; --warn:#C48A1C; --bad:#C0463C; --ok-soft:#E3F3EA; --warn-soft:#FBF0DA; --bad-soft:#F9E3E1;
+  --heat-0:#FFFFFF; --heat-1:#E8F3F4; --heat-2:#BFE0E2; --heat-3:#8FC9CD; --heat-4:#5AAEB4; --heat-5:#2E8B93;
+  --shadow:0 1px 2px rgba(24,35,44,.06), 0 8px 24px -16px rgba(24,35,44,.25);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --ground:#0F1418; --panel:#161C22; --ink:#E4EBF0; --ink-2:#AEBBC5; --muted:#7F8E99; --line:#2A353E; --line-2:#1F282F;
+  --accent:#43BBC5; --accent-ink:#8ADCE2; --accent-soft:#12343A;
+  --ok:#5CC48A; --warn:#E0A83B; --bad:#E5716A; --ok-soft:#153426; --warn-soft:#3A2D10; --bad-soft:#3E1D1A;
+  --heat-0:#161C22; --heat-1:#1B2A2E; --heat-2:#1F4247; --heat-3:#245C63; --heat-4:#2C7B84; --heat-5:#3AA0AA;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+}}
+:root[data-theme="dark"]{
+  --ground:#0F1418; --panel:#161C22; --ink:#E4EBF0; --ink-2:#AEBBC5; --muted:#7F8E99; --line:#2A353E; --line-2:#1F282F;
+  --accent:#43BBC5; --accent-ink:#8ADCE2; --accent-soft:#12343A;
+  --ok:#5CC48A; --warn:#E0A83B; --bad:#E5716A; --ok-soft:#153426; --warn-soft:#3A2D10; --bad-soft:#3E1D1A;
+  --heat-0:#161C22; --heat-1:#1B2A2E; --heat-2:#1F4247; --heat-3:#245C63; --heat-4:#2C7B84; --heat-5:#3AA0AA;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.55;padding-block:0 64px;padding-inline:clamp(16px,4vw,48px)}
+a{color:var(--accent-ink)}
+h1,h2,h3{font-family:"Source Serif 4","Iowan Old Style",Georgia,serif;font-weight:600;letter-spacing:-.01em;text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.1}
+h2{font-size:24px;line-height:1.2;margin-top:56px;padding-top:24px;border-top:1px solid var(--line)}
+h3{font-size:17px;margin-top:28px}
+p{max-width:68ch;margin:.6em 0}
+.lede{font-size:17px;color:var(--ink-2);max-width:70ch}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{padding-block:40px 8px;display:grid;gap:12px}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:8px}
+nav.toc a{text-decoration:none;color:var(--ink-2);padding:4px 0;border-bottom:1px solid transparent}
+nav.toc a:hover,nav.toc a:focus-visible{border-bottom-color:var(--accent);color:var(--accent-ink);outline:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:20px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.tile .n{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12.5px;color:var(--muted);margin-top:4px}
+.wrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);margin-top:16px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line-2);text-align:left;vertical-align:top;white-space:nowrap}
+thead th{position:sticky;top:0;background:var(--panel);font-weight:600;font-size:12.5px;color:var(--ink-2);border-bottom:1px solid var(--line);z-index:1}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:12.5px}
+td.heat{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-variant-numeric:tabular-nums}
+.h0{background:var(--heat-0)} .h1{background:var(--heat-1)} .h2{background:var(--heat-2)} .h3{background:var(--heat-3)} .h4{background:var(--heat-4);color:#fff} .h5{background:var(--heat-5);color:#fff}
+.na{color:var(--muted)} .err{color:var(--bad)}
+.chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:500;line-height:1.6}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.no{background:var(--line-2);color:var(--muted)} .chip.err{background:var(--bad-soft);color:var(--bad)} .chip.warn{background:var(--warn-soft);color:var(--warn)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:3px;border:1px solid var(--line);display:inline-block}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;margin-top:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px 18px;box-shadow:var(--shadow)}
+.card h3{margin-top:0}
+.card .sub{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+svg text{font-family:"IBM Plex Mono",monospace;font-size:11px;fill:var(--ink-2)}
+svg .axis{stroke:var(--line);stroke-width:1}
+svg .grid{stroke:var(--line-2);stroke-width:1}
+.note{font-size:13px;color:var(--ink-2);max-width:78ch}
+details{margin-top:10px} summary{cursor:pointer;color:var(--accent-ink);font-size:13.5px}
+code{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--line-2);padding:1px 5px;border-radius:3px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 70px;align-items:center;gap:10px;font-size:12.5px;padding:3px 0}
+.bar-row .b{height:12px;border-radius:2px;background:var(--accent);min-width:2px}
+.bar-row .v{font-family:"IBM Plex Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}
+.bar-row.alt .b{background:var(--warn)}
+@media (max-width:640px){ .bar-row{grid-template-columns:110px 1fr 60px} h2{margin-top:40px} }
+@media (prefers-reduced-motion: no-preference){ .b{transition:width .4s ease} }
+</style>
+
+<header>
+  <div class="eyebrow">rd-databases · results</div>
+  <h1>Relational Database Lab</h1>
+  <p class="lede" id="lede"></p>
+  <nav class="toc">
+    <a href="#engines">Engines</a><a href="#latency">Query latency</a><a href="#features">Feature probes</a><a href="#optim">Optimisation</a>
+    <a href="#conn">Connections</a><a href="#repl">Replication &amp; failover</a><a href="#backup">Backup &amp; recovery</a><a href="#logging">Logging</a><a href="#citus">Citus bulk-insert load</a><a href="#method">Method</a>
+  </nav>
+  <div class="tiles" id="tiles"></div>
+</header>
+
+<section id="engines"><h2>Engines and bulk load</h2>
+  <p class="note">Same seeded dataset everywhere (20k customers, 200k orders, 488k order items, 1M events). Load rate is the engine's best bulk path through its Python driver.</p>
+  <div class="wrap"><table id="t-engines"></table></div>
+</section>
+
+<section id="latency"><h2>Query latency (p50, ms)</h2>
+  <p class="note">Warm cache, one connection, 10 iterations after 2 warm-ups, client-observed. Cells are shaded relative to the fastest engine on the same row (log scale); <span class="na">—</span> = no syntax for the construct, <span class="err">err</span> = accepted but failed.</p>
+  <div class="legend"><span><i class="sw h0"></i>fastest</span><span><i class="sw h2"></i>~10×</span><span><i class="sw h4"></i>~100×</span><span><i class="sw h5"></i>≥1000× slower</span></div>
+  <div class="wrap"><table id="t-latency"></table></div>
+</section>
+
+<section id="features"><h2>Feature probes</h2>
+  <p class="note">DDL/DML constructs tried verbatim on each engine (dialect-adjusted syntax). Supported means the statement ran and, where it was meant to fail (constraints, timeouts), failed with the expected error.</p>
+  <div class="wrap"><table id="t-features"></table></div>
+</section>
+
+<section id="optim"><h2>Optimisation experiments</h2>
+  <p class="note">Each experiment times a query, applies one change (index, rewrite, statistics, batching, prepared statements), and times it again. Speed-up is p50 of the first variant divided by p50 of the best variant.</p>
+  <div class="wrap"><table id="t-optim"></table></div>
+  <div class="grid2" id="optim-charts"></div>
+</section>
+
+<section id="conn"><h2>Connections</h2>
+  <p class="note">Connect latency includes one round trip; storms open N connections at once and record the error at the limit; throughput uses one forked process per connection running primary-key lookups.</p>
+  <div class="wrap"><table id="t-conn"></table></div>
+  <div class="grid2" id="conn-charts"></div>
+</section>
+
+<section id="repl"><h2>Replication and failover</h2>
+  <p class="note">Visibility lag: insert on the primary, poll the replica until the row appears. Failover: <code>docker kill</code> the primary, promote, time until the first successful write.</p>
+  <div class="wrap"><table id="t-repl"></table></div>
+</section>
+
+<section id="backup"><h2>Backup and recovery drills</h2>
+  <p class="note">Every strategy is executed, not described: back up into the stack's shared <code>/backups</code> volume, restore into a second database, a scratch container or in place, compare a fingerprint of all seven tables with the source (<b>verified</b>), and bring back a 1000-row probe table written after the full backup and deleted after the recovery point (<b>PITR / probe</b>). Sizes are bytes on disk.</p>
+  <div class="wrap"><table id="t-backup"></table></div>
+  <div class="grid2" id="backup-charts"></div>
+</section>
+
+<section id="logging"><h2>Logging</h2>
+  <p class="note">Slow-query sink with a 100 ms threshold, a tagged slow (~300 ms) and fast statement to prove capture and filtering, an audit-trail proof (tagged DDL), and the throughput cost of logging <i>every</i> statement (8 processes doing primary-key lookups for 4 s; differences under ~10 % are run-to-run noise). Every container logs through the Docker <code>json-file</code> driver with rotation (50 MB × 3, compressed).</p>
+  <div class="wrap"><table id="t-logging"></table></div>
+  <div class="grid2" id="logging-charts"></div>
+</section>
+
+<section id="citus"><h2>Citus sharded cluster · multi-connection bulk insert</h2>
+  <p class="note" id="citus-note"></p>
+  <div class="grid2" id="citus-charts"></div>
+  <div class="wrap"><table id="t-citus"></table></div>
+</section>
+
+<section id="method"><h2>Method</h2>
+  <p class="note">One 28-core host, every container on the same machine (Docker Compose v5). Stacks run one at a time. Timings use monotonic clocks; results checksummed per query; plans stored next to timings under <code>results/&lt;engine&gt;/plans/</code>. Harness: <code>harness/rdlab</code>; regenerate this page with <code>scripts/build-report.py</code>.</p>
+</section>
+
+<script>
+/*__DATA__*/
+const E = DATA.engines, keys = Object.keys(E).sort((a,b)=>E[a].display.localeCompare(E[b].display));
+const $ = s => document.querySelector(s);
+const fmt = (v, d=1) => v==null||isNaN(v) ? '—' : (Math.abs(v)>=1000 ? (v/1000).toFixed(2)+' s' : (Math.abs(v)>=10 ? v.toFixed(0) : v.toFixed(d)));
+const fmtInt = v => v==null ? '—' : Number(v).toLocaleString('en-US');
+const esc = s => String(s??'').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const nBench = Object.values(E).filter(e=>Object.keys(e.bench).length).length;
+$('#lede').textContent = `${keys.length} SQL engines in Docker Compose, one dataset, six test families: capabilities, optimisation, connections, replication, backup & recovery, logging. Generated ${DATA.generated}.`;
+const nQ = DATA.queries.length, nCaps = new Set(keys.flatMap(k=>Object.keys(E[k].caps))).size;
+const nRepl = keys.filter(k=>E[k].rep && E[k].rep.kind && E[k].rep.status!=='single-node').length;
+$('#tiles').innerHTML = [[keys.length,'engines'],[nQ,'catalog queries'],[nCaps,'feature probes'],[11,'optimisation experiments'],[nRepl,'replicated / clustered stacks']]
+  .map(([n,l])=>`<div class="tile"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+
+// engines table
+{ const rows = keys.map(k=>{const e=E[k]; const ev=e.load.events||{}; return `<tr><td><b>${esc(e.display)}</b><br><span class="na" style="font-size:12px">${esc(e.category||'')}</span></td><td style="white-space:normal;max-width:260px">${esc(e.version)}</td><td><code>${esc(e.image)}</code></td><td class="num">${fmtInt(ev.rows_per_s)}</td><td style="white-space:normal;max-width:200px;font-size:12px" class="na">${esc((ev.method||ev.error||'').slice(0,60))}</td><td style="white-space:normal;max-width:240px;font-size:12px">${esc(e.rep.kind||'—')}</td></tr>`}).join('');
+  $('#t-engines').innerHTML = `<thead><tr><th>engine</th><th>version</th><th>image</th><th class="num">events load rows/s</th><th>load path</th><th>replication</th></tr></thead><tbody>${rows}</tbody>`; }
+
+// latency heatmap
+{ const eb = keys.filter(k=>Object.keys(E[k].bench).length);
+  const head = `<thead><tr><th>query</th>${eb.map(k=>`<th class="num">${esc(E[k].display)}</th>`).join('')}</tr></thead>`;
+  const rows = DATA.queries.map(q=>{ const vals = eb.map(k=>E[k].bench[q.id]); const oks = vals.filter(v=>v&&v.status==='ok'&&v.p50!=null).map(v=>v.p50); const min = Math.min(...oks);
+    const cells = vals.map(v=>{ if(!v) return '<td class="na">·</td>'; if(v.status==='unsupported') return '<td class="na heat">—</td>'; if(v.status!=='ok') return '<td class="err heat">err</td>';
+      const r = v.p50/min; const cls = r<1.5?'h0':r<4?'h1':r<12?'h2':r<40?'h3':r<150?'h4':'h5'; return `<td class="heat ${cls}" title="p95 ${fmt(v.p95)} ms, rows ${v.rows}">${fmt(v.p50)}</td>`; }).join('');
+    return `<tr><td><code>${q.id}</code><br><span class="na" style="font-size:11.5px">${esc(q.title)}</span></td>${cells}</tr>`; }).join('');
+  $('#t-latency').innerHTML = head + `<tbody>${rows}</tbody>`; }
+
+// features
+{ const ek = keys.filter(k=>Object.keys(E[k].caps).length); const names = [...new Set(ek.flatMap(k=>Object.keys(E[k].caps)))];
+  const sym = {supported:'<span class="chip ok">yes</span>', unsupported:'<span class="chip no">no</span>', error:'<span class="chip err">err</span>'};
+  $('#t-features').innerHTML = `<thead><tr><th>feature</th>${ek.map(k=>`<th>${esc(E[k].display)}</th>`).join('')}</tr></thead><tbody>` +
+    names.map(n=>`<tr><td>${esc(n)}</td>${ek.map(k=>`<td>${E[k].caps[n]?sym[E[k].caps[n]]||'?':'<span class="na">·</span>'}</td>`).join('')}</tr>`).join('') + '</tbody>'; }
+
+// optimisation
+{ const ek = keys.filter(k=>Object.keys(E[k].opt).length); const ids = [...new Set(ek.flatMap(k=>Object.keys(E[k].opt)))];
+  const cell = x => { if(!x) return '<td class="na">·</td>'; if(x.speedup) return `<td class="num" title="${esc(x.best)}">×${x.speedup}</td>`; const v=x.variants||[]; if(v.length&&v[0].rows_per_s!==undefined&&v.some(z=>z.rows_per_s)) return `<td class="num">${v.map(z=>z.rows_per_s?fmtInt(z.rows_per_s):'—').join(' / ')} r/s</td>`; if(v.length&&v.some(z=>z.p50_ms)) return `<td class="num">${v.map(z=>z.p50_ms?fmt(z.p50_ms):'—').join(' / ')}</td>`; return '<td class="na">n/a</td>'; };
+  $('#t-optim').innerHTML = `<thead><tr><th>experiment</th>${ek.map(k=>`<th class="num">${esc(E[k].display)}</th>`).join('')}</tr></thead><tbody>` +
+    ids.map(id=>{ const t = ek.map(k=>E[k].opt[id]).find(x=>x)?.title||id; return `<tr><td><code>${id}</code><br><span class="na" style="font-size:11.5px;white-space:normal;display:inline-block;max-width:320px">${esc(t)}</span></td>${ek.map(k=>cell(E[k].opt[id])).join('')}</tr>`; }).join('') + '</tbody>';
+  // bar charts for two headline experiments
+  const charts = [['opt04_pagination','OFFSET vs keyset pagination (p50 ms, lower is better)'],['opt10_batch_inserts','Insert batching (rows/s, higher is better)']];
+  $('#optim-charts').innerHTML = charts.map(([id,title])=>{ const rows = ek.map(k=>({e:E[k].display, v:(E[k].opt[id]||{}).variants||[]})).filter(r=>r.v.length);
+    const vnames = rows[0]?rows[0].v.map(x=>x.name):[]; const isRate = id==='opt10_batch_inserts';
+    const html = rows.map(r=>{ const vals = r.v.map(x=> isRate? x.rows_per_s : x.p50_ms); const max = Math.max(...vals.filter(x=>x)); return `<div style="margin:10px 0 4px;font-weight:600;font-size:13px">${esc(r.e)}</div>` + r.v.map((x,i)=>{ const val = vals[i]; const w = val? Math.max(2, 100*val/max):0; return `<div class="bar-row ${i%2?'alt':''}"><span class="na" style="overflow:hidden;text-overflow:ellipsis">${esc(x.name)}</span><div><div class="b" style="width:${w}%"></div></div><span class="v">${val?(isRate?fmtInt(val):fmt(val)):'n/a'}</span></div>`;}).join(''); }).join('');
+    return `<div class="card"><h3>${esc(title)}</h3><div class="sub">${vnames.length} variants per engine</div>${html}</div>`; }).join(''); }
+
+// connections
+{ const ek = keys.filter(k=>E[k].conn && Object.keys(E[k].conn).length);
+  const rows = ek.map(k=>{ const c=E[k].conn; const cl=c.connect_latency||{}; const direct = cl.primary ?? cl.embedded ?? Object.values(cl)[0]; const proxyKey = Object.keys(cl).find(t=>!['primary','embedded'].includes(t)); const proxy = proxyKey?cl[proxyKey]:null;
+    const st = (c.storm||{}).primary || Object.values(c.storm||{})[0] || []; const big = st.length? st[st.length-1] : null;
+    const conc = (c.concurrency||{}).primary || Object.values(c.concurrency||{})[0] || []; const w1 = conc.find(x=>x.workers===1)||{}; const w64 = conc.find(x=>x.workers===64)||conc[conc.length-1]||{};
+    const pconc = proxyKey? ((c.concurrency||{})[proxyKey]||[]) : []; const pw64 = pconc.find(x=>x.workers===64)||pconc[pconc.length-1]||{};
+    const tx = c.transactions||{}; const dl = tx.deadlock||{}; const rr = tx.write_conflict_repeatable_read||{};
+    return `<tr><td><b>${esc(E[k].display)}</b></td><td class="num">${c.max_connections??'—'}</td><td class="num">${fmt(direct,2)}</td><td class="num">${proxy!=null?fmt(proxy,2):'—'}</td><td class="num">${big?`${big.opened}/${big.n}${big.failed?` <span class="err">(${big.failed} failed ${esc(Object.keys(big.codes||{})[0]||'')})</span>`:''}`:'—'}</td><td class="num">${fmtInt(w1.qps)}</td><td class="num">${fmtInt(w64.qps)}</td><td class="num">${proxyKey?`${fmtInt(pw64.qps)} <span class="na">${esc(proxyKey)}</span>`:'—'}</td><td>${dl.detected?`<span class="chip ok">${fmt(dl.detection_ms)} ms · ${esc(Object.values(dl.error_codes||{})[0]||'')}</span>`:(dl.note?`<span class="chip warn">single writer</span>`:(tx.status?'<span class="na">n/a</span>':'<span class="chip no">no</span>'))}</td><td>${rr.t1_update_after_t2_commit?`<span class="chip ${rr.t1_update_after_t2_commit==='rejected'?'ok':'warn'}">${esc(rr.t1_update_after_t2_commit)} ${esc(rr.error_code||'')}</span>`:'<span class="na">n/a</span>'}</td></tr>`; }).join('');
+  $('#t-conn').innerHTML = `<thead><tr><th>engine</th><th class="num">max conn</th><th class="num">connect p50 ms</th><th class="num">via proxy</th><th class="num">storm opened/asked</th><th class="num">1 conn QPS</th><th class="num">64 conn QPS</th><th class="num">64 conn via proxy</th><th>deadlock detected</th><th>RR lost-update</th></tr></thead><tbody>${rows}</tbody>`;
+  // chart: QPS scaling
+  const series = ek.map(k=>({name:E[k].display, pts:((E[k].conn.concurrency||{}).primary||Object.values(E[k].conn.concurrency||{})[0]||[]).filter(p=>p.qps)})).filter(s=>s.pts.length>1);
+  $('#conn-charts').innerHTML = `<div class="card"><h3>Throughput vs connections</h3><div class="sub">primary-key lookups, one process per connection, QPS (log scale)</div>${lineChart(series, 'workers', 'qps', true)}</div>`; }
+
+// replication
+{ const ek = keys.filter(k=>E[k].rep && E[k].rep.kind);
+  const rows = ek.map(k=>{ const r=E[k].rep; const v = Object.values(r.visibility||{})[0]; const wr = Object.values(r.write_rejection||{})[0]||{}; const cu = r.catchup? Object.values(r.catchup)[0] : null; const rs=r.read_scaling||{}; const fo=r.failover||{};
+    return `<tr><td><b>${esc(E[k].display)}</b></td><td style="white-space:normal;max-width:260px;font-size:12.5px">${esc(r.kind)}</td><td class="num">${v?`${fmt(v.p50,2)} / ${fmt(v.p95,2)} / ${fmt(v.max,2)}`:(r.status||'—')}</td><td>${wr.writes_rejected===true?`<span class="chip ok">rejected ${esc(wr.error_code||'')}</span>`:wr.writes_rejected===false?'<span class="chip warn">accepted (multi-active)</span>':'<span class="na">—</span>'}</td><td class="num">${cu!=null?fmt(cu):'—'}</td><td class="num">${rs.primary_only?`${fmtInt(rs.primary_only)} → ${fmtInt(rs.primary_plus_replicas)} <span class="na">×${rs.gain}</span>`:'—'}</td><td class="num">${fo.downtime_ms!=null?fmt(fo.downtime_ms):(fo.error||fo.promote_error?'<span class="err">failed</span>':'—')}</td><td style="white-space:normal;max-width:220px;font-size:12px" class="na">${esc(fo.promote_cmd||fo.note||'')}</td></tr>`; }).join('');
+  $('#t-repl').innerHTML = `<thead><tr><th>engine</th><th>mechanism</th><th class="num">visibility lag p50 / p95 / max ms</th><th>replica write</th><th class="num">catch-up after 20k rows ms</th><th class="num">read scaling QPS</th><th class="num">failover downtime ms</th><th>how</th></tr></thead><tbody>${rows}</tbody>`; }
+
+// backup & recovery
+{ const ek = keys.filter(k=>E[k].backup && E[k].backup.length);
+  const chip = v => v===true?'<span class="chip ok">yes</span>':v===false?'<span class="chip no">no</span>':'<span class="na">—</span>';
+  const rows = ek.flatMap(k=>E[k].backup.map((b,i)=>`<tr>${i===0?`<td rowspan="${E[k].backup.length}"><b>${esc(E[k].display)}</b></td>`:''}<td><code>${esc(b.name)}</code></td><td>${esc(b.kind||'')}</td><td style="white-space:normal;max-width:260px;font-size:12px">${esc(b.tool||'')}</td>${b.status==='ok'?`<td class="num">${fmt(b.backup_s,2)}</td><td class="num">${b.mb!=null?fmt(b.mb,1):'—'}</td><td class="num">${fmt(b.restore_s,2)}</td><td>${chip(b.verified)}</td><td>${chip(b.pitr)}</td>`:`<td colspan="5" class="${b.status==='error'?'err':'na'}">${esc(b.status)}</td>`}<td style="white-space:normal;max-width:320px;font-size:12px" class="na">${esc(b.notes||'')}</td></tr>`)).join('');
+  $('#t-backup').innerHTML = `<thead><tr><th>engine</th><th>strategy</th><th>kind</th><th>tool</th><th class="num">backup s</th><th class="num">size MB</th><th class="num">restore s</th><th>verified</th><th>PITR / probe</th><th>notes</th></tr></thead><tbody>${rows}</tbody>`;
+  const okb = ek.flatMap(k=>E[k].backup.filter(b=>b.status==='ok'&&b.backup_s>0&&b.kind!=='pitr'&&b.kind!=='flashback').map(b=>({name:`${E[k].display} · ${b.name}`, bs:b.backup_s, rs:b.restore_s||0, mb:b.mb||0}))).sort((a,b)=>b.mb-a.mb).slice(0,18);
+  const maxT = Math.max(...okb.map(b=>Math.max(b.bs,b.rs)),1);
+  $('#backup-charts').innerHTML = `<div class="card"><h3>Backup vs restore time</h3><div class="sub">seconds, largest backups first (physical, logical and incremental strategies)</div>${okb.map(b=>`<div class="bar-row"><span class="na" style="font-size:11.5px">${esc(b.name)}</span><div><div class="b" style="width:${100*b.bs/maxT}%"></div><div class="b" style="width:${100*b.rs/maxT}%;background:var(--warn);margin-top:2px"></div></div><span class="v">${fmt(b.bs,1)} / ${fmt(b.rs,1)}</span></div>`).join('')}<div class="legend"><span><i class="sw" style="background:var(--accent)"></i>backup</span><span><i class="sw" style="background:var(--warn)"></i>restore</span></div></div>`;
+}
+
+// logging
+{ const ek = keys.filter(k=>E[k].logging && E[k].logging.sink);
+  const chip = v => v===true?'<span class="chip ok">yes</span>':v===false?'<span class="chip no">no</span>':'<span class="na">—</span>';
+  const rows = ek.map(k=>{ const l=E[k].logging; const ov = l.overhead_status==='ok'?`${fmtInt(l.baseline_qps)} → ${fmtInt(l.full_qps)} <span class="${(l.overhead_pct||0)>10?'err':'na'}">(${l.overhead_pct} %)</span>`:`<span class="na">${esc(l.overhead_status||'—')}</span>`;
+    return `<tr><td><b>${esc(E[k].display)}</b></td><td style="white-space:normal;max-width:280px;font-size:12px">${esc(l.sink||'')}</td><td>${l.slow_logged?`<span class="chip ok">captured ${fmt(l.seen_after_s,2)} s</span>`:'<span class="chip no">missed</span>'}</td><td>${l.fast_logged===false?'<span class="chip ok">filtered</span>':l.fast_logged?'<span class="chip warn">logged (no threshold)</span>':'<span class="na">—</span>'}</td><td style="white-space:normal;max-width:260px;font-size:12px">${esc(l.audit_mechanism||'')}</td><td>${l.audit_status==='n/a'?'<span class="na">n/a</span>':chip(l.audit_found)}</td><td class="num">${ov}</td><td class="num">${l.bytes_per_stmt!=null?fmt(l.bytes_per_stmt,0):'—'}</td><td>${esc(l.docker_driver||'')} × ${l.containers}</td></tr>`; }).join('');
+  $('#t-logging').innerHTML = `<thead><tr><th>engine</th><th>slow-query sink</th><th>slow statement</th><th>fast statement</th><th>audit mechanism</th><th>audit event</th><th class="num">QPS: threshold → log everything</th><th class="num">bytes / statement</th><th>docker driver</th></tr></thead><tbody>${rows}</tbody>`;
+  const ovs = ek.filter(k=>E[k].logging.overhead_status==='ok'&&E[k].logging.overhead_pct!=null).map(k=>({name:E[k].display, pct:E[k].logging.overhead_pct})).sort((a,b)=>b.pct-a.pct);
+  const maxP = Math.max(...ovs.map(o=>Math.abs(o.pct)),1);
+  $('#logging-charts').innerHTML = `<div class="card"><h3>Cost of logging every statement</h3><div class="sub">throughput drop in % (negative = within noise)</div>${ovs.map(o=>`<div class="bar-row${o.pct<0?' alt':''}"><span class="na">${esc(o.name)}</span><div><div class="b" style="width:${100*Math.abs(o.pct)/maxP}%"></div></div><span class="v">${o.pct} %</span></div>`).join('')}</div>`;
+}
+
+// citus load test
+{ const c = E.citus; const lt = c && c.loadtest; if(!lt){ $('#citus').style.display='none'; } else {
+  $('#citus-note').textContent = `Coordinator + 5 worker primaries + 5 streaming replicas, every PostgreSQL container capped at 0.8 CPU / 1.5 GiB; clients either connect to the coordinator directly or through HAProxy → 3 PgBouncer instances. Each run: N worker processes inserting ${fmtInt(lt.batch_rows)}-row batches into the hash-distributed events table for ${lt.seconds} s. CPU is exact cgroup accounting during the inserts.`;
+  const groups = {}; lt.runs.forEach(r=>{ const g=`${r.mode} · ${r.target}`; (groups[g]=groups[g]||[]).push(r); });
+  const series = Object.entries(groups).map(([name,rs])=>({name, pts: rs.map(r=>({workers:r.workers, qps:r.rows_per_s}))}));
+  const busiest = lt.runs.map(r=>{ const u=r.usage||{}; const coord=u['citus-coordinator']||{}; const ws=[1,2,3,4,5].map(i=>(u['citus-w'+i]||{}).cores||0); return {r, coord:coord.cores, coordPct: coord.limit? 100*coord.cores/coord.limit : null, wAvg: ws.reduce((a,b)=>a+b,0)/5, wPct: coord.limit? 100*(ws.reduce((a,b)=>a+b,0)/5)/0.8:null, pgb:[1,2,3].map(i=>(u['citus-pgbouncer'+i]||{}).cores||0).reduce((a,b)=>a+b,0), mem: coord.mem_peak_mb}; });
+  $('#citus-charts').innerHTML = `<div class="card"><h3>Rows per second vs client connections</h3><div class="sub">multi-row INSERT vs COPY, direct vs pooled (${lt.best?`best: ${fmtInt(lt.best.rows_per_s)} rows/s, ${lt.best.mode} via ${lt.best.target} with ${lt.best.workers} connections`:''})</div>${lineChart(series,'workers','qps',false)}</div>` +
+    `<div class="card"><h3>Where the CPU goes</h3><div class="sub">average cores used during inserts; each instance is capped at 0.8</div>${busiest.map(b=>`<div style="margin:8px 0 2px;font-size:12.5px"><b>${esc(b.r.mode)} · ${esc(b.r.target)} · ${b.r.workers} conn</b> <span class="na">${fmtInt(b.r.rows_per_s)} rows/s</span></div><div class="bar-row"><span class="na">coordinator</span><div><div class="b" style="width:${Math.min(100,100*(b.coord||0)/0.8)}%"></div></div><span class="v">${(b.coord||0).toFixed(2)}</span></div><div class="bar-row alt"><span class="na">worker avg (×5)</span><div><div class="b" style="width:${Math.min(100,100*(b.wAvg||0)/0.8)}%"></div></div><span class="v">${(b.wAvg||0).toFixed(2)}</span></div>`).join('')}</div>`;
+  $('#t-citus').innerHTML = `<thead><tr><th>mode</th><th>entry point</th><th class="num">connections</th><th class="num">rows/s</th><th class="num">batch p50 ms</th><th class="num">batch p95 ms</th><th class="num">errors</th><th class="num">coordinator cores</th><th class="num">worker cores avg</th><th class="num">pgbouncer cores Σ</th><th class="num">coordinator peak MB</th></tr></thead><tbody>` +
+    busiest.map(b=>`<tr><td>${esc(b.r.mode)}</td><td>${esc(b.r.target)}</td><td class="num">${b.r.workers}</td><td class="num"><b>${fmtInt(b.r.rows_per_s)}</b></td><td class="num">${fmt(b.r.p50)}</td><td class="num">${fmt(b.r.p95)}</td><td class="num">${b.r.errors?`<span class="err">${b.r.errors}</span>`:'0'}</td><td class="num">${b.coord!=null?b.coord.toFixed(2)+(b.coordPct!=null?` <span class="na">(${b.coordPct.toFixed(0)}%)</span>`:''):'—'}</td><td class="num">${b.wAvg.toFixed(2)} <span class="na">(${b.wPct!=null?b.wPct.toFixed(0):'—'}%)</span></td><td class="num">${b.pgb.toFixed(2)}</td><td class="num">${b.mem??'—'}</td></tr>`).join('') + '</tbody>'; } }
+
+function lineChart(series, xk, yk, logY){
+  const W=560,H=260,pl=64,pr=16,pt=16,pb=40; const xs=[...new Set(series.flatMap(s=>s.pts.map(p=>p[xk])))].sort((a,b)=>a-b); const ys=series.flatMap(s=>s.pts.map(p=>p[yk])).filter(v=>v>0);
+  if(!xs.length||!ys.length) return '<p class="na">no data</p>';
+  const ymin = logY? Math.pow(10,Math.floor(Math.log10(Math.min(...ys)))) : 0, ymax = logY? Math.pow(10,Math.ceil(Math.log10(Math.max(...ys)))) : Math.max(...ys)*1.1;
+  const x = v => pl + (xs.indexOf(v))*(W-pl-pr)/Math.max(1,xs.length-1);
+  const y = v => logY ? pt + (H-pt-pb)*(1-(Math.log10(v)-Math.log10(ymin))/(Math.log10(ymax)-Math.log10(ymin))) : pt + (H-pt-pb)*(1-v/ymax);
+  const colors = ['#0F7C86','#C48A1C','#C0463C','#2F8A5A','#6A5ACD','#8B5E3C','#3D7EAA','#A0527F','#5C8A2E','#B04E9E','#4E6E8E'];
+  const ticks = logY ? Array.from({length:Math.log10(ymax)-Math.log10(ymin)+1},(_,i)=>ymin*Math.pow(10,i)) : Array.from({length:5},(_,i)=>ymax*i/4);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="line chart">`;
+  ticks.forEach(t=>{ s+=`<line class="grid" x1="${pl}" x2="${W-pr}" y1="${y(t)}" y2="${y(t)}"/><text x="${pl-6}" y="${y(t)+4}" text-anchor="end">${t>=1000?(t/1000)+'k':Math.round(t)}</text>`; });
+  s += `<line class="axis" x1="${pl}" x2="${W-pr}" y1="${H-pb}" y2="${H-pb}"/>`;
+  xs.forEach(v=>{ s+=`<text x="${x(v)}" y="${H-pb+16}" text-anchor="middle">${v}</text>`; });
+  s += `<text x="${(pl+W-pr)/2}" y="${H-6}" text-anchor="middle">${xk==='workers'?'client connections (processes)':xk}</text>`;
+  series.forEach((sr,i)=>{ const c=colors[i%colors.length]; const pts=sr.pts.filter(p=>p[yk]>0).sort((a,b)=>a[xk]-b[xk]); if(!pts.length) return; s += `<polyline fill="none" stroke="${c}" stroke-width="2" points="${pts.map(p=>`${x(p[xk])},${y(p[yk])}`).join(' ')}"/>`; pts.forEach(p=>{ s+=`<circle cx="${x(p[xk])}" cy="${y(p[yk])}" r="3" fill="${c}"><title>${sr.name}: ${p[xk]} → ${Number(p[yk]).toLocaleString()}</title></circle>`; }); });
+  s += '</svg>';
+  s += `<div class="legend">${series.map((sr,i)=>`<span><i class="sw" style="background:${colors[i%colors.length]};border-color:${colors[i%colors.length]}"></i>${esc(sr.name)}</span>`).join('')}</div>`;
+  return s;
+}
+</script>

@@ -1,0 +1,1169 @@
+{
+  "engine": "citus",
+  "display": "Citus 13 (PG 18) sharded, 5x2",
+  "category": "distributed SQL (sharded PostgreSQL)",
+  "dialect": "citus",
+  "driver": "psycopg",
+  "image": "citusdata/citus:latest",
+  "run_id": "20260913-000142-e49baa",
+  "started": "2026-09-12T21:01:42+00:00",
+  "scale": 1.0,
+  "notes": "Citus coordinator + 5 worker primaries + 5 streaming replicas (registered as Citus secondary nodes), every PostgreSQL instance limited to 0.8 CPU / 1.5 GiB. Clients enter through HAProxy -> 3 PgBouncer instances (transaction pooling) -> coordinator. Tables are hash-distributed on their primary keys (Citus needs PK/UNIQUE to contain the distribution column); products and categories are reference tables. Manual worker failover = promote replica + citus_update_node().",
+  "phases": {
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 20.0,
+      "containers": [
+        "rdlab-citus-coordinator",
+        "rdlab-citus-haproxy",
+        "rdlab-citus-pgbouncer1",
+        "rdlab-citus-pgbouncer2",
+        "rdlab-citus-pgbouncer3",
+        "rdlab-citus-r1",
+        "rdlab-citus-r2",
+        "rdlab-citus-r3",
+        "rdlab-citus-r4",
+        "rdlab-citus-r5",
+        "rdlab-citus-w1",
+        "rdlab-citus-w2",
+        "rdlab-citus-w3",
+        "rdlab-citus-w4",
+        "rdlab-citus-w5"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "rows": 250000,
+          "batches": 250,
+          "errors": 0,
+          "seconds": 20.0,
+          "rows_per_s": 12500,
+          "batch_ms": {
+            "n": 250,
+            "min": 132.617981,
+            "p50": 314.8125495,
+            "p90": 421.4232767,
+            "p95": 435.6276592,
+            "p99": 513.7508872399998,
+            "max": 578.41244,
+            "mean": 319.040212508,
+            "stdev": 79.67368657438783
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 57.1,
+              "cpu_max_pct": 82.7,
+              "mem_max_mb": 270.0,
+              "samples": 6
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 1.7,
+              "cpu_max_pct": 9.6,
+              "mem_max_mb": 34.0,
+              "samples": 6
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 1.3,
+              "cpu_max_pct": 4.2,
+              "mem_max_mb": 3.0,
+              "samples": 6
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 1.3,
+              "cpu_max_pct": 3.9,
+              "mem_max_mb": 5.0,
+              "samples": 6
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 1.3,
+              "cpu_max_pct": 3.8,
+              "mem_max_mb": 3.0,
+              "samples": 6
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 6.2,
+              "cpu_max_pct": 10.7,
+              "mem_max_mb": 153.0,
+              "samples": 6
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 6.3,
+              "cpu_max_pct": 11.1,
+              "mem_max_mb": 153.0,
+              "samples": 6
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 5.0,
+              "cpu_max_pct": 11.0,
+              "mem_max_mb": 143.0,
+              "samples": 6
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 5.4,
+              "cpu_max_pct": 9.8,
+              "mem_max_mb": 144.0,
+              "samples": 6
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 5.8,
+              "cpu_max_pct": 9.2,
+              "mem_max_mb": 145.0,
+              "samples": 6
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 18.4,
+              "cpu_max_pct": 23.3,
+              "mem_max_mb": 190.0,
+              "samples": 6
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 16.0,
+              "cpu_max_pct": 25.1,
+              "mem_max_mb": 190.0,
+              "samples": 6
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 15.8,
+              "cpu_max_pct": 20.8,
+              "mem_max_mb": 179.0,
+              "samples": 6
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 15.4,
+              "cpu_max_pct": 19.8,
+              "mem_max_mb": 178.0,
+              "samples": 6
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 14.3,
+              "cpu_max_pct": 19.8,
+              "mem_max_mb": 180.0,
+              "samples": 6
+            }
+          }
+        },
+        {
+          "workers": 8,
+          "target": "primary",
+          "rows": 176000,
+          "batches": 176,
+          "errors": 84,
+          "seconds": 20.0,
+          "rows_per_s": 8800,
+          "batch_ms": {
+            "n": 176,
+            "min": 98.047551,
+            "p50": 325.26773949999995,
+            "p90": 977.071673,
+            "p95": 1093.56361325,
+            "p99": 1417.09136675,
+            "max": 1621.5613,
+            "mean": 455.85597167613633,
+            "stdev": 310.1392068446305
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(40000000036) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 8,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 43.1,
+              "cpu_max_pct": 79.6,
+              "mem_max_mb": 283.0,
+              "samples": 4
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 2.3,
+              "cpu_max_pct": 8.9,
+              "mem_max_mb": 34.0,
+              "samples": 4
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 1.1,
+              "cpu_max_pct": 4.3,
+              "mem_max_mb": 3.0,
+              "samples": 4
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 1.0,
+              "cpu_max_pct": 3.8,
+              "mem_max_mb": 5.0,
+              "samples": 4
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 1.1,
+              "cpu_max_pct": 4.1,
+              "mem_max_mb": 3.0,
+              "samples": 4
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 5.6,
+              "cpu_max_pct": 7.6,
+              "mem_max_mb": 159.0,
+              "samples": 4
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 5.5,
+              "cpu_max_pct": 7.4,
+              "mem_max_mb": 158.0,
+              "samples": 4
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 3.4,
+              "cpu_max_pct": 10.8,
+              "mem_max_mb": 147.0,
+              "samples": 4
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 5.3,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 148.0,
+              "samples": 4
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 5.3,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 149.0,
+              "samples": 4
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 12.5,
+              "cpu_max_pct": 26.9,
+              "mem_max_mb": 192.0,
+              "samples": 4
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 12.5,
+              "cpu_max_pct": 31.5,
+              "mem_max_mb": 193.0,
+              "samples": 4
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 11.3,
+              "cpu_max_pct": 25.3,
+              "mem_max_mb": 182.0,
+              "samples": 4
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 10.7,
+              "cpu_max_pct": 24.9,
+              "mem_max_mb": 182.0,
+              "samples": 4
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 16.7,
+              "cpu_max_pct": 25.9,
+              "mem_max_mb": 181.0,
+              "samples": 4
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "rows": 83000,
+          "batches": 83,
+          "errors": 140,
+          "seconds": 20.0,
+          "rows_per_s": 4150,
+          "batch_ms": {
+            "n": 83,
+            "min": 909.351493,
+            "p50": 1898.767697,
+            "p90": 2573.0243585999997,
+            "p95": 2835.7032422,
+            "p99": 3071.6488581399985,
+            "max": 3233.51946,
+            "mean": 1963.7133563855423,
+            "stdev": 419.70701849546657
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(43000000006) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 16,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 8.4,
+              "cpu_max_pct": 8.4,
+              "mem_max_mb": 138.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 34.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 3.3,
+              "cpu_max_pct": 3.3,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 3.6,
+              "cpu_max_pct": 3.6,
+              "mem_max_mb": 5.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.5,
+              "cpu_max_pct": 3.5,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 158.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 158.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 147.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 147.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 147.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 181.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 8.2,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 182.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 170.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 170.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 170.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "rows": 73000,
+          "batches": 73,
+          "errors": 130,
+          "seconds": 20.0,
+          "rows_per_s": 3650,
+          "batch_ms": {
+            "n": 73,
+            "min": 2068.808291,
+            "p50": 4098.799007,
+            "p90": 7246.961117,
+            "p95": 7649.1424333999985,
+            "p99": 8895.410096000001,
+            "max": 10263.919334,
+            "mean": 4579.19375320548,
+            "stdev": 1570.6845138952588
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(52000000013) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 32,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 9.3,
+              "cpu_max_pct": 9.3,
+              "mem_max_mb": 164.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 34.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 5.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 8.4,
+              "cpu_max_pct": 8.4,
+              "mem_max_mb": 161.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 8.2,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 161.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 149.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 8.7,
+              "cpu_max_pct": 8.7,
+              "mem_max_mb": 150.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 7.8,
+              "cpu_max_pct": 7.8,
+              "mem_max_mb": 150.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.6,
+              "cpu_max_pct": 0.6,
+              "mem_max_mb": 184.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 183.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.7,
+              "cpu_max_pct": 0.7,
+              "mem_max_mb": 172.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.8,
+              "cpu_max_pct": 0.8,
+              "mem_max_mb": 173.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.7,
+              "cpu_max_pct": 0.7,
+              "mem_max_mb": 173.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 64,
+          "target": "primary",
+          "rows": 65000,
+          "batches": 65,
+          "errors": 120,
+          "seconds": 20.0,
+          "rows_per_s": 3250,
+          "batch_ms": {
+            "n": 65,
+            "min": 5103.812797,
+            "p50": 11810.853966,
+            "p90": 16823.3461954,
+            "p95": 18668.717839799996,
+            "p99": 20692.1158062,
+            "max": 21206.611387,
+            "mean": 11696.789430661538,
+            "stdev": 3734.1338997651287
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(54000000054) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 64,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 2.5,
+              "cpu_max_pct": 5.0,
+              "mem_max_mb": 213.0,
+              "samples": 2
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 34.0,
+              "samples": 2
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 1.8,
+              "cpu_max_pct": 3.5,
+              "mem_max_mb": 4.0,
+              "samples": 2
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 1.8,
+              "cpu_max_pct": 3.6,
+              "mem_max_mb": 6.0,
+              "samples": 2
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 2.2,
+              "cpu_max_pct": 4.4,
+              "mem_max_mb": 4.0,
+              "samples": 2
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.7,
+              "mem_max_mb": 165.0,
+              "samples": 2
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.9,
+              "mem_max_mb": 165.0,
+              "samples": 2
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 8.0,
+              "cpu_max_pct": 8.3,
+              "mem_max_mb": 153.0,
+              "samples": 2
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 5.1,
+              "cpu_max_pct": 10.3,
+              "mem_max_mb": 153.0,
+              "samples": 2
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.8,
+              "mem_max_mb": 153.0,
+              "samples": 2
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 9.4,
+              "cpu_max_pct": 10.7,
+              "mem_max_mb": 188.0,
+              "samples": 2
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 1.2,
+              "cpu_max_pct": 2.4,
+              "mem_max_mb": 188.0,
+              "samples": 2
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 9.1,
+              "cpu_max_pct": 10.6,
+              "mem_max_mb": 177.0,
+              "samples": 2
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 9.2,
+              "cpu_max_pct": 10.7,
+              "mem_max_mb": 177.0,
+              "samples": 2
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 9.3,
+              "cpu_max_pct": 10.2,
+              "mem_max_mb": 177.0,
+              "samples": 2
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "target": "pgbouncers",
+          "rows": 0,
+          "batches": 0,
+          "errors": 84,
+          "seconds": 20.0,
+          "rows_per_s": 0,
+          "batch_ms": {
+            "n": 0
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(42000000050) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 4,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 42.5,
+              "cpu_max_pct": 42.5,
+              "mem_max_mb": 131.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.5,
+              "cpu_max_pct": 0.5,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.7,
+              "cpu_max_pct": 0.7,
+              "mem_max_mb": 6.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.4,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.4,
+              "cpu_max_pct": 7.4,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 6.9,
+              "cpu_max_pct": 6.9,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.3,
+              "cpu_max_pct": 7.3,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 6.3,
+              "cpu_max_pct": 6.3,
+              "mem_max_mb": 154.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 4.9,
+              "cpu_max_pct": 4.9,
+              "mem_max_mb": 198.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 188.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 8,
+          "target": "pgbouncers",
+          "rows": 0,
+          "batches": 0,
+          "errors": 168,
+          "seconds": 20.0,
+          "rows_per_s": 0,
+          "batch_ms": {
+            "n": 0
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(40000000036) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 8,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 17.1,
+              "cpu_max_pct": 17.1,
+              "mem_max_mb": 195.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 11.0,
+              "cpu_max_pct": 11.0,
+              "mem_max_mb": 37.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 4.1,
+              "cpu_max_pct": 4.1,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 3.8,
+              "cpu_max_pct": 3.8,
+              "mem_max_mb": 5.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.9,
+              "cpu_max_pct": 3.9,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 8.9,
+              "cpu_max_pct": 8.9,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 7.3,
+              "cpu_max_pct": 7.3,
+              "mem_max_mb": 198.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.4,
+              "mem_max_mb": 189.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 177.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 177.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "pgbouncers",
+          "rows": 29000,
+          "batches": 29,
+          "errors": 208,
+          "seconds": 20.0,
+          "rows_per_s": 1450,
+          "batch_ms": {
+            "n": 29,
+            "min": 1175.484196,
+            "p50": 1698.185165,
+            "p90": 2519.7241352,
+            "p95": 2719.3483377999996,
+            "p99": 2944.0959611599997,
+            "max": 2998.486088,
+            "mean": 1813.6393976896552,
+            "stdev": 508.96391117791813
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(47000000086) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 16,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 278.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 5.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 164.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 210.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 8.8,
+              "cpu_max_pct": 8.8,
+              "mem_max_mb": 189.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 7.7,
+              "cpu_max_pct": 7.7,
+              "mem_max_mb": 178.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "pgbouncers",
+          "rows": 31000,
+          "batches": 31,
+          "errors": 201,
+          "seconds": 20.0,
+          "rows_per_s": 1550,
+          "batch_ms": {
+            "n": 31,
+            "min": 1810.307987,
+            "p50": 3894.967036,
+            "p90": 6398.509979,
+            "p95": 6596.704796,
+            "p99": 7045.25467,
+            "max": 7193.723737,
+            "mean": 4088.1137491612903,
+            "stdev": 1494.2832319651309
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(47000000086) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 32,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 616.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 9.2,
+              "cpu_max_pct": 9.2,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 3.5,
+              "cpu_max_pct": 3.5,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 3.6,
+              "cpu_max_pct": 3.6,
+              "mem_max_mb": 5.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.5,
+              "cpu_max_pct": 3.5,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 166.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.9,
+              "cpu_max_pct": 7.9,
+              "mem_max_mb": 155.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 153.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 154.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 7.6,
+              "cpu_max_pct": 7.6,
+              "mem_max_mb": 232.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.9,
+              "cpu_max_pct": 0.9,
+              "mem_max_mb": 216.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 9.9,
+              "cpu_max_pct": 9.9,
+              "mem_max_mb": 204.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 8.1,
+              "cpu_max_pct": 8.1,
+              "mem_max_mb": 204.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 203.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 64,
+          "target": "pgbouncers",
+          "rows": 21000,
+          "batches": 21,
+          "errors": 162,
+          "seconds": 20.0,
+          "rows_per_s": 1050,
+          "batch_ms": {
+            "n": 21,
+            "min": 4527.305105,
+            "p50": 11394.433124,
+            "p90": 14762.832565,
+            "p95": 17172.182476,
+            "p99": 17761.633824800003,
+            "max": 17908.996662,
+            "mean": 11286.164529333333,
+            "stdev": 3132.7220310486255
+          },
+          "first_error": "duplicate key value violates unique constraint \"events_pkey_102076\"\nDETAIL:  Key (id)=(54000000054) already exists.\nCONTEXT:  while executing command on w1:5432",
+          "workers_reported": 64,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 1223.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 9.1,
+              "cpu_max_pct": 9.1,
+              "mem_max_mb": 38.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 3.7,
+              "cpu_max_pct": 3.7,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 3.8,
+              "cpu_max_pct": 3.8,
+              "mem_max_mb": 5.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.6,
+              "cpu_max_pct": 3.6,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 166.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 166.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 9.1,
+              "cpu_max_pct": 9.1,
+              "mem_max_mb": 155.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 154.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 154.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 7.8,
+              "cpu_max_pct": 7.8,
+              "mem_max_mb": 274.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 255.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 9.2,
+              "cpu_max_pct": 9.2,
+              "mem_max_mb": 242.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 243.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 241.0,
+              "samples": 1
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "workers": 4,
+        "rows_per_s": 12500
+      },
+      "_seconds": 224.5
+    }
+  },
+  "server_version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "finished": "2026-09-12T21:05:27+00:00"
+}

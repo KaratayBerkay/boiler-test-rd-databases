@@ -1,0 +1,81 @@
+planning time: 959µs
+execution time: 433ms
+distribution: full
+plan type: generic, re-optimized
+rows decoded from KV: 492,606 (24 MiB, 4 gRPC calls)
+DistSQL network usage: 6.1 MiB (509 messages)
+regions: lab
+
+• sort
+│ sql nodes: n1, n3
+│ regions: lab
+│ execution time: 294µs
+│ sql cpu time: 294µs
+│ actual row count: 600
+│ estimated row count: 1,666
+│ order: +category_id,+row_number
+│
+└── • filter
+    │ sql nodes: n1, n3
+    │ regions: lab
+    │ execution time: 59µs
+    │ sql cpu time: 59µs
+    │ actual row count: 600
+    │ estimated row count: 1,666
+    │ filter: row_number <= 3
+    │
+    └── • window
+        │ sql nodes: n1, n3
+        │ regions: lab
+        │ execution time: 4ms
+        │ sql cpu time: 4ms
+        │ actual row count: 5,000
+        │ estimated row count: 4,999
+        │
+        └── • group (hash)
+            │ sql nodes: n1, n3
+            │ regions: lab
+            │ execution time: 205ms
+            │ sql cpu time: 205ms
+            │ actual row count: 5,000
+            │ estimated row count: 4,999
+            │ group by: product_id
+            │
+            └── • render
+                │ execution time: 89ms
+                │ sql cpu time: 88ms
+                │ actual row count: 487,606
+                │
+                └── • hash join
+                    │ sql nodes: n1, n3
+                    │ regions: lab
+                    │ execution time: 58ms
+                    │ sql cpu time: 184ms
+                    │ actual row count: 487,606
+                    │ estimated row count: 487,606
+                    │ equality: (product_id) = (id)
+                    │ right cols are key
+                    │
+                    ├── • scan
+                    │     sql nodes: n1
+                    │     kv nodes: n1
+                    │     regions: lab
+                    │     KV time: 382ms
+                    │     KV rows decoded: 487,606
+                    │     sql cpu time: 188ms
+                    │     actual row count: 487,606
+                    │     estimated row count: 487,606 (100% of the table; stats collected 3 minutes ago)
+                    │     table: order_items@order_items_pkey
+                    │     spans: FULL SCAN
+                    │
+                    └── • scan
+                          sql nodes: n3
+                          kv nodes: n3
+                          regions: lab
+                          KV time: 6ms
+                          KV rows decoded: 5,000
+                          sql cpu time: 2ms
+                          actual row count: 5,000
+                          estimated row count: 5,000 (100% of the table; stats collected 3 minutes ago)
+                          table: products@ix_products_category_id
+                          spans: FULL SCAN

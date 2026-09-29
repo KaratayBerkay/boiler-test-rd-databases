@@ -1,0 +1,14 @@
+Limit  (cost=2633.53..2633.65 rows=50 width=16) (actual time=11.772..11.779 rows=50.00 loops=1)
+  Buffers: shared hit=592
+  ->  Sort  (cost=2633.53..2708.15 rows=29848 width=16) (actual time=11.771..11.775 rows=50.00 loops=1)
+        Sort Key: ordered_at, id
+        Sort Method: top-N heapsort  Memory: 28kB
+        Buffers: shared hit=592
+        ->  Seq Scan on orders  (cost=0.00..1642.00 rows=29848 width=16) (actual time=0.010..7.409 rows=29714.00 loops=1)
+              Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))
+              Rows Removed by Filter: 30286
+              Buffers: shared hit=592
+Planning:
+  Buffers: shared hit=3
+Planning Time: 0.071 ms
+Execution Time: 11.800 ms

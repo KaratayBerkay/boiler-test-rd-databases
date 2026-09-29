@@ -1,0 +1,31 @@
+planning time: 172µs
+execution time: 360ms
+distribution: local
+plan type: generic, reused
+rows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)
+regions: lab
+
+• limit
+│ offset: 100000
+│
+└── • top-k
+    │ sql nodes: n1
+    │ regions: lab
+    │ execution time: 200ms
+    │ sql cpu time: 200ms
+    │ actual row count: 50
+    │ estimated row count: 100,050
+    │ order: +ordered_at,+id
+    │ k: 100050
+    │
+    └── • scan
+          sql nodes: n1
+          kv nodes: n1
+          regions: lab
+          KV time: 160ms
+          KV rows decoded: 200,000
+          sql cpu time: 51ms
+          actual row count: 200,000
+          estimated row count: 200,000 (100% of the table; stats collected 4 minutes ago)
+          table: orders@orders_pkey
+          spans: FULL SCAN

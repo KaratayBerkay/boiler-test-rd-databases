@@ -1,0 +1,4 @@
+Limit  (cost=37121.78..37121.91 rows=50 width=16)
+  ->  Sort  (cost=36871.78..37371.78 rows=200000 width=16)
+        Sort Key: ordered_at, id
+        ->  Seq Scan on orders  (cost=23.10..19261.42 rows=200000 width=16)

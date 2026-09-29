@@ -1,0 +1,46 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.037544849
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 163.7261709,
+    "r_loops": 1,
+    "r_total_time_ms": 91.63171424,
+    "nested_loop": [
+      {
+        "read_sorted_file": {
+          "r_rows": 25268,
+          "filesort": {
+            "sort_key": "orders.shipping_country, orders.`status`",
+            "r_loops": 1,
+            "r_total_time_ms": 81.44156507,
+            "r_used_priority_queue": false,
+            "r_output_rows": 25268,
+            "r_sort_passes": 1,
+            "r_buffer_size": "2047KiB",
+            "r_sort_mode": "sort_key,packed_addon_fields",
+            "table": {
+              "table_name": "orders",
+              "access_type": "ALL",
+              "loops": 1,
+              "r_loops": 1,
+              "rows": 194613,
+              "r_rows": 200000,
+              "cost": 32.3619066,
+              "r_table_time_ms": 45.26290148,
+              "r_other_time_ms": 36.17113059,
+              "r_engine_stats": {
+                "pages_accessed": 714
+              },
+              "filtered": 100,
+              "r_total_filtered": 12.634,
+              "attached_condition": "orders.ordered_at >= TIMESTAMP'2025-06-01 00:00:00' and orders.ordered_at < TIMESTAMP'2025-09-01 00:00:00'",
+              "r_filtered": 12.634
+            }
+          }
+        }
+      }
+    ]
+  }
+}

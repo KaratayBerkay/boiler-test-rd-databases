@@ -1,0 +1,67 @@
+# Microsoft SQL Server 2025 (Developer edition) — primary + secondary in a read-scale Availability Group
+# (CLUSTER_TYPE = NONE, no Pacemaker), synchronous commit, automatic seeding, readable secondary.
+#
+# Backup strategy (`rdlab run mssql --phases backup`): native BACKUP DATABASE (COMPRESSION, CHECKSUM) + DIFFERENTIAL +
+#   BACKUP LOG into the shared `mssql-backups` volume; RESTORE VERIFYONLY; restores WITH MOVE under new names; STOPAT PITR.
+# Logging strategy (init/setup.sh): Extended Events sessions (slow statements >= 100 ms; "everything" for the overhead
+#   test), SQL Server Audit to .sqlaudit files, Query Store on lab; errorlog under /var/opt/mssql/log; Docker json-file rotation.
+name: rdlab-mssql
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-mssql: &mssql
+  image: mcr.microsoft.com/mssql/server:2025-latest
+  logging: *logging
+  environment:
+    ACCEPT_EULA: "Y"
+    MSSQL_PID: Developer
+    MSSQL_SA_PASSWORD: "LabPass_2026!"
+    MSSQL_ENABLE_HADR: "1"
+    MSSQL_AGENT_ENABLED: "false"
+    MSSQL_MEMORY_LIMIT_MB: "6144"
+  healthcheck:
+    test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'LabPass_2026!' -b -Q 'SELECT 1' >/dev/null"]
+    interval: 5s
+    timeout: 5s
+    retries: 60
+
+services:
+  volumes-init:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: rdlab-mssql-volumes-init
+    user: root
+    entrypoint: ["sh", "-c", "chmod 1777 /backups && echo volumes ready"]
+    volumes: [mssql-backups:/backups]
+    logging: *logging
+    restart: "no"
+  mssql1:
+    <<: *mssql
+    container_name: rdlab-mssql-1
+    hostname: mssql1
+    volumes: [mssql1:/var/opt/mssql, mssql-shared:/var/opt/mssql/shared, mssql-backups:/backups]
+    ports: ["11433:1433"]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+  mssql2:
+    <<: *mssql
+    container_name: rdlab-mssql-2
+    hostname: mssql2
+    volumes: [mssql2:/var/opt/mssql, mssql-shared:/var/opt/mssql/shared, mssql-backups:/backups]
+    ports: ["11435:1433"]
+  init:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: rdlab-mssql-init
+    logging: *logging
+    user: root
+    entrypoint: ["bash", "/init/setup.sh"]
+    volumes: ["./init:/init:ro", "mssql-shared:/var/opt/mssql/shared"]
+    depends_on:
+      mssql1: { condition: service_healthy }
+      mssql2: { condition: service_healthy }
+    restart: "no"
+
+volumes:
+  mssql1:
+  mssql2:
+  mssql-shared:
+  mssql-backups:

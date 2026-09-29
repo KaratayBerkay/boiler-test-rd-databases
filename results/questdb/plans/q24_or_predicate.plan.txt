@@ -1,0 +1,8 @@
+Encode sort light
+  keys: [id]
+    SelectedRecord
+        Async JIT Filter workers: 27
+          filter: (customer_id=$0::short or id=$1::int)
+            PageFrame
+                Row forward scan
+                Frame forward scan on: orders

@@ -1,0 +1,53 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=2.360..2.367 rows=90.00 loops=1)
+  ->  Distributed Subplan 59_1
+        Subplan Duration: 78.71 ms
+        Intermediate Data Size: 2876 bytes
+        Result destination: Write locally
+        ->  HashAggregate  (cost=500.00..502.50 rows=200 width=40) (actual time=0.000..0.000 rows=90.00 loops=1)
+              Group Key: remote_scan.d
+              ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=40) (actual time=0.000..0.000 rows=2879.00 loops=1)
+                    Task Count: 32
+                    Tuple data received from nodes: 61 kB
+                    Tasks Shown: One of 32
+                    ->  Task
+                          Tuple data received from node: 1944 bytes
+                          Node: host=w1 port=5432 dbname=lab
+                          ->  HashAggregate  (cost=157.41..168.89 rows=765 width=40) (actual time=39.509..39.575 rows=90.00 loops=1)
+                                Group Key: date_trunc('day'::text, ordered_at)
+                                Batches: 1  Memory Usage: 73kB
+                                Buffers: shared hit=58
+                                ->  Seq Scan on orders_102062 orders  (cost=0.00..153.59 rows=765 width=14) (actual time=0.019..1.517 rows=766.00 loops=1)
+                                      Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-04-01 00:00:00'::timestamp without time zone))
+                                      Rows Removed by Filter: 5479
+                                      Buffers: shared hit=58
+                              Planning Time: 0.110 ms
+                              Execution Time: 39.647 ms
+        Planning Time: 0.000 ms
+        Execution Time: 0.003 ms
+  Task Count: 1
+  Tuple data received from nodes: 4478 bytes
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 4478 bytes
+        Node: host=localhost port=5432 dbname=lab
+        ->  WindowAgg  (cost=2.37..4.19 rows=58 width=104) (actual time=0.272..0.601 rows=90.00 loops=1)
+              Window: w2 AS (ORDER BY intermediate_result.d)
+              Storage: Memory  Maximum Storage: 17kB
+              Buffers: shared hit=3
+              ->  WindowAgg  (cost=2.34..3.33 rows=58 width=72) (actual time=0.251..0.398 rows=90.00 loops=1)
+                    Window: w1 AS (ORDER BY intermediate_result.d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+                    Storage: Memory  Maximum Storage: 17kB
+                    Buffers: shared hit=3
+                    ->  Sort  (cost=2.32..2.46 rows=58 width=40) (actual time=0.238..0.251 rows=90.00 loops=1)
+                          Sort Key: intermediate_result.d
+                          Sort Method: quicksort  Memory: 28kB
+                          Buffers: shared hit=3
+                          ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..0.64 rows=58 width=40) (actual time=0.170..0.182 rows=90.00 loops=1)
+            Planning:
+              Buffers: shared hit=3
+            Planning Time: 0.138 ms
+            Execution Time: 0.680 ms
+Planning:
+  Buffers: shared hit=7
+Planning Time: 1.557 ms
+Execution Time: 81.120 ms

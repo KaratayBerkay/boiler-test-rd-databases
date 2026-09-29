@@ -1,0 +1,449 @@
+{
+  "engine": "mysql",
+  "display": "MySQL 9",
+  "category": "row-store OLTP",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "mysql:9",
+  "run_id": "20260912-215306-bae454",
+  "started": "2026-09-12T18:53:06+00:00",
+  "scale": 1.0,
+  "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+  "phases": {
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 257.906,
+            "p95_ms": 271.078,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0), sum(`events`.value_num)  (cost=104650 rows=1) (actual time=325..325 rows=1 loops=1)\n    -> Filter: ((`events`.event_type = 'checkout') and (`events`.occurred_at >= TIMESTAMP'2025-06-01 00:00:00') and (`events`.occurred_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=102081 rows=11145) (actual time=0.248..324 rows=3145 loops=1)\n        -> Table scan on events  (cost=102081 rows=1e+6) (actual time=0.219..235 rows=1.02e+6 loops=1)\n"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 21.463,
+            "p95_ms": 25.287,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0), sum(`events`.value_num)  (cost=52383 rows=1) (actual time=15.5..15.5 rows=1 loops=1)\n    -> Index range scan on events using ix_ev_ts_type over ('2025-06-01 00:00:00.000000' <= occurred_at <= '2025-07-01 00:00:00.000000' AND 'checkout' <= event_type), with index condition: ((`events`.event_type = 'checkout') and (`events`.occurred_at >= TIMESTAMP'2025-06-01 00:00:00') and (`events`.occurred_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=34644 rows=76986) (actual time=5.14..15.2 rows=3145 loops=1)\n"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 12.662,
+            "p95_ms": 18.803,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0), sum(`events`.value_num)  (cost=2140 rows=1) (actual time=8.38..8.38 rows=1 loops=1)\n    -> Index range scan on events using ix_ev_type_ts over (event_type = 'checkout' AND '2025-06-01 00:00:00.000000' <= occurred_at < '2025-07-01 00:00:00.000000'), with index condition: ((`events`.event_type = 'checkout') and (`events`.occurred_at >= TIMESTAMP'2025-06-01 00:00:00') and (`events`.occurred_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=1416 rows=3145) (actual time=0.83..8.06 rows=3145 loops=1)\n"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 20.37
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 29.133,
+            "p95_ms": 31.946,
+            "rows": 2430,
+            "plan_analyze": "-> Sort: order_items.order_id, order_items.product_id  (cost=1107 rows=2460) (actual time=9.45..9.66 rows=2460 loops=1)\n    -> Index range scan on order_items using ix_order_items_order_id over (163290 <= order_id < 164290), with index condition: ((order_items.order_id >= 163290) and (order_items.order_id < 164290))  (cost=1107 rows=2460) (actual time=0.943..8.69 rows=2460 loops=1)\n"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "mysql: INCLUDE columns not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 47.503,
+            "p95_ms": 70.77,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=66160 rows=1) (actual time=59.5..59.5 rows=1 loops=1)\n    -> Filter: ((year(orders.ordered_at) = 2025) and (month(orders.ordered_at) = 5))  (cost=20152 rows=199675) (actual time=0.226..59.1 rows=8290 loops=1)\n        -> Table scan on orders  (cost=20152 rows=199675) (actual time=0.215..34.9 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 40.085,
+            "p95_ms": 41.132,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=25263 rows=1) (actual time=53.7..53.7 rows=1 loops=1)\n    -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-05-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-06-01 00:00:00'))  (cost=20152 rows=22182) (actual time=0.228..53.3 rows=8290 loops=1)\n        -> Table scan on orders  (cost=20152 rows=199675) (actual time=0.221..35.8 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.888,
+            "p95_ms": 5.239,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=3581 rows=1) (actual time=5.09..5.09 rows=1 loops=1)\n    -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-05-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-06-01 00:00:00'))  (cost=1671 rows=8290) (actual time=0.169..4.48 rows=8290 loops=1)\n        -> Covering index range scan on orders using ix_orders_ordered_at over ('2025-05-01 00:00:00.000000' <= ordered_at < '2025-06-01 00:00:00.000000')  (cost=1671 rows=8290) (actual time=0.166..2.81 rows=8290 loops=1)\n"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 39.631,
+            "p95_ms": 41.317,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=66148 rows=1) (actual time=51.4..51.4 rows=1 loops=1)\n    -> Filter: ((year(orders.ordered_at) = 2025) and (month(orders.ordered_at) = 5))  (cost=20148 rows=199640) (actual time=31.8..51 rows=8290 loops=1)\n        -> Covering index scan on orders using ix_orders_ordered_at  (cost=20148 rows=199640) (actual time=0.164..28.4 rows=200000 loops=1)\n"
+          }
+        ],
+        "best_variant": "sargable_with_index",
+        "speedup_vs_first": 9.72
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 108.067,
+            "p95_ms": 112.95,
+            "rows": 50,
+            "plan_analyze": "-> Limit/Offset: 50/100000 row(s)  (cost=20148 rows=50) (actual time=122..122 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 100050 row(s) per chunk  (cost=20148 rows=199640) (actual time=114..119 rows=100050 loops=1)\n        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.344..43.8 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 65.107,
+            "p95_ms": 65.725,
+            "rows": 50,
+            "plan_analyze": "-> Limit: 50 row(s)  (cost=20148 rows=50) (actual time=79.2..79.2 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 50 row(s) per chunk  (cost=20148 rows=199640) (actual time=79.2..79.2 rows=50 loops=1)\n        -> Filter: ((orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00') or ((orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00') and (orders.id > 0)))  (cost=20148 rows=199640) (actual time=0.301..64.6 rows=99956 loops=1)\n            -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.298..44.4 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 113.284,
+            "p95_ms": 123.518,
+            "rows": 50,
+            "plan_analyze": "-> Limit/Offset: 50/100000 row(s)  (cost=20148 rows=50) (actual time=128..128 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 100050 row(s) per chunk  (cost=20148 rows=199640) (actual time=119..125 rows=100050 loops=1)\n        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.334..45.8 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 8.86,
+            "p95_ms": 10.322,
+            "rows": 50,
+            "plan_analyze": "-> Limit: 50 row(s)  (cost=20148 rows=50) (actual time=5.55..5.56 rows=50 loops=1)\n    -> Index range scan on orders using ix_orders_ts_id over (ordered_at = '2025-01-01 00:00:00.000000' AND 0 < id) OR ('2025-01-01 00:00:00.000000' < ordered_at), with index condition: ((orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00') or ((orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00') and (orders.id > 0)))  (cost=20148 rows=99821) (actual time=5.55..5.56 rows=50 loops=1)\n"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 165.856,
+            "p95_ms": 170.045,
+            "rows": 50,
+            "plan_analyze": "-> Limit: 50 row(s)  (cost=0.0474 rows=50) (actual time=171..171 rows=50 loops=1)\n    -> Filter: ((orders.ordered_at,orders.id) > (TIMESTAMP'2025-01-01 00:00:00',0))  (cost=0.0474 rows=50) (actual time=171..171 rows=50 loops=1)\n        -> Index scan on orders using ix_orders_ts_id  (cost=0.0474 rows=50) (actual time=0.0984..163 rows=100094 loops=1)\n"
+          }
+        ],
+        "best_variant": "keyset_with_index",
+        "speedup_vs_first": 12.2
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 30.03,
+            "p95_ms": 31.433,
+            "rows": 500,
+            "plan_analyze": "-> Limit: 500 row(s)  (cost=68.5 rows=50) (actual time=0.0382..0.362 rows=500 loops=1)\n    -> Filter: (p.`active` = true)  (cost=68.5 rows=50) (actual time=0.0374..0.327 rows=500 loops=1)\n        -> Index scan on p using PRIMARY  (cost=68.5 rows=500) (actual time=0.0352..0.263 rows=593 loops=1)\n-> Select #2 (subquery in projection; dependent)\n    -> Aggregate: avg(p2.price)  (cost=32.2 rows=1) (actual time=0.0413..0.0414 rows=1 loops=500)\n        -> Index lookup on p2 using ix_products_category_id (category_id = p.category_id)  (cost=26.6 rows=24.3) (actual time=0.0106..0.0384 rows=26.2 loops=500)\n"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 17.401,
+            "p95_ms": 19.2,
+            "rows": 500,
+            "plan_analyze": "-> Limit: 500 row(s)  (cost=1322 rows=500) (actual time=10.1..11.1 rows=500 loops=1)\n    -> Nested loop inner join  (cost=1322 rows=980) (actual time=10.1..11 rows=500 loops=1)\n        -> Filter: (p.`active` = true)  (cost=6.67 rows=4.9) (actual time=0.0146..0.414 rows=500 loops=1)\n            -> Index scan on p using PRIMARY  (cost=6.67 rows=49) (actual time=0.0122..0.349 rows=593 loops=1)\n        -> Index lookup on a using <auto_key0> (category_id = p.category_id)  (cost=1877..1880 rows=10) (actual time=0.0208..0.021 rows=1 loops=500)\n            -> Materialize  (cost=1877..1877 rows=200) (actual time=10..10 rows=200 loops=1)\n                -> Group aggregate: avg(products.price)  (cost=1831 rows=200) (actual time=0.342..9.82 rows=200 loops=1)\n                    -> Index scan on products using ix_products_category_id  (cost=710 rows=4864) (actual time=0.332..9.11 rows=5000 loops=1)\n"
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 1.73
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 62.752,
+            "p95_ms": 64.368,
+            "rows": 0,
+            "plan_analyze": "-> Filter: (oi.id is null)  (cost=520456 rows=518404) (actual time=63..63 rows=0 loops=1)\n    -> Nested loop antijoin  (cost=520456 rows=518404) (actual time=63..63 rows=0 loops=1)\n        -> Covering index scan on p using PRIMARY  (cost=710 rows=4864) (actual time=0.198..1.74 rows=5000 loops=1)\n        -> Covering index lookup on oi using ix_order_items_product_id (product_id = p.id)  (cost=0.276 rows=107) (actual time=0.0121..0.0121 rows=1 loops=5000)\n"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 62.667,
+            "p95_ms": 64.308,
+            "rows": 0,
+            "plan_analyze": "-> Nested loop antijoin  (cost=53892 rows=518404) (actual time=63.8..63.8 rows=0 loops=1)\n    -> Covering index scan on p using PRIMARY  (cost=710 rows=4864) (actual time=0.221..1.77 rows=5000 loops=1)\n    -> Covering index lookup on oi using ix_order_items_product_id (product_id = p.id)  (cost=29.6 rows=107) (actual time=0.0123..0.0123 rows=1 loops=5000)\n"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 62.28,
+            "p95_ms": 63.178,
+            "rows": 0,
+            "plan_analyze": "-> Nested loop antijoin  (cost=53892 rows=518404) (actual time=63.5..63.5 rows=0 loops=1)\n    -> Covering index scan on p using PRIMARY  (cost=710 rows=4864) (actual time=0.205..1.73 rows=5000 loops=1)\n    -> Covering index lookup on oi using ix_order_items_product_id (product_id = p.id)  (cost=29.6 rows=107) (actual time=0.0122..0.0122 rows=1 loops=5000)\n"
+          }
+        ],
+        "best_variant": "not_in",
+        "speedup_vs_first": 1.01
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.382,
+            "p95_ms": 0.417,
+            "rows": 13,
+            "plan_analyze": "-> Sort: orders.id  (cost=6.52 rows=12) (actual time=0.0693..0.0698 rows=12 loops=1)\n    -> Filter: ((orders.customer_id = 3342) or (orders.id = 150456))  (cost=6.52 rows=12) (actual time=0.0273..0.0635 rows=12 loops=1)\n        -> Deduplicate rows sorted by row ID  (cost=6.52 rows=12) (actual time=0.0262..0.0612 rows=12 loops=1)\n            -> Covering index range scan on orders using ix_orders_customer_id over (customer_id = 3342)  (cost=1.36 rows=11) (actual time=0.0147..0.0188 rows=11 loops=1)\n            -> Index range scan on orders using PRIMARY over (id = 150456)  (cost=0.36 rows=1) (actual time=0.00673..0.00688 rows=1 loops=1)\n"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.383,
+            "p95_ms": 0.415,
+            "rows": 13,
+            "plan_analyze": "-> Sort: u.id  (cost=12.3..12.3 rows=12) (actual time=0.0401..0.0406 rows=12 loops=1)\n    -> Table scan on u  (cost=4.34..6.77 rows=12) (actual time=0.0335..0.0348 rows=12 loops=1)\n        -> Union materialize with deduplication  (cost=4.12..4.12 rows=12) (actual time=0.0326..0.0326 rows=12 loops=1)\n            -> Covering index lookup on orders using ix_orders_customer_id (customer_id = 3342)  (cost=1.35 rows=11) (actual time=0.0222..0.0244 rows=11 loops=1)\n            -> Rows fetched before execution  (cost=0..0 rows=1) (actual time=157e-6..216e-6 rows=1 loops=1)\n"
+          }
+        ],
+        "best_variant": "or_predicate",
+        "speedup_vs_first": 1.0
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 56.575,
+            "p95_ms": 61.164,
+            "rows": 644,
+            "plan_analyze": "-> Sort: orders.ordered_at, orders.id  (cost=20148 rows=199640) (actual time=66.2..66.2 rows=644 loops=1)\n    -> Filter: ((orders.`status` = 'pending') and (orders.ordered_at >= TIMESTAMP'2025-09-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-10-01 00:00:00'))  (cost=20148 rows=199640) (actual time=0.375..66 rows=644 loops=1)\n        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.326..49.2 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 8.778,
+            "p95_ms": 9.867,
+            "rows": 644,
+            "plan_analyze": "-> Index range scan on orders using ix_orders_status_ts over (status = 'pending' AND '2025-09-01 00:00:00.000000' <= ordered_at < '2025-10-01 00:00:00.000000'), with index condition: ((orders.`status` = 'pending') and (orders.ordered_at >= TIMESTAMP'2025-09-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-10-01 00:00:00'))  (cost=290 rows=644) (actual time=0.323..3.08 rows=644 loops=1)\n"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "mysql: partial indexes not supported"
+          }
+        ],
+        "best_variant": "full_index_(status,ordered_at)",
+        "speedup_vs_first": 6.45
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 304.494,
+            "p95_ms": 321.165,
+            "rows": 13,
+            "plan_analyze": "-> Sort: c.country_code  (actual time=363..363 rows=13 loops=1)\n    -> Table scan on <temporary>  (actual time=363..363 rows=13 loops=1)\n        -> Aggregate using temporary table  (actual time=363..363 rows=13 loops=1)\n            -> Nested loop inner join  (cost=137055 rows=100223) (actual time=308..354 rows=20000 loops=1)\n                -> Filter: (e.event_type = 'bench_stats')  (cost=101977 rows=100223) (actual time=308..319 rows=20000 loops=1)\n                    -> Table scan on e  (cost=101977 rows=1e+6) (actual time=0.239..244 rows=1.02e+6 loops=1)\n                -> Single-row index lookup on c using PRIMARY (id = e.customer_id)  (cost=0.25 rows=1) (actual time=0.00156..0.00159 rows=1 loops=20000)\n"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 296.881,
+            "p95_ms": 307.453,
+            "rows": 13,
+            "plan_analyze": "-> Sort: c.country_code  (actual time=378..378 rows=13 loops=1)\n    -> Table scan on <temporary>  (actual time=378..378 rows=13 loops=1)\n        -> Aggregate using temporary table  (actual time=378..378 rows=13 loops=1)\n            -> Nested loop inner join  (cost=137949 rows=100885) (actual time=326..369 rows=20000 loops=1)\n                -> Filter: (e.event_type = 'bench_stats')  (cost=102639 rows=100885) (actual time=326..336 rows=20000 loops=1)\n                    -> Table scan on e  (cost=102639 rows=1.01e+6) (actual time=0.208..256 rows=1.02e+6 loops=1)\n                -> Single-row index lookup on c using PRIMARY (id = e.customer_id)  (cost=0.25 rows=1) (actual time=0.00148..0.00151 rows=1 loops=20000)\n"
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 1.03
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 7.739,
+            "rows_per_s": 388,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 3.165,
+            "rows_per_s": 948,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.101,
+            "rows_per_s": 29579,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver pymysql: no server-side prepare toggle exposed"
+      },
+      "_seconds": 76.2
+    }
+  },
+  "server_version": "9.7.2",
+  "finished": "2026-09-12T18:54:22+00:00"
+}

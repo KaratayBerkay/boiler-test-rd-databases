@@ -1,0 +1,108 @@
+{
+  "engine": "db2",
+  "display": "IBM Db2 12.1 CE",
+  "category": "row-store OLTP",
+  "dialect": "db2",
+  "driver": "ibm_db",
+  "image": "icr.io/db2_community/db2:latest",
+  "run_id": "20260914-134712-8dde2a",
+  "started": "2026-09-14T10:47:12+00:00",
+  "scale": 0.3,
+  "notes": "Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but needs two instances with matching configuration and a takeover procedure; not automated in this stack.",
+  "phases": {
+    "logging": {
+      "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "DIAGLEVEL": "3",
+        "DIAGPATH": "/database/config/db2inst1/sqllib/db2dump/ $m",
+        "LOGARCHMETH1": "DISK:/backups/logs/",
+        "TRACKMOD": "YES",
+        "MON_ACT_METRICS": "BASE",
+        "MON_REQ_METRICS": "BASE",
+        "MON_DEADLOCK": "WITHOUT_HIST",
+        "MON_LOCKWAIT": "NONE",
+        "NOTIFYLEVEL": "3",
+        "audit_log_path": null,
+        "event_monitor": "RDLAB_ACT (activities -> ACTIVITYSTMT_RDLAB_ACT)"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+        "slow_query_ms": 246.0,
+        "slow_logged": true,
+        "seen_after_s": 0.09,
+        "sample": "executions=1 total_act_time_ms=230 cpu_us=166790 stmt=SELECT COUNT(*) AS rdlab_mk_9cbe9c46ef FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer",
+        "duration_ms": 230,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "db2audit policy RDLAB_POL (EXECUTE) -> db2audit archive/extract",
+        "setup": "CREATE AUDIT POLICY RDLAB_POL CATEGORIES EXECUTE, OBJMAINT; AUDIT DATABASE USING POLICY RDLAB_POL (SECADM via CLP)",
+        "event_found": false,
+        "seen_after_s": 20.32,
+        "sample": "",
+        "status": "not-found"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 2512,
+          "p50_ms": 1.504853,
+          "p99_ms": 25.907318040000014,
+          "errors": 0
+        },
+        "full_logging": "COLLECT ACTIVITY DATA ON ALL WITH DETAILS on the default workload (every statement into the RDLAB_ACT event monitor tables)",
+        "full": {
+          "qps": 1062,
+          "p50_ms": 2.99262,
+          "p99_ms": 46.81800645999999,
+          "errors": 0
+        },
+        "log_bytes_written": 1147800,
+        "bytes_per_statement": 270.3,
+        "overhead_pct": 57.7,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-db2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 5091090,
+          "docker_logs_lines": 107780
+        }
+      },
+      "extra": {
+        "package_cache_top5": [
+          {
+            "executions": 1,
+            "total_ms": 70,
+            "stmt": "ALTER WORKLOAD SYSDEFAULTUSERWORKLOAD COLLECT ACTIVITY DATA NONE"
+          },
+          {
+            "executions": 1,
+            "total_ms": 0,
+            "stmt": "select 1 from sysibm.sysdummy1"
+          }
+        ],
+        "activity_rows": 25449
+      },
+      "collected": [
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2diag.log",
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2inst1.nfy"
+      ],
+      "_seconds": 51.1
+    }
+  },
+  "harness_log": "results/logs/db2/20260914-134712-8dde2a.log",
+  "server_version": "DB2 v12.1.5.0",
+  "finished": "2026-09-14T10:48:03+00:00"
+}

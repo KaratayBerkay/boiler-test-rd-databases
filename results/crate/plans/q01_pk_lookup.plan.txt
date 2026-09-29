@@ -1,0 +1,1 @@
+Get[doc.customers | id, name, email, country_code, tier | DocKeys{$1} | (id = $1)] (rows=1)

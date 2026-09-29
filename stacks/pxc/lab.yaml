@@ -1,0 +1,72 @@
+display: Percona XtraDB Cluster 8.4 (Galera)
+category: multi-master (Galera)
+dialect: mysql
+driver: pymysql
+image: percona/percona-xtradb-cluster:8.4
+project: rdlab-pxc
+scale: 1
+notes: >-
+  3-node Galera cluster (MySQL 8.4 base): synchronous replication by write-set certification, every node writable;
+  cross-node write conflicts surface as deadlock errors at COMMIT. HAProxy round-robins connections over the nodes.
+docs:
+  - https://docs.percona.com/percona-xtradb-cluster/8.4/docker.html
+  - https://galeracluster.com/library/documentation/
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 13326
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pxc-1
+    admin_user: root
+    admin_password: rootpass
+  - name: node2
+    role: node
+    host: 127.0.0.1
+    port: 13327
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pxc-2
+    admin_user: root
+    admin_password: rootpass
+  - name: node3
+    role: node
+    host: 127.0.0.1
+    port: 13328
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pxc-3
+    admin_user: root
+    admin_password: rootpass
+  - name: haproxy
+    role: proxy
+    host: 127.0.0.1
+    port: 13329
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pxc-haproxy
+    splits_reads: true
+replication:
+  kind: Galera (virtually synchronous multi-master)
+  promote:
+    method: none
+    target: node2
+backup:
+  dir: /backups
+  volume: pxc-backups
+  restore_port: 13339
+  flavor: pxc
+  socket: /tmp/mysql.sock
+  strategies: [mysqldump, xtrabackup]
+logging:
+  dir: /var/log/mysql
+  slow_ms: 100
+  flavor: pxc
+features:
+  settle_seconds: 5

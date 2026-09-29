@@ -1,0 +1,17 @@
+Plan hash value: 2475404981
+ 
+-------------------------------------------------------------------------------------------
+| Id  | Operation                | Name   | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT         |        |   100K|  4885K|       |  1598   (1)| 00:00:01 |
+|*  1 |  VIEW                    |        |   100K|  4885K|       |  1598   (1)| 00:00:01 |
+|*  2 |   WINDOW SORT PUSHED RANK|        |   200K|  4101K|  6288K|  1598   (1)| 00:00:01 |
+|   3 |    TABLE ACCESS FULL     | ORDERS |   200K|  4101K|       |   308   (1)| 00:00:01 |
+-------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   1 - filter("from$_subquery$_002"."rowlimit_$$_rownumber"<=100050 AND 
+              "from$_subquery$_002"."rowlimit_$$_rownumber">100000)
+   2 - filter(ROW_NUMBER() OVER ( ORDER BY "ORDERED_AT","ID")<=100050)

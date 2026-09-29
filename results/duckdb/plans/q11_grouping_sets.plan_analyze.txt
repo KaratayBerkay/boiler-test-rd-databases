@@ -1,0 +1,85 @@
+analyzed_plan | ┌─────────────────────────────────────┐
+│┌───────────────────────────────────┐│
+││    Query Profiling Information    ││
+│└───────────────────────────────────┘│
+└─────────────────────────────────────┘
+EXPLAIN ANALYZE SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status
+┌────────────────────────────────────────────────┐
+│┌──────────────────────────────────────────────┐│
+││              Total Time: 0.0125s             ││
+│└──────────────────────────────────────────────┘│
+└────────────────────────────────────────────────┘
+┌───────────────────────────┐
+│           QUERY           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│      EXPLAIN_ANALYZE      │
+│    ────────────────────   │
+│                           │
+│           0 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│      lab.main.orders      │
+│   .shipping_country ASC   │
+│ lab.main.orders.status ASC│
+│                           │
+│                           │
+│                           │
+│          79 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│          Groups:          │
+│             #0            │
+│             #1            │
+│                           │
+│        Aggregates:        │
+│        count_star()       │
+│    sum_no_overflow(#2)    │
+│                           │
+│                           │
+│                           │
+│          79 rows          │
+│           0.01s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│      shipping_country     │
+│           status          │
+│        total_amount       │
+│                           │
+│                           │
+│                           │
+│        25,268 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         TABLE_SCAN        │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.orders      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│      shipping_country     │
+│           status          │
+│        total_amount       │
+│                           │
+│          Filters:         │
+│ ordered_at>='2025-06-01 00│
+│   :00:00'::TIMESTAMP AND  │
+│  ordered_at<'2025-09-01 00│
+│     :00:00'::TIMESTAMP    │
+│                           │
+│                           │
+│                           │
+│        25,268 rows        │
+│           0.00s           │
+└───────────────────────────┘

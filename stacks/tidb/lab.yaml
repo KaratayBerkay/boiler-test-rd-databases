@@ -1,0 +1,51 @@
+display: TiDB 8.5
+category: distributed SQL (HTAP)
+dialect: tidb
+driver: pymysql
+image: pingcap/tidb:v8.5.8 (+ pd, tikv v8.5.8)
+project: rdlab-tidb
+scale: 1
+notes: >-
+  MySQL-protocol distributed SQL: 2 stateless TiDB servers in front of 3 TiKV nodes (Raft, 3 replicas per region) and one PD.
+  Any TiDB node serves reads and writes; killing a TiDB node only affects its own connections.
+docs:
+  - https://docs.pingcap.com/tidb/stable/mysql-compatibility
+  - https://docs.pingcap.com/tidb/stable/sql-statement-explain-analyze
+oneshot: [volumes-init, init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 14000
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-tidb-1
+    admin_user: root
+    admin_password: ""
+  - name: node2
+    role: node
+    host: 127.0.0.1
+    port: 14001
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-tidb-2
+    admin_user: root
+    admin_password: ""
+replication:
+  kind: Raft (TiKV, 3 replicas per region), stateless SQL layer
+  promote:
+    method: none
+    target: node2
+backup:
+  dir: /backups
+  volume: tidb-backups
+  shell_container: rdlab-tidb-tikv1
+  size_containers: [rdlab-tidb-tikv1]
+  strategies: [br_full, br_incremental, flashback, pitr_cluster]
+logging:
+  dir: /var/log/tidb
+  slow_ms: 100
+features:
+  settle_seconds: 5

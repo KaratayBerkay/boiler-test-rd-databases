@@ -1,0 +1,382 @@
+{
+  "engine": "monetdb",
+  "display": "MonetDB",
+  "category": "analytical (columnar)",
+  "dialect": "monetdb",
+  "driver": "pymonetdb",
+  "image": "monetdb/monetdb:latest",
+  "run_id": "20260914-144832-0ebb15",
+  "started": "2026-09-14T11:48:32+00:00",
+  "scale": 1.0,
+  "notes": "Column-store with full SQL:2003 transactions (optimistic concurrency). Bulk load via COPY INTO ... ON CLIENT. Replication: no built-in physical replication in the open-source release (monetdb replication is transaction-log based, experimental).",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.11,
+          "rows_per_s": 176172,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 13757,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.07,
+          "rows_per_s": 70694,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 0.36,
+          "rows_per_s": 551896,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 0.57,
+          "rows_per_s": 854217,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 2.52,
+          "rows_per_s": 396626,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.05,
+          "rows_per_s": 392654,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INT NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INT NOT NULL,\n  parent_id INT,\n  name VARCHAR(100) NOT NULL,\n  depth INT NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INT NOT NULL,\n  category_id INT NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INT NOT NULL,\n  customer_id INT NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INT NOT NULL,\n  order_id INT NOT NULL,\n  product_id INT NOT NULL,\n  qty INT NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INT NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INT NOT NULL,\n  warehouse_id INT NOT NULL,\n  qty INT NOT NULL,\n  updated_at TIMESTAMP NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.02,
+      "load_seconds": 3.71,
+      "fts_setup": [],
+      "after_load": [
+        "ANALYZE sys.customers",
+        "ANALYZE sys.categories",
+        "ANALYZE sys.products",
+        "ANALYZE sys.orders",
+        "ANALYZE sys.order_items",
+        "ANALYZE sys.events",
+        "ANALYZE sys.inventory"
+      ],
+      "post_seconds": 0.59,
+      "server_version": "MonetDB 11.55.7",
+      "_seconds": 4.3
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "msqldump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "msqldump | mclient",
+          "backup_seconds": 5.08,
+          "backup_bytes": 145469546,
+          "backup_mb": 138.7,
+          "restore_seconds": 20.98,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 1.26
+          },
+          "pitr": {},
+          "notes": "SQL dump with COPY INTO blocks; the new database is created in the same dbfarm with the monetdb control tool",
+          "error": null,
+          "steps": [
+            {
+              "name": "msqldump",
+              "cmd": "printf 'user=monetdb\\npassword=labpass\\n' > /tmp/.monetdb; export DOTMONETDBFILE=/tmp/.monetdb;  msqldump -d lab > /backups/lab.sql",
+              "rc": 0,
+              "seconds": 5.08,
+              "out": ""
+            },
+            {
+              "name": "monetdb create lab_restore",
+              "cmd": "monetdb stop lab_restore >/dev/null 2>&1; monetdb destroy -f lab_restore >/dev/null 2>&1; monetdb create lab_restore && monetdb release lab_restore && printf 'user=monetdb\\npassword=monetdb\\n' > /tmp/.monetdb-new && DOTMONETDBFILE=/tmp/.monetdb-new mclient -d lab_restore -s \"ALTER USER SET PASSWORD 'labpass' USING OLD PASSWORD 'monetdb'\"",
+              "rc": 0,
+              "seconds": 0.6,
+              "out": "created database in maintenance mode: lab_restore\ntaken database out of maintenance mode: lab_restore\noperation successful\n"
+            },
+            {
+              "name": "mclient < dump",
+              "cmd": "printf 'user=monetdb\\npassword=labpass\\n' > /tmp/.monetdb; export DOTMONETDBFILE=/tmp/.monetdb;  mclient -d lab_restore < /backups/lab.sql > /dev/null",
+              "rc": 0,
+              "seconds": 20.98,
+              "out": ""
+            },
+            {
+              "name": "destroy restore db",
+              "cmd": "monetdb stop lab_restore >/dev/null 2>&1; monetdb destroy -f lab_restore",
+              "rc": 0,
+              "seconds": 0.61,
+              "out": "destroyed database: lab_restore\n"
+            }
+          ],
+          "seconds": 28.6,
+          "description": "SQL dump restored into a second database"
+        },
+        "hot_snapshot": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "CALL sys.hot_snapshot(tar)",
+          "backup_seconds": 0.48,
+          "backup_bytes": 112313344,
+          "backup_mb": 107.1,
+          "restore_seconds": 0.19,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 1.8
+          },
+          "pitr": {},
+          "notes": "server-side consistent tar of the database directory (no client round trips); restore = untar under a new name in the dbfarm",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab-hot.tar",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "CALL sys.hot_snapshot",
+              "cmd": "CALL sys.hot_snapshot('/backups/lab-hot.tar')",
+              "rc": 0,
+              "seconds": 0.48,
+              "out": ""
+            },
+            {
+              "name": "remove old snapshot db",
+              "cmd": "monetdb stop lab_snap >/dev/null 2>&1; monetdb destroy -f lab_snap >/dev/null 2>&1; rm -rf /var/monetdb5/dbfarm/lab_snap; true",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "extract into dbfarm",
+              "cmd": "tar -C /var/monetdb5/dbfarm -xf /backups/lab-hot.tar --transform 's,^lab/,lab_snap/,' --transform 's,^lab$,lab_snap,' && chown -R monetdb:monetdb /var/monetdb5/dbfarm/lab_snap 2>/dev/null; monetdb release lab_snap >/dev/null 2>&1; true",
+              "rc": 0,
+              "seconds": 0.19,
+              "out": ""
+            },
+            {
+              "name": "destroy snapshot db",
+              "cmd": "monetdb stop lab_snap >/dev/null 2>&1; monetdb destroy -f lab_snap",
+              "rc": 0,
+              "seconds": 0.62,
+              "out": "destroyed database: lab_snap\n"
+            }
+          ],
+          "seconds": 3.3,
+          "description": "server-side consistent tar restored under a new name"
+        }
+      },
+      "order": [
+        "msqldump",
+        "hot_snapshot"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "e9df24d139ab0cdba08d716f"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "afff7248e498429f07e3077a"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "f406964ebee6a32d834ca45e"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 1.24,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "msqldump",
+          "hot_snapshot"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 33.2
+    },
+    "logging": {
+      "sink": "sys.querylog_calls (CALL sys.querylog_enable(threshold_ms))",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "querylog": "sys.querylog_enable(100)",
+        "gdk_dbpath": "/var/monetdb5/dbfarm/lab",
+        "sql_debug": "0",
+        "max_clients": "64",
+        "monet_version": "11.55.7",
+        "monet_release": "Dec2025-SP3"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "sys.querylog_calls (CALL sys.querylog_enable(threshold_ms))",
+        "slow_query_ms": 202.1,
+        "slow_logged": true,
+        "seen_after_s": 0.0,
+        "sample": "start=2026-09-14 11:49:09.648350 stop=2026-09-14 11:49:09.847583 run_us=199220 tuples=1 owner=monetdb query=select count(*) as rdlab_mk_9db972051a from events e1, events e2 where e1.customer_id = e2.customer_",
+        "duration_ms": 199.22,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "sys.querylog_catalog (query text + owner) with threshold 0",
+        "setup": "sys.querylog_enable(0)",
+        "event_found": true,
+        "seen_after_s": 0.0,
+        "sample": "owner=monetdb defined=2026-09-14 11:49:09.872694 query=select q.owner, q.defined, q.query from sys.querylog_catalog q where q.query like '%audit_rdlab_mk_a4cd3c365f%' limit 1\n;",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 7682,
+          "p50_ms": 1.0148015,
+          "p99_ms": 1.58925425,
+          "errors": 0
+        },
+        "full_logging": "CALL sys.querylog_enable(0) (every query logged into sys.querylog_calls)",
+        "full": {
+          "qps": 7540,
+          "p50_ms": 1.031688,
+          "p99_ms": 1.759953400000002,
+          "errors": 0
+        },
+        "log_bytes_written": 6032600,
+        "bytes_per_statement": 200.0,
+        "overhead_pct": 1.8,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-monetdb": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 101,
+          "docker_logs_lines": 3
+        }
+      },
+      "extra": {
+        "querylog_calls": 30169,
+        "top5": [
+          {
+            "query": "select id, name, email from customers where id = 5507\n;",
+            "calls": 8,
+            "avg_ms": 0.24
+          },
+          {
+            "query": "select id, name, email from customers where id = 5212\n;",
+            "calls": 8,
+            "avg_ms": 0.27
+          },
+          {
+            "query": "select id, name, email from customers where id = 10367\n;",
+            "calls": 8,
+            "avg_ms": 0.29
+          },
+          {
+            "query": "select id, name, email from customers where id = 19955\n;",
+            "calls": 7,
+            "avg_ms": 0.35
+          },
+          {
+            "query": "select id, name, email from customers where id = 559\n;",
+            "calls": 7,
+            "avg_ms": 0.26
+          }
+        ]
+      },
+      "collected": [
+        "results/monetdb/logs/monetdb__var_monetdb5_dbfarm_merovingian.log"
+      ],
+      "_seconds": 16.8
+    }
+  },
+  "harness_log": "results/logs/monetdb/20260914-144832-0ebb15.log",
+  "server_version": "MonetDB 11.55.7",
+  "finished": "2026-09-14T11:49:26+00:00"
+}

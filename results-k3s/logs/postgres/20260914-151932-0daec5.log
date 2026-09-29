@@ -1,0 +1,28 @@
+2026-09-14 15:19:32,790 DEBUG   [postgres/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-151932-0daec5.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-151932-0daec5.jsonl
+2026-09-14 15:19:32,790 INFO    [postgres/-] [postgres] run 20260914-151932-0daec5 phases=['backup'] scale=0.3 (log: results-k3s/logs/postgres/20260914-151932-0daec5.log)
+2026-09-14 15:19:32,805 INFO    [postgres/-] [postgres] phase: backup
+2026-09-14 15:19:33,669 INFO    [postgres/backup]   source fingerprint: 7 tables, 520,772 rows (0.86s)
+2026-09-14 15:19:33,669 INFO    [postgres/backup]   strategy pg_dump: parallel directory-format dump restored into a second database
+2026-09-14 15:19:34,087 INFO    [postgres/backup]     prepare                            rc=0    0.42s
+2026-09-14 15:19:34,762 INFO    [postgres/backup]     pg_dump -Fd                        rc=0    0.67s
+2026-09-14 15:19:35,044 INFO    [postgres/backup]     pg_dumpall --globals-only          rc=0    0.28s
+2026-09-14 15:19:35,365 INFO    [postgres/backup]     create restore db                  ok    0.08s
+2026-09-14 15:19:36,878 INFO    [postgres/backup]     pg_restore -j                      rc=0    1.51s
+2026-09-14 15:19:37,852 INFO    [postgres/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:19:38,220 INFO    [postgres/backup]     drop restore db                    ok    0.37s
+2026-09-14 15:19:38,220 INFO    [postgres/backup]   pg_dump: backup 0.67s / 9.2 MB, restore 1.51s, verified=True
+2026-09-14 15:19:38,221 INFO    [postgres/backup]   strategy pg_basebackup: full physical copy restored in a scratch container
+2026-09-14 15:19:38,446 INFO    [postgres/backup]     prepare                            rc=0    0.22s
+2026-09-14 15:19:39,824 INFO    [postgres/backup]     pg_basebackup                      rc=0    1.38s
+2026-09-14 15:19:40,398 INFO    [postgres/backup]     pg_verifybackup                    rc=0    0.32s
+2026-09-14 15:19:43,767 INFO    [postgres/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:19:45,224 INFO    [postgres/backup]   pg_basebackup: backup 1.38s / 113.4 MB, restore 0.24s, verified=True
+2026-09-14 15:19:45,225 INFO    [postgres/backup]   strategy incremental: PG17+ block-level incremental on top of the full backup
+2026-09-14 15:19:48,679 INFO    [postgres/backup]     pg_basebackup --incremental        rc=0    2.86s
+2026-09-14 15:19:52,059 INFO    [postgres/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:19:54,211 INFO    [postgres/backup]   incremental: backup 2.86s / 20.7 MB, restore 0.25s, verified=True, pitr=True
+2026-09-14 15:19:54,211 INFO    [postgres/backup]   strategy pitr: WAL-archive point-in-time recovery to a restore point before a destructive DELETE
+2026-09-14 15:19:59,413 INFO    [postgres/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:20:01,230 INFO    [postgres/backup]   pitr: backup 0.0s / 304.0 MB, restore 0.26s, verified=True, pitr=True
+2026-09-14 15:20:01,248 INFO    [postgres/backup] [postgres] phase backup done in 28.4s
+2026-09-14 15:20:01,315 INFO    [postgres/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/postgres/20260914-151932-0daec5.json

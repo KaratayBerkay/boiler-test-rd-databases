@@ -1,0 +1,30 @@
+Sort  (cost=44825.29..44825.29 rows=1 width=4) (actual time=2002.977..2002.979 rows=0 loops=1)
+  Sort Key: p.id
+  Sort Method: quicksort  Memory: 25kB
+  ->  YB Batched Nested Loop Anti Join  (cost=49.18..44825.28 rows=1 width=4) (actual time=2002.917..2002.918 rows=0 loops=1)
+        Join Filter: (oi.product_id = p.id)
+        ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4) (actual time=1.262..3.298 rows=5000 loops=1)
+              Storage Table Read Requests: 5
+              Storage Table Read Execution Time: 1.236 ms
+              Storage Table Read Ops: 5
+              Storage Table Rows Scanned: 5000
+        ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=26.10..7831.33 rows=99882 width=4) (actual time=5.038..277.934 rows=97521 loops=5)
+              Index Cond: (product_id = ANY (ARRAY[p.id, $1, $2, ..., $1023]))
+              Heap Fetches: 0
+              Storage Index Read Requests: 96
+              Storage Index Read Execution Time: 177.629 ms
+              Storage Index Read Ops: 96
+              Storage Index Rows Scanned: 97521
+Planning Time: 2.896 ms
+Execution Time: 2003.901 ms
+Storage Read Requests: 483
+Storage Read Execution Time: 889.382 ms
+Storage Read Ops: 483
+Storage Rows Scanned: 492606
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 889.382 ms
+Peak Memory Usage: 1626 kB

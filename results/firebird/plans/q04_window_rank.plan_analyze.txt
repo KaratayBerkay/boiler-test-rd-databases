@@ -1,0 +1,18 @@
+Select Expression
+    -> Sort (record length: 84, key length: 20)
+        -> Filter
+            -> Window
+                -> Window Partition
+                    -> Record Buffer (record length: 74)
+                        -> Sort (record length: 84, key length: 28)
+                            -> Window Partition
+                                -> Window Buffer
+                                    -> Record Buffer (record length: 41)
+                                        -> Aggregate
+                                            -> Sort (record length: 76, key length: 16)
+                                                -> Filter
+                                                    -> Hash Join (inner)
+                                                        -> Table "ORDER_ITEMS" as "T OI" Full Scan
+                                                        -> Record Buffer (record length: 33)
+                                                            -> Table "PRODUCTS" as "T P" Full Scan
+fetches=5737195 reads=2518

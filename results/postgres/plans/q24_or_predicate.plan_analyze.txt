@@ -1,0 +1,20 @@
+Sort  (cost=15.17..15.20 rows=11 width=4) (actual time=0.033..0.034 rows=14.00 loops=1)
+  Sort Key: id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=18
+  ->  Bitmap Heap Scan on orders  (cost=2.87..14.98 rows=11 width=4) (actual time=0.018..0.030 rows=14.00 loops=1)
+        Recheck Cond: ((customer_id = '3706'::smallint) OR (id = 56738))
+        Heap Blocks: exact=14
+        Buffers: shared hit=18
+        ->  BitmapOr  (cost=2.87..2.87 rows=11 width=0) (actual time=0.010..0.011 rows=0.00 loops=1)
+              Buffers: shared hit=4
+              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..1.47 rows=10 width=0) (actual time=0.008..0.008 rows=13.00 loops=1)
+                    Index Cond: (customer_id = '3706'::smallint)
+                    Index Searches: 1
+                    Buffers: shared hit=2
+              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..1.40 rows=1 width=0) (actual time=0.002..0.003 rows=1.00 loops=1)
+                    Index Cond: (id = 56738)
+                    Index Searches: 1
+                    Buffers: shared hit=2
+Planning Time: 0.047 ms
+Execution Time: 0.050 ms

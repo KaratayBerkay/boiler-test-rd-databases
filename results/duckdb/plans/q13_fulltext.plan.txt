@@ -1,0 +1,264 @@
+physical_plan | ┌─────────────┐
+│    TOP_N    │
+│    ──────   │
+│   Top: 50   │
+│             │
+│  Order By:  │
+│   lab.main  │
+│ .products.id│
+│      ASC    │
+└──────┬──────┘
+┌──────┴──────┐
+│  PROJECTION │
+│    ──────   │
+│      id     │
+│     name    │
+│             │
+│ ~1,000 rows │
+└──────┬──────┘
+┌──────┴──────┐
+│     CTE     │
+│    ──────   │
+│  CTE Name:  │
+│    tokens   │
+│             ├───────┐
+│ Table Index:│       │
+│      7      │       │
+│             │       │
+│ ~1,000 rows │       │
+└──────┬──────┘       │
+┌──────┴──────┐┌──────┴──────┐
+│HASH_GROUP_BY││     CTE     │
+│    ──────   ││    ──────   │
+│   Groups:   ││  CTE Name:  │
+│      #0     ││    qterms   │
+│             ││             ├───────────────────────────────────────────────────────────────────┐
+│             ││ Table Index:│                                                                   │
+│             ││      10     │                                                                   │
+│             ││             │                                                                   │
+│    ~1 row   ││ ~1,000 rows │                                                                   │
+└──────┬──────┘└──────┬──────┘                                                                   │
+┌──────┴──────┐┌──────┴──────┐                                                            ┌──────┴──────┐
+│  PROJECTION ││  HASH_JOIN  │                                                            │    FILTER   │
+│    ──────   ││    ──────   │                                                            │    ──────   │
+│      t      ││  Join Type: │                                                            │ (SUBQUERY IS│
+│             ││     SEMI    │                                                            │   NOT NULL) │
+│             ││             ├─────────────────────────────────────┐                      │             │
+│             ││ Conditions: │                                     │                      │             │
+│             ││ termid = #0 │                                     │                      │             │
+│             ││             │                                     │                      │             │
+│    ~1 row   ││ ~39,061 rows│                                     │                      │ ~1,000 rows │
+└──────┬──────┘└──────┬──────┘                                     │                      └──────┬──────┘
+┌──────┴──────┐┌──────┴──────┐                              ┌──────┴──────┐               ┌──────┴──────┐
+│  PROJECTION ││  HASH_JOIN  │                              │  PROJECTION │               │  HASH_JOIN  │
+│    ──────   ││    ──────   │                              │    ──────   │               │    ──────   │
+│      t      ││  Join Type: │                              │    termid   │               │  Join Type: │
+│             ││     MARK    │                              │             │               │    SINGLE   │
+│             ││             │                              │             │               │             │
+│             ││ Conditions: ├───────┐                      │             │               │ Conditions: ├───────┐
+│             ││ fieldid = #0│       │                      │             │               │  id IS NOT  │       │
+│             ││             │       │                      │             │               │   DISTINCT  │       │
+│             ││             │       │                      │             │               │    FROM id  │       │
+│             ││             │       │                      │             │               │             │       │
+│    ~1 row   ││~195,308 rows│       │                      │    ~1 row   │               │ ~5,000 rows │       │
+└──────┬──────┘└──────┬──────┘       │                      └──────┬──────┘               └──────┬──────┘       │
+┌──────┴──────┐┌──────┴──────┐┌──────┴──────┐               ┌──────┴──────┐               ┌──────┴──────┐┌──────┴──────┐
+│    UNNEST   ││   SEQ_SCAN  ││  PROJECTION │               │  HASH_JOIN  │               │   SEQ_SCAN  ││  PROJECTION │
+│             ││    ──────   ││    ──────   │               │    ──────   │               │    ──────   ││    ──────   │
+│             ││    Table:   ││   fieldid   │               │  Join Type: │               │    Table:   ││    score    │
+│             ││lab.fts_main_││             │               │    INNER    │               │   lab.main  ││      id     │
+│             ││   products  ││             │               │             │               │  .products  ││             │
+│             ││    .terms   ││             │               │ Conditions: │               │             ││             │
+│             ││             ││             │               │   term = t  │               │    Type:    ││             │
+│             ││    Type:    ││             │               │             │               │  Sequential ││             │
+│             ││  Sequential ││             │               │             ├───────┐       │     Scan    ││             │
+│             ││     Scan    ││             │               │             │       │       │             ││             │
+│             ││             ││             │               │             │       │       │             ││             │
+│             ││ Projections:││             │               │             │       │       │             ││             │
+│             ││   fieldid   ││             │               │             │       │       │             ││             │
+│             ││    termid   ││             │               │             │       │       │             ││             │
+│             ││    docid    ││             │               │             │       │       │             ││             │
+│             ││             ││             │               │             │       │       │             ││             │
+│             ││~195,308 rows││    ~1 row   │               │    ~1 row   │       │       │ ~5,000 rows ││  ~844 rows  │
+└──────┬──────┘└─────────────┘└──────┬──────┘               └──────┬──────┘       │       └─────────────┘└──────┬──────┘
+┌──────┴──────┐               ┌──────┴──────┐               ┌──────┴──────┐┌──────┴──────┐               ┌──────┴──────┐
+│  DUMMY_SCAN │               │  HASH_JOIN  │               │   SEQ_SCAN  ││   CTE_SCAN  │               │  HASH_JOIN  │
+│             │               │    ──────   │               │    ──────   ││    ──────   │               │    ──────   │
+│             │               │  Join Type: │               │    Table:   ││  CTE Index: │               │  Join Type: │
+│             │               │     MARK    │               │lab.fts_main_││      7      │               │    INNER    │
+│             │               │             │               │products.dict││             │               │             │
+│             │               │ Conditions: │               │             ││             │               │ Conditions: │
+│             │               │  field = #0 │               │    Type:    ││             │               │docid = docid│
+│             │               │             ├───────┐       │  Sequential ││             │               │             ├───────┐
+│             │               │             │       │       │     Scan    ││             │               │             │       │
+│             │               │             │       │       │             ││             │               │             │       │
+│             │               │             │       │       │ Projections:││             │               │             │       │
+│             │               │             │       │       │     term    ││             │               │             │       │
+│             │               │             │       │       │    termid   ││             │               │             │       │
+│             │               │             │       │       │             ││             │               │             │       │
+│             │               │    ~1 row   │       │       │  ~142 rows  ││    ~1 row   │               │  ~844 rows  │       │
+└─────────────┘               └──────┬──────┘       │       └─────────────┘└─────────────┘               └──────┬──────┘       │
+                              ┌──────┴──────┐┌──────┴──────┐                                             ┌──────┴──────┐┌──────┴──────┐
+                              │   SEQ_SCAN  ││  PROJECTION │                                             │   SEQ_SCAN  ││HASH_GROUP_BY│
+                              │    ──────   ││    ──────   │                                             │    ──────   ││    ──────   │
+                              │    Table:   ││UNNEST(string│                                             │    Table:   ││   Groups:   │
+                              │lab.fts_main_││ _split(CAST │                                             │lab.fts_main_││      #0     │
+                              │   products  ││   (NULL AS  │                                             │products.docs││             │
+                              │   .fields   ││  VARCHAR), '│                                             │             ││ Aggregates: │
+                              │             ││     ,'))    │                                             │    Type:    ││   sum(#1)   │
+                              │    Type:    ││             │                                             │  Sequential ││             │
+                              │  Sequential ││             │                                             │     Scan    ││             │
+                              │     Scan    ││             │                                             │             ││             │
+                              │             ││             │                                             │ Projections:││             │
+                              │ Projections:││             │                                             │    docid    ││             │
+                              │    field    ││             │                                             │     name    ││             │
+                              │   fieldid   ││             │                                             │             ││             │
+                              │             ││             │                                             │             ││             │
+                              │    ~1 row   ││    ~1 row   │                                             │ ~5,000 rows ││  ~844 rows  │
+                              └─────────────┘└──────┬──────┘                                             └─────────────┘└──────┬──────┘
+                                             ┌──────┴──────┐                                                            ┌──────┴──────┐
+                                             │    UNNEST   │                                                            │  PROJECTION │
+                                             │             │                                                            │    ──────   │
+                                             │             │                                                            │    docid    │
+                                             │             │                                                            │   subscore  │
+                                             │             │                                                            │             │
+                                             │             │                                                            │ ~1,108 rows │
+                                             └──────┬──────┘                                                            └──────┬──────┘
+                                             ┌──────┴──────┐                                                            ┌──────┴──────┐
+                                             │  DUMMY_SCAN │                                                            │  PROJECTION │
+                                             │             │                                                            │    ──────   │
+                                             │             │                                                            │    docid    │
+                                             │             │                                                            │   subscore  │
+                                             │             │                                                            │             │
+                                             │             │                                                            │ ~1,108 rows │
+                                             └─────────────┘                                                            └──────┬──────┘
+                                                                                                                        ┌──────┴──────┐
+                                                                                                                        │  HASH_JOIN  │
+                                                                                                                        │    ──────   │
+                                                                                                                        │  Join Type: │
+                                                                                                                        │    INNER    │
+                                                                                                                        │             ├───────┐
+                                                                                                                        │ Conditions: │       │
+                                                                                                                        │docid = docid│       │
+                                                                                                                        │             │       │
+                                                                                                                        │ ~1,108 rows │       │
+                                                                                                                        └──────┬──────┘       │
+                                                                                                                        ┌──────┴──────┐┌──────┴──────┐
+                                                                                                                        │   SEQ_SCAN  ││  HASH_JOIN  │
+                                                                                                                        │    ──────   ││    ──────   │
+                                                                                                                        │    Table:   ││  Join Type: │
+                                                                                                                        │lab.fts_main_││    INNER    │
+                                                                                                                        │products.docs││             │
+                                                                                                                        │             ││ Conditions: │
+                                                                                                                        │    Type:    ││docid = docid│
+                                                                                                                        │  Sequential ││             ├────────────────────────────────────────────────────┐
+                                                                                                                        │     Scan    ││             │                                                    │
+                                                                                                                        │             ││             │                                                    │
+                                                                                                                        │ Projections:││             │                                                    │
+                                                                                                                        │    docid    ││             │                                                    │
+                                                                                                                        │     len     ││             │                                                    │
+                                                                                                                        │             ││             │                                                    │
+                                                                                                                        │ ~5,000 rows ││ ~1,108 rows │                                                    │
+                                                                                                                        └─────────────┘└──────┬──────┘                                                    │
+                                                                                                                                       ┌──────┴──────┐                                             ┌──────┴──────┐
+                                                                                                                                       │  HASH_JOIN  │                                             │  PROJECTION │
+                                                                                                                                       │    ──────   │                                             │    ──────   │
+                                                                                                                                       │  Join Type: │                                             │    docid    │
+                                                                                                                                       │    INNER    │                                             │             │
+                                                                                                                                       │             │                                             │             │
+                                                                                                                                       │ Conditions: ├───────┐                                     │             │
+                                                                                                                                       │   termid =  │       │                                     │             │
+                                                                                                                                       │    termid   │       │                                     │             │
+                                                                                                                                       │             │       │                                     │             │
+                                                                                                                                       │ ~2,851 rows │       │                                     │ ~1,944 rows │
+                                                                                                                                       └──────┬──────┘       │                                     └──────┬──────┘
+                                                                                                                                       ┌──────┴──────┐┌──────┴──────┐                              ┌──────┴──────┐
+                                                                                                                                       │  PROJECTION ││CROSS_PRODUCT│                              │CROSS_PRODUCT│
+                                                                                                                                       │    ──────   ││             │                              │             │
+                                                                                                                                       │    termid   ││             │                              │             │
+                                                                                                                                       │    docid    ││             ├───────┐                      │             ├───────┐
+                                                                                                                                       │      tf     ││             │       │                      │             │       │
+                                                                                                                                       │             ││             │       │                      │             │       │
+                                                                                                                                       │ ~39,058 rows││             │       │                      │             │       │
+                                                                                                                                       └──────┬──────┘└──────┬──────┘       │                      └──────┬──────┘       │
+                                                                                                                                       ┌──────┴──────┐┌──────┴──────┐┌──────┴──────┐               ┌──────┴──────┐┌──────┴──────┐
+                                                                                                                                       │HASH_GROUP_BY││   SEQ_SCAN  ││CROSS_PRODUCT│               │HASH_GROUP_BY││  PROJECTION │
+                                                                                                                                       │    ──────   ││    ──────   ││             │               │    ──────   ││    ──────   │
+                                                                                                                                       │   Groups:   ││    Table:   ││             │               │   Groups:   ││      42     │
+                                                                                                                                       │      #0     ││lab.fts_main_││             │               │      #0     ││             │
+                                                                                                                                       │      #1     ││products.dict││             │               │             ││             │
+                                                                                                                                       │             ││             ││             │               │             ││             │
+                                                                                                                                       │ Aggregates: ││    Type:    ││             │               │             ││             │
+                                                                                                                                       │ count_star()││  Sequential ││             ├───────┐       │             ││             │
+                                                                                                                                       │             ││     Scan    ││             │       │       │             ││             │
+                                                                                                                                       │             ││             ││             │       │       │             ││             │
+                                                                                                                                       │             ││ Projections:││             │       │       │             ││             │
+                                                                                                                                       │             ││    termid   ││             │       │       │             ││             │
+                                                                                                                                       │             ││      df     ││             │       │       │             ││             │
+                                                                                                                                       │             ││             ││             │       │       │             ││             │
+                                                                                                                                       │ ~39,058 rows││  ~142 rows  ││             │       │       │ ~1,944 rows ││    ~1 row   │
+                                                                                                                                       └──────┬──────┘└─────────────┘└──────┬──────┘       │       └──────┬──────┘└──────┬──────┘
+                                                                                                                                       ┌──────┴──────┐               ┌──────┴──────┐┌──────┴──────┐┌──────┴──────┐┌──────┴──────┐
+                                                                                                                                       │  PROJECTION │               │  PROJECTION ││  PROJECTION ││  PROJECTION ││UNGROUPE...  │
+                                                                                                                                       │    ──────   │               │    ──────   ││    ──────   ││    ──────   ││    ──────   │
+                                                                                                                                       │    docid    │               │ CASE  WHEN (││ CASE  WHEN (││    docid    ││ Aggregates: │
+                                                                                                                                       │    termid   │               │  (#1 > 1))  ││  (#1 > 1))  ││             ││ count_star()│
+                                                                                                                                       │             │               │ THEN ("error││ THEN ("error││             ││             │
+                                                                                                                                       │             │               │ "('More than││ "('More than││             ││             │
+                                                                                                                                       │             │               │    one row  ││    one row  ││             ││             │
+                                                                                                                                       │             │               │  returned by││  returned by││             ││             │
+                                                                                                                                       │             │               │  a subquery ││  a subquery ││             ││             │
+                                                                                                                                       │             │               │  used as an ││  used as an ││             ││             │
+                                                                                                                                       │             │               │  expression ││  expression ││             ││             │
+                                                                                                                                       │             │               │   - scalar  ││   - scalar  ││             ││             │
+                                                                                                                                       │             │               │  subqueries ││  subqueries ││             ││             │
+                                                                                                                                       │             │               │   can only  ││   can only  ││             ││             │
+                                                                                                                                       │             │               │   return a  ││   return a  ││             ││             │
+                                                                                                                                       │             │               │  single row.││  single row.││             ││             │
+                                                                                                                                       │             │               │   Use "SET  ││   Use "SET  ││             ││             │
+                                                                                                                                       │             │               │ scalar_subqu││ scalar_subqu││             ││             │
+                                                                                                                                       │             │               │ery_error_on_││ery_error_on_││             ││             │
+                                                                                                                                       │             │               │multiple_rows││multiple_rows││             ││             │
+                                                                                                                                       │             │               │  =false" to ││  =false" to ││             ││             │
+                                                                                                                                       │             │               │   revert to ││   revert to ││             ││             │
+                                                                                                                                       │             │               │   previous  ││   previous  ││             ││             │
+                                                                                                                                       │             │               │  behavior of││  behavior of││             ││             │
+                                                                                                                                       │             │               │  returning a││  returning a││             ││             │
+                                                                                                                                       │             │               │  random row.││  random row.││             ││             │
+                                                                                                                                       │             │               │ ')) ELSE #0 ││ ')) ELSE #0 ││             ││             │
+                                                                                                                                       │             │               │      END    ││      END    ││             ││             │
+                                                                                                                                       │             │               │             ││             ││             ││             │
+                                                                                                                                       │ ~39,061 rows│               │    ~1 row   ││    ~1 row   ││ ~39,061 rows││             │
+                                                                                                                                       └──────┬──────┘               └──────┬──────┘└──────┬──────┘└──────┬──────┘└──────┬──────┘
+                                                                                                                                       ┌──────┴──────┐               ┌──────┴──────┐┌──────┴──────┐┌──────┴──────┐┌──────┴──────┐
+                                                                                                                                       │   CTE_SCAN  │               │UNGROUPE...  ││UNGROUPE...  ││   CTE_SCAN  ││  PROJECTION │
+                                                                                                                                       │    ──────   │               │    ──────   ││    ──────   ││    ──────   ││    ──────   │
+                                                                                                                                       │  CTE Index: │               │ Aggregates: ││ Aggregates: ││  CTE Index: ││      42     │
+                                                                                                                                       │      10     │               │ "first"(#0) ││ "first"(#0) ││      10     ││             │
+                                                                                                                                       │             │               │ count_star()││ count_star()││             ││             │
+                                                                                                                                       │ ~39,061 rows│               │             ││             ││ ~39,061 rows││    ~1 row   │
+                                                                                                                                       └─────────────┘               └──────┬──────┘└──────┬──────┘└─────────────┘└──────┬──────┘
+                                                                                                                                                                     ┌──────┴──────┐┌──────┴──────┐               ┌──────┴──────┐
+                                                                                                                                                                     │  PROJECTION ││  PROJECTION │               │UNGROUPE...  │
+                                                                                                                                                                     │    ──────   ││    ──────   │               │    ──────   │
+                                                                                                                                                                     │      #0     ││      #0     │               │ Aggregates: │
+                                                                                                                                                                     │             ││             │               │ count_star()│
+                                                                                                                                                                     │    ~1 row   ││    ~1 row   │               │             │
+                                                                                                                                                                     └──────┬──────┘└──────┬──────┘               └──────┬──────┘
+                                                                                                                                                                     ┌──────┴──────┐┌──────┴──────┐               ┌──────┴──────┐
+                                                                                                                                                                     │   SEQ_SCAN  ││   SEQ_SCAN  │               │   CTE_SCAN  │
+                                                                                                                                                                     │    ──────   ││    ──────   │               │    ──────   │
+                                                                                                                                                                     │    Table:   ││    Table:   │               │  CTE Index: │
+                                                                                                                                                                     │lab.fts_main_││lab.fts_main_│               │      7      │
+                                                                                                                                                                     │   products  ││   products  │               │             │
+                                                                                                                                                                     │    .stats   ││    .stats   │               │             │
+                                                                                                                                                                     │             ││             │               │             │
+                                                                                                                                                                     │    Type:    ││    Type:    │               │             │
+                                                                                                                                                                     │  Sequential ││  Sequential │               │             │
+                                                                                                                                                                     │     Scan    ││     Scan    │               │             │
+                                                                                                                                                                     │             ││             │               │             │
+                                                                                                                                                                     │ Projections:││ Projections:│               │             │
+                                                                                                                                                                     │   num_docs  ││    avgdl    │               │             │
+                                                                                                                                                                     │             ││             │               │             │
+                                                                                                                                                                     │    ~1 row   ││    ~1 row   │               │    ~1 row   │
+                                                                                                                                                                     └─────────────┘└─────────────┘               └─────────────┘

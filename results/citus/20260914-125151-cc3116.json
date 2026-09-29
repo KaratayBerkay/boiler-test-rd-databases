@@ -1,0 +1,466 @@
+{
+  "engine": "citus",
+  "display": "Citus 13 (PG 18) sharded, 5x2",
+  "category": "distributed SQL (sharded PostgreSQL)",
+  "dialect": "citus",
+  "driver": "psycopg",
+  "image": "citusdata/citus:latest",
+  "run_id": "20260914-125151-cc3116",
+  "started": "2026-09-14T09:51:51+00:00",
+  "scale": 1.0,
+  "notes": "Citus coordinator + 5 worker primaries + 5 streaming replicas (registered as Citus secondary nodes), every PostgreSQL instance limited to 0.8 CPU / 1.5 GiB. Clients enter through HAProxy -> 3 PgBouncer instances (transaction pooling) -> coordinator. Tables are hash-distributed on their primary keys (Citus needs PK/UNIQUE to contain the distribution column); products and categories are reference tables. Manual worker failover = promote replica + citus_update_node().",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "pg_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "pg_dump -Fd -j | pg_restore -j",
+          "backup_seconds": 4.22,
+          "backup_bytes": 34612984,
+          "backup_mb": 33.0,
+          "restore_seconds": 9.94,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 1.44
+          },
+          "pitr": {},
+          "notes": "logical backup of the whole cluster via the coordinator; the restore yields plain local tables (re-run create_distributed_table/create_reference_table to shard them again; Citus metadata is not in the dump)",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/dump",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "pg_dump -Fd (coordinator)",
+              "cmd": "pg_dump -U lab -d lab -Fd -j 2 --compress=zstd -f /backups/dump",
+              "rc": 0,
+              "seconds": 4.22,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.05,
+              "out": ""
+            },
+            {
+              "name": "pg_restore -j",
+              "cmd": "pg_restore -U lab -d lab_restore -j 2 --no-owner /backups/dump",
+              "rc": 0,
+              "seconds": 9.94,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.19,
+              "out": ""
+            }
+          ],
+          "restore_warnings": "",
+          "seconds": 16.0,
+          "description": "logical dump through the coordinator, restored into a second database"
+        },
+        "cluster_pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "pg_basebackup per node + citus_create_restore_point + recovery_target_name",
+          "backup_seconds": 10.51,
+          "backup_bytes": 591838542,
+          "backup_mb": 564.4,
+          "restore_seconds": 8.26,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 3.95
+          },
+          "pitr": {
+            "match": true,
+            "target": "recovery_target_name='rdlab_citus_pitr' on every node",
+            "probe_rows_at_restore_point": 1000,
+            "probe_rows_on_live_cluster_after_delete": 0,
+            "probe_rows_recovered": 1000,
+            "workers_reachable": true,
+            "recovery_stopped_at_restore_point_on_all_nodes": true
+          },
+          "notes": "pg_basebackup of 6 primaries + per-node WAL archives; citus_create_restore_point gives one consistent recovery target; the 6 nodes restored to it on an isolated network reusing the node names, so pg_dist_node needs no edit",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare coordinator",
+              "cmd": "rm -rf /backups/coordinator && mkdir -p /backups/wal/coordinator",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup coordinator",
+              "cmd": "pg_basebackup -U lab -D /backups/coordinator -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 3.83,
+              "out": ""
+            },
+            {
+              "name": "prepare w1",
+              "cmd": "rm -rf /backups/w1 && mkdir -p /backups/wal/w1",
+              "rc": 0,
+              "seconds": 0.11,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w1",
+              "cmd": "pg_basebackup -U lab -D /backups/w1 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.28,
+              "out": ""
+            },
+            {
+              "name": "prepare w2",
+              "cmd": "rm -rf /backups/w2 && mkdir -p /backups/wal/w2",
+              "rc": 0,
+              "seconds": 0.11,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w2",
+              "cmd": "pg_basebackup -U lab -D /backups/w2 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.21,
+              "out": ""
+            },
+            {
+              "name": "prepare w3",
+              "cmd": "rm -rf /backups/w3 && mkdir -p /backups/wal/w3",
+              "rc": 0,
+              "seconds": 0.11,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w3",
+              "cmd": "pg_basebackup -U lab -D /backups/w3 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.43,
+              "out": ""
+            },
+            {
+              "name": "prepare w4",
+              "cmd": "rm -rf /backups/w4 && mkdir -p /backups/wal/w4",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w4",
+              "cmd": "pg_basebackup -U lab -D /backups/w4 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.38,
+              "out": ""
+            },
+            {
+              "name": "prepare w5",
+              "cmd": "rm -rf /backups/w5 && mkdir -p /backups/wal/w5",
+              "rc": 0,
+              "seconds": 0.11,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w5",
+              "cmd": "pg_basebackup -U lab -D /backups/w5 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.38,
+              "out": ""
+            }
+          ],
+          "nodes": [
+            "coordinator",
+            "w1",
+            "w2",
+            "w3",
+            "w4",
+            "w5"
+          ],
+          "basebackups": {
+            "coordinator": {
+              "seconds": 3.83,
+              "bytes": 54577052
+            },
+            "w1": {
+              "seconds": 1.28,
+              "bytes": 112448538
+            },
+            "w2": {
+              "seconds": 1.21,
+              "bytes": 112407578
+            },
+            "w3": {
+              "seconds": 1.43,
+              "bytes": 104088702
+            },
+            "w4": {
+              "seconds": 1.38,
+              "bytes": 104318078
+            },
+            "w5": {
+              "seconds": 1.38,
+              "bytes": 103998594
+            }
+          },
+          "probe_shards_per_worker": {
+            "w1": 7,
+            "w2": 7,
+            "w3": 6,
+            "w4": 6,
+            "w5": 6
+          },
+          "live_shard_placements": 406,
+          "restore_point": {
+            "name": "rdlab_citus_pitr",
+            "coordinator_lsn": "0/1F03CFD0",
+            "seconds": 0.026
+          },
+          "wal_archive": {
+            "coordinator": {
+              "segment": "00000001000000000000001F",
+              "archived_after_s": 0.3,
+              "archived_count": 33,
+              "failed_count": 0
+            },
+            "w1": {
+              "segment": "00000001000000000000000E",
+              "archived_after_s": 0.3,
+              "archived_count": 17,
+              "failed_count": 0
+            },
+            "w2": {
+              "segment": "00000001000000000000000E",
+              "archived_after_s": 0.3,
+              "archived_count": 17,
+              "failed_count": 0
+            },
+            "w3": {
+              "segment": "00000001000000000000000F",
+              "archived_after_s": 0.3,
+              "archived_count": 18,
+              "failed_count": 0
+            },
+            "w4": {
+              "segment": "00000001000000000000000F",
+              "archived_after_s": 0.3,
+              "archived_count": 18,
+              "failed_count": 0
+            },
+            "w5": {
+              "segment": "00000001000000000000000F",
+              "archived_after_s": 0.3,
+              "archived_count": 18,
+              "failed_count": 0
+            }
+          },
+          "wal_archive_bytes": 1744836213,
+          "promoted_after_s": {
+            "coordinator": 0.15,
+            "w1": 0.13,
+            "w2": 0.14,
+            "w3": 0.15,
+            "w4": 0.14,
+            "w5": 0.77
+          },
+          "restored_recovery_log": {
+            "coordinator": [
+              "starting point-in-time recovery to \"rdlab_citus_pitr\"",
+              "recovery stopping at restore point \"rdlab_citus_pitr\", time 2026-09-14 09:52:24.26382+00",
+              "selected new timeline ID: 2",
+              "archive recovery complete"
+            ],
+            "w1": [
+              "starting point-in-time recovery to \"rdlab_citus_pitr\"",
+              "recovery stopping at restore point \"rdlab_citus_pitr\", time 2026-09-14 09:52:24.264201+00",
+              "selected new timeline ID: 2",
+              "archive recovery complete"
+            ],
+            "w2": [
+              "starting point-in-time recovery to \"rdlab_citus_pitr\"",
+              "recovery stopping at restore point \"rdlab_citus_pitr\", time 2026-09-14 09:52:24.264248+00",
+              "selected new timeline ID: 2",
+              "archive recovery complete"
+            ],
+            "w3": [
+              "starting point-in-time recovery to \"rdlab_citus_pitr\"",
+              "recovery stopping at restore point \"rdlab_citus_pitr\", time 2026-09-14 09:52:24.26423+00",
+              "selected new timeline ID: 2",
+              "archive recovery complete"
+            ],
+            "w4": [
+              "starting point-in-time recovery to \"rdlab_citus_pitr\"",
+              "recovery stopping at restore point \"rdlab_citus_pitr\", time 2026-09-14 09:52:24.264229+00",
+              "selected new timeline ID: 2",
+              "archive recovery complete"
+            ],
+            "w5": [
+              "starting point-in-time recovery to \"rdlab_citus_pitr\"",
+              "recovery stopping at restore point \"rdlab_citus_pitr\", time 2026-09-14 09:52:24.264204+00",
+              "selected new timeline ID: 2",
+              "archive recovery complete"
+            ]
+          },
+          "restored_pg_dist_node": [
+            [
+              "coordinator",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "w1",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r1",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w2",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r2",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w3",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r3",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w4",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r4",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w5",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r5",
+              "5432",
+              "secondary",
+              "True"
+            ]
+          ],
+          "restored_worker_connectivity": {
+            "w1": true,
+            "w2": true,
+            "w3": true,
+            "w4": true,
+            "w5": true
+          },
+          "restored_shard_count": 406,
+          "restored_probe_rows_per_worker": {
+            "w1": 227,
+            "w2": 216,
+            "w3": 190,
+            "w4": 184,
+            "w5": 183
+          },
+          "scratch_log_tail": ": host=172.25.0.1 port=33374\n2026-09-14 09:52:39.517 UTC [86] lab@lab app=[unknown] LOG:  connection authenticated: user=\"lab\" method=trust (/var/lib/postgresql/18/docker/pg_hba.conf:130)\n2026-09-14 09:52:39.517 UTC [86] lab@lab app=[unknown] LOG:  connection authorized: user=lab database=lab application_name=rdlab\n2026-09-14 09:52:39.518 UTC [86] lab@lab app=rdlab LOG:  connection ready: setup total=4.320 ms, fork=1.457 ms, authentication=0.310 ms\n2026-09-14 09:52:39.559 UTC [86] lab@lab app=rdlab LOG:  disconnection: session time: 0:00:00.042 user=lab database=lab host=172.25.0.1 port=33374\n",
+          "seconds": 30.4,
+          "description": "cluster-consistent point-in-time recovery of coordinator and all workers, verified through the restored coordinator"
+        }
+      },
+      "order": [
+        "pg_dump",
+        "cluster_pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "c14c8d8d7120620e54c397dd"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "07e841680e53a9a4bb003312"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "d9f66ab3891c7e4923de5aed"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 4.71,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "pg_dump",
+          "cluster_pitr"
+        ],
+        "pitr_ok": [
+          "cluster_pitr"
+        ]
+      },
+      "_seconds": 51.7
+    }
+  },
+  "harness_log": "results/logs/citus/20260914-125151-cc3116.log",
+  "server_version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "finished": "2026-09-14T09:52:42+00:00"
+}

@@ -1,0 +1,13 @@
+{"ts": "2026-09-14T12:25:28.429+00:00", "level": "DEBUG", "stack": "postgres", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152528-89cc5e.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152528-89cc5e.jsonl"}
+{"ts": "2026-09-14T12:25:28.429+00:00", "level": "INFO", "stack": "postgres", "phase": "-", "msg": "[postgres] run 20260914-152528-89cc5e phases=['load'] scale=0.3 (log: results-k3s/logs/postgres/20260914-152528-89cc5e.log)"}
+{"ts": "2026-09-14T12:25:28.451+00:00", "level": "INFO", "stack": "postgres", "phase": "-", "msg": "[postgres] phase: load"}
+{"ts": "2026-09-14T12:25:28.599+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  schema created (13 statements, 0.13s)"}
+{"ts": "2026-09-14T12:25:28.694+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  customers        6,000 rows     0.09s     64,681 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:25:28.703+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  categories         200 rows     0.01s     29,125 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:25:28.752+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  products         1,500 rows     0.05s     31,617 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:25:29.567+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  orders          60,000 rows     0.81s     74,101 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:25:32.926+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  order_items    147,072 rows     3.35s     43,907 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:25:35.137+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  events         300,000 rows     2.19s    137,011 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:25:35.191+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "  inventory        6,000 rows     0.05s    118,820 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:25:35.849+00:00", "level": "INFO", "stack": "postgres", "phase": "load", "msg": "[postgres] phase load done in 7.4s"}
+{"ts": "2026-09-14T12:25:35.875+00:00", "level": "INFO", "stack": "postgres", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/postgres/20260914-152528-89cc5e.json"}

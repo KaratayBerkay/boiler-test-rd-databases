@@ -1,0 +1,2179 @@
+{
+  "engine": "cockroach",
+  "display": "CockroachDB",
+  "category": "distributed SQL",
+  "dialect": "cockroach",
+  "driver": "psycopg",
+  "image": "cockroachdb/cockroach:latest",
+  "run_id": "20260912-222734-8ad93b",
+  "started": "2026-09-12T19:27:34+00:00",
+  "scale": 1.0,
+  "notes": "3-node insecure cluster; every range replicated 3x via Raft, any node serves reads and writes (no promotion needed). HAProxy round-robins connections across nodes (the recommended production pattern). Insecure mode: no passwords.",
+  "phases": {
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 781.124,
+            "p95_ms": 841.657,
+            "rows": 1,
+            "plan_analyze": "planning time: 623\u00b5s\nexecution time: 877ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 1,020,000 (109 MiB, 11 gRPC calls)\nDistSQL network usage: 240 B (52 messages)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n3\n\u2502 regions: lab\n\u2502 execution time: 2ms\n\u2502 sql cpu time: 2ms\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n3\n    \u2502 regions: lab\n    \u2502 execution time: 18ms\n    \u2502 sql cpu time: 18ms\n    \u2502 actual row count: 3,145\n    \u2502 estimated row count: 6,802\n    \u2502 filter: ((occurred_at >= '2025-06-01 00:00:00') AND (occurred_at < '2025-07-01 00:00:00')) AND (event_type = 'checkout')\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n3\n          kv nodes: n3\n          regions: lab\n          KV time: 855ms\n          KV rows decoded: 1,020,000\n          sql cpu time: 412ms\n          actual row count: 1,020,000\n          estimated row count: 1,000,000 (100% of the table; stats collected 5 minutes ago)\n          table: events@events_pkey\n          spans: FULL SCAN"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "ANALYZE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 107.189,
+            "p95_ms": 117.029,
+            "rows": 1,
+            "plan_analyze": "planning time: 749\u00b5s\nexecution time: 75ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 44,086 (2.2 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 263\u00b5s\n\u2502 sql cpu time: 263\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 index join (streamer)\n    \u2502 sql nodes: n1\n    \u2502 kv nodes: n3\n    \u2502 regions: lab\n    \u2502 KV time: 48ms\n    \u2502 KV rows decoded: 3,145\n    \u2502 sql cpu time: 3ms\n    \u2502 actual row count: 3,145\n    \u2502 estimated row count: 10,668\n    \u2502 table: events@events_pkey\n    \u2502\n    \u2514\u2500\u2500 \u2022 filter\n        \u2502 sql nodes: n1\n        \u2502 regions: lab\n        \u2502 execution time: 488\u00b5s\n        \u2502 sql cpu time: 488\u00b5s\n        \u2502 actual row count: 3,145\n        \u2502 estimated row count: 3,343\n        \u2502 filter: event_type = 'checkout'\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              sql nodes: n1\n              kv nodes: n1\n              regions: lab\n              KV time: 25ms\n              KV rows decoded: 40,941\n              sql cpu time: 10ms\n              actual row count: 40,941\n              estimated row count: 43,367 (4.3% of the table; stats collected 2 seconds ago)\n              table: events@ix_ev_ts_type\n              spans: [/'2025-06-01 00:00:00'/'checkout' - /'2025-06-30 23:59:59.999999'/'checkout']"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "ANALYZE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 64.543,
+            "p95_ms": 77.825,
+            "rows": 1,
+            "plan_analyze": "planning time: 1ms\nexecution time: 66ms\ndistribution: full\nplan type: generic, re-optimized\nrows decoded from KV: 6,290 (426 KiB, 2 gRPC calls)\nDistSQL network usage: 240 B (3 messages)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n3\n\u2502 regions: lab\n\u2502 execution time: 298\u00b5s\n\u2502 sql cpu time: 298\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 index join (streamer)\n    \u2502 sql nodes: n3\n    \u2502 kv nodes: n3\n    \u2502 regions: lab\n    \u2502 KV time: 59ms\n    \u2502 KV rows decoded: 3,145\n    \u2502 sql cpu time: 4ms\n    \u2502 actual row count: 3,145\n    \u2502 estimated row count: 10,055\n    \u2502 table: events@events_pkey\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n3\n          kv nodes: n3\n          regions: lab\n          KV time: 4ms\n          KV rows decoded: 3,145\n          sql cpu time: 1ms\n          actual row count: 3,145\n          estimated row count: 10,055 (0.99% of the table; stats collected 1 second ago)\n          table: events@ix_ev_type_ts  ----------------------  WARNING: the row count estimate is inaccurate, consider running 'ANALYZE events'\n          spans: [/'checkout'/'2025-06-01 00:00:00' - /'checkout'/'2025-06-30 23:59:59.999999']\n\nWARNING: the row count estimate on table \"events\" is inaccurate, consider running 'ANALYZE events'"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 12.1
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.348,
+            "p95_ms": 64.993,
+            "rows": 2430,
+            "plan_error": "InternalError: EXPLAIN does not support placeholders"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "setup": [
+              "CREATE INDEX ix_oi_cover ON order_items (order_id) INCLUDE (product_id, qty)",
+              "ANALYZE order_items"
+            ],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 9.376,
+            "p95_ms": 11.573,
+            "rows": 2430,
+            "plan_error": "InternalError: EXPLAIN does not support placeholders"
+          }
+        ],
+        "best_variant": "covering_include",
+        "speedup_vs_first": 4.41
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 180.083,
+            "p95_ms": 219.822,
+            "rows": 1,
+            "plan_analyze": "planning time: 271\u00b5s\nexecution time: 175ms\ndistribution: local\nplan type: generic, reused\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 53\u00b5s\n\u2502 sql cpu time: 49\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 44ms\n    \u2502 sql cpu time: 44ms\n    \u2502 actual row count: 8,290\n    \u2502 estimated row count: 22,222\n    \u2502 filter: (extract('year', ordered_at) = 2025.0) AND (extract('month', ordered_at) = 5.0)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 131ms\n          KV rows decoded: 200,000\n          sql cpu time: 46ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 6 minutes ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 145.771,
+            "p95_ms": 167.907,
+            "rows": 1,
+            "plan_analyze": "planning time: 555\u00b5s\nexecution time: 153ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 79\u00b5s\n\u2502 sql cpu time: 61\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 4ms\n    \u2502 sql cpu time: 4ms\n    \u2502 actual row count: 8,290\n    \u2502 estimated row count: 8,481\n    \u2502 filter: (ordered_at >= '2025-05-01 00:00:00') AND (ordered_at < '2025-06-01 00:00:00')\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 149ms\n          KV rows decoded: 200,000\n          sql cpu time: 55ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 6 minutes ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 10.313,
+            "p95_ms": 11.523,
+            "rows": 1,
+            "plan_analyze": "planning time: 911\u00b5s\nexecution time: 12ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 8,290 (297 KiB, 1 gRPC calls)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 8\u00b5s\n\u2502 sql cpu time: 8\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 scan\n      sql nodes: n1\n      kv nodes: n1\n      regions: lab\n      KV time: 11ms\n      KV rows decoded: 8,290\n      sql cpu time: 4ms\n      actual row count: 8,290\n      estimated row count: 8,343 (4.2% of the table; stats collected 0 seconds ago)\n      table: orders@ix_orders_ordered_at\n      spans: [/'2025-05-01 00:00:00' - /'2025-05-31 23:59:59.999999']"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 83.945,
+            "p95_ms": 100.8,
+            "rows": 1,
+            "plan_analyze": "planning time: 1ms\nexecution time: 82ms\ndistribution: full\nplan type: generic, re-optimized\nrows decoded from KV: 200,000 (7.0 MiB, 3 gRPC calls)\nDistSQL network usage: 304 B (13 messages)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n1, n2, n3\n\u2502 regions: lab\n\u2502 execution time: 71\u00b5s\n\u2502 sql cpu time: 70\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1, n2, n3\n    \u2502 regions: lab\n    \u2502 execution time: 56ms\n    \u2502 sql cpu time: 56ms\n    \u2502 actual row count: 8,290\n    \u2502 estimated row count: 22,222\n    \u2502 filter: (extract('year', ordered_at) = 2025.0) AND (extract('month', ordered_at) = 5.0)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1, n2, n3\n          kv nodes: n1, n2, n3\n          regions: lab\n          KV time: 156ms\n          KV rows decoded: 200,000\n          sql cpu time: 44ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 1 second ago)\n          table: orders@ix_orders_ordered_at\n          spans: FULL SCAN"
+          }
+        ],
+        "best_variant": "sargable_with_index",
+        "speedup_vs_first": 17.46
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 335.59,
+            "p95_ms": 365.684,
+            "rows": 50,
+            "plan_analyze": "planning time: 371\u00b5s\nexecution time: 318ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 limit\n\u2502 offset: 100000\n\u2502\n\u2514\u2500\u2500 \u2022 top-k\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 194ms\n    \u2502 sql cpu time: 193ms\n    \u2502 actual row count: 50\n    \u2502 estimated row count: 100,050\n    \u2502 order: +ordered_at,+id\n    \u2502 k: 100050\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 124ms\n          KV rows decoded: 200,000\n          sql cpu time: 51ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 6 seconds ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 138.78,
+            "p95_ms": 157.987,
+            "rows": 50,
+            "plan_analyze": "planning time: 494\u00b5s\nexecution time: 131ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 top-k\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 3ms\n\u2502 sql cpu time: 3ms\n\u2502 actual row count: 50\n\u2502 estimated row count: 50\n\u2502 order: +ordered_at,+id\n\u2502 k: 50\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 6ms\n    \u2502 sql cpu time: 6ms\n    \u2502 actual row count: 99,956\n    \u2502 estimated row count: 22,222\n    \u2502 filter: (ordered_at > '2025-01-01 00:00:00') OR ((ordered_at = '2025-01-01 00:00:00') AND (id > 0))\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 122ms\n          KV rows decoded: 200,000\n          sql cpu time: 49ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 8 seconds ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 215.11,
+            "p95_ms": 228.751,
+            "rows": 50,
+            "plan_analyze": "planning time: 843\u00b5s\nexecution time: 156ms\ndistribution: full\nplan type: generic, re-optimized\nrows decoded from KV: 100,100 (3.5 MiB, 200,050 KVs, 3 gRPC calls)\nDistSQL network usage: 2.0 KiB (7 messages)\nregions: lab\n\n\u2022 index join (streamer)\n\u2502 sql nodes: n3\n\u2502 kv nodes: n1\n\u2502 regions: lab\n\u2502 KV time: 3ms\n\u2502 KV rows decoded: 50\n\u2502 sql cpu time: 180\u00b5s\n\u2502 actual row count: 50\n\u2502 estimated row count: 50\n\u2502 table: orders@orders_pkey\n\u2502\n\u2514\u2500\u2500 \u2022 limit\n    \u2502 offset: 100000\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n3\n          kv nodes: n1, n2, n3\n          regions: lab\n          KV time: 152ms\n          KV rows decoded: 100,050\n          sql cpu time: 25ms\n          actual row count: 50\n          estimated row count: 100,050 (50% of the table; stats collected 3 seconds ago)\n          table: orders@ix_orders_ts_id  ----------------------  WARNING: the row count estimate is inaccurate, consider running 'ANALYZE orders'\n          spans: LIMITED SCAN\n          limit: 100050\n\nWARNING: the row count estimate on table \"orders\" is inaccurate, consider running 'ANALYZE orders'"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.748,
+            "p95_ms": 8.361,
+            "rows": 50,
+            "plan_analyze": "planning time: 3ms\nexecution time: 3ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 100 (3.9 KiB, 2 gRPC calls)\nregions: lab\n\n\u2022 index join (streamer)\n\u2502 sql nodes: n1\n\u2502 kv nodes: n1\n\u2502 regions: lab\n\u2502 KV time: 2ms\n\u2502 KV rows decoded: 50\n\u2502 sql cpu time: 145\u00b5s\n\u2502 actual row count: 50\n\u2502 estimated row count: 50\n\u2502 table: orders@orders_pkey\n\u2502\n\u2514\u2500\u2500 \u2022 scan\n      sql nodes: n1\n      kv nodes: n2\n      regions: lab\n      KV time: 985\u00b5s\n      KV rows decoded: 50\n      sql cpu time: 59\u00b5s\n      actual row count: 50\n      estimated row count: 50 (0.03% of the table; stats collected 0 seconds ago)\n      table: orders@ix_orders_ts_id\n      spans: [/'2025-01-01 00:00:00'/1 - ]\n      limit: 50"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.332,
+            "p95_ms": 7.282,
+            "rows": 50,
+            "plan_analyze": "planning time: 1ms\nexecution time: 3ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 100 (3.9 KiB, 2 gRPC calls)\nregions: lab\n\n\u2022 index join (streamer)\n\u2502 sql nodes: n1\n\u2502 kv nodes: n1\n\u2502 regions: lab\n\u2502 KV time: 2ms\n\u2502 KV rows decoded: 50\n\u2502 sql cpu time: 178\u00b5s\n\u2502 actual row count: 50\n\u2502 estimated row count: 50\n\u2502 table: orders@orders_pkey\n\u2502\n\u2514\u2500\u2500 \u2022 scan\n      sql nodes: n1\n      kv nodes: n1\n      regions: lab\n      KV time: 467\u00b5s\n      KV rows decoded: 50\n      sql cpu time: 47\u00b5s\n      actual row count: 50\n      estimated row count: 50 (0.03% of the table; stats collected 0 seconds ago)\n      table: orders@ix_orders_ts_id\n      spans: [/'2025-01-01 00:00:00'/1 - ]\n      limit: 50"
+          }
+        ],
+        "best_variant": "keyset_rowvalue_with_index",
+        "speedup_vs_first": 100.72
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 66.311,
+            "p95_ms": 81.583,
+            "rows": 500,
+            "plan_analyze": "planning time: 487\u00b5s\nexecution time: 81ms\ndistribution: full\nplan type: generic, reused\nrows decoded from KV: 10,000 (4.5 MiB, 2 gRPC calls)\nDistSQL network usage: 21 KiB (3 messages)\nregions: lab\n\n\u2022 render\n\u2502\n\u2514\u2500\u2500 \u2022 top-k\n    \u2502 sql nodes: n3\n    \u2502 regions: lab\n    \u2502 execution time: 905\u00b5s\n    \u2502 sql cpu time: 905\u00b5s\n    \u2502 actual row count: 500\n    \u2502 estimated row count: 500\n    \u2502 order: +id\n    \u2502 k: 500\n    \u2502\n    \u2514\u2500\u2500 \u2022 group (hash)\n        \u2502 sql nodes: n3\n        \u2502 regions: lab\n        \u2502 execution time: 45ms\n        \u2502 sql cpu time: 45ms\n        \u2502 actual row count: 4,232\n        \u2502 estimated row count: 4,231\n        \u2502 group by: id\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join\n            \u2502 sql nodes: n3\n            \u2502 regions: lab\n            \u2502 execution time: 9ms\n            \u2502 sql cpu time: 9ms\n            \u2502 actual row count: 109,803\n            \u2502 estimated row count: 105,800\n            \u2502 equality: (category_id) = (category_id)\n            \u2502\n            \u251c\u2500\u2500 \u2022 scan\n            \u2502     sql nodes: n3\n            \u2502     kv nodes: n3\n            \u2502     regions: lab\n            \u2502     KV time: 11ms\n            \u2502     KV rows decoded: 5,000\n            \u2502     sql cpu time: 4ms\n            \u2502     actual row count: 5,000\n            \u2502     estimated row count: 5,000 (100% of the table; stats collected 6 minutes ago)\n            \u2502     table: products@products_pkey\n            \u2502     spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 filter\n                \u2502 sql nodes: n3\n                \u2502 regions: lab\n                \u2502 execution time: 15\u00b5s\n                \u2502 sql cpu time: 14\u00b5s\n                \u2502 actual row count: 4,232\n                \u2502 estimated row count: 4,232\n                \u2502 filter: active\n                \u2502\n                \u2514\u2500\u2500 \u2022 scan\n                      sql nodes: n3\n                      kv nodes: n3\n                      regions: lab\n                      KV time: 10ms\n                      KV rows decoded: 5,000\n                      sql cpu time: 4ms\n                      actual row count: 5,000\n                      estimated row count: 5,000 (100% of the table; stats collected 6 minutes ago)\n                      table: products@products_pkey\n                      spans: FULL SCAN"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 24.052,
+            "p95_ms": 30.396,
+            "rows": 500,
+            "plan_analyze": "planning time: 3ms\nexecution time: 28ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 10,000 (4.5 MiB, 2 gRPC calls)\nDistSQL network usage: 21 KiB (3 messages)\nregions: lab\n\n\u2022 top-k\n\u2502 sql nodes: n3\n\u2502 regions: lab\n\u2502 execution time: 610\u00b5s\n\u2502 sql cpu time: 609\u00b5s\n\u2502 actual row count: 500\n\u2502 estimated row count: 500\n\u2502 order: +id\n\u2502 k: 500\n\u2502\n\u2514\u2500\u2500 \u2022 hash join\n    \u2502 sql nodes: n3\n    \u2502 regions: lab\n    \u2502 execution time: 887\u00b5s\n    \u2502 sql cpu time: 888\u00b5s\n    \u2502 actual row count: 4,232\n    \u2502 estimated row count: 4,232\n    \u2502 equality: (category_id) = (category_id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 filter\n    \u2502   \u2502 sql nodes: n3\n    \u2502   \u2502 regions: lab\n    \u2502   \u2502 execution time: 15\u00b5s\n    \u2502   \u2502 sql cpu time: 15\u00b5s\n    \u2502   \u2502 actual row count: 4,232\n    \u2502   \u2502 estimated row count: 4,232\n    \u2502   \u2502 filter: active\n    \u2502   \u2502\n    \u2502   \u2514\u2500\u2500 \u2022 scan\n    \u2502         sql nodes: n3\n    \u2502         kv nodes: n3\n    \u2502         regions: lab\n    \u2502         KV time: 9ms\n    \u2502         KV rows decoded: 5,000\n    \u2502         sql cpu time: 4ms\n    \u2502         actual row count: 5,000\n    \u2502         estimated row count: 5,000 (100% of the table; stats collected 6 minutes ago)\n    \u2502         table: products@products_pkey\n    \u2502         spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 group (hash)\n        \u2502 sql nodes: n3\n        \u2502 regions: lab\n        \u2502 execution time: 2ms\n        \u2502 sql cpu time: 2ms\n        \u2502 actual row count: 200\n        \u2502 estimated row count: 200\n        \u2502 group by: category_id\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              sql nodes: n3\n              kv nodes: n3\n              regions: lab\n              KV time: 10ms\n              KV rows decoded: 5,000\n              sql cpu time: 4ms\n              actual row count: 5,000\n              estimated row count: 5,000 (100% of the table; stats collected 6 minutes ago)\n              table: products@products_pkey\n              spans: FULL SCAN"
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 2.76
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 301.499,
+            "p95_ms": 380.136,
+            "rows": 0,
+            "plan_analyze": "planning time: 1ms\nexecution time: 427ms\ndistribution: full\nplan type: generic, re-optimized\nrows decoded from KV: 492,606 (18 MiB, 3 gRPC calls)\nDistSQL network usage: 3.7 MiB (485 messages)\nregions: lab\n\n\u2022 filter\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 416\u00b5s\n\u2502 sql cpu time: 393\u00b5s\n\u2502 actual row count: 0\n\u2502 estimated row count: 2\n\u2502 filter: id IS NULL\n\u2502\n\u2514\u2500\u2500 \u2022 merge join (right outer)\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 62ms\n    \u2502 sql cpu time: 90ms\n    \u2502 actual row count: 487,606\n    \u2502 estimated row count: 487,606\n    \u2502 equality: (product_id) = (id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     sql nodes: n1\n    \u2502     kv nodes: n1\n    \u2502     regions: lab\n    \u2502     KV time: 409ms\n    \u2502     KV rows decoded: 487,606\n    \u2502     sql cpu time: 141ms\n    \u2502     actual row count: 487,606\n    \u2502     estimated row count: 487,606 (100% of the table; stats collected 35 seconds ago)\n    \u2502     table: order_items@ix_order_items_product_id\n    \u2502     spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 sort\n        \u2502 sql nodes: n3\n        \u2502 regions: lab\n        \u2502 execution time: 2ms\n        \u2502 sql cpu time: 2ms\n        \u2502 actual row count: 5,000\n        \u2502 estimated row count: 5,000\n        \u2502 order: +id\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              sql nodes: n3\n              kv nodes: n3\n              regions: lab\n              KV time: 10ms\n              KV rows decoded: 5,000\n              sql cpu time: 3ms\n              actual row count: 5,000\n              estimated row count: 5,000 (100% of the table; stats collected 6 minutes ago)\n              table: products@ix_products_category_id\n              spans: FULL SCAN"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 282.766,
+            "p95_ms": 326.199,
+            "rows": 0,
+            "plan_analyze": "planning time: 1ms\nexecution time: 448ms\ndistribution: full\nplan type: generic, re-optimized\nrows decoded from KV: 492,606 (18 MiB, 3 gRPC calls)\nDistSQL network usage: 1.9 MiB (486 messages)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 76\u00b5s\n\u2502 sql cpu time: 75\u00b5s\n\u2502 actual row count: 0\n\u2502 estimated row count: 1\n\u2502 order: +id\n\u2502\n\u2514\u2500\u2500 \u2022 hash join (right anti)\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 31ms\n    \u2502 sql cpu time: 52ms\n    \u2502 actual row count: 0\n    \u2502 estimated row count: 1\n    \u2502 equality: (product_id) = (id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     sql nodes: n1\n    \u2502     kv nodes: n1\n    \u2502     regions: lab\n    \u2502     KV time: 431ms\n    \u2502     KV rows decoded: 487,606\n    \u2502     sql cpu time: 139ms\n    \u2502     actual row count: 487,606\n    \u2502     estimated row count: 487,606 (100% of the table; stats collected 39 seconds ago)\n    \u2502     table: order_items@ix_order_items_product_id\n    \u2502     spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n3\n          kv nodes: n3\n          regions: lab\n          KV time: 6ms\n          KV rows decoded: 5,000\n          sql cpu time: 2ms\n          actual row count: 5,000\n          estimated row count: 5,000 (100% of the table; stats collected 6 minutes ago)\n          table: products@ix_products_category_id\n          spans: FULL SCAN"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 278.456,
+            "p95_ms": 305.307,
+            "rows": 0,
+            "plan_analyze": "planning time: 1ms\nexecution time: 297ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 492,606 (18 MiB, 3 gRPC calls)\nDistSQL network usage: 1.9 MiB (486 messages)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 49\u00b5s\n\u2502 sql cpu time: 49\u00b5s\n\u2502 actual row count: 0\n\u2502 estimated row count: 1\n\u2502 order: +id\n\u2502\n\u2514\u2500\u2500 \u2022 hash join (right anti)\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 24ms\n    \u2502 sql cpu time: 37ms\n    \u2502 actual row count: 0\n    \u2502 estimated row count: 1\n    \u2502 equality: (product_id) = (id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     sql nodes: n1\n    \u2502     kv nodes: n1\n    \u2502     regions: lab\n    \u2502     KV time: 286ms\n    \u2502     KV rows decoded: 487,606\n    \u2502     sql cpu time: 78ms\n    \u2502     actual row count: 487,606\n    \u2502     estimated row count: 487,606 (100% of the table; stats collected 42 seconds ago)\n    \u2502     table: order_items@ix_order_items_product_id\n    \u2502     spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n3\n          kv nodes: n3\n          regions: lab\n          KV time: 6ms\n          KV rows decoded: 5,000\n          sql cpu time: 2ms\n          actual row count: 5,000\n          estimated row count: 5,000 (100% of the table; stats collected 6 minutes ago)\n          table: products@ix_products_category_id\n          spans: FULL SCAN"
+          }
+        ],
+        "best_variant": "not_in",
+        "speedup_vs_first": 1.08
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.898,
+            "p95_ms": 3.262,
+            "rows": 13,
+            "plan_error": "InternalError: EXPLAIN does not support placeholders"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.862,
+            "p95_ms": 3.84,
+            "rows": 13,
+            "plan_error": "InternalError: EXPLAIN does not support placeholders"
+          }
+        ],
+        "best_variant": "union_rewrite",
+        "speedup_vs_first": 1.01
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 141.995,
+            "p95_ms": 148.809,
+            "rows": 644,
+            "plan_analyze": "planning time: 1ms\nexecution time: 166ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 441\u00b5s\n\u2502 sql cpu time: 440\u00b5s\n\u2502 actual row count: 644\n\u2502 estimated row count: 2,282\n\u2502 order: +ordered_at,+id\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 3ms\n    \u2502 sql cpu time: 3ms\n    \u2502 actual row count: 644\n    \u2502 estimated row count: 2,282\n    \u2502 filter: ((ordered_at >= '2025-09-01 00:00:00') AND (ordered_at < '2025-10-01 00:00:00')) AND (status = 'pending')\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 162ms\n          KV rows decoded: 200,000\n          sql cpu time: 60ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 16 seconds ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 21.448,
+            "p95_ms": 27.084,
+            "rows": 644,
+            "plan_analyze": "planning time: 1ms\nexecution time: 16ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 1,288 (56 KiB, 2 gRPC calls)\nregions: lab\n\n\u2022 index join (streamer)\n\u2502 sql nodes: n1\n\u2502 kv nodes: n1\n\u2502 regions: lab\n\u2502 KV time: 14ms\n\u2502 KV rows decoded: 644\n\u2502 sql cpu time: 994\u00b5s\n\u2502 actual row count: 644\n\u2502 estimated row count: 1,004\n\u2502 table: orders@orders_pkey\n\u2502\n\u2514\u2500\u2500 \u2022 scan\n      sql nodes: n1\n      kv nodes: n1\n      regions: lab\n      KV time: 2ms\n      KV rows decoded: 644\n      sql cpu time: 656\u00b5s\n      actual row count: 644\n      estimated row count: 1,004 (0.50% of the table; stats collected 1 second ago)\n      table: orders@ix_orders_status_ts\n      spans: [/'pending'/'2025-09-01 00:00:00' - /'pending'/'2025-09-30 23:59:59.999999']"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "setup": [
+              "CREATE INDEX ix_orders_pending_ts ON orders (ordered_at) WHERE status = 'pending'",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 18.727,
+            "p95_ms": 20.515,
+            "rows": 644,
+            "plan_analyze": "planning time: 2ms\nexecution time: 19ms\ndistribution: local\nplan type: generic, re-optimized\nrows decoded from KV: 1,288 (50 KiB, 2 gRPC calls)\nregions: lab\n\n\u2022 index join (streamer)\n\u2502 sql nodes: n1\n\u2502 kv nodes: n1\n\u2502 regions: lab\n\u2502 KV time: 17ms\n\u2502 KV rows decoded: 644\n\u2502 sql cpu time: 844\u00b5s\n\u2502 actual row count: 644\n\u2502 estimated row count: 1,041\n\u2502 table: orders@orders_pkey\n\u2502\n\u2514\u2500\u2500 \u2022 scan\n      sql nodes: n1\n      kv nodes: n1, n3\n      regions: lab\n      KV time: 2ms\n      KV rows decoded: 644\n      sql cpu time: 313\u00b5s\n      actual row count: 644\n      estimated row count: 1,041 (0.52% of the table; stats collected 0 seconds ago)\n      table: orders@ix_orders_pending_ts (partial index)\n      spans: [/'2025-09-01 00:00:00' - /'2025-09-30 23:59:59.999999']"
+          }
+        ],
+        "best_variant": "partial_index_pending",
+        "speedup_vs_first": 7.58
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 581.013,
+            "p95_ms": 657.817,
+            "rows": 13,
+            "plan_analyze": "planning time: 2ms\nexecution time: 632ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 1,040,000 (111 MiB, 12 gRPC calls)\nDistSQL network usage: 868 KiB (62 messages)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 114\u00b5s\n\u2502 sql cpu time: 114\u00b5s\n\u2502 actual row count: 13\n\u2502 estimated row count: 13\n\u2502 order: +country_code\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 3ms\n    \u2502 sql cpu time: 3ms\n    \u2502 actual row count: 13\n    \u2502 estimated row count: 13\n    \u2502 group by: country_code\n    \u2502\n    \u2514\u2500\u2500 \u2022 hash join\n        \u2502 sql nodes: n1, n3\n        \u2502 regions: lab\n        \u2502 execution time: 5ms\n        \u2502 sql cpu time: 8ms\n        \u2502 actual row count: 20,000\n        \u2502 estimated row count: 141,720\n        \u2502 equality: (customer_id) = (id)\n        \u2502 right cols are key\n        \u2502\n        \u251c\u2500\u2500 \u2022 filter\n        \u2502   \u2502 sql nodes: n1\n        \u2502   \u2502 regions: lab\n        \u2502   \u2502 execution time: 11ms\n        \u2502   \u2502 sql cpu time: 11ms\n        \u2502   \u2502 actual row count: 20,000\n        \u2502   \u2502 estimated row count: 141,899\n        \u2502   \u2502 filter: event_type = 'bench_stats'\n        \u2502   \u2502\n        \u2502   \u2514\u2500\u2500 \u2022 scan\n        \u2502         sql nodes: n1\n        \u2502         kv nodes: n1\n        \u2502         regions: lab\n        \u2502         KV time: 617ms\n        \u2502         KV rows decoded: 1,020,000\n        \u2502         sql cpu time: 228ms\n        \u2502         actual row count: 1,020,000\n        \u2502         estimated row count: 1,020,000 (100% of the table; stats collected 3 seconds ago)\n        \u2502         table: events@events_pkey\n        \u2502         spans: FULL SCAN\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              sql nodes: n3\n              kv nodes: n3\n              regions: lab\n              KV time: 23ms\n              KV rows decoded: 20,000\n              sql cpu time: 9ms\n              actual row count: 20,000\n              estimated row count: 20,000 (100% of the table; stats collected 7 minutes ago)\n              table: customers@customers_pkey\n              spans: FULL SCAN"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "ANALYZE events"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 535.954,
+            "p95_ms": 573.694,
+            "rows": 13,
+            "plan_analyze": "planning time: 1ms\nexecution time: 617ms\ndistribution: full\nplan type: generic, re-optimized\nrows decoded from KV: 1,040,000 (111 MiB, 12 gRPC calls)\nDistSQL network usage: 868 KiB (62 messages)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 119\u00b5s\n\u2502 sql cpu time: 119\u00b5s\n\u2502 actual row count: 13\n\u2502 estimated row count: 13\n\u2502 order: +country_code\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 3ms\n    \u2502 sql cpu time: 3ms\n    \u2502 actual row count: 13\n    \u2502 estimated row count: 13\n    \u2502 group by: country_code\n    \u2502\n    \u2514\u2500\u2500 \u2022 hash join\n        \u2502 sql nodes: n1, n3\n        \u2502 regions: lab\n        \u2502 execution time: 5ms\n        \u2502 sql cpu time: 7ms\n        \u2502 actual row count: 20,000\n        \u2502 estimated row count: 141,915\n        \u2502 equality: (customer_id) = (id)\n        \u2502 right cols are key\n        \u2502\n        \u251c\u2500\u2500 \u2022 filter\n        \u2502   \u2502 sql nodes: n1\n        \u2502   \u2502 regions: lab\n        \u2502   \u2502 execution time: 11ms\n        \u2502   \u2502 sql cpu time: 11ms\n        \u2502   \u2502 actual row count: 20,000\n        \u2502   \u2502 estimated row count: 142,094\n        \u2502   \u2502 filter: event_type = 'bench_stats'\n        \u2502   \u2502\n        \u2502   \u2514\u2500\u2500 \u2022 scan\n        \u2502         sql nodes: n1\n        \u2502         kv nodes: n1\n        \u2502         regions: lab\n        \u2502         KV time: 603ms\n        \u2502         KV rows decoded: 1,020,000\n        \u2502         sql cpu time: 224ms\n        \u2502         actual row count: 1,020,000\n        \u2502         estimated row count: 1,020,000 (100% of the table; stats collected 7 seconds ago)\n        \u2502         table: events@events_pkey\n        \u2502         spans: FULL SCAN\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              sql nodes: n3\n              kv nodes: n3\n              regions: lab\n              KV time: 14ms\n              KV rows decoded: 20,000\n              sql cpu time: 5ms\n              actual row count: 20,000\n              estimated row count: 20,000 (100% of the table; stats collected 7 minutes ago)\n              table: customers@customers_pkey\n              spans: FULL SCAN"
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 1.08
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 6.826,
+            "rows_per_s": 440,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 1.069,
+            "rows_per_s": 2805,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.474,
+            "rows_per_s": 6325,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups (psycopg prepare=True)",
+        "what": "server-side prepared statements skip parse/plan per execution",
+        "variants": [
+          {
+            "name": "unprepared",
+            "p50_ms": 1.7845,
+            "p99_ms": 2.2943,
+            "n": 300,
+            "error": null
+          },
+          {
+            "name": "prepared",
+            "p50_ms": 1.683,
+            "p99_ms": 2.1266,
+            "n": 300,
+            "error": null
+          },
+          {
+            "name": "unprepared_again",
+            "p50_ms": 1.7006,
+            "p99_ms": 2.2126,
+            "n": 300,
+            "error": null
+          }
+        ]
+      },
+      "_seconds": 138.2
+    },
+    "connections": {
+      "max_connections": -1,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 2.644377,
+            "p50": 2.8408290000000003,
+            "p90": 3.0643351,
+            "p95": 3.2220038,
+            "p99": 3.2325060899999998,
+            "max": 3.233341,
+            "mean": 2.869996733333333,
+            "stdev": 0.15402756767084116
+          },
+          "errors": [],
+          "error_count": 0
+        },
+        "haproxy": {
+          "target": "haproxy",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 1.979365,
+            "p50": 3.1735495,
+            "p90": 3.6647244000000003,
+            "p95": 3.8841688999999997,
+            "p99": 4.08979195,
+            "max": 4.161696,
+            "mean": 3.1823640666666666,
+            "stdev": 0.42599934036349035
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 9,
+            "opened": 9,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 9,
+              "min": 2.715115,
+              "p50": 4.664949,
+              "p90": 6.372955,
+              "p95": 6.796197,
+              "p99": 7.1347906000000005,
+              "max": 7.219439,
+              "mean": 4.851761,
+              "stdev": 1.394162038432804
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ],
+        "haproxy": [
+          {
+            "target": "haproxy",
+            "requested": 9,
+            "opened": 9,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 9,
+              "min": 3.88255,
+              "p50": 5.992104,
+              "p90": 8.2488414,
+              "p95": 8.3832082,
+              "p99": 8.490701640000001,
+              "max": 8.517575,
+              "mean": 6.078419444444445,
+              "stdev": 1.503104627444818
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 2460,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 615,
+            "latency_ms": {
+              "n": 2460,
+              "min": 0.654462,
+              "p50": 1.708161,
+              "p90": 2.005938,
+              "p95": 2.059834,
+              "p99": 2.16275977,
+              "max": 3.398866,
+              "mean": 1.6233846951219513,
+              "stdev": 0.3554767328081325
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 10537,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 2634,
+            "latency_ms": {
+              "n": 10537,
+              "min": 0.615348,
+              "p50": 1.606923,
+              "p90": 1.946042,
+              "p95": 2.0201103999999996,
+              "p99": 2.15566228,
+              "max": 4.176176,
+              "mean": 1.515717713485812,
+              "stdev": 0.38387088089057964
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 65653,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 16413,
+            "latency_ms": {
+              "n": 65653,
+              "min": 0.68854,
+              "p50": 0.945417,
+              "p90": 1.0912494000000001,
+              "p95": 1.1784604,
+              "p99": 1.615294319999999,
+              "max": 8.139469,
+              "mean": 0.9731008685665545,
+              "stdev": 0.17995573223025704
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 82393,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 20598,
+            "latency_ms": {
+              "n": 82393,
+              "min": 0.762998,
+              "p50": 1.504643,
+              "p90": 1.9800446,
+              "p95": 2.1704771999999997,
+              "p99": 2.7079634800000014,
+              "max": 8.480774,
+              "mean": 1.5519787106307574,
+              "stdev": 0.3849275949987774
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 89623,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 22406,
+            "latency_ms": {
+              "n": 89623,
+              "min": 0.796064,
+              "p50": 2.764323,
+              "p90": 3.8842324000000006,
+              "p95": 4.272156899999999,
+              "p99": 5.249363819999999,
+              "max": 15.608832,
+              "mean": 2.856265870557781,
+              "stdev": 0.8325029393902578
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ],
+        "haproxy": [
+          {
+            "workers": 1,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 2915,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 729,
+            "latency_ms": {
+              "n": 2915,
+              "min": 0.539635,
+              "p50": 1.439696,
+              "p90": 1.6699336,
+              "p95": 1.7325737999999997,
+              "p99": 1.8533935800000003,
+              "max": 10.381658,
+              "mean": 1.3695554895368782,
+              "stdev": 0.33404106645968956
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 10507,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 2627,
+            "latency_ms": {
+              "n": 10507,
+              "min": 0.512304,
+              "p50": 1.535589,
+              "p90": 2.0844327999999996,
+              "p95": 2.1715741,
+              "p99": 2.3192384,
+              "max": 9.224651,
+              "mean": 1.5199138836014086,
+              "stdev": 0.43961669512946416
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 70019,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 17505,
+            "latency_ms": {
+              "n": 70019,
+              "min": 0.571168,
+              "p50": 0.924153,
+              "p90": 1.0954496000000002,
+              "p95": 1.1874475,
+              "p99": 1.5185127399999958,
+              "max": 6.91319,
+              "mean": 0.9122755548351161,
+              "stdev": 0.20998643485897062
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 81070,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 20268,
+            "latency_ms": {
+              "n": 81070,
+              "min": 0.628704,
+              "p50": 1.4842075000000001,
+              "p90": 2.292761000000001,
+              "p95": 2.5884545500000002,
+              "p99": 3.32284194,
+              "max": 9.407828,
+              "mean": 1.5772697060811645,
+              "stdev": 0.5642404658130078
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 86876,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 21719,
+            "latency_ms": {
+              "n": 86876,
+              "min": 0.624276,
+              "p50": 2.6734855,
+              "p90": 4.79923,
+              "p95": 5.539615,
+              "p99": 7.2014985,
+              "max": 17.130516,
+              "mean": 2.945955265516368,
+              "stdev": 1.3909961400235993
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 11271,
+        "qps": 2806,
+        "checkout_wait_ms": {
+          "n": 11271,
+          "min": 0.001936,
+          "p50": 0.005456,
+          "p90": 0.008769,
+          "p95": 0.0093095,
+          "p99": 0.016175199999999963,
+          "max": 4007.921094,
+          "mean": 8.508798384349214,
+          "stdev": 184.07738798062138
+        },
+        "exec_ms": {
+          "n": 11271,
+          "min": 0.767525,
+          "p50": 2.64877,
+          "p90": 4.410512,
+          "p95": 5.0390345,
+          "p99": 6.435998999999995,
+          "max": 10.931118,
+          "mean": 2.8374372239375387,
+          "stdev": 1.1909069663240852
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "SerializationFailure: restart transaction: TransactionRetryWithProtoRefreshError: WriteTooOldError: write for key /Table/135/1/1/0 at timestamp 1789241459.038396946,0 too old; must write at or above 1789241459.039267122,1: \"sql txn\" meta={id=c8dd4b14 key=/Table/135/1/1/0 iso=Serializable pri=0.00045",
+          "ms": 3.6,
+          "t2": {
+            "outcome": "committed",
+            "ms": 4.0
+          },
+          "final_balance": 90
+        },
+        "write_conflict_serializable": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "SerializationFailure: restart transaction: TransactionRetryWithProtoRefreshError: WriteTooOldError: write for key /Table/135/1/1/0 at timestamp 1789241459.057836901,0 too old; must write at or above 1789241459.058653180,1: \"sql txn\" meta={id=2fbd6baa key=/Table/135/1/1/0 iso=Serializable pri=0.08437",
+          "ms": 2.9,
+          "t2": {
+            "outcome": "committed",
+            "ms": 2.8
+          },
+          "final_balance": 90
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t2"
+          ],
+          "error_codes": {
+            "t2": "40001"
+          },
+          "detection_ms": 103.7,
+          "timeline_s": {
+            "t1": 0.404,
+            "t2": 0.104
+          }
+        }
+      },
+      "rw_split": {
+        "haproxy": {
+          "proxy": "haproxy",
+          "connections": 40,
+          "reads_by_backend": {
+            "::/0/false": 40
+          },
+          "writes_ok": 40,
+          "writes_rejected": 0,
+          "writes_rejected_on_backend": {},
+          "write_error_codes": {},
+          "interpretation": "all traffic served by one writable backend (no read scaling through this proxy)"
+        }
+      },
+      "_seconds": 67.4
+    },
+    "replication": {
+      "kind": "Raft consensus, 3 replicas per range (multi-active)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+          "status": {
+            "in_recovery": false,
+            "error": "unknown function: pg_wal_lsn_diff()"
+          }
+        },
+        "node2": {
+          "role_reported": "primary",
+          "role_configured": "node",
+          "version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+          "status": {
+            "in_recovery": false,
+            "error": "unknown function: pg_wal_lsn_diff()"
+          }
+        },
+        "node3": {
+          "role_reported": "primary",
+          "role_configured": "node",
+          "version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+          "status": {
+            "in_recovery": false,
+            "error": "unknown function: pg_wal_lsn_diff()"
+          }
+        },
+        "haproxy": {
+          "role_reported": "primary",
+          "role_configured": "proxy",
+          "version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+          "status": {
+            "in_recovery": false,
+            "error": "unknown function: pg_wal_lsn_diff()"
+          }
+        }
+      },
+      "visibility_lag": {
+        "node2": {
+          "replica": "node2",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 1.312751992372796,
+            "p50": 1.5420185081893578,
+            "p90": 1.7303736036410557,
+            "p95": 1.9494122097967186,
+            "p99": 2.496323742961977,
+            "max": 2.6754460122901946,
+            "mean": 1.599908866531526,
+            "stdev": 0.2466567050339118
+          }
+        },
+        "node3": {
+          "error": "UniqueViolation: duplicate key value violates unique constraint \"repl_probe_pkey\" DETAIL: Key (id)=(1000) already exists."
+        }
+      },
+      "write_rejection": {
+        "node2": {
+          "replica": "node2",
+          "writes_rejected": false,
+          "note": "replica accepted a write (multi-master / node-level writable)"
+        },
+        "node3": {
+          "replica": "node3",
+          "writes_rejected": false,
+          "note": "replica accepted a write (multi-master / node-level writable)"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 19.25,
+        "rows_per_s": 1039,
+        "catchup_ms_after_last_commit": {
+          "node2": 35.0,
+          "node3": 17.8
+        },
+        "samples": [
+          {
+            "t": 195577.884,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195578.143,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195578.402,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195578.658,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195578.915,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195579.173,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195579.434,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195579.692,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195579.95,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195580.208,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195580.466,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195580.721,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195580.979,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195581.237,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195581.495,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195581.753,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195582.008,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195582.266,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195582.525,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195582.781,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195583.038,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195583.296,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195583.554,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195583.812,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195584.071,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195584.329,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195584.589,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195584.844,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195585.098,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195585.356,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195585.614,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195585.872,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195586.13,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195586.387,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195586.646,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195586.901,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195587.159,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195587.417,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195587.673,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195587.931,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195588.186,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195588.444,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195588.703,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195588.959,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195589.216,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195589.473,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195589.73,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195589.988,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195590.246,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195590.504,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195590.761,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195591.016,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195591.273,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195591.53,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195591.788,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195592.046,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195592.304,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195592.562,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195592.82,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195593.076,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195593.334,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195593.592,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195593.849,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195594.107,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195594.364,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195594.621,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195594.877,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195595.132,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195595.39,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195595.648,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195595.906,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195596.165,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195596.42,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195596.678,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195596.935,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          },
+          {
+            "t": 195597.191,
+            "primary": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node2": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            },
+            "node3": {
+              "in_recovery": false,
+              "error": "unknown function: pg_wal_lsn_diff()"
+            }
+          }
+        ]
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 82027,
+          "qps": 20507,
+          "errors": 0,
+          "latency_ms": {
+            "n": 82027,
+            "min": 0.740706,
+            "p50": 1.507319,
+            "p90": 1.9934008,
+            "p95": 2.1819378,
+            "p99": 2.689062340000003,
+            "max": 11.628093,
+            "mean": 1.558839533848611,
+            "stdev": 0.4167956397671232
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "node2",
+            "node3"
+          ],
+          "workers": 32,
+          "queries": 94718,
+          "qps": 23680,
+          "errors": 0,
+          "latency_ms": {
+            "n": 94718,
+            "min": 0.505635,
+            "p50": 1.251981,
+            "p90": 2.0161236000000002,
+            "p95": 2.2812688999999997,
+            "p99": 2.8808141400000014,
+            "max": 9.530434,
+            "mean": 1.349742504539792,
+            "stdev": 0.5116413478021868
+          }
+        },
+        "gain": 1.15
+      },
+      "failover": {
+        "kind": "Raft consensus, 3 replicas per range (multi-active)",
+        "stopped_at": 0.0,
+        "old_primary_error": "OperationalError: connection failed: connection to server at \"127.0.0.1\", port 26257 failed: Connection refused Is the server running on that host and accepting TCP/IP connections?",
+        "write_attempts_until_success": 1,
+        "last_error_before_success": null,
+        "downtime_ms": 494.4,
+        "new_primary": "node2",
+        "new_primary_role": "primary",
+        "new_primary_status": {
+          "in_recovery": false,
+          "error": "unknown function: pg_wal_lsn_diff()"
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 35.5
+    }
+  },
+  "finished": "2026-09-12T19:31:35+00:00"
+}

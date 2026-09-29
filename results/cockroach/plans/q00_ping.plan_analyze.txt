@@ -1,0 +1,13 @@
+planning time: 62µs
+execution time: 181µs
+distribution: local
+plan type: generic, reused
+regions: lab
+
+• values
+  sql nodes: n1
+  regions: lab
+  execution time: 30µs
+  sql cpu time: 30µs
+  actual row count: 1
+  size: 1 column, 1 row

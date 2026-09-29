@@ -1,0 +1,163 @@
+analyzed_plan | ┌─────────────────────────────────────┐
+│┌───────────────────────────────────┐│
+││    Query Profiling Information    ││
+│└───────────────────────────────────┘│
+└─────────────────────────────────────┘
+EXPLAIN ANALYZE SELECT c.country_code, DATE_TRUNC('month', o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_TRUNC('month', o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start LIMIT 50
+┌────────────────────────────────────────────────┐
+│┌──────────────────────────────────────────────┐│
+││              Total Time: 0.0341s             ││
+│└──────────────────────────────────────────────┘│
+└────────────────────────────────────────────────┘
+┌───────────────────────────┐
+│           QUERY           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│      EXPLAIN_ANALYZE      │
+│    ────────────────────   │
+│                           │
+│           0 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           TOP_N           │
+│    ────────────────────   │
+│          Top: 50          │
+│                           │
+│         Order By:         │
+│      sum((oi.qty * oi     │
+│     .unit_price)) DESC    │
+│     c.country_code ASC    │
+│   date_trunc('month', o   │
+│      .ordered_at) ASC     │
+│                           │
+│                           │
+│                           │
+│          50 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_strin│
+│           g(#0)           │
+│             #1            │
+│             #2            │
+│             #3            │
+│                           │
+│                           │
+│                           │
+│          78 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│          Groups:          │
+│             #0            │
+│             #1            │
+│                           │
+│        Aggregates:        │
+│     count(DISTINCT #2)    │
+│          sum(#3)          │
+│                           │
+│                           │
+│                           │
+│          78 rows          │
+│           0.03s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│        country_code       │
+│    date_trunc('month',    │
+│         ordered_at)       │
+│             id            │
+│ (CAST(qty AS DECIMAL(18,0)│
+│      ) * unit_price)      │
+│                           │
+│                           │
+│                           │
+│        84,255 rows        │
+│           0.01s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│             #2            │
+│             #3            │
+│__internal_compress_string_│
+│        uinteger(#4)       │
+│                           │
+│                           │
+│                           │
+│        84,255 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│      Join Type: INNER     │
+│                           │
+│        Conditions:        │
+│       order_id = id       ├──────────────┐
+│                           │              │
+│                           │              │
+│                           │              │
+│        84,255 rows        │              │
+│           0.01s           │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│         TABLE_SCAN        ││         HASH_JOIN         │
+│    ────────────────────   ││    ────────────────────   │
+│           Table:          ││      Join Type: INNER     │
+│    lab.main.order_items   ││                           │
+│                           ││        Conditions:        │
+│   Type: Sequential Scan   ││      customer_id = id     │
+│                           ││                           │
+│        Projections:       ││                           │
+│          order_id         ││                           │
+│            qty            ││                           │
+│         unit_price        ││           0.00s           ├──────────────┐
+│                           ││                           │              │
+│      Dynamic Filters:     ││                           │              │
+│ optional: order_id>=2 AND ││                           │              │
+│ optional: order_id<=199999││                           │              │
+│                           ││                           │              │
+│                           ││                           │              │
+│                           ││                           │              │
+│        487,602 rows       ││        34,679 rows        │              │
+│           0.01s           ││          (0.00s)          │              │
+└───────────────────────────┘└─────────────┬─────────────┘              │
+                             ┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+                             │         TABLE_SCAN        ││         TABLE_SCAN        │
+                             │    ────────────────────   ││    ────────────────────   │
+                             │           Table:          ││           Table:          │
+                             │      lab.main.orders      ││     lab.main.customers    │
+                             │                           ││                           │
+                             │   Type: Sequential Scan   ││   Type: Sequential Scan   │
+                             │                           ││                           │
+                             │        Projections:       ││        Projections:       │
+                             │        customer_id        ││             id            │
+                             │             id            ││        country_code       │
+                             │         ordered_at        ││                           │
+                             │                           ││                           │
+                             │          Filters:         ││                           │
+                             │     status='delivered'    ││                           │
+                             │ ordered_at>='2025-01-01 00││           0.00s           │
+                             │   :00:00'::TIMESTAMP AND  ││                           │
+                             │  ordered_at<'2025-07-01 00││                           │
+                             │     :00:00'::TIMESTAMP    ││                           │
+                             │                           ││                           │
+                             │      Dynamic Filters:     ││                           │
+                             │  optional: customer_id>=1 ││                           │
+                             │  AND optional: customer_id││                           │
+                             │          <=20000          ││                           │
+                             │                           ││                           │
+                             │                           ││                           │
+                             │                           ││                           │
+                             │        34,679 rows        ││        20,000 rows        │
+                             │           0.01s           ││          (0.00s)          │
+                             └───────────────────────────┘└───────────────────────────┘

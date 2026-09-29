@@ -1,0 +1,60 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=7.170..7.198 rows=600.00 loops=1)
+  ->  Distributed Subplan 43_1
+        Subplan Duration: 304.05 ms
+        Intermediate Data Size: 233 kB
+        Result destination: Write locally
+        ->  WindowAgg  (cost=760.14..764.64 rows=200 width=48) (actual time=0.000..0.000 rows=5000.00 loops=1)
+              Window: w1 AS (PARTITION BY remote_scan.category_id ORDER BY (sum(remote_scan.revenue)), remote_scan.product_id ROWS UNBOUNDED PRECEDING)
+              ->  Sort  (cost=760.14..760.64 rows=200 width=40) (actual time=0.000..0.000 rows=5000.00 loops=1)
+                    Sort Key: remote_scan.category_id, (sum(remote_scan.revenue)) DESC, remote_scan.product_id
+                    ->  HashAggregate  (cost=750.00..752.50 rows=200 width=40) (never executed)
+                          Group Key: remote_scan.category_id, remote_scan.product_id
+                          ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=40) (never executed)
+                                Task Count: 32
+                                Tuple data received from nodes: 2975 kB
+                                Tasks Shown: One of 32
+                                ->  Task
+                                      Tuple data received from node: 93 kB
+                                      Node: host=w2 port=5432 dbname=lab
+                                      ->  HashAggregate  (cost=909.73..1099.88 rows=15212 width=40) (actual time=83.340..164.974 rows=4756.00 loops=1)
+                                            Group Key: p.category_id, oi.product_id
+                                            Batches: 1  Memory Usage: 2833kB
+                                            Buffers: shared hit=415
+                                            ->  Hash Join  (cost=430.50..719.58 rows=15212 width=18) (actual time=2.751..12.236 rows=15212.00 loops=1)
+                                                  Hash Cond: (oi.product_id = p.id)
+                                                  Buffers: shared hit=415
+                                                  ->  Seq Scan on order_items_102127 oi  (cost=0.00..249.12 rows=15212 width=14) (actual time=0.011..1.740 rows=15212.00 loops=1)
+                                                        Buffers: shared hit=97
+                                                  ->  Hash  (cost=368.00..368.00 rows=5000 width=8) (actual time=2.727..2.729 rows=5000.00 loops=1)
+                                                        Buckets: 8192  Batches: 1  Memory Usage: 260kB
+                                                        Buffers: shared hit=318
+                                                        ->  Seq Scan on products_102009 p  (cost=0.00..368.00 rows=5000 width=8) (actual time=0.006..1.290 rows=5000.00 loops=1)
+                                                              Buffers: shared hit=318
+                                          Planning:
+                                            Buffers: shared hit=12
+                                          Planning Time: 0.557 ms
+                                          Execution Time: 166.429 ms
+        Planning Time: 0.000 ms
+        Execution Time: 0.005 ms
+  Task Count: 1
+  Tuple data received from nodes: 17 kB
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 17 kB
+        Node: host=localhost port=5432 dbname=lab
+        ->  Sort  (cost=288.28..297.32 rows=3619 width=48) (actual time=4.398..4.449 rows=600.00 loops=1)
+              Sort Key: intermediate_result.category_id, intermediate_result.rn
+              Sort Method: quicksort  Memory: 52kB
+              Buffers: shared hit=9
+              ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..74.39 rows=3619 width=48) (actual time=3.745..4.230 rows=600.00 loops=1)
+                    Filter: (rn <= 3)
+                    Rows Removed by Filter: 4400
+                    Buffers: shared hit=3
+            Planning:
+              Buffers: shared hit=9
+            Planning Time: 0.175 ms
+            Execution Time: 4.577 ms
+Planning:
+  Buffers: shared hit=13
+Planning Time: 1.139 ms
+Execution Time: 311.294 ms

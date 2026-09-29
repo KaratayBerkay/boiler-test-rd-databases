@@ -1,0 +1,16 @@
+/usr/sbin/mysqld, Version: 9.7.2 (MySQL Community Server - GPL). started with:
+Tcp port: 3306  Unix socket: /var/run/mysqld/mysqld.sock
+Time                 Id Command    Argument
+2026-09-14T12:31:54.735397-00:00	  195 Quit	
+2026-09-14T12:31:54.736307-00:00	  196 Connect	lab@10.42.0.1 on lab using TCP/IP
+2026-09-14T12:31:54.736589-00:00	  196 Query	SET NAMES utf8mb4
+2026-09-14T12:31:54.736813-00:00	  196 Query	CREATE TABLE audit_rdlab_mk_dbde3f5dad (id INTEGER)
+2026-09-14T12:31:54.745363-00:00	  196 Quit	
+2026-09-14T12:31:54.746344-00:00	  197 Connect	lab@10.42.0.1 on lab using TCP/IP
+2026-09-14T12:31:54.746657-00:00	  197 Query	SET NAMES utf8mb4
+2026-09-14T12:31:54.746949-00:00	  197 Query	DROP TABLE audit_rdlab_mk_dbde3f5dad
+2026-09-14T12:31:54.752721-00:00	  197 Quit	
+2026-09-14T12:31:54.786464-00:00	   26 Query	SELECT @@global.read_only read_only
+2026-09-14T12:31:54.957295-00:00	  198 Connect	root@10.42.0.1 on lab using TCP/IP
+2026-09-14T12:31:54.957547-00:00	  198 Query	SET NAMES utf8mb4
+2026-09-14T12:31:54.957797-00:00	  198 Query	SET GLOBAL general_log = OFF

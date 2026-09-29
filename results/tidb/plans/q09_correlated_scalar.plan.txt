@@ -1,0 +1,8 @@
+TopN_18 | 500.00 | root |  | lab.products.id, offset:0, count:500
+└─HashAgg_23 | 4232.00 | root |  | group by:lab.products.id, funcs:firstrow(lab.products.id)->lab.products.id, funcs:firstrow(lab.products.price)->lab.products.price, funcs:avg(lab.products.price)->Column#25
+  └─HashJoin_26 | 105800.00 | root |  | left outer join, equal:[eq(lab.products.category_id, lab.products.category_id)]
+    ├─TableReader_59(Build) | 4232.00 | root |  | data:Selection_58
+    │ └─Selection_58 | 4232.00 | cop[tikv] |  | eq(lab.products.active, 1)
+    │   └─TableFullScan_57 | 5000.00 | cop[tikv] | table:p | keep order:false
+    └─TableReader_61(Probe) | 5000.00 | root |  | data:TableFullScan_60
+      └─TableFullScan_60 | 5000.00 | cop[tikv] | table:p2 | keep order:false

@@ -1,0 +1,64 @@
+planning time: 2ms
+execution time: 204ms
+distribution: full
+plan type: generic, re-optimized
+rows decoded from KV: 220,000 (15 MiB, 3 gRPC calls)
+DistSQL network usage: 5.6 MiB (238 messages)
+regions: lab
+
+• sort
+│ sql nodes: n1, n3
+│ regions: lab
+│ execution time: 83µs
+│ sql cpu time: 83µs
+│ actual row count: 13
+│ estimated row count: 13
+│ order: +country_code
+│
+└── • group (hash)
+    │ sql nodes: n1, n3
+    │ regions: lab
+    │ execution time: 117ms
+    │ sql cpu time: 117ms
+    │ actual row count: 13
+    │ estimated row count: 13
+    │ group by: country_code
+    │
+    └── • render
+        │ execution time: 28ms
+        │ sql cpu time: 28ms
+        │ actual row count: 200,000
+        │
+        └── • hash join
+            │ sql nodes: n1, n3
+            │ regions: lab
+            │ execution time: 35ms
+            │ sql cpu time: 93ms
+            │ actual row count: 200,000
+            │ estimated row count: 199,651
+            │ equality: (customer_id) = (id)
+            │ right cols are key
+            │
+            ├── • scan
+            │     sql nodes: n1
+            │     kv nodes: n1
+            │     regions: lab
+            │     KV time: 183ms
+            │     KV rows decoded: 200,000
+            │     sql cpu time: 99ms
+            │     actual row count: 200,000
+            │     estimated row count: 200,000 (100% of the table; stats collected 5 minutes ago)
+            │     table: orders@orders_pkey
+            │     spans: FULL SCAN
+            │
+            └── • scan
+                  sql nodes: n3
+                  kv nodes: n3
+                  regions: lab
+                  KV time: 27ms
+                  KV rows decoded: 20,000
+                  sql cpu time: 10ms
+                  actual row count: 20,000
+                  estimated row count: 20,000 (100% of the table; stats collected 5 minutes ago)
+                  table: customers@customers_pkey
+                  spans: FULL SCAN

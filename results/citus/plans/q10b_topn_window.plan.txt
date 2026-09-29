@@ -1,0 +1,23 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  ->  Distributed Subplan 123_1
+        ->  WindowAgg  (cost=8304.84..10554.82 rows=100000 width=42)
+              Window: w1 AS (PARTITION BY remote_scan.customer_id ORDER BY remote_scan.ordered_at, remote_scan.id ROWS UNBOUNDED PRECEDING)
+              ->  Sort  (cost=8304.82..8554.82 rows=100000 width=34)
+                    Sort Key: remote_scan.customer_id, remote_scan.ordered_at DESC, remote_scan.id DESC
+                    ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=34)
+                          Task Count: 32
+                          Tasks Shown: One of 32
+                          ->  Task
+                                Node: host=w1 port=5432 dbname=lab
+                                ->  Bitmap Heap Scan on orders_102042 orders  (cost=1.64..28.89 rows=33 width=22)
+                                      Recheck Cond: (customer_id <= 100)
+                                      ->  Bitmap Index Scan on ix_orders_customer_id_102042  (cost=0.00..1.63 rows=33 width=0)
+                                            Index Cond: (customer_id <= 100)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=localhost port=5432 dbname=lab
+        ->  Sort  (cost=26.45..27.29 rows=333 width=34)
+              Sort Key: intermediate_result.customer_id, intermediate_result.ordered_at DESC
+              ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..12.50 rows=333 width=34)
+                    Filter: (rn <= 3)

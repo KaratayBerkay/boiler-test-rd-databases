@@ -1,0 +1,2233 @@
+{
+  "engine": "tidb",
+  "display": "TiDB 8.5",
+  "category": "distributed SQL (HTAP)",
+  "dialect": "tidb",
+  "driver": "pymysql",
+  "image": "pingcap/tidb:v8.5.8 (+ pd, tikv v8.5.8)",
+  "run_id": "20260913-020400-1e5614",
+  "started": "2026-09-12T23:04:00+00:00",
+  "scale": 1.0,
+  "notes": "MySQL-protocol distributed SQL: 2 stateless TiDB servers in front of 3 TiKV nodes (Raft, 3 replicas per region) and one PD. Any TiDB node serves reads and writes; killing a TiDB node only affects its own connections.",
+  "phases": {
+    "load": {
+      "_error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')",
+      "_seconds": 0.7
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, 'You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 19 near \"MATERIALIZED VIEW mv_lab AS SELECT country_code, COUNT(*) AS n FROM customers GROUP BY country_code\" ')",
+        "error_code": "1064",
+        "ms": 3.4
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "",
+        "ms": 179.3
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 197.4
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 198.7
+      },
+      "returning": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, 'You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 44 near \"RETURNING id, v\" ')",
+        "error_code": "1064",
+        "ms": 228.6
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 232.7
+      },
+      "arrays": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, 'You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 12 near \"ARRAY[1,2,3]\" ')",
+        "error_code": "1064",
+        "ms": 4.4
+      },
+      "statement_timeout": {
+        "status": "unsupported",
+        "note": "expects error 3024",
+        "detail": "no error raised",
+        "ms": 237.0
+      },
+      "filter_clause": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, 'You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 24 near \"(WHERE status = \\'delivered\\') FROM orders\" ')",
+        "error_code": "1064",
+        "ms": 4.0
+      },
+      "distinct_on": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, 'You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 18 near \"ON (customer_id) customer_id, id FROM orders WHERE customer_id <= 20 ORDER BY customer_id, ordered_at DESC\" ')",
+        "error_code": "1064",
+        "ms": 4.1
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, 'You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 40 near \"ROW_NUMBER() OVER (ORDER BY id) <= 5\" ')",
+        "error_code": "1064",
+        "ms": 4.2
+      },
+      "check_constraint": {
+        "status": "unsupported",
+        "note": "",
+        "detail": "no error raised",
+        "ms": 244.5
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "1452",
+        "detail": "IntegrityError: (1452, 'Cannot add or update a child row: a foreign key constraint fails (`lab`.`order_items`, CONSTRAINT `fk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`))')",
+        "ms": 10.5
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 259.2
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(None,)]",
+        "ms": 8.2
+      },
+      "isolation_serializable": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (8048, \"The isolation level 'SERIALIZABLE' is not supported. Set tidb_skip_isolation_level_check=1 to skip this error\")",
+        "error_code": "8048",
+        "ms": 4.6
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 4.9
+      },
+      "isolation_read_uncommitted": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (8048, \"The isolation level 'READ-UNCOMMITTED' is not supported. Set tidb_skip_isolation_level_check=1 to skip this error\")",
+        "error_code": "8048",
+        "ms": 4.4
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(0,)]",
+        "ms": 7.9
+      },
+      "invisible_index": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')",
+        "error_code": "8256",
+        "ms": 42.7
+      },
+      "vector_type": {
+        "status": "supported",
+        "note": "TiDB 8.4+ VECTOR",
+        "sample": "[(0.2142857142857143,)]",
+        "ms": 241.4
+      },
+      "temporal_query": {
+        "status": "error",
+        "note": "TiDB stale read",
+        "error": "ProgrammingError: (1146, \"Table 'lab.orders' doesn't exist\")",
+        "error_code": "1146",
+        "ms": 50.6
+      },
+      "_seconds": 2.2
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 FROM DUAL",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.861,
+          "p50": 0.97,
+          "p90": 1.165,
+          "p95": 1.244,
+          "p99": 1.404,
+          "max": 1.445,
+          "mean": 1.014,
+          "stdev": 0.132,
+          "first_ms": 1.02
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_3 | 1.00 | root |  | 1->Column#1\n\u2514\u2500TableDual_4 | 1.00 | root |  | rows:1",
+        "plan_analyze": "Projection_3 | 1.00 | 1 | root |  | time:8.82\u00b5s, loops:2, RU:0.00, Concurrency:OFF | 1->Column#1 | 0 Bytes | N/A\n\u2514\u2500TableDual_4 | 1.00 | 1 | root |  | time:2.72\u00b5s, loops:2 | rows:1 | N/A | N/A"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.735,
+          "p50": 1.962,
+          "p90": 2.054,
+          "p95": 2.069,
+          "p99": 2.211,
+          "max": 2.265,
+          "mean": 1.944,
+          "stdev": 0.111,
+          "first_ms": 2.591
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Point_Get_1 | 1.00 | root | table:customers | handle:4403",
+        "plan_analyze": "Point_Get_1 | 1.00 | 0 | root | table:customers | time:1.03ms, loops:1, RU:0.50, Get:{num_rpc:1, total_time:982.9\u00b5s}, time_detail: {total_process_time: 88.1\u00b5s, total_wait_time: 119.9\u00b5s, total_kv_read_wall_time: 218.7\u00b5s, tikv_wall_time: 341.9\u00b5s}, scan_detail: {total_keys: 1, get_snapshot_time: 24.3\u00b5s, rocksdb: {block: {}}} | handle:4403 | N/A | N/A"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.454,
+          "p50": 3.778,
+          "p90": 3.914,
+          "p95": 3.984,
+          "p99": 4.04,
+          "max": 4.055,
+          "mean": 3.743,
+          "stdev": 0.188,
+          "first_ms": 4.004
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_8 | 0.25 | root |  | lab.orders.id, lab.orders.customer_id, lab.orders.status, lab.orders.total_amount\n\u2514\u2500TopN_12 | 0.25 | root |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:500\n  \u2514\u2500TableReader_22 | 0.25 | root |  | data:Selection_21\n    \u2514\u2500Selection_21 | 0.25 | cop[tikv] |  | eq(lab.orders.status, \"delivered\"), ge(lab.orders.ordered_at, 2025-03-01 00:00:00), lt(lab.orders.ordered_at, 2025-03-08 00:00:00)\n      \u2514\u2500TableFullScan_20 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "Projection_8 | 0.25 | 0 | root |  | time:1.12ms, loops:1, RU:0.49, Concurrency:OFF | lab.orders.id, lab.orders.customer_id, lab.orders.status, lab.orders.total_amount | 3.14 KB | N/A\n\u2514\u2500TopN_12 | 0.25 | 0 | root |  | time:1.12ms, loops:1 | lab.orders.ordered_at, lab.orders.id, offset:0, count:500 | 0 Bytes | 0 Bytes\n  \u2514\u2500TableReader_22 | 0.25 | 0 | root |  | time:1.07ms, loops:2, cop_task: {num: 1, max: 974.1\u00b5s, proc_keys: 0, tot_proc: 54.4\u00b5s, tot_wait: 120.4\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 9.35\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:946\u00b5s}} | data:Selection_21 | 241 Bytes | N/A\n    \u2514\u2500Selection_21 | 0.25 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 25.4\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 54.4\u00b5s, total_wait_time: 120.4\u00b5s, tikv_wall_time: 390.4\u00b5s} | eq(lab.orders.status, \"delivered\"), ge(lab.orders.ordered_at, 2025-03-01 00:00:00), lt(lab.orders.ordered_at, 2025-03-08 00:00:00) | N/A | N/A\n      \u2514\u2500TableFullScan_20 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, DATE_FORMAT(o.ordered_at, '%Y-%m-01') AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_FORMAT(o.ordered_at, '%Y-%m-01') ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.028,
+          "p50": 5.614,
+          "p90": 6.454,
+          "p95": 6.792,
+          "p99": 7.063,
+          "max": 7.13,
+          "mean": 5.578,
+          "stdev": 0.959,
+          "first_ms": 6.984
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_17 | 1.00 | root |  | lab.customers.country_code, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#21, Column#19, Column#20\n\u2514\u2500Projection_95 | 1.00 | root |  | Column#19, Column#20, lab.orders.ordered_at, lab.customers.country_code\n  \u2514\u2500TopN_20 | 1.00 | root |  | Column#20:desc, lab.customers.country_code, Column#33, offset:0, count:50\n    \u2514\u2500Projection_96 | 1.00 | root |  | Column#19, Column#20, lab.orders.ordered_at, lab.customers.country_code, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#33\n      \u2514\u2500HashAgg_22 | 1.00 | root |  | group by:Column#31, Column#32, funcs:count(distinct Column#28)->Column#19, funcs:sum(Column#29)->Column#20, funcs:firstrow(Column#30)->lab.orders.ordered_at, funcs:firstrow(Column#31)->lab.customers.country_code\n        \u2514\u2500Projection_94 | 0.39 | root |  | lab.orders.id->Column#28, mul(cast(lab.order_items.qty, decimal(10,0) BINARY), lab.order_items.unit_price)->Column#29, lab.orders.ordered_at->Column#30, lab.customers.country_code->Column#31, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#32\n          \u2514\u2500IndexHashJoin_31 | 0.39 | root |  | inner join, inner:IndexLookUp_28, outer key:lab.orders.id, inner key:lab.order_items.order_id, equal cond:eq(lab.orders.id, lab.order_items.order_id)\n            \u251c\u2500IndexJoin_61(Build) | 0.31 | root |  | inner join, inner:TableReader_58, outer key:lab.orders.customer_id, inner key:lab.customers.id, equal cond:eq(lab.orders.customer_id, lab.customers.id)\n            \u2502 \u251c\u2500TableReader_87(Build) | 0.25 | root |  | data:Selection_86\n            \u2502 \u2502 \u2514\u2500Selection_86 | 0.25 | cop[tikv] |  | eq(lab.orders.status, \"delivered\"), ge(lab.orders.ordered_at, 2025-01-01 00:00:00), lt(lab.orders.ordered_at, 2025-07-01 00:00:00)\n            \u2502 \u2502   \u2514\u2500TableFullScan_85 | 10000.00 | cop[tikv] | table:o | keep order:false, stats:pseudo\n            \u2502 \u2514\u2500TableReader_58(Probe) | 0.25 | root |  | data:TableRangeScan_57\n            \u2502   \u2514\u2500TableRangeScan_57 | 0.25 | cop[tikv] | table:c | range: decided by [lab.orders.customer_id], keep order:false, stats:pseudo\n            \u2514\u2500IndexLookUp_28(Probe) | 0.39 | root |  | \n              \u251c\u2500IndexRangeScan_26(Build) | 0.39 | cop[tikv] | table:oi, index:fk_1(order_id) | range: decided by [eq(lab.order_items.order_id, lab.orders.id)], keep order:false, stats:pseudo\n              \u2514\u2500TableRowIDScan_27(Probe) | 0.39 | cop[tikv] | table:oi | keep order:false, stats:pseudo",
+        "plan_analyze": "Projection_17 | 1.00 | 0 | root |  | time:991.2\u00b5s, loops:1, RU:0.49, Concurrency:OFF | lab.customers.country_code, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#21, Column#19, Column#20 | 2.77 KB | N/A\n\u2514\u2500Projection_95 | 1.00 | 0 | root |  | time:989.5\u00b5s, loops:1, Concurrency:OFF | Column#19, Column#20, lab.orders.ordered_at, lab.customers.country_code | 3.39 KB | N/A\n  \u2514\u2500TopN_20 | 1.00 | 0 | root |  | time:988.3\u00b5s, loops:1 | Column#20:desc, lab.customers.country_code, Column#33, offset:0, count:50 | 0 Bytes | 0 Bytes\n    \u2514\u2500Projection_96 | 1.00 | 0 | root |  | time:963\u00b5s, loops:2, Concurrency:OFF | Column#19, Column#20, lab.orders.ordered_at, lab.customers.country_code, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#33 | 3.02 KB | N/A\n      \u2514\u2500HashAgg_22 | 1.00 | 0 | root |  | time:953.4\u00b5s, loops:2 | group by:Column#31, Column#32, funcs:count(distinct Column#28)->Column#19, funcs:sum(Column#29)->Column#20, funcs:firstrow(Column#30)->lab.orders.ordered_at, funcs:firstrow(Column#31)->lab.customers.country_code | 4.00 KB | 0 Bytes\n        \u2514\u2500Projection_94 | 0.39 | 0 | root |  | time:940.7\u00b5s, loops:1, Concurrency:OFF | lab.orders.id->Column#28, mul(cast(lab.order_items.qty, decimal(10,0) BINARY), lab.order_items.unit_price)->Column#29, lab.orders.ordered_at->Column#30, lab.customers.country_code->Column#31, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#32 | 3.14 KB | N/A\n          \u2514\u2500IndexHashJoin_31 | 0.39 | 0 | root |  | time:939.1\u00b5s, loops:1 | inner join, inner:IndexLookUp_28, outer key:lab.orders.id, inner key:lab.order_items.order_id, equal cond:eq(lab.orders.id, lab.order_items.order_id) | 0 Bytes | N/A\n            \u251c\u2500IndexJoin_61(Build) | 0.31 | 0 | root |  | time:839.1\u00b5s, loops:1 | inner join, inner:TableReader_58, outer key:lab.orders.customer_id, inner key:lab.customers.id, equal cond:eq(lab.orders.customer_id, lab.customers.id) | 0 Bytes | N/A\n            \u2502 \u251c\u2500TableReader_87(Build) | 0.25 | 0 | root |  | time:749.1\u00b5s, loops:1, cop_task: {num: 1, max: 711.2\u00b5s, proc_keys: 0, tot_proc: 40.3\u00b5s, tot_wait: 134.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 6.07\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:695.5\u00b5s}} | data:Selection_86 | 241 Bytes | N/A\n            \u2502 \u2502 \u2514\u2500Selection_86 | 0.25 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 32.1\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 40.3\u00b5s, total_wait_time: 134.7\u00b5s, tikv_wall_time: 285\u00b5s} | eq(lab.orders.status, \"delivered\"), ge(lab.orders.ordered_at, 2025-01-01 00:00:00), lt(lab.orders.ordered_at, 2025-07-01 00:00:00) | N/A | N/A\n            \u2502 \u2502   \u2514\u2500TableFullScan_85 | 10000.00 | 0 | cop[tikv] | table:o | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A\n            \u2502 \u2514\u2500TableReader_58(Probe) | 0.25 | 0 | root |  |  | data:TableRangeScan_57 | N/A | N/A\n            \u2502   \u2514\u2500TableRangeScan_57 | 0.25 | 0 | cop[tikv] | table:c |  | range: decided by [lab.orders.customer_id], keep order:false, stats:pseudo | N/A | N/A\n            \u2514\u2500IndexLookUp_28(Probe) | 0.39 | 0 | root |  |  |  | N/A | N/A\n              \u251c\u2500IndexRangeScan_26(Build) | 0.39 | 0 | cop[tikv] | table:oi, index:fk_1(order_id) |  | range: decided by [eq(lab.order_items.order_id, lab.orders.id)], keep order:false, stats:pseudo | N/A | N/A\n              \u2514\u2500TableRowIDScan_27(Probe) | 0.39 | 0 | cop[tikv] | table:oi |  | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.874,
+          "p50": 3.624,
+          "p90": 4.412,
+          "p95": 4.527,
+          "p99": 4.619,
+          "max": 4.642,
+          "mean": 3.652,
+          "stdev": 0.543,
+          "first_ms": 3.645
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort_15 | 6400.00 | root |  | lab.products.category_id, Column#16\n\u2514\u2500Projection_17 | 6400.00 | root |  | lab.products.category_id, lab.order_items.product_id, Column#14, Column#16\n  \u2514\u2500Selection_18 | 6400.00 | root |  | le(Column#16, 3)\n    \u2514\u2500Shuffle_58 | 8000.00 | root |  | execution info: concurrency:5, data sources:[HashAgg_20]\n      \u2514\u2500Window_19 | 8000.00 | root |  | row_number()->Column#16 over(partition by lab.products.category_id order by Column#14 desc, lab.order_items.product_id rows between current row and current row)\n        \u2514\u2500Sort_57 | 8000.00 | root |  | lab.products.category_id, Column#14:desc, lab.order_items.product_id\n          \u2514\u2500ShuffleReceiver_62 | 8000.00 | root |  | \n            \u2514\u2500HashAgg_20 | 8000.00 | root |  | group by:Column#27, Column#28, funcs:sum(Column#26)->Column#14, funcs:firstrow(Column#27)->lab.order_items.product_id, funcs:firstrow(Column#28)->lab.products.category_id\n              \u2514\u2500Projection_61 | 12500.00 | root |  | mul(cast(lab.order_items.qty, decimal(10,0) BINARY), lab.order_items.unit_price)->Column#26, lab.order_items.product_id->Column#27, lab.products.category_id->Column#28\n                \u2514\u2500HashJoin_21 | 12500.00 | root |  | inner join, equal:[eq(lab.order_items.product_id, lab.products.id)]\n                  \u251c\u2500IndexReader_56(Build) | 10000.00 | root |  | index:IndexFullScan_55\n                  \u2502 \u2514\u2500IndexFullScan_55 | 10000.00 | cop[tikv] | table:p, index:fk_1(category_id) | keep order:false, stats:pseudo\n                  \u2514\u2500TableReader_52(Probe) | 10000.00 | root |  | data:TableFullScan_51\n                    \u2514\u2500TableFullScan_51 | 10000.00 | cop[tikv] | table:oi | keep order:false, stats:pseudo",
+        "plan_analyze": "Sort_15 | 6400.00 | 0 | root |  | time:1.74ms, loops:1, RU:0.98 | lab.products.category_id, Column#16 | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_17 | 6400.00 | 0 | root |  | time:1.7ms, loops:1, Concurrency:5 | lab.products.category_id, lab.order_items.product_id, Column#14, Column#16 | 25.2 KB | N/A\n  \u2514\u2500Selection_18 | 6400.00 | 0 | root |  | time:1.61ms, loops:1 | le(Column#16, 3) | 2.52 KB | N/A\n    \u2514\u2500Shuffle_58 | 8000.00 | 0 | root |  | time:1.61ms, loops:1, ShuffleConcurrency:5 | execution info: concurrency:5, data sources:[HashAgg_20] | N/A | N/A\n      \u2514\u2500Window_19 | 8000.00 | 0 | root |  | time:7.66ms, loops:5 | row_number()->Column#16 over(partition by lab.products.category_id order by Column#14 desc, lab.order_items.product_id rows between current row and current row) | N/A | N/A\n        \u2514\u2500Sort_57 | 8000.00 | 0 | root |  | time:7.58ms, loops:5 | lab.products.category_id, Column#14:desc, lab.order_items.product_id | 0 Bytes | 0 Bytes\n          \u2514\u2500ShuffleReceiver_62 | 8000.00 | 0 | root |  | time:7.27ms, loops:5 |  | N/A | N/A\n            \u2514\u2500HashAgg_20 | 8000.00 | 0 | root |  | time:1.51ms, loops:1, partial_worker:{wall_time:1.464001ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:6.974704ms, max:1.421158ms, p95:1.421158ms}, final_worker:{wall_time:1.49615ms, concurrency:5, task_num:5, tot_wait:8.083\u00b5s, tot_exec:409ns, tot_time:7.175798ms, max:1.442372ms, p95:1.442372ms} | group by:Column#27, Column#28, funcs:sum(Column#26)->Column#14, funcs:firstrow(Column#27)->lab.order_items.product_id, funcs:firstrow(Column#28)->lab.products.category_id | 23.7 KB | 0 Bytes\n              \u2514\u2500Projection_61 | 12500.00 | 0 | root |  | time:1.38ms, loops:1, Concurrency:5 | mul(cast(lab.order_items.qty, decimal(10,0) BINARY), lab.order_items.unit_price)->Column#26, lab.order_items.product_id->Column#27, lab.products.category_id->Column#28 | 23.3 KB | N/A\n                \u2514\u2500HashJoin_21 | 12500.00 | 0 | root |  | time:1.28ms, loops:1, build_hash_table:{total:235.1\u00b5s, fetch:235.1\u00b5s, build:0s} | inner join, equal:[eq(lab.order_items.product_id, lab.products.id)] | 0 Bytes | 0 Bytes\n                  \u251c\u2500IndexReader_56(Build) | 10000.00 | 0 | root |  | time:210.9\u00b5s, loops:1, cop_task: {num: 1, max: 766.5\u00b5s, proc_keys: 0, tot_proc: 54.1\u00b5s, tot_wait: 96.9\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 3.42\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:734.1\u00b5s}} | index:IndexFullScan_55 | 234 Bytes | N/A\n                  \u2502 \u2514\u2500IndexFullScan_55 | 10000.00 | 0 | cop[tikv] | table:p, index:fk_1(category_id) | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 54.1\u00b5s, total_wait_time: 96.9\u00b5s, tikv_wall_time: 333.7\u00b5s} | keep order:false, stats:pseudo | N/A | N/A\n                  \u2514\u2500TableReader_52(Probe) | 10000.00 | 0 | root |  | time:988.9\u00b5s, loops:1, cop_task: {num: 1, max: 918\u00b5s, proc_keys: 0, tot_proc: 42.7\u00b5s, tot_wait: 89.5\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.42\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:892.7\u00b5s}} | data:TableFullScan_51 | 233 Bytes | N/A\n                    \u2514\u2500TableFullScan_51 | 10000.00 | 0 | cop[tikv] | table:oi | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 26\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 42.7\u00b5s, total_wait_time: 89.5\u00b5s, tikv_wall_time: 293.3\u00b5s} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE(ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE(ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.955,
+          "p50": 4.251,
+          "p90": 4.403,
+          "p95": 4.419,
+          "p99": 4.431,
+          "max": 4.434,
+          "mean": 4.245,
+          "stdev": 0.147,
+          "first_ms": 4.232
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_31 | 200.00 | root |  | Column#8, Column#7, Column#12, Column#11\n\u2514\u2500Window_32 | 200.00 | root |  | sum(Column#7)->Column#12 over(order by Column#8 rows between unbounded preceding and current row)\n  \u2514\u2500Window_16 | 200.00 | root |  | lag(Column#7, 1)->Column#11 over(order by Column#8)\n    \u2514\u2500Sort_29 | 200.00 | root |  | Column#8\n      \u2514\u2500Projection_18 | 200.00 | root |  | date(lab.orders.ordered_at)->Column#8, Column#7\n        \u2514\u2500HashAgg_24 | 200.00 | root |  | group by:Column#14, funcs:sum(Column#15)->Column#7, funcs:firstrow(Column#16)->lab.orders.ordered_at\n          \u2514\u2500TableReader_25 | 200.00 | root |  | data:HashAgg_19\n            \u2514\u2500HashAgg_19 | 200.00 | cop[tikv] |  | group by:date(lab.orders.ordered_at), funcs:sum(lab.orders.total_amount)->Column#15, funcs:firstrow(lab.orders.ordered_at)->Column#16\n              \u2514\u2500Selection_23 | 250.00 | cop[tikv] |  | ge(lab.orders.ordered_at, 2025-01-01 00:00:00), lt(lab.orders.ordered_at, 2025-04-01 00:00:00)\n                \u2514\u2500TableFullScan_22 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "Projection_31 | 200.00 | 0 | root |  | time:1.28ms, loops:1, RU:0.50, Concurrency:OFF | Column#8, Column#7, Column#12, Column#11 | 4.58 KB | N/A\n\u2514\u2500Window_32 | 200.00 | 0 | root |  | time:1.28ms, loops:1 | sum(Column#7)->Column#12 over(order by Column#8 rows between unbounded preceding and current row) | N/A | N/A\n  \u2514\u2500Window_16 | 200.00 | 0 | root |  | time:1.27ms, loops:1 | lag(Column#7, 1)->Column#11 over(order by Column#8) | N/A | N/A\n    \u2514\u2500Sort_29 | 200.00 | 0 | root |  | time:1.27ms, loops:1 | Column#8 | 0 Bytes | 0 Bytes\n      \u2514\u2500Projection_18 | 200.00 | 0 | root |  | time:1.22ms, loops:1, Concurrency:OFF | date(lab.orders.ordered_at)->Column#8, Column#7 | 1.77 KB | N/A\n        \u2514\u2500HashAgg_24 | 200.00 | 0 | root |  | time:1.22ms, loops:1, partial_worker:{wall_time:1.131428ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:5.244966ms, max:1.056674ms, p95:1.056674ms}, final_worker:{wall_time:1.186427ms, concurrency:5, task_num:5, tot_wait:9.793\u00b5s, tot_exec:736ns, tot_time:5.513861ms, max:1.118055ms, p95:1.118055ms} | group by:Column#14, funcs:sum(Column#15)->Column#7, funcs:firstrow(Column#16)->lab.orders.ordered_at | 23.7 KB | 0 Bytes\n          \u2514\u2500TableReader_25 | 200.00 | 0 | root |  | time:1.07ms, loops:1, cop_task: {num: 1, max: 959.1\u00b5s, proc_keys: 0, tot_proc: 73.8\u00b5s, tot_wait: 87.9\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.56\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:928\u00b5s}} | data:HashAgg_19 | 249 Bytes | N/A\n            \u2514\u2500HashAgg_19 | 200.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.1\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 73.8\u00b5s, total_wait_time: 87.9\u00b5s, tikv_wall_time: 385.9\u00b5s} | group by:date(lab.orders.ordered_at), funcs:sum(lab.orders.total_amount)->Column#15, funcs:firstrow(lab.orders.ordered_at)->Column#16 | N/A | N/A\n              \u2514\u2500Selection_23 | 250.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | ge(lab.orders.ordered_at, 2025-01-01 00:00:00), lt(lab.orders.ordered_at, 2025-04-01 00:00:00) | N/A | N/A\n                \u2514\u2500TableFullScan_22 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS CHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(CONCAT(t.path, ' > ', c.name) AS CHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.591,
+          "p50": 4.807,
+          "p90": 4.97,
+          "p95": 4.974,
+          "p99": 4.977,
+          "max": 4.978,
+          "mean": 4.809,
+          "stdev": 0.125,
+          "first_ms": 4.918
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort_33 | 20.00 | root |  | Column#37\n\u2514\u2500Projection_35 | 20.00 | root |  | lab.categories.id, Column#36, Column#37\n  \u2514\u2500CTEFullScan_36 | 20.00 | root | CTE:tree | data:CTE_0\nCTE_0 | 20.00 | root |  | Recursive CTE\n\u251c\u2500Projection_17(Seed Part) | 10.00 | root |  | lab.categories.id, lab.categories.parent_id, lab.categories.name, 0->Column#15, cast(lab.categories.name, var_string(400))->Column#16\n\u2502 \u2514\u2500TableReader_20 | 10.00 | root |  | data:Selection_19\n\u2502   \u2514\u2500Selection_19 | 10.00 | cop[tikv] |  | isnull(lab.categories.parent_id)\n\u2502     \u2514\u2500TableFullScan_18 | 10000.00 | cop[tikv] | table:categories | keep order:false, stats:pseudo\n\u2514\u2500Projection_24(Recursive Part) | 10.00 | root |  | lab.categories.id, lab.categories.parent_id, lab.categories.name, cast(plus(Column#24, 1), bigint BINARY)->Column#31, cast(concat(Column#25,  > , lab.categories.name), var_string(400))->Column#32\n  \u2514\u2500Projection_25 | 10.00 | root |  | lab.categories.id, lab.categories.parent_id, lab.categories.name, Column#24, Column#25\n    \u2514\u2500HashJoin_27 | 10.00 | root |  | inner join, equal:[eq(lab.categories.id, lab.categories.parent_id)]\n      \u251c\u2500Selection_28(Build) | 8.00 | root |  | not(isnull(lab.categories.id))\n      \u2502 \u2514\u2500CTETable_29 | 10.00 | root |  | Scan on CTE_0\n      \u2514\u2500TableReader_32(Probe) | 9990.00 | root |  | data:Selection_31\n        \u2514\u2500Selection_31 | 9990.00 | cop[tikv] |  | not(isnull(lab.categories.parent_id))\n          \u2514\u2500TableFullScan_30 | 10000.00 | cop[tikv] | table:c | keep order:false, stats:pseudo",
+        "plan_analyze": "Sort_33 | 20.00 | 0 | root |  | time:1.17ms, loops:1, RU:1.00 | Column#37 | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_35 | 20.00 | 0 | root |  | time:1.13ms, loops:1, Concurrency:OFF | lab.categories.id, Column#36, Column#37 | 4.73 KB | N/A\n  \u2514\u2500CTEFullScan_36 | 20.00 | 0 | root | CTE:tree | time:1.12ms, loops:1 | data:CTE_0 | 0 Bytes | 0 Bytes\nCTE_0 | 20.00 | 0 | root |  | time:1.12ms, loops:1 | Recursive CTE | 0 Bytes | 0 Bytes\n\u251c\u2500Projection_17(Seed Part) | 10.00 | 0 | root |  | time:1.07ms, loops:1, Concurrency:OFF | lab.categories.id, lab.categories.parent_id, lab.categories.name, 0->Column#15, cast(lab.categories.name, var_string(400))->Column#16 | 1.99 KB | N/A\n\u2502 \u2514\u2500TableReader_20 | 10.00 | 0 | root |  | time:1.07ms, loops:1, cop_task: {num: 1, max: 1ms, proc_keys: 0, tot_proc: 74.9\u00b5s, tot_wait: 84\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 9.13\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:932.8\u00b5s}} | data:Selection_19 | 253 Bytes | N/A\n\u2502   \u2514\u2500Selection_19 | 10.00 | 0 | cop[tikv] |  | tikv_task:{time:1ms, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22.7\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 74.9\u00b5s, total_wait_time: 84\u00b5s, total_kv_read_wall_time: 1ms, tikv_wall_time: 341.9\u00b5s} | isnull(lab.categories.parent_id) | N/A | N/A\n\u2502     \u2514\u2500TableFullScan_18 | 10000.00 | 0 | cop[tikv] | table:categories | tikv_task:{time:1ms, loops:1} | keep order:false, stats:pseudo | N/A | N/A\n\u2514\u2500Projection_24(Recursive Part) | 10.00 | 0 | root |  | time:0s, loops:0, Concurrency:OFF | lab.categories.id, lab.categories.parent_id, lab.categories.name, cast(plus(Column#24, 1), bigint BINARY)->Column#31, cast(concat(Column#25,  > , lab.categories.name), var_string(400))->Column#32 | 3.48 KB | N/A\n  \u2514\u2500Projection_25 | 10.00 | 0 | root |  | time:0s, loops:0, Concurrency:OFF | lab.categories.id, lab.categories.parent_id, lab.categories.name, Column#24, Column#25 | 3.48 KB | N/A\n    \u2514\u2500HashJoin_27 | 10.00 | 0 | root |  | time:0s, loops:0 | inner join, equal:[eq(lab.categories.id, lab.categories.parent_id)] | 0 Bytes | 0 Bytes\n      \u251c\u2500Selection_28(Build) | 8.00 | 0 | root |  | time:0s, loops:0 | not(isnull(lab.categories.id)) | 4.11 KB | N/A\n      \u2502 \u2514\u2500CTETable_29 | 10.00 | 0 | root |  | time:0s, loops:0 | Scan on CTE_0 | N/A | N/A\n      \u2514\u2500TableReader_32(Probe) | 9990.00 | 0 | root |  | time:0s, loops:0 | data:Selection_31 | 241 Bytes | N/A\n        \u2514\u2500Selection_31 | 9990.00 | 0 | cop[tikv] |  |  | not(isnull(lab.categories.parent_id)) | N/A | N/A\n          \u2514\u2500TableFullScan_30 | 10000.00 | 0 | cop[tikv] | table:c |  | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_FORMAT(first_at, '%Y-%m-01') AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_FORMAT(o.ordered_at, '%Y-%m-01') AS m FROM orders o GROUP BY o.customer_id, DATE_FORMAT(o.ordered_at, '%Y-%m-01')) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 6.333,
+          "p50": 6.835,
+          "p90": 7.237,
+          "p95": 7.273,
+          "p99": 7.302,
+          "max": 7.31,
+          "mean": 6.854,
+          "stdev": 0.269,
+          "first_ms": 6.823
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort_28 | 8000.00 | root |  | Column#36\n\u2514\u2500Projection_30 | 8000.00 | root |  | Column#36, Column#46, Column#47\n  \u2514\u2500HashAgg_31 | 8000.00 | root |  | group by:Column#36, funcs:count(distinct lab.orders.customer_id)->Column#46, funcs:count(distinct lab.orders.customer_id)->Column#47, funcs:firstrow(Column#36)->Column#36\n    \u2514\u2500HashJoin_32 | 8000.00 | root |  | left outer join, equal:[eq(lab.orders.customer_id, lab.orders.customer_id)], other cond:gt(Column#45, Column#36)\n      \u251c\u2500Projection_74(Build) | 6400.00 | root |  | lab.orders.customer_id, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#45\n      \u2502 \u2514\u2500Selection_75 | 6400.00 | root |  | not(isnull(date_format(lab.orders.ordered_at, \"%Y-%m-01\")))\n      \u2502   \u2514\u2500HashAgg_80 | 8000.00 | root |  | group by:Column#65, lab.orders.customer_id, funcs:firstrow(lab.orders.customer_id)->lab.orders.customer_id, funcs:firstrow(Column#67)->lab.orders.ordered_at\n      \u2502     \u2514\u2500TableReader_81 | 8000.00 | root |  | data:HashAgg_76\n      \u2502       \u2514\u2500HashAgg_76 | 8000.00 | cop[tikv] |  | group by:date_format(lab.orders.ordered_at, \"%Y-%m-01\"), lab.orders.customer_id, funcs:firstrow(lab.orders.ordered_at)->Column#67\n      \u2502         \u2514\u2500TableFullScan_79 | 10000.00 | cop[tikv] | table:o | keep order:false, stats:pseudo\n      \u2514\u2500Projection_63(Probe) | 8000.00 | root |  | lab.orders.customer_id, date_format(Column#35, %Y-%m-01)->Column#36\n        \u2514\u2500HashAgg_70 | 8000.00 | root |  | group by:lab.orders.customer_id, funcs:min(Column#63)->Column#35, funcs:firstrow(lab.orders.customer_id)->lab.orders.customer_id\n          \u2514\u2500TableReader_71 | 8000.00 | root |  | data:HashAgg_64\n            \u2514\u2500HashAgg_64 | 8000.00 | cop[tikv] |  | group by:lab.orders.customer_id, funcs:min(lab.orders.ordered_at)->Column#63\n              \u2514\u2500TableFullScan_69 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "Sort_28 | 8000.00 | 0 | root |  | time:1.78ms, loops:1, RU:0.99 | Column#36 | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_30 | 8000.00 | 0 | root |  | time:1.7ms, loops:1, Concurrency:5 | Column#36, Column#46, Column#47 | 13.6 KB | N/A\n  \u2514\u2500HashAgg_31 | 8000.00 | 0 | root |  | time:1.59ms, loops:1 | group by:Column#36, funcs:count(distinct lab.orders.customer_id)->Column#46, funcs:count(distinct lab.orders.customer_id)->Column#47, funcs:firstrow(Column#36)->Column#36 | 2.60 KB | 0 Bytes\n    \u2514\u2500HashJoin_32 | 8000.00 | 0 | root |  | time:1.57ms, loops:1, build_hash_table:{total:897.1\u00b5s, fetch:897.1\u00b5s, build:0s} | left outer join, equal:[eq(lab.orders.customer_id, lab.orders.customer_id)], other cond:gt(Column#45, Column#36) | 0 Bytes | 0 Bytes\n      \u251c\u2500Projection_74(Build) | 6400.00 | 0 | root |  | time:883.1\u00b5s, loops:1, Concurrency:5 | lab.orders.customer_id, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#45 | 8.67 KB | N/A\n      \u2502 \u2514\u2500Selection_75 | 6400.00 | 0 | root |  | time:820.7\u00b5s, loops:1 | not(isnull(date_format(lab.orders.ordered_at, \"%Y-%m-01\"))) | 760 Bytes | N/A\n      \u2502   \u2514\u2500HashAgg_80 | 8000.00 | 0 | root |  | time:813.2\u00b5s, loops:1, partial_worker:{wall_time:750.737\u00b5s, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:3.606713ms, max:726.124\u00b5s, p95:726.124\u00b5s}, final_worker:{wall_time:803.838\u00b5s, concurrency:5, task_num:5, tot_wait:6.504\u00b5s, tot_exec:400ns, tot_time:3.758556ms, max:760.939\u00b5s, p95:760.939\u00b5s} | group by:Column#65, lab.orders.customer_id, funcs:firstrow(lab.orders.customer_id)->lab.orders.customer_id, funcs:firstrow(Column#67)->lab.orders.ordered_at | 21.2 KB | 0 Bytes\n      \u2502     \u2514\u2500TableReader_81 | 8000.00 | 0 | root |  | time:701.1\u00b5s, loops:1, cop_task: {num: 1, max: 1.1ms, proc_keys: 0, tot_proc: 56.6\u00b5s, tot_wait: 122.1\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 4.45\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:1.06ms}} | data:HashAgg_76 | 241 Bytes | N/A\n      \u2502       \u2514\u2500HashAgg_76 | 8000.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 25.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 56.6\u00b5s, total_wait_time: 122.1\u00b5s, tikv_wall_time: 532.4\u00b5s} | group by:date_format(lab.orders.ordered_at, \"%Y-%m-01\"), lab.orders.customer_id, funcs:firstrow(lab.orders.ordered_at)->Column#67 | N/A | N/A\n      \u2502         \u2514\u2500TableFullScan_79 | 10000.00 | 0 | cop[tikv] | table:o | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A\n      \u2514\u2500Projection_63(Probe) | 8000.00 | 0 | root |  | time:1.27ms, loops:1, Concurrency:5 | lab.orders.customer_id, date_format(Column#35, %Y-%m-01)->Column#36 | 8.67 KB | N/A\n        \u2514\u2500HashAgg_70 | 8000.00 | 0 | root |  | time:1.17ms, loops:1, partial_worker:{wall_time:1.144875ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:5.321985ms, max:1.070587ms, p95:1.070587ms}, final_worker:{wall_time:1.161117ms, concurrency:5, task_num:5, tot_wait:6.34\u00b5s, tot_exec:376ns, tot_time:5.424172ms, max:1.089363ms, p95:1.089363ms} | group by:lab.orders.customer_id, funcs:min(Column#63)->Column#35, funcs:firstrow(lab.orders.customer_id)->lab.orders.customer_id | 15.9 KB | 0 Bytes\n          \u2514\u2500TableReader_71 | 8000.00 | 0 | root |  | time:1.09ms, loops:1, cop_task: {num: 1, max: 1.01ms, proc_keys: 0, tot_proc: 59.2\u00b5s, tot_wait: 120.6\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.56\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:984.4\u00b5s}} | data:HashAgg_64 | 241 Bytes | N/A\n            \u2514\u2500HashAgg_64 | 8000.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 24.6\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 59.2\u00b5s, total_wait_time: 120.6\u00b5s, tikv_wall_time: 358.7\u00b5s} | group by:lab.orders.customer_id, funcs:min(lab.orders.ordered_at)->Column#63 | N/A | N/A\n              \u2514\u2500TableFullScan_69 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.683,
+          "p50": 5.036,
+          "p90": 5.398,
+          "p95": 6.055,
+          "p99": 6.58,
+          "max": 6.712,
+          "mean": 5.156,
+          "stdev": 0.546,
+          "first_ms": 6.591
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "TopN_18 | 200.00 | root |  | lab.customers.id, offset:0, count:200\n\u2514\u2500HashJoin_23 | 6400.00 | root |  | anti semi join, equal:[eq(lab.customers.id, lab.events.customer_id)]\n  \u251c\u2500TableReader_54(Build) | 10.00 | root |  | data:Selection_53\n  \u2502 \u2514\u2500Selection_53 | 10.00 | cop[tikv] |  | eq(lab.events.event_type, \"churn\")\n  \u2502   \u2514\u2500TableFullScan_52 | 10000.00 | cop[tikv] | table:e | keep order:false, stats:pseudo\n  \u2514\u2500HashJoin_24(Probe) | 8000.00 | root |  | semi join, equal:[eq(lab.customers.id, lab.orders.customer_id)]\n    \u251c\u2500TableReader_51(Build) | 3333.33 | root |  | data:Selection_50\n    \u2502 \u2514\u2500Selection_50 | 3333.33 | cop[tikv] |  | ge(lab.orders.ordered_at, 2025-11-01 00:00:00)\n    \u2502   \u2514\u2500TableFullScan_49 | 10000.00 | cop[tikv] | table:o | keep order:false, stats:pseudo\n    \u2514\u2500TableReader_48(Probe) | 10000.00 | root |  | data:TableFullScan_47\n      \u2514\u2500TableFullScan_47 | 10000.00 | cop[tikv] | table:c | keep order:false, stats:pseudo",
+        "plan_analyze": "TopN_18 | 200.00 | 0 | root |  | time:1.74ms, loops:1, RU:1.48 | lab.customers.id, offset:0, count:200 | 0 Bytes | 0 Bytes\n\u2514\u2500HashJoin_23 | 6400.00 | 0 | root |  | time:1.72ms, loops:2, build_hash_table:{total:783.1\u00b5s, fetch:783.1\u00b5s, build:0s} | anti semi join, equal:[eq(lab.customers.id, lab.events.customer_id)] | 0 Bytes | 0 Bytes\n  \u251c\u2500TableReader_54(Build) | 10.00 | 0 | root |  | time:767.4\u00b5s, loops:1, cop_task: {num: 1, max: 860.6\u00b5s, proc_keys: 0, tot_proc: 63.4\u00b5s, tot_wait: 166.2\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 3.62\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:813.7\u00b5s}} | data:Selection_53 | 241 Bytes | N/A\n  \u2502 \u2514\u2500Selection_53 | 10.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 24.9\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 63.4\u00b5s, total_wait_time: 166.2\u00b5s, tikv_wall_time: 405.5\u00b5s} | eq(lab.events.event_type, \"churn\") | N/A | N/A\n  \u2502   \u2514\u2500TableFullScan_52 | 10000.00 | 0 | cop[tikv] | table:e | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A\n  \u2514\u2500HashJoin_24(Probe) | 8000.00 | 0 | root |  | time:1.35ms, loops:1, build_hash_table:{total:432.5\u00b5s, fetch:432.5\u00b5s, build:0s} | semi join, equal:[eq(lab.customers.id, lab.orders.customer_id)] | 0 Bytes | 0 Bytes\n    \u251c\u2500TableReader_51(Build) | 3333.33 | 0 | root |  | time:414.9\u00b5s, loops:1, cop_task: {num: 1, max: 885.4\u00b5s, proc_keys: 0, tot_proc: 48.1\u00b5s, tot_wait: 110.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 4.27\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:845.3\u00b5s}} | data:Selection_50 | 241 Bytes | N/A\n    \u2502 \u2514\u2500Selection_50 | 3333.33 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 48.1\u00b5s, total_wait_time: 110.7\u00b5s, tikv_wall_time: 327.6\u00b5s} | ge(lab.orders.ordered_at, 2025-11-01 00:00:00) | N/A | N/A\n    \u2502   \u2514\u2500TableFullScan_49 | 10000.00 | 0 | cop[tikv] | table:o | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A\n    \u2514\u2500TableReader_48(Probe) | 10000.00 | 0 | root |  | time:1.01ms, loops:1, cop_task: {num: 1, max: 899\u00b5s, proc_keys: 0, tot_proc: 46\u00b5s, tot_wait: 110.9\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.81\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:869.4\u00b5s}} | data:TableFullScan_47 | 233 Bytes | N/A\n      \u2514\u2500TableFullScan_47 | 10000.00 | 0 | cop[tikv] | table:c | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22.8\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 46\u00b5s, total_wait_time: 110.9\u00b5s, tikv_wall_time: 325\u00b5s} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.338,
+          "p50": 4.657,
+          "p90": 4.915,
+          "p95": 5.0,
+          "p99": 5.067,
+          "max": 5.084,
+          "mean": 4.699,
+          "stdev": 0.201,
+          "first_ms": 4.933
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit_22 | 8.00 | root |  | offset:0, count:500\n\u2514\u2500StreamAgg_70 | 8.00 | root |  | group by:lab.products.id, funcs:firstrow(lab.products.id)->lab.products.id, funcs:firstrow(lab.products.price)->lab.products.price, funcs:avg(lab.products.price)->Column#25\n  \u2514\u2500IndexHashJoin_77 | 12.50 | root |  | left outer join, inner:IndexLookUp_74, outer key:lab.products.category_id, inner key:lab.products.category_id, equal cond:eq(lab.products.category_id, lab.products.category_id)\n    \u251c\u2500TableReader_67(Build) | 10.00 | root |  | data:Selection_66\n    \u2502 \u2514\u2500Selection_66 | 10.00 | cop[tikv] |  | eq(lab.products.active, 1)\n    \u2502   \u2514\u2500TableFullScan_65 | 10000.00 | cop[tikv] | table:p | keep order:true, stats:pseudo\n    \u2514\u2500IndexLookUp_74(Probe) | 12.50 | root |  | \n      \u251c\u2500IndexRangeScan_72(Build) | 12.50 | cop[tikv] | table:p2, index:fk_1(category_id) | range: decided by [eq(lab.products.category_id, lab.products.category_id)], keep order:false, stats:pseudo\n      \u2514\u2500TableRowIDScan_73(Probe) | 12.50 | cop[tikv] | table:p2 | keep order:false, stats:pseudo",
+        "plan_analyze": "Limit_22 | 8.00 | 0 | root |  | time:1.35ms, loops:1, RU:0.49 | offset:0, count:500 | N/A | N/A\n\u2514\u2500StreamAgg_70 | 8.00 | 0 | root |  | time:1.34ms, loops:1 | group by:lab.products.id, funcs:firstrow(lab.products.id)->lab.products.id, funcs:firstrow(lab.products.price)->lab.products.price, funcs:avg(lab.products.price)->Column#25 | 3.28 KB | N/A\n  \u2514\u2500IndexHashJoin_77 | 12.50 | 0 | root |  | time:1.34ms, loops:1 | left outer join, inner:IndexLookUp_74, outer key:lab.products.category_id, inner key:lab.products.category_id, equal cond:eq(lab.products.category_id, lab.products.category_id) | 0 Bytes | N/A\n    \u251c\u2500TableReader_67(Build) | 10.00 | 0 | root |  | time:1.19ms, loops:1, cop_task: {num: 1, max: 1.08ms, proc_keys: 0, tot_proc: 48.9\u00b5s, tot_wait: 124.4\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 10.2\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:1.06ms}} | data:Selection_66 | 241 Bytes | N/A\n    \u2502 \u2514\u2500Selection_66 | 10.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 26\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 48.9\u00b5s, total_wait_time: 124.4\u00b5s, tikv_wall_time: 436.1\u00b5s} | eq(lab.products.active, 1) | N/A | N/A\n    \u2502   \u2514\u2500TableFullScan_65 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1} | keep order:true, stats:pseudo | N/A | N/A\n    \u2514\u2500IndexLookUp_74(Probe) | 12.50 | 0 | root |  |  |  | N/A | N/A\n      \u251c\u2500IndexRangeScan_72(Build) | 12.50 | 0 | cop[tikv] | table:p2, index:fk_1(category_id) |  | range: decided by [eq(lab.products.category_id, lab.products.category_id)], keep order:false, stats:pseudo | N/A | N/A\n      \u2514\u2500TableRowIDScan_73(Probe) | 12.50 | 0 | cop[tikv] | table:p2 |  | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id AS customer_id, o.id AS order_id, o.ordered_at, o.total_amount FROM customers c CROSS JOIN LATERAL (SELECT o2.id, o2.ordered_at, o2.total_amount FROM orders o2 WHERE o2.customer_id = c.id ORDER BY o2.ordered_at DESC, o2.id DESC LIMIT 3) o WHERE c.id <= 100 ORDER BY c.id, o.ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.766,
+          "p50": 4.032,
+          "p90": 4.205,
+          "p95": 4.375,
+          "p99": 4.512,
+          "max": 4.546,
+          "mean": 4.054,
+          "stdev": 0.198,
+          "first_ms": 4.023
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort_12 | 3.75 | root |  | lab.customers.id, lab.orders.ordered_at:desc\n\u2514\u2500Projection_14 | 3.75 | root |  | lab.customers.id, lab.orders.id, lab.orders.ordered_at, lab.orders.total_amount\n  \u2514\u2500Apply_16 | 3.75 | root |  | CARTESIAN inner join\n    \u251c\u2500TableReader_18(Build) | 3333.33 | root |  | data:TableRangeScan_17\n    \u2502 \u2514\u2500TableRangeScan_17 | 3333.33 | cop[tikv] | table:c | range:[-inf,100], keep order:false, stats:pseudo\n    \u2514\u2500TopN_20(Probe) | 10000.00 | root |  | lab.orders.ordered_at:desc, lab.orders.id:desc, offset:0, count:3\n      \u2514\u2500IndexLookUp_32 | 10000.00 | root |  | \n        \u251c\u2500IndexRangeScan_29(Build) | 33333.33 | cop[tikv] | table:o2, index:fk_1(customer_id) | range: decided by [eq(lab.orders.customer_id, lab.customers.id)], keep order:false, stats:pseudo\n        \u2514\u2500TopN_31(Probe) | 10000.00 | cop[tikv] |  | lab.orders.ordered_at:desc, lab.orders.id:desc, offset:0, count:3\n          \u2514\u2500TableRowIDScan_30 | 33333.33 | cop[tikv] | table:o2 | keep order:false, stats:pseudo",
+        "plan_analyze": "Sort_12 | 3.75 | 0 | root |  | time:1.11ms, loops:1, RU:0.49 | lab.customers.id, lab.orders.ordered_at:desc | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_14 | 3.75 | 0 | root |  | time:1.02ms, loops:1, Concurrency:OFF | lab.customers.id, lab.orders.id, lab.orders.ordered_at, lab.orders.total_amount | 2.89 KB | N/A\n  \u2514\u2500Apply_16 | 3.75 | 0 | root |  | time:1.02ms, loops:1, concurrency:OFF, cache:OFF | CARTESIAN inner join | 0 Bytes | N/A\n    \u251c\u2500TableReader_18(Build) | 3333.33 | 0 | root |  | time:997.7\u00b5s, loops:1, cop_task: {num: 1, max: 893.2\u00b5s, proc_keys: 0, tot_proc: 43.8\u00b5s, tot_wait: 111.3\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.81\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:833.3\u00b5s}} | data:TableRangeScan_17 | 233 Bytes | N/A\n    \u2502 \u2514\u2500TableRangeScan_17 | 3333.33 | 0 | cop[tikv] | table:c | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 23.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 43.8\u00b5s, total_wait_time: 111.3\u00b5s, tikv_wall_time: 304.3\u00b5s} | range:[-inf,100], keep order:false, stats:pseudo | N/A | N/A\n    \u2514\u2500TopN_20(Probe) | 10000.00 | 0 | root |  | time:0s, loops:0 | lab.orders.ordered_at:desc, lab.orders.id:desc, offset:0, count:3 | N/A | N/A\n      \u2514\u2500IndexLookUp_32 | 10000.00 | 0 | root |  | time:0s, loops:0 |  | N/A | N/A\n        \u251c\u2500IndexRangeScan_29(Build) | 33333.33 | 0 | cop[tikv] | table:o2, index:fk_1(customer_id) |  | range: decided by [eq(lab.orders.customer_id, lab.customers.id)], keep order:false, stats:pseudo | N/A | N/A\n        \u2514\u2500TopN_31(Probe) | 10000.00 | 0 | cop[tikv] |  |  | lab.orders.ordered_at:desc, lab.orders.id:desc, offset:0, count:3 | N/A | N/A\n          \u2514\u2500TableRowIDScan_30 | 33333.33 | 0 | cop[tikv] | table:o2 |  | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.63,
+          "p50": 3.763,
+          "p90": 3.897,
+          "p95": 3.908,
+          "p99": 3.916,
+          "max": 3.918,
+          "mean": 3.756,
+          "stdev": 0.101,
+          "first_ms": 3.923
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_23 | 2658.67 | root |  | lab.orders.customer_id, lab.orders.id, lab.orders.ordered_at, lab.orders.total_amount\n\u2514\u2500Selection_24 | 2658.67 | root |  | le(Column#8, 3)\n  \u2514\u2500Window_25 | 3323.33 | root |  | row_number()->Column#8 over(partition by lab.orders.customer_id order by lab.orders.ordered_at desc, lab.orders.id desc rows between current row and current row)\n    \u2514\u2500Sort_21 | 3323.33 | root |  | lab.orders.customer_id, lab.orders.ordered_at:desc, lab.orders.id:desc\n      \u2514\u2500TableReader_17 | 3323.33 | root |  | data:Selection_16\n        \u2514\u2500Selection_16 | 3323.33 | cop[tikv] |  | le(lab.orders.customer_id, 100)\n          \u2514\u2500TableFullScan_15 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "Projection_23 | 2658.67 | 0 | root |  | time:1.24ms, loops:1, RU:0.49, Concurrency:5 | lab.orders.customer_id, lab.orders.id, lab.orders.ordered_at, lab.orders.total_amount | 27.0 KB | N/A\n\u2514\u2500Selection_24 | 2658.67 | 0 | root |  | time:1.16ms, loops:1 | le(Column#8, 3) | 2.89 KB | N/A\n  \u2514\u2500Window_25 | 3323.33 | 0 | root |  | time:1.16ms, loops:1 | row_number()->Column#8 over(partition by lab.orders.customer_id order by lab.orders.ordered_at desc, lab.orders.id desc rows between current row and current row) | N/A | N/A\n    \u2514\u2500Sort_21 | 3323.33 | 0 | root |  | time:1.13ms, loops:1 | lab.orders.customer_id, lab.orders.ordered_at:desc, lab.orders.id:desc | 0 Bytes | 0 Bytes\n      \u2514\u2500TableReader_17 | 3323.33 | 0 | root |  | time:1.06ms, loops:1, cop_task: {num: 1, max: 984.4\u00b5s, proc_keys: 0, tot_proc: 52.8\u00b5s, tot_wait: 122.6\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 10.9\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:955.8\u00b5s}} | data:Selection_16 | 241 Bytes | N/A\n        \u2514\u2500Selection_16 | 3323.33 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.4\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 52.8\u00b5s, total_wait_time: 122.6\u00b5s, tikv_wall_time: 356.8\u00b5s} | le(lab.orders.customer_id, 100) | N/A | N/A\n          \u2514\u2500TableFullScan_15 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY shipping_country, status WITH ROLLUP",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.386,
+          "p50": 2.84,
+          "p90": 4.05,
+          "p95": 4.138,
+          "p99": 4.209,
+          "max": 4.226,
+          "mean": 3.038,
+          "stdev": 0.637,
+          "first_ms": 4.314
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_8 | 200.00 | root |  | Column#7->Column#12, Column#8->Column#13, Column#10, Column#11\n\u2514\u2500HashAgg_9 | 200.00 | root |  | group by:Column#7, Column#8, gid, funcs:count(1)->Column#10, funcs:sum(lab.orders.total_amount)->Column#11, funcs:firstrow(Column#7)->Column#7, funcs:firstrow(Column#8)->Column#8\n  \u2514\u2500Expand_12 | 250.00 | root |  | level-projection:[lab.orders.total_amount, <nil>->Column#7, <nil>->Column#8, 0->gid],[lab.orders.total_amount, Column#7, <nil>->Column#8, 1->gid],[lab.orders.total_amount, Column#7, Column#8, 3->gid]; schema: [lab.orders.total_amount,Column#7,Column#8,gid]\n    \u2514\u2500TableReader_18 | 250.00 | root |  | data:Projection_15\n      \u2514\u2500Projection_15 | 250.00 | cop[tikv] |  | lab.orders.total_amount, lab.orders.shipping_country->Column#7, lab.orders.status->Column#8\n        \u2514\u2500Selection_17 | 250.00 | cop[tikv] |  | ge(lab.orders.ordered_at, 2025-06-01 00:00:00), lt(lab.orders.ordered_at, 2025-09-01 00:00:00)\n          \u2514\u2500TableFullScan_16 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "Projection_8 | 200.00 | 0 | root |  | time:876.1\u00b5s, loops:1, RU:0.49, Concurrency:OFF | Column#7->Column#12, Column#8->Column#13, Column#10, Column#11 | 4.39 KB | N/A\n\u2514\u2500HashAgg_9 | 200.00 | 0 | root |  | time:873.3\u00b5s, loops:1, partial_worker:{wall_time:840.512\u00b5s, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:4.020579ms, max:810.002\u00b5s, p95:810.002\u00b5s}, final_worker:{wall_time:867.444\u00b5s, concurrency:5, task_num:5, tot_wait:80.175\u00b5s, tot_exec:327ns, tot_time:4.189815ms, max:846.251\u00b5s, p95:846.251\u00b5s} | group by:Column#7, Column#8, gid, funcs:count(1)->Column#10, funcs:sum(lab.orders.total_amount)->Column#11, funcs:firstrow(Column#7)->Column#7, funcs:firstrow(Column#8)->Column#8 | 39.3 KB | 0 Bytes\n  \u2514\u2500Expand_12 | 250.00 | 0 | root |  | time:784.8\u00b5s, loops:1, Concurrency:OFF | level-projection:[lab.orders.total_amount, <nil>->Column#7, <nil>->Column#8, 0->gid],[lab.orders.total_amount, Column#7, <nil>->Column#8, 1->gid],[lab.orders.total_amount, Column#7, Column#8, 3->gid]; schema: [lab.orders.total_amount,Column#7,Column#8,gid] | 5.02 KB | N/A\n    \u2514\u2500TableReader_18 | 250.00 | 0 | root |  | time:775.1\u00b5s, loops:1, cop_task: {num: 1, max: 658.2\u00b5s, proc_keys: 0, tot_proc: 33.5\u00b5s, tot_wait: 58.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 6.25\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:639.5\u00b5s}} | data:Projection_15 | 249 Bytes | N/A\n      \u2514\u2500Projection_15 | 250.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 17.8\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 33.5\u00b5s, total_wait_time: 58.7\u00b5s, tikv_wall_time: 256.6\u00b5s} | lab.orders.total_amount, lab.orders.shipping_country->Column#7, lab.orders.status->Column#8 | N/A | N/A\n        \u2514\u2500Selection_17 | 250.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | ge(lab.orders.ordered_at, 2025-06-01 00:00:00), lt(lab.orders.ordered_at, 2025-09-01 00:00:00) | N/A | N/A\n          \u2514\u2500TableFullScan_16 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE JSON_UNQUOTE(JSON_EXTRACT(attrs, '$.color')) = 'red' AND CAST(JSON_EXTRACT(attrs, '$.weight') AS DECIMAL(12,2)) > 10 ORDER BY id LIMIT 100",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.122,
+          "p50": 2.335,
+          "p90": 2.513,
+          "p95": 2.718,
+          "p99": 2.881,
+          "max": 2.922,
+          "mean": 2.363,
+          "stdev": 0.214,
+          "first_ms": 2.775
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_7 | 100.00 | root |  | lab.products.id, lab.products.sku, lab.products.price\n\u2514\u2500Limit_12 | 100.00 | root |  | offset:0, count:100\n  \u2514\u2500TableReader_21 | 100.00 | root |  | data:Limit_20\n    \u2514\u2500Limit_20 | 100.00 | cop[tikv] |  | offset:0, count:100\n      \u2514\u2500Selection_19 | 100.00 | cop[tikv] |  | eq(json_unquote(cast(json_extract(lab.products.attrs, \"$.color\"), var_string(16777216))), \"red\"), gt(cast(json_extract(lab.products.attrs, \"$.weight\"), decimal(12,2) BINARY), 10)\n        \u2514\u2500TableFullScan_18 | 125.00 | cop[tikv] | table:products | keep order:true, stats:pseudo",
+        "plan_analyze": "Projection_7 | 100.00 | 0 | root |  | time:585\u00b5s, loops:1, RU:0.49, Concurrency:OFF | lab.products.id, lab.products.sku, lab.products.price | 8.36 KB | N/A\n\u2514\u2500Limit_12 | 100.00 | 0 | root |  | time:583.3\u00b5s, loops:1 | offset:0, count:100 | N/A | N/A\n  \u2514\u2500TableReader_21 | 100.00 | 0 | root |  | time:581.7\u00b5s, loops:1, cop_task: {num: 1, max: 557.7\u00b5s, proc_keys: 0, tot_proc: 32.5\u00b5s, tot_wait: 46.1\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 4.61\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:544.3\u00b5s}} | data:Limit_20 | 248 Bytes | N/A\n    \u2514\u2500Limit_20 | 100.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 12.7\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 32.5\u00b5s, total_wait_time: 46.1\u00b5s, tikv_wall_time: 195.6\u00b5s} | offset:0, count:100 | N/A | N/A\n      \u2514\u2500Selection_19 | 100.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | eq(json_unquote(cast(json_extract(lab.products.attrs, \"$.color\"), var_string(16777216))), \"red\"), gt(cast(json_extract(lab.products.attrs, \"$.weight\"), decimal(12,2) BINARY), 10) | N/A | N/A\n        \u2514\u2500TableFullScan_18 | 125.00 | 0 | cop[tikv] | table:products | tikv_task:{time:0s, loops:1} | keep order:true, stats:pseudo | N/A | N/A"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE MATCH(description) AGAINST('bluetooth waterproof' IN NATURAL LANGUAGE MODE) ORDER BY id LIMIT 50",
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "OperationalError: (1105, 'UnknownType: *ast.MatchAgainst')",
+        "error_code": null
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO inventory (product_id, warehouse_id, qty, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) AS new ON DUPLICATE KEY UPDATE qty = inventory.qty + new.qty, updated_at = CURRENT_TIMESTAMP",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "ProgrammingError: (1064, 'You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 107 near \"AS new ON DUPLICATE KEY UPDATE qty = inventory.qty + new.qty, updated_at = CURRENT_TIMESTAMP\" ')",
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1.694,
+          "p50": 2.165,
+          "p90": 2.351,
+          "p95": 2.375,
+          "p99": 2.393,
+          "max": 2.398,
+          "mean": 2.126,
+          "stdev": 0.207,
+          "first_ms": 1.945
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "TopN_10 | 50.00 | root |  | lab.orders.ordered_at, lab.orders.id, offset:100000, count:50\n\u2514\u2500TableReader_18 | 10000.00 | root |  | data:TableFullScan_17\n  \u2514\u2500TableFullScan_17 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "TopN_10 | 50.00 | 0 | root |  | time:816.5\u00b5s, loops:1, RU:0.49 | lab.orders.ordered_at, lab.orders.id, offset:100000, count:50 | 0 Bytes | 0 Bytes\n\u2514\u2500TableReader_18 | 10000.00 | 0 | root |  | time:793.3\u00b5s, loops:2, cop_task: {num: 1, max: 741\u00b5s, proc_keys: 0, tot_proc: 42.5\u00b5s, tot_wait: 80.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 3.97\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:725.2\u00b5s}} | data:TableFullScan_17 | 233 Bytes | N/A\n  \u2514\u2500TableFullScan_17 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.5\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 42.5\u00b5s, total_wait_time: 80.7\u00b5s, tikv_wall_time: 271.9\u00b5s} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.932,
+          "p50": 3.273,
+          "p90": 3.396,
+          "p95": 3.419,
+          "p99": 3.438,
+          "max": 3.442,
+          "mean": 3.234,
+          "stdev": 0.158,
+          "first_ms": 2.348
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "TopN_8 | 50.00 | root |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:50\n\u2514\u2500TableReader_17 | 50.00 | root |  | data:TopN_16\n  \u2514\u2500TopN_16 | 50.00 | cop[tikv] |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:50\n    \u2514\u2500Selection_15 | 3335.56 | cop[tikv] |  | or(gt(lab.orders.ordered_at, 2025-01-01 00:00:00), and(eq(lab.orders.ordered_at, 2025-01-01 00:00:00), gt(lab.orders.id, 0)))\n      \u2514\u2500TableFullScan_14 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "TopN_8 | 50.00 | 0 | root |  | time:992.6\u00b5s, loops:1, RU:0.49 | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | 0 Bytes | 0 Bytes\n\u2514\u2500TableReader_17 | 50.00 | 0 | root |  | time:961.8\u00b5s, loops:2, cop_task: {num: 1, max: 899.5\u00b5s, proc_keys: 0, tot_proc: 55.2\u00b5s, tot_wait: 105\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 7.94\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:874.8\u00b5s}} | data:TopN_16 | 249 Bytes | N/A\n  \u2514\u2500TopN_16 | 50.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 20.8\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 55.2\u00b5s, total_wait_time: 105\u00b5s, tikv_wall_time: 396.3\u00b5s} | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | N/A | N/A\n    \u2514\u2500Selection_15 | 3335.56 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | or(gt(lab.orders.ordered_at, 2025-01-01 00:00:00), and(eq(lab.orders.ordered_at, 2025-01-01 00:00:00), gt(lab.orders.id, 0))) | N/A | N/A\n      \u2514\u2500TableFullScan_14 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.206,
+          "p50": 3.469,
+          "p90": 3.679,
+          "p95": 3.722,
+          "p99": 3.756,
+          "max": 3.764,
+          "mean": 3.491,
+          "stdev": 0.164,
+          "first_ms": 3.473
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "TopN_8 | 50.00 | root |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:50\n\u2514\u2500TableReader_17 | 50.00 | root |  | data:TopN_16\n  \u2514\u2500TopN_16 | 50.00 | cop[tikv] |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:50\n    \u2514\u2500Selection_15 | 3335.56 | cop[tikv] |  | or(gt(lab.orders.ordered_at, 2025-01-01 00:00:00), and(eq(lab.orders.ordered_at, 2025-01-01 00:00:00), gt(lab.orders.id, 0)))\n      \u2514\u2500TableFullScan_14 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "TopN_8 | 50.00 | 0 | root |  | time:934.4\u00b5s, loops:1, RU:0.50 | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | 0 Bytes | 0 Bytes\n\u2514\u2500TableReader_17 | 50.00 | 0 | root |  | time:913.4\u00b5s, loops:2, cop_task: {num: 1, max: 841.8\u00b5s, proc_keys: 0, tot_proc: 65.7\u00b5s, tot_wait: 80.3\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 21.9\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:815.7\u00b5s}} | data:TopN_16 | 249 Bytes | N/A\n  \u2514\u2500TopN_16 | 50.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 23.4\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 65.7\u00b5s, total_wait_time: 80.3\u00b5s, tikv_wall_time: 338.2\u00b5s} | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | N/A | N/A\n    \u2514\u2500Selection_15 | 3335.56 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | or(gt(lab.orders.ordered_at, 2025-01-01 00:00:00), and(eq(lab.orders.ordered_at, 2025-01-01 00:00:00), gt(lab.orders.id, 0))) | N/A | N/A\n      \u2514\u2500TableFullScan_14 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.364,
+          "p50": 2.888,
+          "p90": 3.111,
+          "p95": 3.206,
+          "p99": 3.283,
+          "max": 3.302,
+          "mean": 2.88,
+          "stdev": 0.251,
+          "first_ms": 2.896
+        },
+        "rows": 1,
+        "checksum": "4be464d2e69d15bd59287603",
+        "error": null,
+        "error_code": null,
+        "plan": "HashAgg_6 | 1.00 | root |  | funcs:count(distinct lab.events.customer_id)->Column#7\n\u2514\u2500TableReader_10 | 3333.33 | root |  | data:Selection_9\n  \u2514\u2500Selection_9 | 3333.33 | cop[tikv] |  | ge(lab.events.occurred_at, 2025-01-01 00:00:00)\n    \u2514\u2500TableFullScan_8 | 10000.00 | cop[tikv] | table:events | keep order:false, stats:pseudo",
+        "plan_analyze": "HashAgg_6 | 1.00 | 1 | root |  | time:671.1\u00b5s, loops:2, RU:0.48 | funcs:count(distinct lab.events.customer_id)->Column#7 | 1.56 KB | 0 Bytes\n\u2514\u2500TableReader_10 | 3333.33 | 0 | root |  | time:656.6\u00b5s, loops:1, cop_task: {num: 1, max: 613.2\u00b5s, proc_keys: 0, tot_proc: 28.9\u00b5s, tot_wait: 46\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.59\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:587.5\u00b5s}} | data:Selection_9 | 240 Bytes | N/A\n  \u2514\u2500Selection_9 | 3333.33 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 13.9\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 28.9\u00b5s, total_wait_time: 46\u00b5s, tikv_wall_time: 168.1\u00b5s} | ge(lab.events.occurred_at, 2025-01-01 00:00:00) | N/A | N/A\n    \u2514\u2500TableFullScan_8 | 10000.00 | 0 | cop[tikv] | table:events | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.778,
+          "p50": 2.963,
+          "p90": 3.35,
+          "p95": 3.36,
+          "p99": 3.368,
+          "max": 3.37,
+          "mean": 3.044,
+          "stdev": 0.199,
+          "first_ms": 3.792
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_36 | 10000.00 | root |  | lab.products.id\n\u2514\u2500Selection_37 | 10000.00 | root |  | isnull(lab.order_items.id)\n  \u2514\u2500MergeJoin_38 | 12500.00 | root |  | left outer join, left key:lab.products.id, right key:lab.order_items.product_id\n    \u251c\u2500IndexReader_27(Build) | 10000.00 | root |  | index:IndexFullScan_26\n    \u2502 \u2514\u2500IndexFullScan_26 | 10000.00 | cop[tikv] | table:oi, index:fk_2(product_id) | keep order:true, stats:pseudo\n    \u2514\u2500TableReader_25(Probe) | 10000.00 | root |  | data:TableFullScan_24\n      \u2514\u2500TableFullScan_24 | 10000.00 | cop[tikv] | table:p | keep order:true, stats:pseudo",
+        "plan_analyze": "Projection_36 | 10000.00 | 0 | root |  | time:1.26ms, loops:1, RU:0.97, Concurrency:5 | lab.products.id | 5.57 KB | N/A\n\u2514\u2500Selection_37 | 10000.00 | 0 | root |  | time:1.2ms, loops:1 | isnull(lab.order_items.id) | 760 Bytes | N/A\n  \u2514\u2500MergeJoin_38 | 12500.00 | 0 | root |  | time:1.2ms, loops:1 | left outer join, left key:lab.products.id, right key:lab.order_items.product_id | 1.11 KB | 0 Bytes\n    \u251c\u2500IndexReader_27(Build) | 10000.00 | 0 | root |  | time:661.4\u00b5s, loops:1, cop_task: {num: 1, max: 579\u00b5s, proc_keys: 0, tot_proc: 22.1\u00b5s, tot_wait: 44.5\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 2.06\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:539.9\u00b5s}} | index:IndexFullScan_26 | 233 Bytes | N/A\n    \u2502 \u2514\u2500IndexFullScan_26 | 10000.00 | 0 | cop[tikv] | table:oi, index:fk_2(product_id) | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 14.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 22.1\u00b5s, total_wait_time: 44.5\u00b5s, tikv_wall_time: 161.7\u00b5s} | keep order:true, stats:pseudo | N/A | N/A\n    \u2514\u2500TableReader_25(Probe) | 10000.00 | 0 | root |  | time:529.7\u00b5s, loops:1, cop_task: {num: 1, max: 508.4\u00b5s, proc_keys: 0, tot_proc: 30.5\u00b5s, tot_wait: 46.3\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 4.47\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:495.5\u00b5s}} | data:TableFullScan_24 | 231 Bytes | N/A\n      \u2514\u2500TableFullScan_24 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 14.8\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 30.5\u00b5s, total_wait_time: 46.3\u00b5s, tikv_wall_time: 168.5\u00b5s} | keep order:true, stats:pseudo | N/A | N/A"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.861,
+          "p50": 3.502,
+          "p90": 3.792,
+          "p95": 3.856,
+          "p99": 3.908,
+          "max": 3.92,
+          "mean": 3.402,
+          "stdev": 0.367,
+          "first_ms": 3.26
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "MergeJoin_36 | 8000.00 | root |  | anti semi join, left key:lab.products.id, right key:lab.order_items.product_id\n\u251c\u2500IndexReader_26(Build) | 10000.00 | root |  | index:IndexFullScan_25\n\u2502 \u2514\u2500IndexFullScan_25 | 10000.00 | cop[tikv] | table:oi, index:fk_2(product_id) | keep order:true, stats:pseudo\n\u2514\u2500TableReader_24(Probe) | 10000.00 | root |  | data:TableFullScan_23\n  \u2514\u2500TableFullScan_23 | 10000.00 | cop[tikv] | table:p | keep order:true, stats:pseudo",
+        "plan_analyze": "MergeJoin_36 | 8000.00 | 0 | root |  | time:1.37ms, loops:1, RU:0.97 | anti semi join, left key:lab.products.id, right key:lab.order_items.product_id | 760 Bytes | 0 Bytes\n\u251c\u2500IndexReader_26(Build) | 10000.00 | 0 | root |  | time:572.3\u00b5s, loops:1, cop_task: {num: 1, max: 502.6\u00b5s, proc_keys: 0, tot_proc: 21.1\u00b5s, tot_wait: 53.1\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 2.19\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:468.7\u00b5s}} | index:IndexFullScan_25 | 233 Bytes | N/A\n\u2502 \u2514\u2500IndexFullScan_25 | 10000.00 | 0 | cop[tikv] | table:oi, index:fk_2(product_id) | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 11.4\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 21.1\u00b5s, total_wait_time: 53.1\u00b5s, tikv_wall_time: 143.4\u00b5s} | keep order:true, stats:pseudo | N/A | N/A\n\u2514\u2500TableReader_24(Probe) | 10000.00 | 0 | root |  | time:792.7\u00b5s, loops:1, cop_task: {num: 1, max: 753.5\u00b5s, proc_keys: 0, tot_proc: 41\u00b5s, tot_wait: 102.4\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 4.91\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:729.9\u00b5s}} | data:TableFullScan_23 | 233 Bytes | N/A\n  \u2514\u2500TableFullScan_23 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 18.8\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 41\u00b5s, total_wait_time: 102.4\u00b5s, tikv_wall_time: 297.4\u00b5s} | keep order:true, stats:pseudo | N/A | N/A"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR TIMESTAMPDIFF(SECOND, prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.054,
+          "p50": 3.63,
+          "p90": 3.696,
+          "p95": 3.712,
+          "p99": 3.724,
+          "max": 3.727,
+          "mean": 3.539,
+          "stdev": 0.204,
+          "first_ms": 2.902
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_28 | 2126.93 | root |  | lab.events.customer_id, Column#13\n\u2514\u2500StreamAgg_29 | 2126.93 | root |  | group by:lab.events.customer_id, funcs:count(1)->Column#13, funcs:firstrow(lab.events.customer_id)->lab.events.customer_id\n  \u2514\u2500Selection_26 | 2658.67 | root |  | eq(case(or(isnull(Column#8), gt(timestampdiff(\"SECOND\", Column#8, lab.events.occurred_at), 1800)), 1, 0), 1)\n    \u2514\u2500Window_27 | 3323.33 | root |  | lag(lab.events.occurred_at)->Column#8 over(partition by lab.events.customer_id order by lab.events.occurred_at, lab.events.id)\n      \u2514\u2500Sort_24 | 3323.33 | root |  | lab.events.customer_id, lab.events.occurred_at, lab.events.id\n        \u2514\u2500TableReader_23 | 3323.33 | root |  | data:Selection_22\n          \u2514\u2500Selection_22 | 3323.33 | cop[tikv] |  | le(lab.events.customer_id, 2000)\n            \u2514\u2500TableFullScan_21 | 10000.00 | cop[tikv] | table:events | keep order:false, stats:pseudo",
+        "plan_analyze": "Projection_28 | 2126.93 | 0 | root |  | time:1.14ms, loops:1, RU:0.49, Concurrency:5 | lab.events.customer_id, Column#13 | 7.42 KB | N/A\n\u2514\u2500StreamAgg_29 | 2126.93 | 0 | root |  | time:1.07ms, loops:1 | group by:lab.events.customer_id, funcs:count(1)->Column#13, funcs:firstrow(lab.events.customer_id)->lab.events.customer_id | 1.51 KB | N/A\n  \u2514\u2500Selection_26 | 2658.67 | 0 | root |  | time:1.05ms, loops:1 | eq(case(or(isnull(Column#8), gt(timestampdiff(\"SECOND\", Column#8, lab.events.occurred_at), 1800)), 1, 0), 1) | 1.48 KB | N/A\n    \u2514\u2500Window_27 | 3323.33 | 0 | root |  | time:1.05ms, loops:1 | lag(lab.events.occurred_at)->Column#8 over(partition by lab.events.customer_id order by lab.events.occurred_at, lab.events.id) | N/A | N/A\n      \u2514\u2500Sort_24 | 3323.33 | 0 | root |  | time:1.05ms, loops:1 | lab.events.customer_id, lab.events.occurred_at, lab.events.id | 0 Bytes | 0 Bytes\n        \u2514\u2500TableReader_23 | 3323.33 | 0 | root |  | time:983.1\u00b5s, loops:1, cop_task: {num: 1, max: 914.1\u00b5s, proc_keys: 0, tot_proc: 44.7\u00b5s, tot_wait: 98.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 7.48\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:881.7\u00b5s}} | data:Selection_22 | 241 Bytes | N/A\n          \u2514\u2500Selection_22 | 3323.33 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.3\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 44.7\u00b5s, total_wait_time: 98.7\u00b5s, tikv_wall_time: 325.9\u00b5s} | le(lab.events.customer_id, 2000) | N/A | N/A\n            \u2514\u2500TableFullScan_21 | 10000.00 | 0 | cop[tikv] | table:events | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, GROUP_CONCAT(p.sku ORDER BY p.sku SEPARATOR ',') AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.318,
+          "p50": 4.56,
+          "p90": 4.763,
+          "p95": 4.806,
+          "p99": 4.841,
+          "max": 4.85,
+          "mean": 4.579,
+          "stdev": 0.149,
+          "first_ms": 10.32
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort_14 | 400.00 | root |  | lab.orders.id\n\u2514\u2500Projection_16 | 400.00 | root |  | lab.orders.id, Column#20\n  \u2514\u2500HashAgg_17 | 400.00 | root |  | group by:lab.orders.id, funcs:group_concat(lab.products.sku order by lab.products.sku separator \",\")->Column#20, funcs:firstrow(lab.orders.id)->lab.orders.id\n    \u2514\u2500IndexHashJoin_28 | 781.25 | root |  | inner join, inner:TableReader_23, outer key:lab.order_items.product_id, inner key:lab.products.id, equal cond:eq(lab.order_items.product_id, lab.products.id)\n      \u251c\u2500HashJoin_50(Build) | 625.00 | root |  | inner join, equal:[eq(lab.orders.id, lab.order_items.order_id)]\n      \u2502 \u251c\u2500TableReader_84(Build) | 3333.33 | root |  | data:TableRangeScan_83\n      \u2502 \u2502 \u2514\u2500TableRangeScan_83 | 3333.33 | cop[tikv] | table:o | range:[-inf,500], keep order:false, stats:pseudo\n      \u2502 \u2514\u2500TableReader_87(Probe) | 3323.33 | root |  | data:Selection_86\n      \u2502   \u2514\u2500Selection_86 | 3323.33 | cop[tikv] |  | le(lab.order_items.order_id, 500)\n      \u2502     \u2514\u2500TableFullScan_85 | 10000.00 | cop[tikv] | table:oi | keep order:false, stats:pseudo\n      \u2514\u2500TableReader_23(Probe) | 625.00 | root |  | data:TableRangeScan_22\n        \u2514\u2500TableRangeScan_22 | 625.00 | cop[tikv] | table:p | range: decided by [lab.order_items.product_id], keep order:false, stats:pseudo",
+        "plan_analyze": "Sort_14 | 400.00 | 0 | root |  | time:1.46ms, loops:1, RU:0.99 | lab.orders.id | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_16 | 400.00 | 0 | root |  | time:1.38ms, loops:1, Concurrency:OFF | lab.orders.id, Column#20 | 1.62 KB | N/A\n  \u2514\u2500HashAgg_17 | 400.00 | 0 | root |  | time:1.37ms, loops:1 | group by:lab.orders.id, funcs:group_concat(lab.products.sku order by lab.products.sku separator \",\")->Column#20, funcs:firstrow(lab.orders.id)->lab.orders.id | 1.85 KB | 0 Bytes\n    \u2514\u2500IndexHashJoin_28 | 781.25 | 0 | root |  | time:1.36ms, loops:1 | inner join, inner:TableReader_23, outer key:lab.order_items.product_id, inner key:lab.products.id, equal cond:eq(lab.order_items.product_id, lab.products.id) | 0 Bytes | N/A\n      \u251c\u2500HashJoin_50(Build) | 625.00 | 0 | root |  | time:1.27ms, loops:1, build_hash_table:{total:1.05ms, fetch:1.05ms, build:0s} | inner join, equal:[eq(lab.orders.id, lab.order_items.order_id)] | 0 Bytes | 0 Bytes\n      \u2502 \u251c\u2500TableReader_84(Build) | 3333.33 | 0 | root |  | time:1.02ms, loops:1, cop_task: {num: 1, max: 931.4\u00b5s, proc_keys: 0, tot_proc: 41.8\u00b5s, tot_wait: 129.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 11\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:897.7\u00b5s}} | data:TableRangeScan_83 | 233 Bytes | N/A\n      \u2502 \u2502 \u2514\u2500TableRangeScan_83 | 3333.33 | 0 | cop[tikv] | table:o | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 20\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 41.8\u00b5s, total_wait_time: 129.7\u00b5s, tikv_wall_time: 317.9\u00b5s} | range:[-inf,500], keep order:false, stats:pseudo | N/A | N/A\n      \u2502 \u2514\u2500TableReader_87(Probe) | 3323.33 | 0 | root |  | time:564.2\u00b5s, loops:1, cop_task: {num: 1, max: 857.2\u00b5s, proc_keys: 0, tot_proc: 71.6\u00b5s, tot_wait: 82.8\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 7.9\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:821.8\u00b5s}} | data:Selection_86 | 241 Bytes | N/A\n      \u2502   \u2514\u2500Selection_86 | 3323.33 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 24.7\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 71.6\u00b5s, total_wait_time: 82.8\u00b5s, tikv_wall_time: 335.1\u00b5s} | le(lab.order_items.order_id, 500) | N/A | N/A\n      \u2502     \u2514\u2500TableFullScan_85 | 10000.00 | 0 | cop[tikv] | table:oi | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A\n      \u2514\u2500TableReader_23(Probe) | 625.00 | 0 | root |  |  | data:TableRangeScan_22 | N/A | N/A\n        \u2514\u2500TableRangeScan_22 | 625.00 | 0 | cop[tikv] | table:p |  | range: decided by [lab.order_items.product_id], keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.245,
+          "p50": 4.485,
+          "p90": 4.647,
+          "p95": 4.807,
+          "p99": 4.936,
+          "max": 4.968,
+          "mean": 4.51,
+          "stdev": 0.183,
+          "first_ms": 4.419
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort_9 | 8000.00 | root |  | lab.customers.country_code\n\u2514\u2500Projection_11 | 8000.00 | root |  | lab.customers.country_code, Column#14, Column#15, Column#16, Column#17\n  \u2514\u2500HashAgg_12 | 8000.00 | root |  | group by:Column#27, funcs:sum(Column#23)->Column#14, funcs:sum(Column#24)->Column#15, funcs:sum(Column#25)->Column#16, funcs:avg(Column#26)->Column#17, funcs:firstrow(Column#27)->lab.customers.country_code\n    \u2514\u2500Projection_48 | 12500.00 | root |  | cast(case(eq(lab.orders.status, delivered), 1, 0), decimal(20,0) BINARY)->Column#23, cast(case(eq(lab.orders.status, cancelled), 1, 0), decimal(20,0) BINARY)->Column#24, cast(case(eq(lab.orders.status, returned), 1, 0), decimal(20,0) BINARY)->Column#25, lab.orders.total_amount->Column#26, lab.customers.country_code->Column#27\n      \u2514\u2500HashJoin_13 | 12500.00 | root |  | inner join, equal:[eq(lab.orders.customer_id, lab.customers.id)]\n        \u251c\u2500TableReader_46(Build) | 10000.00 | root |  | data:TableFullScan_45\n        \u2502 \u2514\u2500TableFullScan_45 | 10000.00 | cop[tikv] | table:c | keep order:false, stats:pseudo\n        \u2514\u2500TableReader_44(Probe) | 10000.00 | root |  | data:TableFullScan_43\n          \u2514\u2500TableFullScan_43 | 10000.00 | cop[tikv] | table:o | keep order:false, stats:pseudo",
+        "plan_analyze": "Sort_9 | 8000.00 | 0 | root |  | time:1.65ms, loops:1, RU:0.99 | lab.customers.country_code | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_11 | 8000.00 | 0 | root |  | time:1.55ms, loops:1, Concurrency:5 | lab.customers.country_code, Column#14, Column#15, Column#16, Column#17 | 62.3 KB | N/A\n  \u2514\u2500HashAgg_12 | 8000.00 | 0 | root |  | time:1.36ms, loops:1, partial_worker:{wall_time:1.326229ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:6.440524ms, max:1.306559ms, p95:1.306559ms}, final_worker:{wall_time:1.365398ms, concurrency:5, task_num:5, tot_wait:5.32\u00b5s, tot_exec:396ns, tot_time:6.564937ms, max:1.319516ms, p95:1.319516ms} | group by:Column#27, funcs:sum(Column#23)->Column#14, funcs:sum(Column#24)->Column#15, funcs:sum(Column#25)->Column#16, funcs:avg(Column#26)->Column#17, funcs:firstrow(Column#27)->lab.customers.country_code | 31.3 KB | 0 Bytes\n    \u2514\u2500Projection_48 | 12500.00 | 0 | root |  | time:1.29ms, loops:1, Concurrency:5 | cast(case(eq(lab.orders.status, delivered), 1, 0), decimal(20,0) BINARY)->Column#23, cast(case(eq(lab.orders.status, cancelled), 1, 0), decimal(20,0) BINARY)->Column#24, cast(case(eq(lab.orders.status, returned), 1, 0), decimal(20,0) BINARY)->Column#25, lab.orders.total_amount->Column#26, lab.customers.country_code->Column#27 | 44.4 KB | N/A\n      \u2514\u2500HashJoin_13 | 12500.00 | 0 | root |  | time:1.19ms, loops:1, build_hash_table:{total:420.5\u00b5s, fetch:420.5\u00b5s, build:0s} | inner join, equal:[eq(lab.orders.customer_id, lab.customers.id)] | 0 Bytes | 0 Bytes\n        \u251c\u2500TableReader_46(Build) | 10000.00 | 0 | root |  | time:403.3\u00b5s, loops:1, cop_task: {num: 1, max: 820.3\u00b5s, proc_keys: 0, tot_proc: 59.5\u00b5s, tot_wait: 112.4\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 3.79\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:789.5\u00b5s}} | data:TableFullScan_45 | 233 Bytes | N/A\n        \u2502 \u2514\u2500TableFullScan_45 | 10000.00 | 0 | cop[tikv] | table:c | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 25.6\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 59.5\u00b5s, total_wait_time: 112.4\u00b5s, tikv_wall_time: 336.4\u00b5s} | keep order:false, stats:pseudo | N/A | N/A\n        \u2514\u2500TableReader_44(Probe) | 10000.00 | 0 | root |  | time:987.6\u00b5s, loops:1, cop_task: {num: 1, max: 919.1\u00b5s, proc_keys: 0, tot_proc: 53\u00b5s, tot_wait: 120.3\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.72\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:887.2\u00b5s}} | data:TableFullScan_43 | 233 Bytes | N/A\n          \u2514\u2500TableFullScan_43 | 10000.00 | 0 | cop[tikv] | table:o | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22.6\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 53\u00b5s, total_wait_time: 120.3\u00b5s, tikv_wall_time: 366.4\u00b5s} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 3.332,
+          "p50": 3.573,
+          "p90": 3.73,
+          "p95": 3.822,
+          "p99": 3.84,
+          "max": 3.845,
+          "mean": 3.576,
+          "stdev": 0.15,
+          "first_ms": 3.612
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Projection_24 | 11.00 | root |  | lab.orders.id\n\u2514\u2500IndexMerge_32 | 11.00 | root |  | type: union\n  \u251c\u2500IndexRangeScan_29(Build) | 10.00 | cop[tikv] | table:orders, index:fk_1(customer_id) | range:[14824,14824], keep order:true, stats:pseudo\n  \u251c\u2500TableRangeScan_30(Build) | 1.00 | cop[tikv] | table:orders | range:[146741,146741], keep order:true, stats:pseudo\n  \u2514\u2500TableRowIDScan_31(Probe) | 11.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "Projection_24 | 11.00 | 0 | root |  | time:1.22ms, loops:1, RU:0.98, Concurrency:OFF | lab.orders.id | 8.61 KB | N/A\n\u2514\u2500IndexMerge_32 | 11.00 | 0 | root |  | time:1.22ms, loops:1 | type: union | 242 Bytes | N/A\n  \u251c\u2500IndexRangeScan_29(Build) | 10.00 | 0 | cop[tikv] | table:orders, index:fk_1(customer_id) | time:949.2\u00b5s, loops:1, cop_task: {num: 1, max: 898.1\u00b5s, proc_keys: 0, tot_proc: 53.6\u00b5s, tot_wait: 99\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 26.5\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:869.5\u00b5s}}, tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 23.1\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 53.6\u00b5s, total_wait_time: 99\u00b5s, tikv_wall_time: 355.2\u00b5s} | range:[14824,14824], keep order:true, stats:pseudo | N/A | N/A\n  \u251c\u2500TableRangeScan_30(Build) | 1.00 | 0 | cop[tikv] | table:orders | time:957\u00b5s, loops:1, cop_task: {num: 1, max: 881.9\u00b5s, proc_keys: 0, tot_proc: 40.5\u00b5s, tot_wait: 156.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 9.95\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:854.9\u00b5s}}, tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22.6\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 40.5\u00b5s, total_wait_time: 156.7\u00b5s, tikv_wall_time: 336.5\u00b5s} | range:[146741,146741], keep order:true, stats:pseudo | 233 Bytes | N/A\n  \u2514\u2500TableRowIDScan_31(Probe) | 11.00 | 0 | cop[tikv] | table:orders |  | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 9.136,
+          "p50": 9.394,
+          "p90": 9.606,
+          "p95": 9.874,
+          "p99": 10.089,
+          "max": 10.142,
+          "mean": 9.452,
+          "stdev": 0.255,
+          "first_ms": 10.652
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Batch_Point_Get_10 | 500.00 | root | table:orders | handle:[47 281 457 869 942 950 1298 3027 3073 3269 3737 4023 4216 4413 4589 4762 4833 4939 5265 5718 5897 6511 7606 8169 8453 9031 9687 10378 10923 10974 11327 11479 11859 12255 12654 12840 12970 13207 13312 13532 14258 14524 15081 15902 16269 16854 17034 17315 17465 18380 18540 18983 19173 19517 19560 19706 20028 20045 20117 20309 21123 21953 21992 22037 22147 22148 22307 22507 23218 23452 23529 23673 23781 23817 23880 24103 24275 26089 26663 27468 27504 27862 28693 29538 29583 31065 31390 31469 31696 31898 32998 33358 33374 33876 33963 34032 34762 34890 34981 36326 36519 36595 36627 36886 37157 37714 37946 38647 39038 39156 39181 40699 41297 41699 42323 42378 42795 43866 44765 45796 46636 47487 47593 47962 48063 48589 49665 49768 50439 51313 51981 52069 52233 52686 52893 52991 53330 53797 53968 54493 55008 55052 55237 56409 56614 57068 57113 57679 58303 59915 60180 60278 60487 60656 61030 61548 62505 62565 62686 63495 63986 64081 64110 64404 65059 65131 65359 65654 66112 66379 66569 67003 67042 67727 67793 68202 68303 68632 68655 69008 69152 69251 69325 69615 69617 69660 70218 70427 70458 70497 70527 70842 70896 70916 71047 71283 72131 72750 73120 73155 73288 73568 73859 73908 74496 74854 74875 75028 75319 75914 75978 76012 76247 76824 77452 78060 78551 78863 79155 79756 79802 79956 80684 81147 81704 81787 81794 82734 82858 83700 84813 85079 85495 85734 86227 86855 86973 87251 87906 88658 88677 88907 89642 89838 90090 90168 90965 91109 93477 94255 94410 94558 95458 95732 96550 97576 97872 98594 98729 98794 99846 100042 100286 100359 100811 101410 102110 102279 102635 102997 103046 103280 103306 103382 104402 104730 104794 104869 106090 106279 106417 106486 107712 108209 108498 108755 109100 109514 110692 111464 111495 112047 112132 112212 112524 112917 113204 113293 114358 116835 116871 116880 117193 117821 117955 118165 118191 118329 118748 118955 119787 120317 120443 120676 121809 122133 122249 123781 123980 124065 124220 124425 124456 125570 126464 126664 127291 127350 127439 128266 128350 128405 128896 129486 129550 129660 129762 130306 130519 130586 131096 131231 131797 131851 131963 132218 132314 132525 132555 132630 132808 132825 133365 133946 134287 134475 134804 134948 135407 135643 137300 137381 137408 137886 138128 138376 138724 138734 139221 139315 140300 140667 143107 143413 143599 143938 143977 144208 144281 144455 144983 145268 145720 146099 146415 148836 149024 149322 149579 150545 152430 153109 153508 153827 153925 154450 156385 156967 157210 158169 159431 161197 161737 162191 162831 162976 163559 163958 164162 164452 164566 164803 165053 165065 165386 165589 165883 166315 166452 166718 167018 168497 168530 168613 168617 168950 169291 170376 170422 170796 171133 171966 171972 172101 172372 172575 172832 173534 174386 175342 175779 176162 176202 177133 177203 178433 178675 179017 179227 179955 180029 180288 180409 181453 181584 181637 181752 183611 183777 184376 185264 185827 185995 186001 186434 186915 187436 187694 188632 188922 189834 190627 191063 191191 191982 192173 192375 193145 193658 193733 193942 193963 194220 194830 195489 195518 195950 196154 196519 196750 196801 197162 197308 197360 198091 198123 198297 199033 199098 199664], keep order:true, desc:false",
+        "plan_analyze": "Batch_Point_Get_10 | 500.00 | 0 | root | table:orders | time:4.02ms, loops:1, RU:0.48, BatchGet:{num_rpc:1, total_time:3.55ms}, time_detail: {total_process_time: 1ns, total_kv_read_wall_time: 2.73ms, tikv_wall_time: 2.84ms}, scan_detail: {total_keys: 500, get_snapshot_time: 20\u00b5s, rocksdb: {block: {}}} | handle:[47 281 457 869 942 950 1298 3027 3073 3269 3737 4023 4216 4413 4589 4762 4833 4939 5265 5718 5897 6511 7606 8169 8453 9031 9687 10378 10923 10974 11327 11479 11859 12255 12654 12840 12970 13207 13312 13532 14258 14524 15081 15902 16269 16854 17034 17315 17465 18380 18540 18983 19173 19517 19560 19706 20028 20045 20117 20309 21123 21953 21992 22037 22147 22148 22307 22507 23218 23452 23529 23673 23781 23817 23880 24103 24275 26089 26663 27468 27504 27862 28693 29538 29583 31065 31390 31469 31696 31898 32998 33358 33374 33876 33963 34032 34762 34890 34981 36326 36519 36595 36627 36886 37157 37714 37946 38647 39038 39156 39181 40699 41297 41699 42323 42378 42795 43866 44765 45796 46636 47487 47593 47962 48063 48589 49665 49768 50439 51313 51981 52069 52233 52686 52893 52991 53330 53797 53968 54493 55008 55052 55237 56409 56614 57068 57113 57679 58303 59915 60180 60278 60487 60656 61030 61548 62505 62565 62686 63495 63986 64081 64110 64404 65059 65131 65359 65654 66112 66379 66569 67003 67042 67727 67793 68202 68303 68632 68655 69008 69152 69251 69325 69615 69617 69660 70218 70427 70458 70497 70527 70842 70896 70916 71047 71283 72131 72750 73120 73155 73288 73568 73859 73908 74496 74854 74875 75028 75319 75914 75978 76012 76247 76824 77452 78060 78551 78863 79155 79756 79802 79956 80684 81147 81704 81787 81794 82734 82858 83700 84813 85079 85495 85734 86227 86855 86973 87251 87906 88658 88677 88907 89642 89838 90090 90168 90965 91109 93477 94255 94410 94558 95458 95732 96550 97576 97872 98594 98729 98794 99846 100042 100286 100359 100811 101410 102110 102279 102635 102997 103046 103280 103306 103382 104402 104730 104794 104869 106090 106279 106417 106486 107712 108209 108498 108755 109100 109514 110692 111464 111495 112047 112132 112212 112524 112917 113204 113293 114358 116835 116871 116880 117193 117821 117955 118165 118191 118329 118748 118955 119787 120317 120443 120676 121809 122133 122249 123781 123980 124065 124220 124425 124456 125570 126464 126664 127291 127350 127439 128266 128350 128405 128896 129486 129550 129660 129762 130306 130519 130586 131096 131231 131797 131851 131963 132218 132314 132525 132555 132630 132808 132825 133365 133946 134287 134475 134804 134948 135407 135643 137300 137381 137408 137886 138128 138376 138724 138734 139221 139315 140300 140667 143107 143413 143599 143938 143977 144208 144281 144455 144983 145268 145720 146099 146415 148836 149024 149322 149579 150545 152430 153109 153508 153827 153925 154450 156385 156967 157210 158169 159431 161197 161737 162191 162831 162976 163559 163958 164162 164452 164566 164803 165053 165065 165386 165589 165883 166315 166452 166718 167018 168497 168530 168613 168617 168950 169291 170376 170422 170796 171133 171966 171972 172101 172372 172575 172832 173534 174386 175342 175779 176162 176202 177133 177203 178433 178675 179017 179227 179955 180029 180288 180409 181453 181584 181637 181752 183611 183777 184376 185264 185827 185995 186001 186434 186915 187436 187694 188632 188922 189834 190627 191063 191191 191982 192173 192375 193145 193658 193733 193942 193963 194220 194830 195489 195518 195950 196154 196519 196750 196801 197162 197308 197360 198091 198123 198297 199033 199098 199664], keep order:true, desc:false | N/A | N/A"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.075,
+          "p50": 3.207,
+          "p90": 3.385,
+          "p95": 3.389,
+          "p99": 3.393,
+          "max": 3.394,
+          "mean": 3.23,
+          "stdev": 0.1,
+          "first_ms": 3.541
+        },
+        "rows": 1,
+        "checksum": "4be464d2e69d15bd59287603",
+        "error": null,
+        "error_code": null,
+        "plan": "HashAgg_13 | 1.00 | root |  | funcs:count(Column#8)->Column#7\n\u2514\u2500TableReader_14 | 1.00 | root |  | data:HashAgg_6\n  \u2514\u2500HashAgg_6 | 1.00 | cop[tikv] |  | funcs:count(1)->Column#8\n    \u2514\u2500Selection_12 | 8000.00 | cop[tikv] |  | eq(month(lab.orders.ordered_at), 5), eq(year(lab.orders.ordered_at), 2025)\n      \u2514\u2500TableFullScan_11 | 10000.00 | cop[tikv] | table:orders | keep order:false, stats:pseudo",
+        "plan_analyze": "HashAgg_13 | 1.00 | 1 | root |  | time:1.12ms, loops:2, RU:0.49, partial_worker:{wall_time:1.076083ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:5.103214ms, max:1.029508ms, p95:1.029508ms}, final_worker:{wall_time:1.091569ms, concurrency:5, task_num:5, tot_wait:93.484\u00b5s, tot_exec:520ns, tot_time:5.346677ms, max:1.078157ms, p95:1.078157ms} | funcs:count(Column#8)->Column#7 | 21.3 KB | 0 Bytes\n\u2514\u2500TableReader_14 | 1.00 | 0 | root |  | time:994\u00b5s, loops:1, cop_task: {num: 1, max: 907.2\u00b5s, proc_keys: 0, tot_proc: 57.4\u00b5s, tot_wait: 124.9\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.71\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:879.7\u00b5s}} | data:HashAgg_6 | 249 Bytes | N/A\n  \u2514\u2500HashAgg_6 | 1.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 38.5\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 57.4\u00b5s, total_wait_time: 124.9\u00b5s, tikv_wall_time: 389.2\u00b5s} | funcs:count(1)->Column#8 | N/A | N/A\n    \u2514\u2500Selection_12 | 8000.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | eq(month(lab.orders.ordered_at), 5), eq(year(lab.orders.ordered_at), 2025) | N/A | N/A\n      \u2514\u2500TableFullScan_11 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.875,
+          "p50": 2.325,
+          "p90": 2.434,
+          "p95": 2.464,
+          "p99": 3.707,
+          "max": 4.214,
+          "mean": 2.361,
+          "stdev": 0.362,
+          "first_ms": 2.567
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 3.34,
+          "p50": 3.757,
+          "p90": 3.938,
+          "p95": 4.084,
+          "p99": 4.243,
+          "max": 4.275,
+          "mean": 3.769,
+          "stdev": 0.198,
+          "first_ms": 3.904
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "IntegrityError: (1452, 'Cannot add or update a child row: a foreign key constraint fails (`lab`.`orders`, CONSTRAINT `fk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`))')",
+        "error_code": null
+      },
+      "_seconds": 1.8
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.791,
+            "p95_ms": 29.581,
+            "rows": 1,
+            "plan_analyze": "StreamAgg_10 | 1.00 | 1 | root |  | time:791.7\u00b5s, loops:2, RU:0.48 | funcs:count(1)->Column#7, funcs:sum(lab.events.value_num)->Column#8 | 2.45 KB | N/A\n\u2514\u2500TableReader_17 | 0.25 | 0 | root |  | time:784.4\u00b5s, loops:1, cop_task: {num: 1, max: 741.8\u00b5s, proc_keys: 0, tot_proc: 1.81\u00b5s, tot_wait: 101\u00b5s, copr_cache_hit_ratio: 1.00, build_task_duration: 10.4\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:714.4\u00b5s}} | data:Selection_16 | 245 Bytes | N/A\n  \u2514\u2500Selection_16 | 0.25 | 0 | cop[tikv] |  | tikv_task:{time:32ms, loops:24}, scan_detail: {get_snapshot_time: 20\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 1.81\u00b5s, total_wait_time: 101\u00b5s, tikv_wall_time: 245.7\u00b5s} | eq(lab.events.event_type, \"checkout\"), ge(lab.events.occurred_at, 2025-06-01 00:00:00), lt(lab.events.occurred_at, 2025-07-01 00:00:00) | N/A | N/A\n    \u2514\u2500TableFullScan_15 | 10000.00 | 20000 | cop[tikv] | table:events | tikv_task:{time:29ms, loops:24} | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          }
+        ]
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.08,
+            "p95_ms": 3.3,
+            "rows": 0,
+            "plan_analyze": "Sort_5 | 250.00 | 0 | root |  | time:1.37ms, loops:1, RU:0.49 | lab.order_items.order_id, lab.order_items.product_id | 0 Bytes | 0 Bytes\n\u2514\u2500TableReader_10 | 250.00 | 0 | root |  | time:1.26ms, loops:1, cop_task: {num: 1, max: 1.15ms, proc_keys: 0, tot_proc: 52.4\u00b5s, tot_wait: 135.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 11.6\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:1.12ms}} | data:Selection_9 | 241 Bytes | N/A\n  \u2514\u2500Selection_9 | 250.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 27.7\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 52.4\u00b5s, total_wait_time: 135.7\u00b5s, tikv_wall_time: 364.1\u00b5s} | ge(lab.order_items.order_id, 163290), lt(lab.order_items.order_id, 164290) | N/A | N/A\n    \u2514\u2500TableFullScan_8 | 10000.00 | 0 | cop[tikv] | table:order_items | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "tidb: INCLUDE columns not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.243,
+            "p95_ms": 3.432,
+            "rows": 1,
+            "plan_analyze": "HashAgg_13 | 1.00 | 1 | root |  | time:1.13ms, loops:2, RU:0.49, partial_worker:{wall_time:1.071347ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:5.054903ms, max:1.017412ms, p95:1.017412ms}, final_worker:{wall_time:1.117591ms, concurrency:5, task_num:5, tot_wait:10.419\u00b5s, tot_exec:483ns, tot_time:5.140128ms, max:1.040147ms, p95:1.040147ms} | funcs:count(Column#8)->Column#7 | 12.2 KB | 0 Bytes\n\u2514\u2500TableReader_14 | 1.00 | 0 | root |  | time:1.01ms, loops:1, cop_task: {num: 1, max: 927.7\u00b5s, proc_keys: 0, tot_proc: 59.6\u00b5s, tot_wait: 102.9\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.8\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:900\u00b5s}} | data:HashAgg_6 | 249 Bytes | N/A\n  \u2514\u2500HashAgg_6 | 1.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 27.7\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 59.6\u00b5s, total_wait_time: 102.9\u00b5s, tikv_wall_time: 360.6\u00b5s} | funcs:count(1)->Column#8 | N/A | N/A\n    \u2514\u2500Selection_12 | 8000.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | eq(month(lab.orders.ordered_at), 5), eq(year(lab.orders.ordered_at), 2025) | N/A | N/A\n      \u2514\u2500TableFullScan_11 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.086,
+            "p95_ms": 3.263,
+            "rows": 1,
+            "plan_analyze": "StreamAgg_20 | 1.00 | 1 | root |  | time:939.9\u00b5s, loops:2, RU:0.49 | funcs:count(Column#9)->Column#7 | 388 Bytes | N/A\n\u2514\u2500TableReader_21 | 1.00 | 0 | root |  | time:931.4\u00b5s, loops:1, cop_task: {num: 1, max: 876.6\u00b5s, proc_keys: 0, tot_proc: 58.5\u00b5s, tot_wait: 75.9\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.64\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:836.2\u00b5s}} | data:StreamAgg_9 | 249 Bytes | N/A\n  \u2514\u2500StreamAgg_9 | 1.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.8\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 58.5\u00b5s, total_wait_time: 75.9\u00b5s, tikv_wall_time: 311.5\u00b5s} | funcs:count(1)->Column#9 | N/A | N/A\n    \u2514\u2500Selection_19 | 250.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | ge(lab.orders.ordered_at, 2025-05-01 00:00:00), lt(lab.orders.ordered_at, 2025-06-01 00:00:00) | N/A | N/A\n      \u2514\u2500TableFullScan_18 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          }
+        ],
+        "best_variant": "sargable_no_index",
+        "speedup_vs_first": 1.05
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.262,
+            "p95_ms": 2.427,
+            "rows": 0,
+            "plan_analyze": "TopN_10 | 50.00 | 0 | root |  | time:792.3\u00b5s, loops:1, RU:0.49 | lab.orders.ordered_at, lab.orders.id, offset:100000, count:50 | 0 Bytes | 0 Bytes\n\u2514\u2500TableReader_18 | 10000.00 | 0 | root |  | time:765.6\u00b5s, loops:2, cop_task: {num: 1, max: 710.8\u00b5s, proc_keys: 0, tot_proc: 42.5\u00b5s, tot_wait: 64.4\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.08\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:686.8\u00b5s}} | data:TableFullScan_17 | 233 Bytes | N/A\n  \u2514\u2500TableFullScan_17 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 19.5\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 42.5\u00b5s, total_wait_time: 64.4\u00b5s, tikv_wall_time: 237.5\u00b5s} | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.059,
+            "p95_ms": 3.163,
+            "rows": 0,
+            "plan_analyze": "TopN_8 | 50.00 | 0 | root |  | time:1.12ms, loops:1, RU:0.52 | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | 0 Bytes | 0 Bytes\n\u2514\u2500TableReader_17 | 50.00 | 0 | root |  | time:1.09ms, loops:2, cop_task: {num: 1, max: 1.03ms, proc_keys: 0, tot_proc: 125.9\u00b5s, tot_wait: 115.3\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 7.65\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:990.5\u00b5s}} | data:TopN_16 | 249 Bytes | N/A\n  \u2514\u2500TopN_16 | 50.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 20.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 125.9\u00b5s, total_wait_time: 115.3\u00b5s, tikv_wall_time: 471.7\u00b5s} | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | N/A | N/A\n    \u2514\u2500Selection_15 | 3335.56 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1} | or(gt(lab.orders.ordered_at, 2025-01-01 00:00:00), and(eq(lab.orders.ordered_at, 2025-01-01 00:00:00), gt(lab.orders.id, 0))) | N/A | N/A\n      \u2514\u2500TableFullScan_14 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:0s, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          }
+        ],
+        "best_variant": "offset_no_index",
+        "speedup_vs_first": 1.0
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.231,
+            "p95_ms": 4.42,
+            "rows": 0,
+            "plan_analyze": "Limit_22 | 8.00 | 0 | root |  | time:1.2ms, loops:1, RU:0.49 | offset:0, count:500 | N/A | N/A\n\u2514\u2500StreamAgg_70 | 8.00 | 0 | root |  | time:1.2ms, loops:1 | group by:lab.products.id, funcs:firstrow(lab.products.id)->lab.products.id, funcs:firstrow(lab.products.price)->lab.products.price, funcs:avg(lab.products.price)->Column#25 | 3.28 KB | N/A\n  \u2514\u2500IndexHashJoin_77 | 12.50 | 0 | root |  | time:1.19ms, loops:1 | left outer join, inner:IndexLookUp_74, outer key:lab.products.category_id, inner key:lab.products.category_id, equal cond:eq(lab.products.category_id, lab.products.category_id) | 0 Bytes | N/A\n    \u251c\u2500TableReader_67(Build) | 10.00 | 0 | root |  | time:1.06ms, loops:1, cop_task: {num: 1, max: 988.4\u00b5s, proc_keys: 0, tot_proc: 51.7\u00b5s, tot_wait: 118.4\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 9.67\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:961.6\u00b5s}} | data:Selection_66 | 241 Bytes | N/A\n    \u2502 \u2514\u2500Selection_66 | 10.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 27\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 51.7\u00b5s, total_wait_time: 118.4\u00b5s, tikv_wall_time: 370.7\u00b5s} | eq(lab.products.active, 1) | N/A | N/A\n    \u2502   \u2514\u2500TableFullScan_65 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1} | keep order:true, stats:pseudo | N/A | N/A\n    \u2514\u2500IndexLookUp_74(Probe) | 12.50 | 0 | root |  |  |  | N/A | N/A\n      \u251c\u2500IndexRangeScan_72(Build) | 12.50 | 0 | cop[tikv] | table:p2, index:fk_1(category_id) |  | range: decided by [eq(lab.products.category_id, lab.products.category_id)], keep order:false, stats:pseudo | N/A | N/A\n      \u2514\u2500TableRowIDScan_73(Probe) | 12.50 | 0 | cop[tikv] | table:p2 |  | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.566,
+            "p95_ms": 4.659,
+            "rows": 0,
+            "plan_analyze": "Limit_20 | 10.00 | 0 | root |  | time:1.14ms, loops:1, RU:0.49 | offset:0, count:500 | N/A | N/A\n\u2514\u2500IndexJoin_81 | 10.00 | 0 | root |  | time:1.13ms, loops:1 | inner join, inner:HashAgg_79, outer key:lab.products.category_id, inner key:lab.products.category_id, equal cond:eq(lab.products.category_id, lab.products.category_id) | 0 Bytes | N/A\n  \u251c\u2500TableReader_92(Build) | 10.00 | 0 | root |  | time:1.04ms, loops:1, cop_task: {num: 1, max: 955.6\u00b5s, proc_keys: 0, tot_proc: 52.7\u00b5s, tot_wait: 144.5\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 13.8\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:926.6\u00b5s}} | data:Selection_91 | 241 Bytes | N/A\n  \u2502 \u2514\u2500Selection_91 | 10.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 68.3\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 52.7\u00b5s, total_wait_time: 144.5\u00b5s, tikv_wall_time: 370.8\u00b5s} | eq(lab.products.active, 1) | N/A | N/A\n  \u2502   \u2514\u2500TableFullScan_90 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1} | keep order:true, stats:pseudo | N/A | N/A\n  \u2514\u2500HashAgg_79(Probe) | 10.00 | 0 | root |  |  | group by:lab.products.category_id, funcs:avg(Column#33, Column#34)->Column#17, funcs:firstrow(lab.products.category_id)->lab.products.category_id | N/A | N/A\n    \u2514\u2500IndexLookUp_80 | 10.00 | 0 | root |  |  |  | N/A | N/A\n      \u251c\u2500IndexRangeScan_76(Build) | 10.00 | 0 | cop[tikv] | table:products, index:fk_1(category_id) |  | range: decided by [eq(lab.products.category_id, lab.products.category_id)], keep order:false, stats:pseudo | N/A | N/A\n      \u2514\u2500HashAgg_78(Probe) | 10.00 | 0 | cop[tikv] |  |  | group by:lab.products.category_id, funcs:count(lab.products.price)->Column#33, funcs:sum(lab.products.price)->Column#34 | N/A | N/A\n        \u2514\u2500TableRowIDScan_77 | 10.00 | 0 | cop[tikv] | table:products |  | keep order:false, stats:pseudo | N/A | N/A"
+          }
+        ],
+        "best_variant": "correlated_subquery",
+        "speedup_vs_first": 1.0
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.431,
+            "p95_ms": 4.589,
+            "rows": 0,
+            "plan_analyze": "Projection_36 | 10000.00 | 0 | root |  | time:1.98ms, loops:1, RU:0.98, Concurrency:5 | lab.products.id | 5.57 KB | N/A\n\u2514\u2500Selection_37 | 10000.00 | 0 | root |  | time:1.93ms, loops:1 | isnull(lab.order_items.id) | 4.46 KB | N/A\n  \u2514\u2500MergeJoin_38 | 12500.00 | 0 | root |  | time:1.92ms, loops:1 | left outer join, left key:lab.products.id, right key:lab.order_items.product_id | 4.83 KB | 0 Bytes\n    \u251c\u2500IndexReader_27(Build) | 10000.00 | 0 | root |  | time:951.5\u00b5s, loops:1, cop_task: {num: 1, max: 881.3\u00b5s, proc_keys: 0, tot_proc: 48\u00b5s, tot_wait: 74.6\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 4.03\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:854.2\u00b5s}} | index:IndexFullScan_26 | 234 Bytes | N/A\n    \u2502 \u2514\u2500IndexFullScan_26 | 10000.00 | 0 | cop[tikv] | table:oi, index:fk_2(product_id) | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22.4\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 48\u00b5s, total_wait_time: 74.6\u00b5s, tikv_wall_time: 297.4\u00b5s} | keep order:true, stats:pseudo | N/A | N/A\n    \u2514\u2500TableReader_25(Probe) | 10000.00 | 0 | root |  | time:943.9\u00b5s, loops:1, cop_task: {num: 1, max: 898.6\u00b5s, proc_keys: 0, tot_proc: 50.1\u00b5s, tot_wait: 113.2\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.9\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:871.2\u00b5s}} | data:TableFullScan_24 | 233 Bytes | N/A\n      \u2514\u2500TableFullScan_24 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 23.6\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 50.1\u00b5s, total_wait_time: 113.2\u00b5s, tikv_wall_time: 304.4\u00b5s} | keep order:true, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.936,
+            "p95_ms": 4.027,
+            "rows": 0,
+            "plan_analyze": "MergeJoin_36 | 8000.00 | 0 | root |  | time:1.87ms, loops:1, RU:0.98 | anti semi join, left key:lab.products.id, right key:lab.order_items.product_id | 760 Bytes | 0 Bytes\n\u251c\u2500IndexReader_26(Build) | 10000.00 | 0 | root |  | time:910.7\u00b5s, loops:1, cop_task: {num: 1, max: 816.5\u00b5s, proc_keys: 0, tot_proc: 56.8\u00b5s, tot_wait: 74.8\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.5\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:785\u00b5s}} | index:IndexFullScan_25 | 234 Bytes | N/A\n\u2502 \u2514\u2500IndexFullScan_25 | 10000.00 | 0 | cop[tikv] | table:oi, index:fk_2(product_id) | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.9\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 56.8\u00b5s, total_wait_time: 74.8\u00b5s, tikv_wall_time: 279.1\u00b5s} | keep order:true, stats:pseudo | N/A | N/A\n\u2514\u2500TableReader_24(Probe) | 10000.00 | 0 | root |  | time:952\u00b5s, loops:1, cop_task: {num: 1, max: 906.4\u00b5s, proc_keys: 0, tot_proc: 46.5\u00b5s, tot_wait: 117.2\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 12.1\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:875.9\u00b5s}} | data:TableFullScan_23 | 233 Bytes | N/A\n  \u2514\u2500TableFullScan_23 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.8\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 46.5\u00b5s, total_wait_time: 117.2\u00b5s, tikv_wall_time: 312.4\u00b5s} | keep order:true, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.976,
+            "p95_ms": 4.56,
+            "rows": 0,
+            "plan_analyze": "MergeJoin_35 | 8000.00 | 0 | root |  | time:1.94ms, loops:1, RU:0.98 | anti semi join, left key:lab.products.id, right key:lab.order_items.product_id | 4.46 KB | 0 Bytes\n\u251c\u2500IndexReader_25(Build) | 10000.00 | 0 | root |  | time:968.5\u00b5s, loops:1, cop_task: {num: 1, max: 875.8\u00b5s, proc_keys: 0, tot_proc: 55.1\u00b5s, tot_wait: 130.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 3.98\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:842.2\u00b5s}} | index:IndexFullScan_24 | 234 Bytes | N/A\n\u2502 \u2514\u2500IndexFullScan_24 | 10000.00 | 0 | cop[tikv] | table:oi, index:fk_2(product_id) | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.6\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 55.1\u00b5s, total_wait_time: 130.7\u00b5s, tikv_wall_time: 327\u00b5s} | keep order:true, stats:pseudo | N/A | N/A\n\u2514\u2500TableReader_23(Probe) | 10000.00 | 0 | root |  | time:959.5\u00b5s, loops:1, cop_task: {num: 1, max: 907.6\u00b5s, proc_keys: 0, tot_proc: 45.7\u00b5s, tot_wait: 113.6\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 9.2\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:875\u00b5s}} | data:TableFullScan_22 | 233 Bytes | N/A\n  \u2514\u2500TableFullScan_22 | 10000.00 | 0 | cop[tikv] | table:p | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 24.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 45.7\u00b5s, total_wait_time: 113.6\u00b5s, tikv_wall_time: 324.4\u00b5s} | keep order:true, stats:pseudo | N/A | N/A"
+          }
+        ],
+        "best_variant": "not_exists",
+        "speedup_vs_first": 1.13
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.578,
+            "p95_ms": 3.974,
+            "rows": 0,
+            "plan_analyze": "Projection_24 | 11.00 | 0 | root |  | time:1.18ms, loops:1, RU:0.99, Concurrency:OFF | lab.orders.id | 8.61 KB | N/A\n\u2514\u2500IndexMerge_32 | 11.00 | 0 | root |  | time:1.18ms, loops:1 | type: union | 242 Bytes | N/A\n  \u251c\u2500IndexRangeScan_29(Build) | 10.00 | 0 | cop[tikv] | table:orders, index:fk_1(customer_id) | time:1.01ms, loops:1, cop_task: {num: 1, max: 967.5\u00b5s, proc_keys: 0, tot_proc: 68.8\u00b5s, tot_wait: 65.1\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 26.8\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:940.3\u00b5s}}, tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 21.7\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 68.8\u00b5s, total_wait_time: 65.1\u00b5s, tikv_wall_time: 331.9\u00b5s} | range:[3342,3342], keep order:true, stats:pseudo | N/A | N/A\n  \u251c\u2500TableRangeScan_30(Build) | 1.00 | 0 | cop[tikv] | table:orders | time:848.8\u00b5s, loops:1, cop_task: {num: 1, max: 764.9\u00b5s, proc_keys: 0, tot_proc: 39\u00b5s, tot_wait: 114.7\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 10.4\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:731.7\u00b5s}}, tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 22\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 39\u00b5s, total_wait_time: 114.7\u00b5s, tikv_wall_time: 306.7\u00b5s} | range:[150456,150456], keep order:true, stats:pseudo | 233 Bytes | N/A\n  \u2514\u2500TableRowIDScan_31(Probe) | 11.00 | 0 | cop[tikv] | table:orders |  | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.304,
+            "p95_ms": 3.518,
+            "rows": 0,
+            "plan_analyze": "Sort_13 | 9.00 | 0 | root |  | time:1.22ms, loops:1, RU:0.99 | Column#13 | 0 Bytes | 0 Bytes\n\u2514\u2500HashAgg_16 | 9.00 | 0 | root |  | time:1.14ms, loops:1, partial_worker:{wall_time:1.114016ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:5.141203ms, max:1.036321ms, p95:1.036321ms}, final_worker:{wall_time:1.132512ms, concurrency:5, task_num:5, tot_wait:111.329\u00b5s, tot_exec:442ns, tot_time:5.404564ms, max:1.086406ms, p95:1.086406ms} | group by:Column#13, funcs:firstrow(Column#13)->Column#13 | 28.8 KB | 0 Bytes\n  \u2514\u2500Union_17 | 11.00 | 0 | root |  | time:1.05ms, loops:1 |  | N/A | N/A\n    \u251c\u2500IndexReader_23 | 10.00 | 0 | root |  | time:907.3\u00b5s, loops:1, cop_task: {num: 1, max: 863\u00b5s, proc_keys: 0, tot_proc: 70.5\u00b5s, tot_wait: 84\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 26.4\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:836.3\u00b5s}} | index:Projection_19 | 250 Bytes | N/A\n    \u2502 \u2514\u2500Projection_19 | 10.00 | 0 | cop[tikv] |  | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 24\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 70.5\u00b5s, total_wait_time: 84\u00b5s, tikv_wall_time: 320.5\u00b5s} | lab.orders.id->Column#13 | N/A | N/A\n    \u2502   \u2514\u2500IndexRangeScan_22 | 10.00 | 0 | cop[tikv] | table:orders, index:fk_1(customer_id) | tikv_task:{time:0s, loops:1} | range:[3342,3342], keep order:false, stats:pseudo | N/A | N/A\n    \u2514\u2500Point_Get_25 | 1.00 | 0 | root | table:orders | time:983.4\u00b5s, loops:1, Get:{num_rpc:1, total_time:899.9\u00b5s}, time_detail: {total_process_time: 44.1\u00b5s, total_wait_time: 124.8\u00b5s, total_kv_read_wall_time: 177.8\u00b5s, tikv_wall_time: 245.9\u00b5s}, scan_detail: {total_keys: 1, get_snapshot_time: 20.4\u00b5s, rocksdb: {block: {}}} | handle:150456 | N/A | N/A"
+          }
+        ],
+        "best_variant": "union_rewrite",
+        "speedup_vs_first": 1.08
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.123,
+            "p95_ms": 3.253,
+            "rows": 0,
+            "plan_analyze": "Projection_6 | 0.25 | 0 | root |  | time:1.09ms, loops:1, RU:0.50, Concurrency:OFF | lab.orders.id, lab.orders.customer_id | 1.73 KB | N/A\n\u2514\u2500Sort_7 | 0.25 | 0 | root |  | time:1.09ms, loops:1 | lab.orders.ordered_at, lab.orders.id | 0 Bytes | 0 Bytes\n  \u2514\u2500TableReader_11 | 0.25 | 0 | root |  | time:1ms, loops:1, cop_task: {num: 1, max: 914.7\u00b5s, proc_keys: 0, tot_proc: 72.1\u00b5s, tot_wait: 70.5\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 8.51\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:887\u00b5s}} | data:Selection_10 | 253 Bytes | N/A\n    \u2514\u2500Selection_10 | 0.25 | 0 | cop[tikv] |  | tikv_task:{time:1ms, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 23.3\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 72.1\u00b5s, total_wait_time: 70.5\u00b5s, total_kv_read_wall_time: 1ms, tikv_wall_time: 322.9\u00b5s} | eq(lab.orders.status, \"pending\"), ge(lab.orders.ordered_at, 2025-09-01 00:00:00), lt(lab.orders.ordered_at, 2025-10-01 00:00:00) | N/A | N/A\n      \u2514\u2500TableFullScan_9 | 10000.00 | 0 | cop[tikv] | table:orders | tikv_task:{time:1ms, loops:1} | keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (8256, 'Check ingest environment failed: no enough space in /tmp/tidb/tmp_ddl-4000')"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "tidb: partial indexes not supported"
+          }
+        ]
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 72.673,
+            "p95_ms": 125.244,
+            "rows": 0,
+            "plan_analyze": "Sort_10 | 12.50 | 0 | root |  | time:77.2ms, loops:1, RU:30.89 | lab.customers.country_code | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_12 | 12.50 | 0 | root |  | time:77.2ms, loops:1, Concurrency:OFF | lab.customers.country_code, Column#14 | 16.6 KB | N/A\n  \u2514\u2500HashAgg_13 | 12.50 | 0 | root |  | time:77.2ms, loops:1, partial_worker:{wall_time:77.102479ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:385.322986ms, max:77.078356ms, p95:77.078356ms}, final_worker:{wall_time:77.14881ms, concurrency:5, task_num:5, tot_wait:5.663\u00b5s, tot_exec:403ns, tot_time:385.518114ms, max:77.112255ms, p95:77.112255ms} | group by:lab.customers.country_code, funcs:count(1)->Column#14, funcs:firstrow(lab.customers.country_code)->lab.customers.country_code | 103.3 KB | 0 Bytes\n    \u2514\u2500IndexJoin_20 | 12.50 | 0 | root |  | time:77ms, loops:1, inner:{total:154.4ms, concurrency:5, task:4, construct:33.2ms, fetch:121.2ms, build:1.12\u00b5s}, probe:3.61ms | inner join, inner:TableReader_17, outer key:lab.events.customer_id, inner key:lab.customers.id, equal cond:eq(lab.events.customer_id, lab.customers.id) | 2.31 MB | N/A\n      \u251c\u2500TableReader_27(Build) | 10.00 | 20000 | root |  | time:6.5ms, loops:22, cop_task: {num: 7, max: 931.9\u00b5s, min: 697.6\u00b5s, avg: 801.3\u00b5s, p95: 931.9\u00b5s, tot_proc: 13\u00b5s, tot_wait: 655.4\u00b5s, copr_cache_hit_ratio: 1.00, build_task_duration: 10.8\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:7, total_time:5.42ms}} | data:Selection_26 | 350.2 KB | N/A\n      \u2502 \u2514\u2500Selection_26 | 10.00 | 20000 | cop[tikv] |  | tikv_task:{proc max:17ms, min:9ms, avg: 11.7ms, p80:15ms, p95:17ms, iters:47, tasks:7}, scan_detail: {get_snapshot_time: 159.1\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 13\u00b5s, total_wait_time: 655.4\u00b5s, tikv_wall_time: 1.74ms} | eq(lab.events.event_type, \"bench_stats\") | N/A | N/A\n      \u2502   \u2514\u2500TableFullScan_25 | 10000.00 | 20000 | cop[tikv] | table:e | tikv_task:{proc max:14ms, min:9ms, avg: 10.9ms, p80:14ms, p95:14ms, iters:47, tasks:7} | keep order:false, stats:pseudo | N/A | N/A\n      \u2514\u2500TableReader_17(Probe) | 10.00 | 0 | root |  | time:106.5ms, loops:4, cop_task: {num: 4, max: 41.9ms, min: 12.1ms, avg: 26.4ms, p95: 41.9ms, tot_proc: 77ms, tot_wait: 445.4\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 2.25ms, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:4, total_time:105.5ms}} | data:TableRangeScan_16 | N/A | N/A\n        \u2514\u2500TableRangeScan_16 | 10.00 | 0 | cop[tikv] | table:c | tikv_task:{proc max:32ms, min:8ms, avg: 19.3ms, p80:32ms, p95:32ms, iters:4, tasks:4}, scan_detail: {total_keys: 12664, get_snapshot_time: 116.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 77ms, total_wait_time: 445.4\u00b5s, total_kv_read_wall_time: 77ms, tikv_wall_time: 94.6ms} | range: decided by [lab.events.customer_id], keep order:false, stats:pseudo | N/A | N/A"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 5.153,
+            "p95_ms": 5.447,
+            "rows": 0,
+            "plan_analyze": "Sort_11 | 8000.00 | 0 | root |  | time:2.73ms, loops:1, RU:2.40 | lab.customers.country_code | 0 Bytes | 0 Bytes\n\u2514\u2500Projection_13 | 8000.00 | 0 | root |  | time:2.64ms, loops:1, Concurrency:5 | lab.customers.country_code, Column#14 | 34.2 KB | N/A\n  \u2514\u2500HashAgg_14 | 8000.00 | 0 | root |  | time:2.57ms, loops:1, partial_worker:{wall_time:2.518055ms, concurrency:5, task_num:0, tot_wait:0s, tot_exec:0s, tot_time:12.243768ms, max:2.45653ms, p95:2.45653ms}, final_worker:{wall_time:2.545054ms, concurrency:5, task_num:5, tot_wait:32.898\u00b5s, tot_exec:661ns, tot_time:12.371004ms, max:2.481863ms, p95:2.481863ms} | group by:lab.customers.country_code, funcs:count(1)->Column#14, funcs:firstrow(lab.customers.country_code)->lab.customers.country_code | 87.7 KB | 0 Bytes\n    \u2514\u2500HashJoin_17 | 15847.86 | 0 | root |  | time:2.46ms, loops:1, build_hash_table:{total:934.3\u00b5s, fetch:934.3\u00b5s, build:0s} | inner join, equal:[eq(lab.customers.id, lab.events.customer_id)] | 0 Bytes | 0 Bytes\n      \u251c\u2500TableReader_31(Build) | 10000.00 | 0 | root |  | time:910.9\u00b5s, loops:1, cop_task: {num: 1, max: 839\u00b5s, proc_keys: 0, tot_proc: 60.9\u00b5s, tot_wait: 84.2\u00b5s, copr_cache_hit_ratio: 0.00, build_task_duration: 10.7\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:807.7\u00b5s}} | data:TableFullScan_30 | 233 Bytes | N/A\n      \u2502 \u2514\u2500TableFullScan_30 | 10000.00 | 0 | cop[tikv] | table:c | tikv_task:{time:0s, loops:1}, scan_detail: {total_keys: 1, get_snapshot_time: 25.1\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 60.9\u00b5s, total_wait_time: 84.2\u00b5s, tikv_wall_time: 312.3\u00b5s} | keep order:false, stats:pseudo | N/A | N/A\n      \u2514\u2500TableReader_29(Probe) | 20000.00 | 1024 | root |  | time:2.2ms, loops:1, cop_task: {num: 3, max: 791.1\u00b5s, min: 710.3\u00b5s, avg: 758.6\u00b5s, p95: 791.1\u00b5s, tot_proc: 5\u00b5s, tot_wait: 309.1\u00b5s, copr_cache_hit_ratio: 1.00, build_task_duration: 4.35\u00b5s, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:3, total_time:2.19ms}} | data:Selection_28 | 39.4 KB | N/A\n        \u2514\u2500Selection_28 | 20000.00 | 1696 | cop[tikv] |  | tikv_task:{proc max:9ms, min:9ms, avg: 9ms, p80:9ms, p95:9ms, iters:12, tasks:3}, scan_detail: {get_snapshot_time: 67.2\u00b5s, rocksdb: {block: {}}}, time_detail: {total_process_time: 5\u00b5s, total_wait_time: 309.1\u00b5s, tikv_wall_time: 697\u00b5s} | eq(lab.events.event_type, \"bench_stats\") | N/A | N/A\n          \u2514\u2500TableFullScan_27 | 20000.00 | 1696 | cop[tikv] | table:e | tikv_task:{proc max:9ms, min:9ms, avg: 9ms, p80:9ms, p95:9ms, iters:12, tasks:3} | keep order:false | N/A | N/A"
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 14.1
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 10.7,
+            "rows_per_s": 280,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 5.189,
+            "rows_per_s": 578,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.258,
+            "rows_per_s": 11644,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver pymysql: no server-side prepare toggle exposed"
+      },
+      "_seconds": 76.7
+    },
+    "connections": {
+      "max_connections": 0,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 3.018066,
+            "p50": 3.571242,
+            "p90": 3.8233857,
+            "p95": 3.86507215,
+            "p99": 3.90500158,
+            "max": 3.914107,
+            "mean": 3.5611598333333334,
+            "stdev": 0.19583100892590757
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 10,
+              "min": 5.615825,
+              "p50": 6.5694704999999995,
+              "p90": 6.9668896,
+              "p95": 7.530040299999999,
+              "p99": 7.98056086,
+              "max": 8.093191,
+              "mean": 6.5679459,
+              "stdev": 0.6416408476098524
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.4,
+            "connect_ms": {
+              "n": 50,
+              "min": 12.332574,
+              "p50": 24.120686499999998,
+              "p90": 29.704578100000003,
+              "p95": 30.4398282,
+              "p99": 30.92354336,
+              "max": 31.030822,
+              "mean": 22.80691734,
+              "stdev": 5.723076879209325
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 102.6,
+            "connect_ms": {
+              "n": 100,
+              "min": 17.163906,
+              "p50": 53.123925,
+              "p90": 60.8114215,
+              "p95": 62.60964045,
+              "p99": 63.65122452,
+              "max": 64.516833,
+              "mean": 51.42409579,
+              "stdev": 8.718822095068472
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 172.7,
+            "connect_ms": {
+              "n": 200,
+              "min": 38.602759,
+              "p50": 90.46445700000001,
+              "p90": 111.38276830000001,
+              "p95": 116.46475885,
+              "p99": 120.18254230999999,
+              "max": 121.620848,
+              "mean": 89.22186970000001,
+              "stdev": 17.61919608410372
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 2307,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 577,
+            "latency_ms": {
+              "n": 2307,
+              "min": 0.765789,
+              "p50": 1.830933,
+              "p90": 1.9549356,
+              "p95": 1.9939408999999997,
+              "p99": 2.07355162,
+              "max": 3.854693,
+              "mean": 1.7308726237537928,
+              "stdev": 0.27968971675522014
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 10028,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 2507,
+            "latency_ms": {
+              "n": 10028,
+              "min": 0.593868,
+              "p50": 1.670345,
+              "p90": 1.9922458000000003,
+              "p95": 2.132136,
+              "p99": 2.38908973,
+              "max": 4.888405,
+              "mean": 1.5924267878938971,
+              "stdev": 0.38485846206818164
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 76473,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 19118,
+            "latency_ms": {
+              "n": 76473,
+              "min": 0.575677,
+              "p50": 0.803386,
+              "p90": 0.9400328000000001,
+              "p95": 1.0297273999999996,
+              "p99": 1.6204395599999997,
+              "max": 6.923791,
+              "mean": 0.8352333318687641,
+              "stdev": 0.18557999363076344
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 95117,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 23779,
+            "latency_ms": {
+              "n": 95117,
+              "min": 0.626668,
+              "p50": 1.281723,
+              "p90": 1.7496112000000001,
+              "p95": 1.9354131999999997,
+              "p99": 2.4543515199999986,
+              "max": 6.209091,
+              "mean": 1.3439866312331128,
+              "stdev": 0.35066733502201036
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 108296,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 27074,
+            "latency_ms": {
+              "n": 108296,
+              "min": 0.603123,
+              "p50": 2.2463265000000003,
+              "p90": 3.4454995000000004,
+              "p95": 3.8503837499999998,
+              "p99": 4.885174450000001,
+              "max": 11.147768,
+              "mean": 2.362837439443747,
+              "stdev": 0.8528621415639125
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 8809,
+        "qps": 2193,
+        "checkout_wait_ms": {
+          "n": 8809,
+          "min": 0.001987,
+          "p50": 0.005853,
+          "p90": 0.009049,
+          "p95": 0.009591800000000001,
+          "p99": 0.014981200000000014,
+          "max": 4007.863314,
+          "mean": 10.883147976841865,
+          "stdev": 208.1060203327131
+        },
+        "exec_ms": {
+          "n": 8809,
+          "min": 0.785246,
+          "p50": 3.428517,
+          "p90": 5.5880256,
+          "p95": 6.340695000000001,
+          "p99": 7.943854000000001,
+          "max": 11.228818,
+          "mean": 3.632709125780452,
+          "stdev": 1.4649784236281709
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 6.0,
+          "t2": {
+            "outcome": "committed",
+            "ms": 6.5
+          },
+          "final_balance": 80
+        },
+        "write_conflict_serializable": {
+          "set_isolation_error": "OperationalError: (8048, \"The isolation level 'SERIALIZABLE' is not supported. Set tidb_skip_isolation_level_check=1 to skip this error\")",
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 6.0,
+          "t2": {
+            "outcome": "committed",
+            "ms": 6.2
+          },
+          "final_balance": 80
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t2"
+          ],
+          "error_codes": {
+            "t2": "1213"
+          },
+          "detection_ms": 5.7,
+          "timeline_s": {
+            "t2": 0.006,
+            "t1": 0.307
+          }
+        }
+      },
+      "_seconds": 39.5
+    },
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-tidb-1",
+        "rdlab-tidb-2"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 613000,
+          "batches": 613,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 40867,
+          "batch_ms": {
+            "n": 613,
+            "min": 44.561352,
+            "p50": 93.830216,
+            "p90": 112.54627280000003,
+            "p95": 120.8979138,
+            "p99": 254.79796507999998,
+            "max": 278.796792,
+            "mean": 95.62194722349102,
+            "stdev": 29.151791600467046
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-tidb-1": {
+              "cpu_cores_avg": 1.887,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 659,
+              "mem_end_mb": 651,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 2.131
+            },
+            "rdlab-tidb-2": {
+              "cpu_cores_avg": 0.06,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 315,
+              "mem_end_mb": 310,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.068
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 1218000,
+          "batches": 1218,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 81200,
+          "batch_ms": {
+            "n": 1218,
+            "min": 89.512073,
+            "p50": 151.585827,
+            "p90": 326.28417999999994,
+            "p95": 382.45166544999995,
+            "p99": 460.3043274599997,
+            "max": 517.297407,
+            "mean": 196.26993927011495,
+            "stdev": 92.34271940956435
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-tidb-1": {
+              "cpu_cores_avg": 3.01,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 1243,
+              "mem_end_mb": 1213,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.561
+            },
+            "rdlab-tidb-2": {
+              "cpu_cores_avg": 0.061,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 316,
+              "mem_end_mb": 311,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.072
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 1315000,
+          "batches": 1315,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 87667,
+          "batch_ms": {
+            "n": 1315,
+            "min": 168.158255,
+            "p50": 289.981522,
+            "p90": 515.2548380000001,
+            "p95": 575.3198311,
+            "p99": 930.0946462599996,
+            "max": 1019.912056,
+            "mean": 363.6069264159696,
+            "stdev": 143.0463449692877
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-tidb-1": {
+              "cpu_cores_avg": 3.118,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2005,
+              "mem_end_mb": 2001,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.797
+            },
+            "rdlab-tidb-2": {
+              "cpu_cores_avg": 0.059,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 317,
+              "mem_end_mb": 311,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.072
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "mode": "values",
+        "workers": 32,
+        "rows_per_s": 87667
+      },
+      "_seconds": 80.7
+    },
+    "replication": {
+      "kind": "Raft (TiKV, 3 replicas per region), stateless SQL layer",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "8.0.11-TiDB-v8.5.8",
+          "status": {
+            "read_only": 0,
+            "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+          }
+        },
+        "node2": {
+          "role_reported": "primary",
+          "role_configured": "node",
+          "version": "8.0.11-TiDB-v8.5.8",
+          "status": {
+            "read_only": 0,
+            "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+          }
+        }
+      },
+      "visibility_lag": {
+        "node2": {
+          "replica": "node2",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 1.2434539967216551,
+            "p50": 1.683197493548505,
+            "p90": 2.003786599379964,
+            "p95": 2.0319359537097625,
+            "p99": 2.0987166062695906,
+            "max": 2.121333993272856,
+            "mean": 1.6969014007675771,
+            "stdev": 0.21832167852791667
+          }
+        }
+      },
+      "write_rejection": {
+        "node2": {
+          "replica": "node2",
+          "writes_rejected": false,
+          "note": "replica accepted a write (multi-master / node-level writable)"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 6.55,
+        "rows_per_s": 3052,
+        "catchup_ms_after_last_commit": {
+          "node2": 21.7
+        },
+        "samples": [
+          {
+            "t": 208569.563,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208569.825,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208570.08,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208570.334,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208570.588,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208570.842,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208571.098,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208571.351,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208571.607,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208571.862,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208572.116,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208572.371,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208572.625,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208572.88,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208573.134,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208573.389,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208573.645,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208573.9,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208574.156,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208574.411,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208574.664,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208574.92,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208575.176,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208575.433,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208575.687,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          },
+          {
+            "t": 208575.942,
+            "primary": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            },
+            "node2": {
+              "read_only": 0,
+              "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+            }
+          }
+        ]
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 91248,
+          "qps": 22812,
+          "errors": 0,
+          "latency_ms": {
+            "n": 91248,
+            "min": 0.655147,
+            "p50": 1.336476,
+            "p90": 1.8195771,
+            "p95": 2.0144536,
+            "p99": 2.5766181999999995,
+            "max": 9.236203,
+            "mean": 1.40105849666842,
+            "stdev": 0.3706258621533076
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "node2"
+          ],
+          "workers": 32,
+          "queries": 90602,
+          "qps": 22650,
+          "errors": 0,
+          "latency_ms": {
+            "n": 90602,
+            "min": 0.683107,
+            "p50": 1.3380575000000001,
+            "p90": 1.8785527000000004,
+            "p95": 2.096638749999999,
+            "p99": 2.6850308200000006,
+            "max": 7.362782,
+            "mean": 1.4111563206882851,
+            "stdev": 0.3874061428866278
+          }
+        },
+        "gain": 0.99
+      },
+      "failover": {
+        "kind": "Raft (TiKV, 3 replicas per region), stateless SQL layer",
+        "killed": "primary",
+        "probe_table": "repl_probe",
+        "stopped_at": 0.0,
+        "writes_still_succeed_after_kill": true,
+        "write_attempts_until_success": 1,
+        "last_error_before_success": null,
+        "downtime_ms": 587.3,
+        "new_primary": "node2",
+        "verified_via": "node2",
+        "new_primary_role": "primary",
+        "new_primary_status": {
+          "read_only": 0,
+          "error": "(1235, \"This version of TiDB doesn't yet support 'SHOW {REPLICA | SLAVE} STATUS'\")"
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 32.4
+    }
+  },
+  "finished": "2026-09-12T23:07:54+00:00"
+}

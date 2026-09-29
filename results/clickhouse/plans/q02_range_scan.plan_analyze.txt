@@ -1,0 +1,25 @@
+query_log: duration_ms=12 read_rows=120000 read_bytes=2615862 memory=4481403 result_rows=380
+(Expression)
+ExpressionTransform
+  (Expression)
+  ExpressionTransform
+    (Expression)
+    ExpressionTransform
+      (JoinLazyColumnsStep)
+      LazyMaterializingTransform 2 → 1
+        (Limit)
+        Limit
+          (Sorting)
+          MergeSortingTransform
+            LimitsCheckingTransform
+              PartialSortingTransform
+                (Expression)
+                ExpressionTransform
+                  (Filter)
+                  FilterTransform × 3
+                    (Expression)
+                    ExpressionTransform
+                      (ReadFromMergeTree)
+                      MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1
+        (LazilyReadFromMergeTree)
+        LazyReadFromMergeTreeSource 0 → 1

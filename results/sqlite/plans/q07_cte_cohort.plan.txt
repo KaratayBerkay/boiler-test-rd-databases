@@ -1,0 +1,11 @@
+2 | 0 | 0 | CO-ROUTINE first_orders
+9 | 2 | 0 | SCAN orders USING INDEX ix_orders_customer_id
+43 | 0 | 0 | MATERIALIZE activity
+51 | 43 | 0 | SCAN o USING INDEX ix_orders_customer_id
+54 | 43 | 0 | USE TEMP B-TREE FOR GROUP BY
+100 | 0 | 0 | SCAN first_orders
+107 | 0 | 0 | BLOOM FILTER ON a (customer_id=?)
+117 | 0 | 0 | SEARCH a USING AUTOMATIC COVERING INDEX (customer_id=?) LEFT-JOIN
+131 | 0 | 0 | USE TEMP B-TREE FOR GROUP BY
+185 | 0 | 0 | USE TEMP B-TREE FOR count(DISTINCT)
+187 | 0 | 0 | USE TEMP B-TREE FOR count(DISTINCT)

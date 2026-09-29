@@ -1,0 +1,41 @@
+# QuestDB — time-series SQL database; PostgreSQL wire protocol on 8812, HTTP (import/console) on 9000.
+#
+# Backup strategy (`rdlab run questdb --phases backup`): CHECKPOINT CREATE -> `cp -a` of db/ conf/ .checkpoint/ into the shared
+#   `questdb-backups` volume (the image has no tar) -> CHECKPOINT RELEASE; restore = copy back + `_restore` trigger file in a scratch container.
+# Logging strategy: query tracing (QDB_QUERY_TRACING_ENABLED -> _query_trace table with execution_micros per statement),
+#   server log on stdout with Docker json-file rotation.
+name: rdlab-questdb
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+services:
+  volumes-init:
+    image: questdb/questdb:latest
+    container_name: rdlab-questdb-volumes-init
+    entrypoint: ["sh", "-c", "chmod 1777 /backups && echo volumes ready"]
+    volumes: [questdb-backups:/backups]
+    logging: *logging
+    restart: "no"
+  questdb:
+    image: questdb/questdb:latest
+    container_name: rdlab-questdb
+    logging: *logging
+    environment:
+      QDB_PG_USER: admin
+      QDB_PG_PASSWORD: quest
+      QDB_PG_NET_CONNECTION_LIMIT: "512"
+      QDB_HTTP_QUERY_CACHE_ENABLED: "false"
+      QDB_CAIRO_SQL_COPY_ROOT: /var/lib/questdb/import
+      QDB_QUERY_TRACING_ENABLED: "true"
+    volumes: [questdb:/var/lib/questdb, questdb-backups:/backups]
+    ports: ["18812:8812", "19009:9000", "19003:9003"]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://127.0.0.1:9003/status >/dev/null || curl -fs 'http://127.0.0.1:9000/exec?query=select%201' >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+volumes:
+  questdb:
+  questdb-backups:

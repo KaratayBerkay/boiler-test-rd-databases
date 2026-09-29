@@ -1,0 +1,32 @@
+Incremental Sort  (cost=19331.31..31433.58 rows=147072 width=48) (actual time=113.231..113.734 rows=592.00 loops=1)
+  Sort Key: p.category_id, (row_number() OVER w1)
+  Presorted Key: p.category_id
+  Full-sort Groups: 18  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+  Buffers: shared hit=1088
+  ->  WindowAgg  (cost=19279.76..22588.85 rows=147072 width=48) (actual time=113.196..113.582 rows=592.00 loops=1)
+        Window: w1 AS (PARTITION BY p.category_id ORDER BY (sum(((oi.qty)::numeric * oi.unit_price))), oi.product_id ROWS UNBOUNDED PRECEDING)
+        Run Condition: (row_number() OVER w1 <= 3)
+        Storage: Memory  Maximum Storage: 17kB
+        Buffers: shared hit=1088
+        ->  Sort  (cost=19279.73..19647.41 rows=147072 width=40) (actual time=113.188..113.264 rows=1500.00 loops=1)
+              Sort Key: p.category_id, (sum(((oi.qty)::numeric * oi.unit_price))) DESC, oi.product_id
+              Sort Method: quicksort  Memory: 106kB
+              Buffers: shared hit=1088
+              ->  HashAggregate  (cost=4818.02..6656.42 rows=147072 width=40) (actual time=111.293..112.512 rows=1500.00 loops=1)
+                    Group Key: p.category_id, oi.product_id
+                    Batches: 1  Memory Usage: 4689kB
+                    Buffers: shared hit=1088
+                    ->  Hash Join  (cost=177.75..2979.62 rows=147072 width=18) (actual time=0.534..48.507 rows=147072.00 loops=1)
+                          Hash Cond: (oi.product_id = p.id)
+                          Buffers: shared hit=1088
+                          ->  Seq Scan on order_items oi  (cost=0.00..2414.72 rows=147072 width=14) (actual time=0.012..12.227 rows=147072.00 loops=1)
+                                Buffers: shared hit=944
+                          ->  Hash  (cost=159.00..159.00 rows=1500 width=8) (actual time=0.518..0.519 rows=1500.00 loops=1)
+                                Buckets: 2048  Batches: 1  Memory Usage: 75kB
+                                Buffers: shared hit=144
+                                ->  Seq Scan on products p  (cost=0.00..159.00 rows=1500 width=8) (actual time=0.004..0.307 rows=1500.00 loops=1)
+                                      Buffers: shared hit=144
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.227 ms
+Execution Time: 114.079 ms

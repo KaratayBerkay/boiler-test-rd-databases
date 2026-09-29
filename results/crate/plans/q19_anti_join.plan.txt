@@ -1,0 +1,8 @@
+Eval[id] (rows=0)
+  └ OrderBy[id ASC] (rows=0)
+    └ Filter[(id IS NULL)] (rows=0)
+      └ HashJoin[LEFT | (product_id = id)] (rows=5)
+        ├ Rename[id] AS p (rows=5000)
+        │  └ Collect[doc.products | [id] | true] (rows=5000)
+        └ Rename[product_id, id] AS oi (rows=487606)
+          └ Collect[doc.order_items | [product_id, id] | true] (rows=487606)

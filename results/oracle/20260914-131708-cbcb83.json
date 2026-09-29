@@ -1,0 +1,214 @@
+{
+  "engine": "oracle",
+  "display": "Oracle 23ai Free",
+  "category": "row-store OLTP",
+  "dialect": "oracle",
+  "driver": "oracledb",
+  "image": "gvenzl/oracle-free:23-slim-faststart",
+  "run_id": "20260914-131708-cbcb83",
+  "started": "2026-09-14T10:17:08+00:00",
+  "scale": 0.3,
+  "notes": "Oracle Database 23ai Free (slim image: no Oracle Text, so full-text search falls back to LIKE) in FREEPDB1 (user lab). Free edition caps: 2 CPU threads, 2 GB SGA/PGA, 12 GB data. Data Guard (physical standby) is not available in Free, so no replica in this stack.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "datapump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "expdp / impdp REMAP_SCHEMA",
+          "backup_seconds": 89.48,
+          "backup_bytes": 36544512,
+          "backup_mb": 34.9,
+          "restore_seconds": 45.96,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.67
+          },
+          "pitr": {},
+          "notes": "Data Pump schema export through a directory object on the shared volume, imported into another schema (REMAP_SCHEMA)",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.dmp /backups/exp.log /backups/imp.log",
+              "rc": 0,
+              "seconds": 0.09,
+              "out": ""
+            },
+            {
+              "name": "directory object",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nCREATE OR REPLACE DIRECTORY rdlab_bk AS '/backups';\nGRANT READ, WRITE ON DIRECTORY rdlab_bk TO lab;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": ""
+            },
+            {
+              "name": "expdp SCHEMAS=lab",
+              "cmd": "__o=$(mktemp); ( expdp system/rootpass@localhost/FREEPDB1 SCHEMAS=lab DIRECTORY=rdlab_bk DUMPFILE=lab.dmp LOGFILE=exp.log REUSE_DUMPFILES=YES ) > $__o 2>&1; __rc=$?; tail -n 4 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 89.48,
+              "out": "Dump file set for SYSTEM.SYS_EXPORT_SCHEMA_01 is:\n  /backups/lab.dmp\nJob \"SYSTEM\".\"SYS_EXPORT_SCHEMA_01\" successfully completed at Mon Sep 14 10:18:30 2026 elapsed 0 00:01:17\n\n"
+            },
+            {
+              "name": "create restore user",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nBEGIN EXECUTE IMMEDIATE 'DROP USER lab_restore CASCADE'; EXCEPTION WHEN OTHERS THEN NULL; END;\n/\nCREATE USER lab_restore IDENTIFIED BY labpass QUOTA UNLIMITED ON USERS;\nGRANT CONNECT, RESOURCE, CREATE VIEW TO lab_restore;\n",
+              "rc": 0,
+              "seconds": 0.41,
+              "out": ""
+            },
+            {
+              "name": "impdp REMAP_SCHEMA",
+              "cmd": "__o=$(mktemp); ( impdp system/rootpass@localhost/FREEPDB1 SCHEMAS=lab REMAP_SCHEMA=lab:lab_restore DIRECTORY=rdlab_bk DUMPFILE=lab.dmp LOGFILE=imp.log TABLE_EXISTS_ACTION=REPLACE ) > $__o 2>&1; __rc=$?; tail -n 4 $__o; rm -f $__o; exit $__rc",
+              "rc": 5,
+              "seconds": 45.96,
+              "out": "Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT\nProcessing object type SCHEMA_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS\nJob \"SYSTEM\".\"SYS_IMPORT_SCHEMA_01\" completed with 1 error(s) at Mon Sep 14 10:19:22 2026 elapsed 0 00:00:38\n\n"
+            },
+            {
+              "name": "drop restore user",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nDROP USER lab_restore CASCADE;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 1.2,
+              "out": ""
+            }
+          ],
+          "seconds": 139.1,
+          "description": "Data Pump schema export imported into a second schema"
+        },
+        "rman": {
+          "status": "n/a",
+          "kind": "physical",
+          "tool": "RMAN BACKUP DATABASE PLUS ARCHIVELOG",
+          "backup_seconds": null,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "RMAN binary is not part of gvenzl/oracle-free:*-slim*; with the full image: `ALTER DATABASE ARCHIVELOG` (mount), `RMAN> CONFIGURE CONTROLFILE AUTOBACKUP ON; BACKUP AS COMPRESSED BACKUPSET DATABASE PLUS ARCHIVELOG;` and `RECOVER DATABASE UNTIL TIME` for PITR",
+          "error": null,
+          "steps": [
+            {
+              "name": "log mode",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nSELECT log_mode FROM v$database;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.12,
+              "out": "NOARCHIVELOG\n"
+            }
+          ],
+          "log_mode": "NOARCHIVELOG",
+          "seconds": 0.2,
+          "description": "physical backup with RMAN (not in the slim image)"
+        },
+        "flashback": {
+          "status": "ok",
+          "kind": "flashback",
+          "tool": "AS OF TIMESTAMP / FLASHBACK TABLE / TO BEFORE DROP",
+          "backup_seconds": 0.0,
+          "backup_bytes": 0,
+          "backup_mb": 0.0,
+          "restore_seconds": 0.612,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.33
+          },
+          "pitr": {
+            "match": true,
+            "target": "SCN 2357313",
+            "probe_rows_after_delete": 0,
+            "stale_read_rows": 1000,
+            "probe_rows_after_flashback_table": 1000,
+            "probe_rows_after_flashback_before_drop": 1000,
+            "flashback_table_s": 0.612,
+            "flashback_drop_s": 0.062,
+            "undo_retention_s": "900"
+          },
+          "notes": "undo-based: Flashback Query reads the old version, FLASHBACK TABLE TO SCN rewrites the current one, the recycle bin brings a dropped table back (within undo_retention)",
+          "error": null,
+          "steps": [
+            {
+              "name": "grant dbms_flashback",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nGRANT EXECUTE ON DBMS_FLASHBACK TO lab;\nGRANT FLASHBACK ANY TABLE TO lab;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.18,
+              "out": ""
+            },
+            {
+              "name": "undo_retention",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nSELECT value FROM v$parameter WHERE name = 'undo_retention';\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "900\n"
+            }
+          ],
+          "seconds": 9.7,
+          "description": "undo-based point-in-time recovery of a table"
+        }
+      },
+      "order": [
+        "datapump",
+        "rman",
+        "flashback"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "9cadd85eb6bf6d27354e3d10"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "1d1675c1c9b4efb397dc3877"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "3845bf25e1fa1bb203189d46"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 1.2,
+      "summary": {
+        "strategies": 3,
+        "ok": 2,
+        "verified": [
+          "datapump",
+          "flashback"
+        ],
+        "pitr_ok": [
+          "flashback"
+        ]
+      },
+      "_seconds": 150.2
+    }
+  },
+  "harness_log": "results/logs/oracle/20260914-131708-cbcb83.log",
+  "server_version": "Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free\nVersion 23.26.3.0.0",
+  "finished": "2026-09-14T10:19:38+00:00"
+}

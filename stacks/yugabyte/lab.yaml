@@ -1,0 +1,56 @@
+display: YugabyteDB
+category: distributed SQL
+dialect: yugabyte
+driver: psycopg
+image: yugabytedb/yugabyte:latest
+project: rdlab-yugabyte
+scale: 1
+notes: >-
+  3 nodes via yugabyted, replication factor 3 (Raft per tablet), PostgreSQL-compatible YSQL layer on every node
+  (any node serves reads and writes; no promotion). Auth disabled for the lab.
+docs:
+  - https://docs.yugabyte.com/stable/reference/configuration/yugabyted/
+  - https://docs.yugabyte.com/stable/explore/ysql-language-features/
+oneshot: [volumes-init, init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 15433
+    user: yugabyte
+    password: yugabyte
+    database: lab
+    container: rdlab-yb-1
+  - name: node2
+    role: node
+    host: 127.0.0.1
+    port: 15435
+    user: yugabyte
+    password: yugabyte
+    database: lab
+    container: rdlab-yb-2
+  - name: node3
+    role: node
+    host: 127.0.0.1
+    port: 15436
+    user: yugabyte
+    password: yugabyte
+    database: lab
+    container: rdlab-yb-3
+replication:
+  kind: Raft per tablet, RF=3 (multi-active)
+  promote:
+    method: none
+    target: node2
+backup:
+  dir: /backups
+  volume: yb-backups
+  masters: yb1:7100,yb2:7100,yb3:7100
+  host: yb1
+  strategies: [ysql_dump, snapshot, pitr]
+logging:
+  base_dir: /home/yugabyte/yb_data
+  slow_ms: 100
+features:
+  settle_seconds: 5
+  bulk_load: copy

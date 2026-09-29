@@ -1,0 +1,9 @@
+Sort  (cost=2837.01..2837.05 rows=13 width=59)
+  Sort Key: c.country_code
+  ->  HashAggregate  (cost=2836.61..2836.77 rows=13 width=59)
+        Group Key: c.country_code
+        ->  Hash Join  (cost=287.00..1636.61 rows=60000 width=18)
+              Hash Cond: (o.customer_id = c.id)
+              ->  Seq Scan on orders o  (cost=0.00..1192.00 rows=60000 width=19)
+              ->  Hash  (cost=212.00..212.00 rows=6000 width=7)
+                    ->  Seq Scan on customers c  (cost=0.00..212.00 rows=6000 width=7)

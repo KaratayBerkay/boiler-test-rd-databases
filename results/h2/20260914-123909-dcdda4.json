@@ -1,0 +1,258 @@
+{
+  "engine": "h2",
+  "display": "H2 2.x",
+  "category": "embedded / Java server",
+  "dialect": "h2",
+  "driver": "psycopg",
+  "image": "rdlab/h2:2.3.232 (eclipse-temurin:21-jre + h2 jar)",
+  "run_id": "20260914-123909-dcdda4",
+  "started": "2026-09-14T09:39:09+00:00",
+  "scale": 0.3,
+  "notes": "H2 in server mode using its PostgreSQL-protocol emulation (MODE=PostgreSQL); accessed with psycopg. The PG emulation is partial (no COPY, limited pg_catalog), so loading uses executemany. Single node; H2 has no replication (clustering mode is deprecated).",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "backup_zip": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP TO 'lab.zip' + org.h2.tools.Restore",
+          "backup_seconds": 2.62,
+          "backup_bytes": 18249314,
+          "backup_mb": 17.4,
+          "restore_seconds": 0.88,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.61
+          },
+          "pitr": {},
+          "notes": "online zip of the .mv.db file taken by the server; the Restore tool unpacks it under a new database name",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.zip /data/lab_restore.mv.db /data/lab_restore.trace.db",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "BACKUP TO",
+              "cmd": "BACKUP TO '/backups/lab.zip'",
+              "rc": 0,
+              "seconds": 2.62,
+              "out": ""
+            },
+            {
+              "name": "org.h2.tools.Restore",
+              "cmd": "java -cp /opt/h2.jar org.h2.tools.Restore -file /backups/lab.zip -dir /data -db lab_restore",
+              "rc": 0,
+              "seconds": 0.88,
+              "out": ""
+            }
+          ],
+          "seconds": 5.3,
+          "description": "online zip of the database file restored under a new name"
+        },
+        "script": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "SCRIPT TO / RUNSCRIPT FROM",
+          "backup_seconds": 1.04,
+          "backup_bytes": 47016016,
+          "backup_mb": 44.8,
+          "restore_seconds": 3.62,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.44
+          },
+          "pitr": {},
+          "notes": "SQL script (DDL + INSERTs) replayed into a fresh database through the same connection type",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.sql /data/lab_script.mv.db /data/lab_script.trace.db",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "SCRIPT TO",
+              "cmd": "SCRIPT TO '/backups/lab.sql'",
+              "rc": 0,
+              "seconds": 1.04,
+              "out": ""
+            },
+            {
+              "name": "RUNSCRIPT FROM (new db)",
+              "cmd": "RUNSCRIPT FROM '/backups/lab.sql'",
+              "rc": 0,
+              "seconds": 3.62,
+              "out": ""
+            }
+          ],
+          "seconds": 7.3,
+          "description": "SQL script replayed into a new database"
+        }
+      },
+      "order": [
+        "backup_zip",
+        "script"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 1.76,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "backup_zip",
+          "script"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 14.4
+    },
+    "logging": {
+      "sink": "INFORMATION_SCHEMA.QUERY_STATISTICS (SET QUERY_STATISTICS TRUE) + trace file (SET TRACE_LEVEL_FILE 2, t:<ms> per statement)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "trace_level_file": 1,
+        "query_statistics": true,
+        "info.VERSION": "2.3.232 (2024-08-11)",
+        "MODE": "PostgreSQL"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "INFORMATION_SCHEMA.QUERY_STATISTICS (SET QUERY_STATISTICS TRUE) + trace file (SET TRACE_LEVEL_FILE 2, t:<ms> per statement)",
+        "slow_query_ms": 133.1,
+        "slow_logged": false,
+        "seen_after_s": 25.18,
+        "sample": "",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "trace file level 2 (every statement, DDL included)",
+        "setup": "SET TRACE_LEVEL_FILE 2",
+        "event_found": true,
+        "seen_after_s": 0.07,
+        "sample": "/*SQL */CREATE TABLE audit_rdlab_mk_a00203213a (id INTEGER);",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 196,
+          "p50_ms": 41.015658,
+          "p99_ms": 49.5503117499984,
+          "errors": 0
+        },
+        "full_logging": "SET TRACE_LEVEL_FILE 2 (every statement with its time written to /data/lab.trace.db)",
+        "full": {
+          "qps": 196,
+          "p50_ms": 41.0145025,
+          "p99_ms": 49.86721423999837,
+          "errors": 0
+        },
+        "log_bytes_written": 109956,
+        "bytes_per_statement": 140.2,
+        "overhead_pct": 0.0,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-h2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 202,
+          "docker_logs_lines": 3
+        }
+      },
+      "extra": {
+        "query_statistics_top5": [
+          {
+            "sql": "SELECT id, name, email FROM customers WHERE id = $1",
+            "calls": 1960,
+            "avg_ms": 0.12664919591836743
+          },
+          {
+            "sql": "SELECT SQL_STATEMENT, EXECUTION_COUNT, MAX_EXECUTION_TIME, AVERAGE_EXECUTION_TIME, MAX_ROW",
+            "calls": 50,
+            "avg_ms": 0.20878644
+          },
+          {
+            "sql": "set search_path = public, pg_catalog",
+            "calls": 24,
+            "avg_ms": 0.03063783333333333
+          },
+          {
+            "sql": "SET DEFAULT_NULL_ORDERING HIGH",
+            "calls": 24,
+            "avg_ms": 0.03943525
+          },
+          {
+            "sql": "SET MODE PostgreSQL",
+            "calls": 24,
+            "avg_ms": 0.026344625
+          }
+        ]
+      },
+      "collected": [
+        "results/h2/logs/h2__data_lab.trace.db"
+      ],
+      "_seconds": 42.5
+    }
+  },
+  "harness_log": "results/logs/h2/20260914-123909-dcdda4.log",
+  "server_version": "PostgreSQL 8.2.23 server protocol using H2 2.3.232 (2024-08-11)",
+  "finished": "2026-09-14T09:40:07+00:00"
+}

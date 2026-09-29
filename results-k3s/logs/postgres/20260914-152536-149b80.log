@@ -1,0 +1,16 @@
+2026-09-14 15:25:36,241 DEBUG   [postgres/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152536-149b80.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152536-149b80.jsonl
+2026-09-14 15:25:36,242 INFO    [postgres/-] [postgres] run 20260914-152536-149b80 phases=['replication'] scale=1.0 (log: results-k3s/logs/postgres/20260914-152536-149b80.log)
+2026-09-14 15:25:36,256 INFO    [postgres/-] [postgres] phase: replication
+2026-09-14 15:25:36,277 INFO    [postgres/replication]   primary    role=primary {'in_recovery': False, 'pg_stat_replication': [('walreceiver', '10.42.0.48/32', 'streaming', 'async', Decimal('0'), Deci
+2026-09-14 15:25:36,293 INFO    [postgres/replication]   replica    role=replica {'in_recovery': True, 'wal_receiver': ('streaming', 'primary', '0/B66DB08', '0/B66DB08', Decimal('0.446160')), 'last_rep
+2026-09-14 15:25:36,333 INFO    [postgres/replication]   pgbouncer  role=primary {'in_recovery': False, 'pg_stat_replication': [('walreceiver', '10.42.0.48/32', 'streaming', 'async', Decimal('0'), Deci
+2026-09-14 15:25:36,354 INFO    [postgres/replication]   haproxy-ro role=replica {'in_recovery': True, 'wal_receiver': ('streaming', 'primary', '0/B66DB08', '0/B66DB08', Decimal('0.506484')), 'last_rep
+2026-09-14 15:25:38,233 INFO    [postgres/replication]   visibility lag -> replica: p50=0.90 ms p95=14.46 ms max=32.00 ms timeouts=0
+2026-09-14 15:25:38,366 INFO    [postgres/replication]   write on replica: rejected 25006
+2026-09-14 15:25:39,236 INFO    [postgres/replication]   lag under load: 20000 rows in 0.67s, catch-up after last commit: {'replica': 3.6}
+2026-09-14 15:25:53,012 INFO    [postgres/replication]   read scaling: primary only 51438 qps -> primary+replicas 48504 qps (x0.94)
+2026-09-14 15:25:53,013 INFO    [postgres/replication]   stopping primary container rdlab-pg-primary ...
+2026-09-14 15:25:59,381 INFO    [postgres/replication]   promoted replica via: pg_ctl promote -D /var/lib/postgresql/18/docker
+2026-09-14 15:25:59,499 INFO    [postgres/replication]   downtime until first successful write via replica: 6407.9 ms (1 attempts)
+2026-09-14 15:25:59,840 INFO    [postgres/replication] [postgres] phase replication done in 23.6s
+2026-09-14 15:25:59,956 INFO    [postgres/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/postgres/20260914-152536-149b80.json

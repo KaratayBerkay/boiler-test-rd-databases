@@ -1,0 +1,12 @@
+Limit  (cost=8554.82..8554.82 rows=1 width=16)
+  ->  Sort  (cost=8304.82..8554.82 rows=100000 width=16)
+        Sort Key: remote_scan.ordered_at, remote_scan.id
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=16)
+              Task Count: 32
+              Tasks Shown: One of 32
+              ->  Task
+                    Node: host=w1 port=5432 dbname=lab
+                    ->  Limit  (cost=510.42..525.95 rows=6211 width=16)
+                          ->  Sort  (cost=510.42..525.95 rows=6211 width=16)
+                                Sort Key: ordered_at, id
+                                ->  Seq Scan on orders_102042 orders  (cost=0.00..119.11 rows=6211 width=16)

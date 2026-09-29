@@ -1,0 +1,13 @@
+SELECT
+    "id",
+    "customer_id",
+    "ordered_at"
+FROM "public"."orders"
+    /* public.orders.tableScan */
+    /* scanCount: 200001 */
+ORDER BY 3, 1
+OFFSET 100000 ROWS
+FETCH NEXT 50 ROWS ONLY
+/*
+reads: 5021
+*/

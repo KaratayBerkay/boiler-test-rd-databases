@@ -1,0 +1,26 @@
+WindowAgg  (cost=15647.94..17192.04 rows=24705 width=104) (actual time=297.143..323.815 rows=90 loops=1)
+  ->  WindowAgg  (cost=15647.94..16821.47 rows=24705 width=72) (actual time=296.618..323.547 rows=90 loops=1)
+        ->  GroupAggregate  (cost=15647.94..16203.84 rows=24705 width=40) (actual time=296.065..323.236 rows=90 loops=1)
+              Group Key: (date_trunc('day'::text, orders.ordered_at))
+              ->  Sort  (cost=15647.94..15709.72 rows=24710 width=14) (actual time=295.572..300.669 rows=24934 loops=1)
+                    Sort Key: (date_trunc('day'::text, orders.ordered_at))
+                    Sort Method: quicksort  Memory: 2132kB
+                    ->  Seq Scan on orders  (cost=23.10..13845.00 rows=24710 width=14) (actual time=12.393..271.589 rows=24934 loops=1)
+                          Storage Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-04-01 00:00:00'::timestamp without time zone))
+                          Storage Table Read Requests: 25
+                          Storage Table Read Execution Time: 221.875 ms
+                          Storage Table Read Ops: 25
+                          Storage Table Rows Scanned: 200000
+Planning Time: 0.325 ms
+Execution Time: 324.330 ms
+Storage Read Requests: 25
+Storage Read Execution Time: 221.875 ms
+Storage Read Ops: 25
+Storage Rows Scanned: 200000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 221.875 ms
+Peak Memory Usage: 3055 kB

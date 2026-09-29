@@ -1,0 +1,3 @@
+VirtualRecord
+  functions: [1]
+    long_sequence count: 1

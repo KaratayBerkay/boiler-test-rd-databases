@@ -1,0 +1,16 @@
+GroupAggregate  (cost=1013035.35..1076784.37 rows=200 width=24)
+  Group Key: (date_trunc('month'::text, first_orders.first_at))
+  ->  Sort  (cost=1013035.35..1028971.98 rows=6374652 width=16)
+        Sort Key: (date_trunc('month'::text, first_orders.first_at))
+        ->  Hash Right Join  (cost=51780.20..74685.88 rows=6374652 width=16)
+              Hash Cond: (o.customer_id = first_orders.customer_id)
+              Join Filter: ((date_trunc('month'::text, o.ordered_at)) > date_trunc('month'::text, first_orders.first_at))
+              ->  HashAggregate  (cost=31734.69..36180.64 rows=199426 width=12)
+                    Group Key: o.customer_id, date_trunc('month'::text, o.ordered_at)
+                    Planned Partitions: 4
+                    ->  Seq Scan on orders o  (cost=23.10..18922.19 rows=200000 width=12)
+              ->  Hash  (cost=19805.77..19805.77 rows=19179 width=12)
+                    ->  Subquery Scan on first_orders  (cost=19422.19..19805.77 rows=19179 width=12)
+                          ->  HashAggregate  (cost=19422.19..19613.98 rows=19179 width=12)
+                                Group Key: orders.customer_id
+                                ->  Seq Scan on orders  (cost=23.10..18422.19 rows=200000 width=12)

@@ -1,0 +1,1 @@
+1 | SIMPLE | customers | const | PRIMARY | PRIMARY | 4 | const | 1 | 

@@ -1,0 +1,64 @@
+Output: id, email
+
+Limit (preliminary LIMIT)
+│  Limit 200
+│  Offset 0
+└──Sorting (Sorting for ORDER BY)
+   │  Sort description: id ASC
+   │  Limit 200
+   └──Join (JOIN FillRightFirst)
+      │  events[42857] ⋊̸ R1
+      │  Type: right | Strictness: anti | Algorithm: SpillingHashJoin(HashJoin)
+      │  Join conditions: customer_id = id
+      │  Output:
+      │    Left:  Empty
+      │    Right: id, email
+      ├──ReadFromMergeTree (lab.events)
+      │     Read type: Default
+      │     Parts: 3 | Granules: 36
+      │     Output: customer_id
+      │     Prewhere filter
+      │     Prewhere filter column:  customer_id = customer_id AND event_type = 'churn'
+      │     Runtime filters: RF2(customer_id, id)
+      │     Indexes:
+      │       PrimaryKey
+      │         Condition: true
+      │         Parts: 3/3
+      │         Granules: 36/36
+      │       Ranges: 3
+      └──BuildRuntimeFilter (Build runtime join filter on id)
+         │  Filter id: RF2
+         └──Join (JOIN FillRightFirst)
+            │  customers[6000] ⋉ orders[cache~4883]
+            │  Type: left | Strictness: semi | Algorithm: SpillingHashJoin(HashJoin)
+            │  Result rows: 6000
+            │  Join conditions: id = customer_id
+            │  Output:
+            │    Left:  id, email
+            │    Right: Empty
+            ├──ReadFromMergeTree (lab.customers)
+            │     Read type: Default
+            │     Parts: 1 | Granules: 1
+            │     Output: id, email
+            │     Runtime filters: RF1(id, customer_id from lab.orders)
+            │     Indexes:
+            │       PrimaryKey
+            │         Condition: true
+            │         Parts: 1/1
+            │         Granules: 1/1
+            │       Ranges: 1
+            └──BuildRuntimeFilter (Build runtime join filter on exists(__table2).id)
+               │  Filter id: RF1
+               │  Source table: lab.orders
+               └──ReadFromMergeTree (lab.orders)
+                     Read type: Default
+                     Parts: 1 | Granules: 7
+                     Output: customer_id
+                     Prewhere filter
+                     Prewhere filter column:  customer_id = customer_id AND ordered_at >= '2025-11-01 00:00:00.000000'
+                     Indexes:
+                       PrimaryKey
+                         Condition: true
+                         Parts: 1/1
+                         Granules: 7/7
+                       Ranges: 1

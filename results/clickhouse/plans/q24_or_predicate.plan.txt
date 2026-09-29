@@ -1,0 +1,23 @@
+Output: id
+
+Sorting (Sorting for ORDER BY)
+│  Prefix sort description: id ASC
+│  Result sort description: id ASC
+└──Filter ((WHERE + Change column names to column identifiers))
+   │  Filter column: customer_id = 3706 OR id = 56738
+   └──ReadFromMergeTree (lab.orders)
+         Read type: InOrder
+         Parts: 1 | Granules: 7
+         Output: id, customer_id
+         Virtual row conversions
+         Indexes:
+           PrimaryKey
+             Condition: true
+             Parts: 1/1
+             Granules: 7/7
+           Skip
+             Name: ix_orders_customer_id
+             Description: bloom_filter GRANULARITY 4
+             Parts: 1/1
+             Granules: 7/7
+           Ranges: 1

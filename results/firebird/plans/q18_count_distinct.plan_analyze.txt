@@ -1,0 +1,5 @@
+Select Expression
+    -> Aggregate
+        -> Filter
+            -> Table "EVENTS" Full Scan
+fetches=17645468 reads=8141

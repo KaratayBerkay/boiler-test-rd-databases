@@ -1,0 +1,4 @@
+10 | 0 | 0 | SEARCH o USING INTEGER PRIMARY KEY (rowid<?)
+15 | 0 | 0 | SEARCH oi USING INDEX ix_order_items_order_id (order_id=?)
+20 | 0 | 0 | SEARCH p USING INTEGER PRIMARY KEY (rowid=?)
+59 | 0 | 0 | USE TEMP B-TREE FOR group_concat(ORDER BY)

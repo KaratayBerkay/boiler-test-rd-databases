@@ -1,0 +1,10 @@
+SELECT
+    "id",
+    "name",
+    "email",
+    "country_code",
+    "tier"
+FROM "public"."customers"
+    /* public.PRIMARY_KEY_6: id = ?1 */
+    /* scanCount: 2 */
+WHERE "id" = ?1

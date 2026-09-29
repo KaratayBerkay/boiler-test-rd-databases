@@ -1,0 +1,45 @@
+# Oracle AI Database 26ai Free, release 23.26.3 (gvenzl image `23-slim-faststart`: the 23 tag ships the rebranded 26ai build). Free edition limits: 2 CPU threads, 2 GB RAM, 12 GB user data.
+#
+# Backup strategy (`rdlab run oracle --phases backup`): Data Pump (expdp/impdp through a directory object on the shared
+#   `oracle-backups` volume, REMAP_SCHEMA restore), Flashback Query / FLASHBACK TABLE / recycle bin; RMAN is not in the slim image.
+# Logging strategy: unified auditing (audit policy on DDL + DELETE), session SQL trace files + V$SQL, alert log under
+#   /opt/oracle/diag; Docker json-file rotation.
+name: rdlab-oracle
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+services:
+  volumes-init:
+    image: gvenzl/oracle-free:23-slim-faststart
+    container_name: rdlab-oracle-volumes-init
+    user: root
+    entrypoint: ["sh", "-c", "chmod 1777 /backups && echo volumes ready"]
+    volumes: [oracle-backups:/backups]
+    logging: *logging
+    restart: "no"
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    x-k8s:                            # k8s-only hints (compose ignores x-* keys)
+      startup_seconds: 900            # first-boot DB creation is slow; don't let the startupProbe kill it
+      seed_from_image:                # a PVC starts empty and masks the faststart image's baked DB; copy it in (Docker does this for named volumes)
+        /opt/oracle/oradata: oracle
+      shm_reset: true                 # clear stale SGA in /dev/shm on start so a pod restart doesn't hit ORA-01081
+    container_name: rdlab-oracle
+    logging: *logging
+    environment:
+      ORACLE_PASSWORD: rootpass
+      APP_USER: lab
+      APP_USER_PASSWORD: labpass
+    volumes: [oracle:/opt/oracle/oradata, oracle-backups:/backups]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+    ports: ["11521:1521"]
+    shm_size: 2g
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 5s
+      timeout: 10s
+      retries: 60
+volumes:
+  oracle:
+  oracle-backups:

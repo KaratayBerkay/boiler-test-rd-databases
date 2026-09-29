@@ -1,0 +1,25 @@
+Sort  (cost=283.39..288.16 rows=1910 width=524) (actual time=1.078..1.092 rows=200.00 loops=1)
+  Sort Key: tree.path
+  Sort Method: quicksort  Memory: 37kB
+  Buffers: shared hit=10
+  CTE tree
+    ->  Recursive Union  (cost=0.00..141.10 rows=1910 width=540) (actual time=0.010..0.314 rows=200.00 loops=1)
+          Storage: Memory  Maximum Storage: 44kB
+          Buffers: shared hit=10
+          ->  Seq Scan on categories  (cost=0.00..4.00 rows=10 width=540) (actual time=0.009..0.021 rows=10.00 loops=1)
+                Filter: (parent_id IS NULL)
+                Rows Removed by Filter: 190
+                Buffers: shared hit=2
+          ->  Hash Join  (cost=3.25..11.80 rows=190 width=540) (actual time=0.026..0.059 rows=47.50 loops=4)
+                Hash Cond: (c.parent_id = t.id)
+                Buffers: shared hit=8
+                ->  Seq Scan on categories c  (cost=0.00..4.00 rows=200 width=20) (actual time=0.003..0.017 rows=200.00 loops=4)
+                      Buffers: shared hit=8
+                ->  Hash  (cost=2.00..2.00 rows=100 width=524) (actual time=0.014..0.014 rows=50.00 loops=4)
+                      Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                      ->  WorkTable Scan on tree t  (cost=0.00..2.00 rows=100 width=524) (actual time=0.000..0.005 rows=50.00 loops=4)
+  ->  CTE Scan on tree  (cost=0.00..38.20 rows=1910 width=524) (actual time=0.012..0.389 rows=200.00 loops=1)
+        Storage: Memory  Maximum Storage: 34kB
+        Buffers: shared hit=10
+Planning Time: 0.106 ms
+Execution Time: 1.126 ms

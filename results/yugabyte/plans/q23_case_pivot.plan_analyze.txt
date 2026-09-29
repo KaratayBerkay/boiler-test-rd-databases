@@ -1,0 +1,33 @@
+Sort  (cost=31398.85..31398.89 rows=13 width=59) (actual time=393.075..393.078 rows=13 loops=1)
+  Sort Key: c.country_code
+  Sort Method: quicksort  Memory: 26kB
+  ->  HashAggregate  (cost=31398.45..31398.61 rows=13 width=59) (actual time=393.029..393.038 rows=13 loops=1)
+        Group Key: c.country_code
+        Batches: 1  Memory Usage: 24kB
+        ->  Hash Join  (cost=2221.04..27398.45 rows=200000 width=18) (actual time=20.387..277.826 rows=200000 loops=1)
+              Hash Cond: (o.customer_id = c.id)
+              ->  Seq Scan on orders o  (cost=23.10..22450.51 rows=200000 width=19) (actual time=1.413..159.888 rows=200000 loops=1)
+                    Storage Table Read Requests: 196
+                    Storage Table Read Execution Time: 2.941 ms
+                    Storage Table Read Ops: 196
+                    Storage Table Rows Scanned: 200000
+              ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7) (actual time=18.939..18.941 rows=20000 loops=1)
+                    Buckets: 32768  Batches: 1  Memory Usage: 1038kB
+                    ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7) (actual time=1.066..10.472 rows=20000 loops=1)
+                          Storage Table Read Requests: 20
+                          Storage Table Read Execution Time: 5.641 ms
+                          Storage Table Read Ops: 20
+                          Storage Table Rows Scanned: 20000
+Planning Time: 0.274 ms
+Execution Time: 393.238 ms
+Storage Read Requests: 216
+Storage Read Execution Time: 8.582 ms
+Storage Read Ops: 216
+Storage Rows Scanned: 220000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 8.582 ms
+Peak Memory Usage: 1534 kB

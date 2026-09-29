@@ -1,0 +1,5 @@
+TopN_8 | 50.00 | 50 | root |  | time:450.9µs, loops:2, RU:0.48 | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | 1.94 KB | 0 Bytes
+└─TableReader_17 | 50.00 | 50 | root |  | time:393.1µs, loops:2, cop_task: {num: 1, max: 356.1µs, proc_keys: 0, tot_proc: 922ns, tot_wait: 60.4µs, copr_cache_hit_ratio: 1.00, build_task_duration: 4.28µs, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:343.1µs}} | data:TopN_16 | 1.46 KB | N/A
+  └─TopN_16 | 50.00 | 50 | cop[tikv] |  | tikv_task:{time:182ms, loops:196}, scan_detail: {get_snapshot_time: 10.1µs, rocksdb: {block: {}}}, time_detail: {total_process_time: 922ns, total_wait_time: 60.4µs, tikv_wall_time: 140.6µs} | lab.orders.ordered_at, lab.orders.id, offset:0, count:50 | N/A | N/A
+    └─Selection_15 | 99723.04 | 99956 | cop[tikv] |  | tikv_task:{time:177ms, loops:196} | or(gt(lab.orders.ordered_at, 2025-01-01 00:00:00), and(eq(lab.orders.ordered_at, 2025-01-01 00:00:00), gt(lab.orders.id, 0))) | N/A | N/A
+      └─TableFullScan_14 | 200000.00 | 200000 | cop[tikv] | table:orders | tikv_task:{time:157ms, loops:196} | keep order:false | N/A | N/A

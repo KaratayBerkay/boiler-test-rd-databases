@@ -1,0 +1,2037 @@
+{
+  "generated": "2026-09-14T12:48:25+00:00",
+  "engines": {
+    "clickhouse": {
+      "engine": "clickhouse",
+      "display": "ClickHouse",
+      "category": "analytical (columnar)",
+      "dialect": "clickhouse",
+      "driver": "clickhouse-connect",
+      "image": "clickhouse/clickhouse-server:latest",
+      "run_id": "20260914-152928-e4ef32",
+      "started": "2026-09-14T12:29:28+00:00",
+      "scale": 0.3,
+      "notes": "Two replicas of one shard using ReplicatedMergeTree with ClickHouse Keeper; DDL runs ON CLUSTER. No transactions, no foreign keys; secondary \"indexes\" are data-skipping (bloom filter) indexes; UPDATE/DELETE are asynchronous mutations.",
+      "harness_log": "results-k3s/logs/clickhouse/20260914-152928-e4ef32.log",
+      "server_version": "ClickHouse 26.8.2.7",
+      "finished": "2026-09-14T12:29:37+00:00",
+      "phases": {
+        "load": {
+          "scale": 0.3,
+          "tables": {
+            "customers": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.21,
+              "rows_per_s": 28221,
+              "method": "client.insert (native batches)",
+              "ok": true
+            },
+            "categories": {
+              "rows": 200,
+              "counted": 200,
+              "expected": 200,
+              "seconds": 0.11,
+              "rows_per_s": 1829,
+              "method": "client.insert (native batches)",
+              "ok": true
+            },
+            "products": {
+              "rows": 1500,
+              "counted": 1500,
+              "expected": 1500,
+              "seconds": 0.13,
+              "rows_per_s": 11676,
+              "method": "client.insert (native batches)",
+              "ok": true
+            },
+            "orders": {
+              "rows": 60000,
+              "counted": 60000,
+              "expected": 60000,
+              "seconds": 1.13,
+              "rows_per_s": 53121,
+              "method": "client.insert (native batches)",
+              "ok": true
+            },
+            "order_items": {
+              "rows": 147072,
+              "counted": 147072,
+              "expected": 147072,
+              "seconds": 1.05,
+              "rows_per_s": 140365,
+              "method": "client.insert (native batches)",
+              "ok": true
+            },
+            "events": {
+              "rows": 300000,
+              "counted": 300000,
+              "expected": 300000,
+              "seconds": 5.76,
+              "rows_per_s": 52117,
+              "method": "client.insert (native batches)",
+              "ok": true
+            },
+            "inventory": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.2,
+              "rows_per_s": 29402,
+              "method": "client.insert (native batches)",
+              "ok": true
+            }
+          },
+          "errors": [],
+          "schema_seconds": 1.98,
+          "load_seconds": 8.63,
+          "fts_setup": [],
+          "after_load": [],
+          "post_seconds": 0.0,
+          "server_version": "ClickHouse 26.8.2.7",
+          "_seconds": 10.6
+        },
+        "backup": {
+          "backup_dir": "/backups",
+          "strategies": {
+            "backup_disk": {
+              "status": "ok",
+              "kind": "physical",
+              "tool": "BACKUP DATABASE TO Disk('backups', ...)",
+              "backup_seconds": 0.06,
+              "backup_bytes": 14179079,
+              "backup_mb": 13.5,
+              "restore_seconds": 1.28,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 0.79
+              },
+              "pitr": {},
+              "notes": "single-replica backup of every table's parts + metadata into the `backups` disk (/backups); restored under a new database name on the same server",
+              "error": null,
+              "steps": [
+                {
+                  "name": "prepare",
+                  "cmd": "rm -rf /backups/full /backups/inc1 /backups/cluster",
+                  "rc": 0,
+                  "seconds": 0.42,
+                  "out": "\nDefaulted container \"ch1\" out of: ch1, wait-keeper (init), init-volumes-init (init)\n"
+                },
+                {
+                  "name": "BACKUP DATABASE TO Disk",
+                  "cmd": "BACKUP DATABASE lab TO Disk('backups', 'full')",
+                  "rc": 0,
+                  "seconds": 0.06,
+                  "out": ""
+                },
+                {
+                  "name": "drop old restore db",
+                  "cmd": "DROP DATABASE IF EXISTS lab_restore SYNC",
+                  "rc": 0,
+                  "seconds": 0.02,
+                  "out": ""
+                },
+                {
+                  "name": "RESTORE DATABASE AS lab_restore",
+                  "cmd": "RESTORE DATABASE lab AS lab_restore FROM Disk('backups', 'full')",
+                  "rc": 0,
+                  "seconds": 1.28,
+                  "out": ""
+                },
+                {
+                  "name": "drop restore db",
+                  "cmd": "DROP DATABASE lab_restore SYNC",
+                  "rc": 0,
+                  "seconds": 0.89,
+                  "out": ""
+                }
+              ],
+              "system_backups": {
+                "status": "BACKUP_CREATED",
+                "num_files": 130,
+                "total_size": 14054757,
+                "num_entries": 103,
+                "uncompressed_size": 14072583,
+                "compressed_size": 14072583,
+                "error": "",
+                "start": "2026-09-14 12:29:29.609913",
+                "end": "2026-09-14 12:29:29.647772"
+              },
+              "seconds": 3.7,
+              "description": "native backup of parts + metadata, restored as a new database"
+            },
+            "backup_cluster": {
+              "status": "ok",
+              "kind": "physical",
+              "tool": "BACKUP DATABASE ON CLUSTER",
+              "backup_seconds": 0.49,
+              "backup_bytes": 14238343,
+              "backup_mb": 13.6,
+              "restore_seconds": 0.41,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 0.74
+              },
+              "pitr": {},
+              "notes": "cluster-coordinated backup (each shard once, the replicas split the parts); drill: DROP TABLE ... ON CLUSTER then RESTORE TABLE ... ON CLUSTER in place",
+              "error": null,
+              "steps": [
+                {
+                  "name": "BACKUP DATABASE ON CLUSTER",
+                  "cmd": "BACKUP DATABASE lab ON CLUSTER lab_cluster TO Disk('backups', 'cluster')",
+                  "rc": 0,
+                  "seconds": 0.49,
+                  "out": ""
+                },
+                {
+                  "name": "DROP TABLE inventory ON CLUSTER",
+                  "cmd": "DROP TABLE lab.inventory ON CLUSTER lab_cluster SYNC",
+                  "rc": 0,
+                  "seconds": 0.21,
+                  "out": ""
+                },
+                {
+                  "name": "RESTORE TABLE inventory ON CLUSTER",
+                  "cmd": "RESTORE TABLE lab.inventory ON CLUSTER lab_cluster FROM Disk('backups', 'cluster')",
+                  "rc": 0,
+                  "seconds": 0.41,
+                  "out": ""
+                }
+              ],
+              "system_backups": {
+                "status": "BACKUP_CREATED",
+                "num_files": 260,
+                "total_size": 28109514,
+                "num_entries": 104,
+                "uncompressed_size": 14107271,
+                "compressed_size": 14107271,
+                "error": "",
+                "start": "2026-09-14 12:29:32.904282",
+                "end": "2026-09-14 12:29:33.374443"
+              },
+              "replica_verify": {
+                "match": true,
+                "tables": 1,
+                "rows": 6000,
+                "mismatch": [],
+                "seconds": 0.07
+              },
+              "seconds": 2.2,
+              "description": "cluster-coordinated backup (shards once, replicas share)"
+            },
+            "incremental": {
+              "status": "ok",
+              "kind": "incremental",
+              "tool": "BACKUP ... SETTINGS base_backup",
+              "backup_seconds": 0.08,
+              "backup_bytes": 75277,
+              "backup_mb": 0.1,
+              "restore_seconds": 0.21,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 0.7
+              },
+              "pitr": {
+                "match": true,
+                "probe_rows_expected": 1000,
+                "probe_rows_restored": 1000,
+                "note": "table created after the base backup restored from the incremental"
+              },
+              "notes": "only parts not present in the base backup are written; RESTORE from the incremental resolves the base automatically",
+              "error": null,
+              "steps": [
+                {
+                  "name": "BACKUP ... base_backup",
+                  "cmd": "BACKUP DATABASE lab TO Disk('backups', 'inc1') SETTINGS base_backup = Disk('backups', 'full')",
+                  "rc": 0,
+                  "seconds": 0.08,
+                  "out": ""
+                },
+                {
+                  "name": "drop old restore db",
+                  "cmd": "DROP DATABASE IF EXISTS lab_restore3 SYNC",
+                  "rc": 0,
+                  "seconds": 0.02,
+                  "out": ""
+                },
+                {
+                  "name": "RESTORE DATABASE AS lab_restore3",
+                  "cmd": "RESTORE DATABASE lab AS lab_restore3 FROM Disk('backups', 'inc1')",
+                  "rc": 0,
+                  "seconds": 0.21,
+                  "out": ""
+                },
+                {
+                  "name": "drop restore db",
+                  "cmd": "DROP DATABASE lab_restore3 SYNC",
+                  "rc": 0,
+                  "seconds": 0.27,
+                  "out": ""
+                }
+              ],
+              "system_backups": {
+                "status": "BACKUP_CREATED",
+                "num_files": 153,
+                "total_size": 14064289,
+                "num_entries": 16,
+                "uncompressed_size": 34317,
+                "compressed_size": 34317,
+                "error": "",
+                "start": "2026-09-14 12:29:35.535092",
+                "end": "2026-09-14 12:29:35.578306"
+              },
+              "seconds": 2.0,
+              "description": "incremental on top of the full backup"
+            }
+          },
+          "order": [
+            "backup_disk",
+            "backup_cluster",
+            "incremental"
+          ],
+          "source_fingerprint": {
+            "customers": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "bde4b36d53228ad1212bb943"
+            },
+            "categories": {
+              "count": 200,
+              "sample": 200,
+              "checksum": "86d483590462358a1656764d"
+            },
+            "products": {
+              "count": 1500,
+              "sample": 1500,
+              "checksum": "fba5f898a15c5df229824160"
+            },
+            "orders": {
+              "count": 60000,
+              "sample": 20000,
+              "checksum": "eb602730c3feb5ead2ea4025"
+            },
+            "order_items": {
+              "count": 147072,
+              "sample": 20000,
+              "checksum": "0ddb4f9ede330178cdbec14c"
+            },
+            "events": {
+              "count": 300000,
+              "sample": 20000,
+              "checksum": "9cde6b51376675a09bc87c0a"
+            },
+            "inventory": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "2a6fdffe76ce0fe94d748f2f"
+            }
+          },
+          "fingerprint_seconds": 0.76,
+          "summary": {
+            "strategies": 3,
+            "ok": 3,
+            "verified": [
+              "backup_disk",
+              "backup_cluster",
+              "incremental"
+            ],
+            "pitr_ok": [
+              "incremental"
+            ]
+          },
+          "_seconds": 8.9
+        }
+      }
+    },
+    "cockroach": {
+      "engine": "cockroach",
+      "display": "CockroachDB",
+      "category": "distributed SQL",
+      "dialect": "cockroach",
+      "driver": "psycopg",
+      "image": "cockroachdb/cockroach:latest",
+      "run_id": "20260914-153105-941b62",
+      "started": "2026-09-14T12:31:05+00:00",
+      "scale": 0.3,
+      "notes": "3-node insecure cluster; every range replicated 3x via Raft, any node serves reads and writes (no promotion needed). HAProxy round-robins connections across nodes (the recommended production pattern). Insecure mode: no passwords.",
+      "harness_log": "results-k3s/logs/cockroach/20260914-153105-941b62.log",
+      "server_version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+      "finished": "2026-09-14T12:31:23+00:00",
+      "phases": {
+        "load": {
+          "scale": 0.3,
+          "tables": {
+            "customers": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.39,
+              "rows_per_s": 15554,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "categories": {
+              "rows": 200,
+              "counted": 200,
+              "expected": 200,
+              "seconds": 0.02,
+              "rows_per_s": 9473,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "products": {
+              "rows": 1500,
+              "counted": 1500,
+              "expected": 1500,
+              "seconds": 0.19,
+              "rows_per_s": 8060,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "orders": {
+              "rows": 60000,
+              "counted": 60000,
+              "expected": 60000,
+              "seconds": 9.84,
+              "rows_per_s": 6101,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "order_items": {
+              "rows": 147072,
+              "counted": 147072,
+              "expected": 147072,
+              "seconds": 22.46,
+              "rows_per_s": 6549,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "events": {
+              "rows": 300000,
+              "counted": 300000,
+              "expected": 300000,
+              "seconds": 22.87,
+              "rows_per_s": 13115,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "inventory": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.21,
+              "rows_per_s": 29010,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            }
+          },
+          "errors": [],
+          "schema_seconds": 3.49,
+          "load_seconds": 56.46,
+          "fts_setup": [
+            "CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description))"
+          ],
+          "after_load": [
+            "ANALYZE customers",
+            "ANALYZE categories",
+            "ANALYZE products",
+            "ANALYZE orders",
+            "ANALYZE order_items",
+            "ANALYZE events",
+            "ANALYZE inventory"
+          ],
+          "post_seconds": 3.6,
+          "server_version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+          "_seconds": 63.6
+        },
+        "backup": {
+          "backup_dir": "/backups",
+          "strategies": {
+            "full": {
+              "status": "ok",
+              "kind": "physical",
+              "tool": "BACKUP DATABASE INTO 'nodelocal://1/lab' WITH revision_history",
+              "backup_seconds": 1.11,
+              "backup_bytes": 22786542,
+              "backup_mb": 21.7,
+              "restore_seconds": 1.43,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 2.13
+              },
+              "pitr": {},
+              "notes": "distributed backup job (every node exports its ranges as SSTs) with MVCC revision history; restored under a new database name",
+              "error": null,
+              "steps": [
+                {
+                  "name": "prepare",
+                  "cmd": "rm -rf /cockroach/cockroach-data/extern/lab",
+                  "rc": 0,
+                  "seconds": 0.44,
+                  "out": ""
+                },
+                {
+                  "name": "BACKUP DATABASE (full, revision_history)",
+                  "cmd": "BACKUP DATABASE lab INTO 'nodelocal://1/lab' WITH revision_history",
+                  "rc": 0,
+                  "seconds": 1.11,
+                  "out": ""
+                },
+                {
+                  "name": "drop lab_restore if exists",
+                  "cmd": "DROP DATABASE IF EXISTS lab_restore CASCADE",
+                  "rc": 0,
+                  "seconds": 0.0,
+                  "out": ""
+                },
+                {
+                  "name": "RESTORE DATABASE AS lab_restore",
+                  "cmd": "RESTORE DATABASE lab FROM LATEST IN 'nodelocal://1/lab' WITH new_db_name = 'lab_restore'",
+                  "rc": 0,
+                  "seconds": 1.43,
+                  "out": ""
+                },
+                {
+                  "name": "drop restore db",
+                  "cmd": "DROP DATABASE lab_restore CASCADE",
+                  "rc": 0,
+                  "seconds": 1.78,
+                  "out": ""
+                }
+              ],
+              "show_backup": {
+                "tables": [
+                  {
+                    "table": "customers",
+                    "type": "full",
+                    "rows": 6000,
+                    "size_bytes": 867140
+                  },
+                  {
+                    "table": "categories",
+                    "type": "full",
+                    "rows": 200,
+                    "size_bytes": 5405
+                  },
+                  {
+                    "table": "products",
+                    "type": "full",
+                    "rows": 1500,
+                    "size_bytes": 1702114
+                  },
+                  {
+                    "table": "orders",
+                    "type": "full",
+                    "rows": 60000,
+                    "size_bytes": 3380137
+                  },
+                  {
+                    "table": "order_items",
+                    "type": "full",
+                    "rows": 147072,
+                    "size_bytes": 8614946
+                  },
+                  {
+                    "table": "events",
+                    "type": "full",
+                    "rows": 300000,
+                    "size_bytes": 31700181
+                  },
+                  {
+                    "table": "inventory",
+                    "type": "full",
+                    "rows": 6000,
+                    "size_bytes": 135795
+                  }
+                ],
+                "size_bytes": 46405718,
+                "jobs": [
+                  [
+                    "BACKUP",
+                    "succeeded",
+                    "None",
+                    "BACKUP DATABASE lab INTO '/2026/09/14-123107.05' IN 'nodelo \u2026 = true)",
+                    "2026-09-14 12:31:07+00",
+                    "2026-09-14 12:31:08+00"
+                  ]
+                ]
+              },
+              "seconds": 7.1,
+              "description": "distributed full backup restored under a new name"
+            },
+            "incremental": {
+              "status": "ok",
+              "kind": "incremental",
+              "tool": "BACKUP DATABASE INTO LATEST IN",
+              "backup_seconds": 0.41,
+              "backup_bytes": 113179,
+              "backup_mb": 0.1,
+              "restore_seconds": 1.13,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 1.68
+              },
+              "pitr": {
+                "match": true,
+                "probe_rows_expected": 1000,
+                "probe_rows_restored": 1000,
+                "note": "table created after the full backup comes from the incremental layer"
+              },
+              "notes": "incremental layer appended to the same collection (INTO LATEST IN); RESTORE FROM LATEST applies full + incrementals",
+              "error": null,
+              "steps": [
+                {
+                  "name": "BACKUP DATABASE INTO LATEST (incremental)",
+                  "cmd": "BACKUP DATABASE lab INTO LATEST IN 'nodelocal://1/lab' WITH revision_history",
+                  "rc": 0,
+                  "seconds": 0.4,
+                  "out": ""
+                },
+                {
+                  "name": "drop lab_restore2 if exists",
+                  "cmd": "DROP DATABASE IF EXISTS lab_restore2 CASCADE",
+                  "rc": 0,
+                  "seconds": 0.0,
+                  "out": ""
+                },
+                {
+                  "name": "RESTORE DATABASE AS lab_restore2",
+                  "cmd": "RESTORE DATABASE lab FROM LATEST IN 'nodelocal://1/lab' WITH new_db_name = 'lab_restore2'",
+                  "rc": 0,
+                  "seconds": 1.13,
+                  "out": ""
+                },
+                {
+                  "name": "drop restore db",
+                  "cmd": "DROP DATABASE lab_restore2 CASCADE",
+                  "rc": 0,
+                  "seconds": 0.8,
+                  "out": ""
+                }
+              ],
+              "show_backup": {
+                "tables": [
+                  {
+                    "table": "customers",
+                    "type": "full",
+                    "rows": 6000,
+                    "size_bytes": 867140
+                  },
+                  {
+                    "table": "categories",
+                    "type": "full",
+                    "rows": 200,
+                    "size_bytes": 5405
+                  },
+                  {
+                    "table": "products",
+                    "type": "full",
+                    "rows": 1500,
+                    "size_bytes": 1702114
+                  },
+                  {
+                    "table": "orders",
+                    "type": "full",
+                    "rows": 60000,
+                    "size_bytes": 3380137
+                  },
+                  {
+                    "table": "order_items",
+                    "type": "full",
+                    "rows": 147072,
+                    "size_bytes": 8614946
+                  },
+                  {
+                    "table": "events",
+                    "type": "full",
+                    "rows": 300000,
+                    "size_bytes": 31700181
+                  },
+                  {
+                    "table": "inventory",
+                    "type": "full",
+                    "rows": 6000,
+                    "size_bytes": 135795
+                  },
+                  {
+                    "table": "customers",
+                    "type": "incremental",
+                    "rows": 0,
+                    "size_bytes": 0
+                  },
+                  {
+                    "table": "categories",
+                    "type": "incremental",
+                    "rows": 0,
+                    "size_bytes": 0
+                  },
+                  {
+                    "table": "products",
+                    "type": "incremental",
+                    "rows": 0,
+                    "size_bytes": 0
+                  },
+                  {
+                    "table": "orders",
+                    "type": "incremental",
+                    "rows": 0,
+                    "size_bytes": 0
+                  },
+                  {
+                    "table": "order_items",
+                    "type": "incremental",
+                    "rows": 0,
+                    "size_bytes": 0
+                  },
+                  {
+                    "table": "events",
+                    "type": "incremental",
+                    "rows": 0,
+                    "size_bytes": 0
+                  },
+                  {
+                    "table": "inventory",
+                    "type": "incremental",
+                    "rows": 0,
+                    "size_bytes": 0
+                  },
+                  {
+                    "table": "backup_probe",
+                    "type": "incremental",
+                    "rows": 1000,
+                    "size_bytes": 18636
+                  }
+                ],
+                "size_bytes": 46424354,
+                "jobs": [
+                  [
+                    "BACKUP",
+                    "succeeded",
+                    "None",
+                    "BACKUP DATABASE lab INTO '/2026/09/14-123107.05' IN 'nodelo \u2026 = true)",
+                    "2026-09-14 12:31:14+00",
+                    "2026-09-14 12:31:14+00"
+                  ],
+                  [
+                    "RESTORE",
+                    "succeeded",
+                    "None",
+                    "RESTORE DATABASE lab FROM '/2026/09/14-123107.05' IN 'nodel \u2026 store')",
+                    "2026-09-14 12:31:08+00",
+                    "2026-09-14 12:31:09+00"
+                  ],
+                  [
+                    "BACKUP",
+                    "succeeded",
+                    "None",
+                    "BACKUP DATABASE lab INTO '/2026/09/14-123107.05' IN 'nodelo \u2026 = true)",
+                    "2026-09-14 12:31:07+00",
+                    "2026-09-14 12:31:08+00"
+                  ]
+                ]
+              },
+              "seconds": 5.0,
+              "description": "incremental layer on the same collection"
+            },
+            "pitr": {
+              "status": "ok",
+              "kind": "pitr",
+              "tool": "RESTORE ... AS OF SYSTEM TIME",
+              "backup_seconds": 0.37,
+              "backup_bytes": 111148,
+              "backup_mb": 0.1,
+              "restore_seconds": 1.14,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 1.8
+              },
+              "pitr": {
+                "match": true,
+                "target": "AS OF SYSTEM TIME '1789389074214967612.0000000000'",
+                "probe_rows_after_delete": 0,
+                "probe_rows_recovered": 1000,
+                "probe_rows_expected": 1000,
+                "stale_read_rows": 1000
+              },
+              "notes": "revision_history keeps every MVCC version in the backup chain; RESTORE ... AS OF SYSTEM TIME picks the state before the DELETE",
+              "error": null,
+              "steps": [
+                {
+                  "name": "BACKUP INTO LATEST (captures the DELETE)",
+                  "cmd": "BACKUP DATABASE lab INTO LATEST IN 'nodelocal://1/lab' WITH revision_history",
+                  "rc": 0,
+                  "seconds": 0.37,
+                  "out": ""
+                },
+                {
+                  "name": "drop lab_pitr if exists",
+                  "cmd": "DROP DATABASE IF EXISTS lab_pitr CASCADE",
+                  "rc": 0,
+                  "seconds": 0.0,
+                  "out": ""
+                },
+                {
+                  "name": "RESTORE DATABASE AS lab_pitr",
+                  "cmd": "RESTORE DATABASE lab FROM LATEST IN 'nodelocal://1/lab' AS OF SYSTEM TIME '1789389074214967612.0000000000' WITH new_db_name = 'lab_pitr'",
+                  "rc": 0,
+                  "seconds": 1.14,
+                  "out": ""
+                },
+                {
+                  "name": "drop pitr db",
+                  "cmd": "DROP DATABASE lab_pitr CASCADE",
+                  "rc": 0,
+                  "seconds": 0.74,
+                  "out": ""
+                }
+              ],
+              "stale_read": {
+                "as_of": "1789389074214967612.0000000000",
+                "rows": 1000,
+                "current_rows": 0
+              },
+              "seconds": 5.0,
+              "description": "point-in-time restore from the revision history"
+            }
+          },
+          "order": [
+            "full",
+            "incremental",
+            "pitr"
+          ],
+          "source_fingerprint": {
+            "customers": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "a187be706ac6cc57f65a464b"
+            },
+            "categories": {
+              "count": 200,
+              "sample": 200,
+              "checksum": "86d483590462358a1656764d"
+            },
+            "products": {
+              "count": 1500,
+              "sample": 1500,
+              "checksum": "250e572937ed0817cfcef0db"
+            },
+            "orders": {
+              "count": 60000,
+              "sample": 20000,
+              "checksum": "b5d8b2d0bf165d4ca1153f21"
+            },
+            "order_items": {
+              "count": 147072,
+              "sample": 20000,
+              "checksum": "0ddb4f9ede330178cdbec14c"
+            },
+            "events": {
+              "count": 300000,
+              "sample": 20000,
+              "checksum": "89b78dacdffd2c2d1b02b303"
+            },
+            "inventory": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "5203826630895c79378d2c39"
+            }
+          },
+          "fingerprint_seconds": 1.45,
+          "summary": {
+            "strategies": 3,
+            "ok": 3,
+            "verified": [
+              "full",
+              "incremental",
+              "pitr"
+            ],
+            "pitr_ok": [
+              "incremental",
+              "pitr"
+            ]
+          },
+          "_seconds": 18.7
+        }
+      }
+    },
+    "mysql": {
+      "engine": "mysql",
+      "display": "MySQL 9",
+      "category": "row-store OLTP",
+      "dialect": "mysql",
+      "driver": "pymysql",
+      "image": "mysql:9",
+      "run_id": "20260914-153153-602ae6",
+      "started": "2026-09-14T12:31:53+00:00",
+      "scale": 0.3,
+      "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+      "harness_log": "results-k3s/logs/mysql/20260914-153153-602ae6.log",
+      "server_version": "9.7.2",
+      "finished": "2026-09-14T12:32:15+00:00",
+      "phases": {
+        "load": {
+          "scale": 0.3,
+          "tables": {
+            "customers": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.18,
+              "rows_per_s": 33259,
+              "method": "LOAD DATA LOCAL INFILE",
+              "ok": true
+            },
+            "categories": {
+              "rows": 200,
+              "counted": 200,
+              "expected": 200,
+              "seconds": 0.01,
+              "rows_per_s": 34254,
+              "method": "LOAD DATA LOCAL INFILE",
+              "ok": true
+            },
+            "products": {
+              "rows": 1500,
+              "counted": 1500,
+              "expected": 1500,
+              "seconds": 0.11,
+              "rows_per_s": 14259,
+              "method": "LOAD DATA LOCAL INFILE",
+              "ok": true
+            },
+            "orders": {
+              "rows": 60000,
+              "counted": 60000,
+              "expected": 60000,
+              "seconds": 1.02,
+              "rows_per_s": 59035,
+              "method": "LOAD DATA LOCAL INFILE",
+              "ok": true
+            },
+            "order_items": {
+              "rows": 147072,
+              "counted": 147072,
+              "expected": 147072,
+              "seconds": 3.15,
+              "rows_per_s": 46675,
+              "method": "LOAD DATA LOCAL INFILE",
+              "ok": true
+            },
+            "events": {
+              "rows": 300000,
+              "counted": 300000,
+              "expected": 300000,
+              "seconds": 6.09,
+              "rows_per_s": 49281,
+              "method": "LOAD DATA LOCAL INFILE",
+              "ok": true
+            },
+            "inventory": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.05,
+              "rows_per_s": 114231,
+              "method": "LOAD DATA LOCAL INFILE",
+              "ok": true
+            }
+          },
+          "errors": [],
+          "schema_seconds": 0.14,
+          "load_seconds": 10.68,
+          "fts_setup": [
+            "CREATE FULLTEXT INDEX ft_products_description ON products (description)"
+          ],
+          "after_load": [
+            "ANALYZE TABLE customers",
+            "ANALYZE TABLE categories",
+            "ANALYZE TABLE products",
+            "ANALYZE TABLE orders",
+            "ANALYZE TABLE order_items",
+            "ANALYZE TABLE events",
+            "ANALYZE TABLE inventory"
+          ],
+          "post_seconds": 0.42,
+          "server_version": "9.7.2",
+          "_seconds": 11.3
+        },
+        "backup": {
+          "backup_dir": "/backups",
+          "strategies": {
+            "mysqlsh_dump": {
+              "status": "ok",
+              "kind": "logical",
+              "tool": "mysqlsh util dump-tables / load-dump",
+              "backup_seconds": 2.33,
+              "backup_bytes": 9652164,
+              "backup_mb": 9.2,
+              "restore_seconds": 10.35,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 1.37
+              },
+              "pitr": {},
+              "notes": "MySQL Shell dump utility: 4 threads, zstd chunks, loaded with LOAD DATA LOCAL INFILE into a second schema",
+              "error": null,
+              "steps": [
+                {
+                  "name": "prepare",
+                  "cmd": "rm -rf /backups/shell",
+                  "rc": 0,
+                  "seconds": 1.02,
+                  "out": "\nDefaulted container \"source\" out of: source, init-volumes-init (init)\n"
+                },
+                {
+                  "name": "mysqlsh dump-tables",
+                  "cmd": "mysqlsh --uri root:rootpass@localhost:3306 -- util dump-tables lab --all --outputUrl=/backups/shell --threads=4 --compression=zstd",
+                  "rc": 0,
+                  "seconds": 2.33,
+                  "out": "\nGlobal read lock has been released\nWriting global DDL files\nWriting schema metadata...\nWriting DDL...\nWriting table metadata...\nRunning data dump using 4 threads.\nDumping data...\nWriting schema metadata - done\nWriting DDL - done\nWriting table metadata - done\nStarting data dump\nDumping data - done\nDump duration: 00:00:00s\nTotal duration: 00:00:00s\nSchemas dumped: 1\nTables dumped: 7\nUncompressed data size: 39.11 MB\nCompressed data size: 9.60 MB\nCompression ratio: 4.1\nRows written: 520772\nBytes written: 9.60 MB\nAverage uncompressed throughput: 39.11 MB/s\nAverage compressed throughput: 9.60 MB/s\n"
+                },
+                {
+                  "name": "create restore db",
+                  "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+                  "rc": 0,
+                  "seconds": 0.05,
+                  "out": ""
+                },
+                {
+                  "name": "mysqlsh load-dump",
+                  "cmd": "mysqlsh --uri root:rootpass@localhost:3306 -- util load-dump /backups/shell --schema=lab_restore --threads=4 --resetProgress",
+                  "rc": 0,
+                  "seconds": 10.35,
+                  "out": "ecuting schema DDL...\nExecuting schema DDL - done\nExecuting table DDL...\nExecuting table DDL - done\nLoading data...\nStarting data load\nBuilding indexes...\nLoading data - done\nExecuting view DDL...\nBuilding indexes - done\nExecuting view DDL - done\nExecuting common postamble SQL...\nExecuting common postamble SQL - done\n7 chunks (520.77K rows, 39.11 MB) for 7 tables in 1 schemas were loaded in 4 sec (avg throughput 8.23 MB/s, 109.59K rows/s)\n8 DDL files were executed in 0 sec.\nData load duration: 4 sec\n1 indexes were built in 3 sec.\nTotal duration: 8 sec\n0 warnings were reported during the load.\n"
+                },
+                {
+                  "name": "drop restore db",
+                  "cmd": "DROP DATABASE lab_restore",
+                  "rc": 0,
+                  "seconds": 0.07,
+                  "out": ""
+                }
+              ],
+              "seconds": 15.4,
+              "description": "MySQL Shell parallel zstd dump loaded into a second schema"
+            },
+            "mysqldump": {
+              "status": "ok",
+              "kind": "logical",
+              "tool": "mysqldump --single-transaction",
+              "backup_seconds": 0.99,
+              "backup_bytes": 45363961,
+              "backup_mb": 43.3,
+              "restore_seconds": 12.85,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 1.38
+              },
+              "pitr": {},
+              "notes": "single-transaction consistent snapshot, plain SQL restored serially with the mysql client",
+              "error": null,
+              "steps": [
+                {
+                  "name": "mysqldump",
+                  "cmd": "mysqldump -uroot -prootpass --single-transaction --routines --triggers --events --set-gtid-purged=OFF lab > /backups/lab.sql",
+                  "rc": 0,
+                  "seconds": 0.99,
+                  "out": "\nDefaulted container \"source\" out of: source, init-volumes-init (init)\nmysqldump: [Warning] Using a password on the command line interface can be insecure.\n"
+                },
+                {
+                  "name": "create restore db",
+                  "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+                  "rc": 0,
+                  "seconds": 0.04,
+                  "out": ""
+                },
+                {
+                  "name": "restore",
+                  "cmd": "mysql -uroot -prootpass lab_restore < /backups/lab.sql",
+                  "rc": 0,
+                  "seconds": 12.85,
+                  "out": "\nDefaulted container \"source\" out of: source, init-volumes-init (init)\nmysql: [Warning] Using a password on the command line interface can be insecure.\n"
+                },
+                {
+                  "name": "drop restore db",
+                  "cmd": "DROP DATABASE lab_restore",
+                  "rc": 0,
+                  "seconds": 0.06,
+                  "out": ""
+                }
+              ],
+              "seconds": 15.5,
+              "description": "classic logical dump restored into a second schema"
+            },
+            "clone": {
+              "status": "ok",
+              "kind": "physical",
+              "tool": "CLONE LOCAL DATA DIRECTORY + START REPLICA UNTIL SQL_BEFORE_GTIDS",
+              "backup_seconds": 2.18,
+              "backup_bytes": 270548379,
+              "backup_mb": 258.0,
+              "restore_seconds": 1.53,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 1.96
+              },
+              "pitr": {
+                "match": true,
+                "method": "START REPLICA UNTIL SQL_BEFORE_GTIDS='8a6e09f8-b037-11f1-8110-1e04fb0abcd0:150'",
+                "replay_seconds": 0.51,
+                "stopped_before_target": true,
+                "probe_rows_recovered": 1000,
+                "probe_rows_expected": 1000,
+                "replica_status": {
+                  "Replica_IO_Running": "Yes",
+                  "Replica_SQL_Running": "No",
+                  "Seconds_Behind_Source": "None",
+                  "Source_Host": "source",
+                  "Executed_Gtid_Set": "8a6e09f8-b037-11f1-8110-1e04fb0abcd0:1-149",
+                  "Last_IO_Error": "",
+                  "Last_SQL_Error": "",
+                  "Last_Error": ""
+                }
+              },
+              "notes": "clone plugin physical hot copy (no external tool), scratch instance replays the source binlog with GTID auto-positioning and stops before the bad transaction",
+              "error": null,
+              "steps": [
+                {
+                  "name": "prepare",
+                  "cmd": "rm -rf /backups/clone",
+                  "rc": 0,
+                  "seconds": 0.19,
+                  "out": "\nDefaulted container \"source\" out of: source, init-volumes-init (init)\n"
+                },
+                {
+                  "name": "install clone plugin",
+                  "cmd": "INSTALL PLUGIN clone SONAME 'mysql_clone.so'",
+                  "rc": 0,
+                  "seconds": 0.01,
+                  "out": ""
+                },
+                {
+                  "name": "CLONE LOCAL DATA DIRECTORY",
+                  "cmd": "CLONE LOCAL DATA DIRECTORY = '/backups/clone'",
+                  "rc": 0,
+                  "seconds": 2.18,
+                  "out": ""
+                },
+                {
+                  "name": "clone status",
+                  "cmd": "SELECT state, error_no, gtid_executed FROM performance_schema.clone_status",
+                  "rc": 0,
+                  "seconds": 0.0,
+                  "out": "[('Completed', 0, '')]"
+                },
+                {
+                  "name": "START REPLICA UNTIL SQL_BEFORE_GTIDS",
+                  "cmd": "CHANGE REPLICATION SOURCE TO SOURCE_HOST='source', SOURCE_PORT=3306, SOURCE_USER='repl', SOURCE_PASSWORD='replpass', SOURCE_AUTO_POSITION=1, GET_SOURCE_PUBLIC_KEY=1; START REPLICA UNTIL SQL_BEFORE_GTIDS='8a6e09f8-b037-11f1-8110-1e04fb0abcd0:150'",
+                  "rc": 0,
+                  "seconds": 0.04,
+                  "out": ""
+                }
+              ],
+              "clone_status": "('Completed', 0, '')",
+              "gtid_before_delete": "8a6e09f8-b037-11f1-8110-1e04fb0abcd0:1-149",
+              "bad_transaction_gtid": "8a6e09f8-b037-11f1-8110-1e04fb0abcd0:150",
+              "seconds": 12.2,
+              "description": "clone-plugin physical copy started in a scratch container, PITR by GTID replication"
+            }
+          },
+          "order": [
+            "mysqlsh_dump",
+            "mysqldump",
+            "clone"
+          ],
+          "source_fingerprint": {
+            "customers": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "35ac83bf2b2e114610721f09"
+            },
+            "categories": {
+              "count": 200,
+              "sample": 200,
+              "checksum": "86d483590462358a1656764d"
+            },
+            "products": {
+              "count": 1500,
+              "sample": 1500,
+              "checksum": "79f947ee8911ba569f94fe46"
+            },
+            "orders": {
+              "count": 60000,
+              "sample": 20000,
+              "checksum": "b5d8b2d0bf165d4ca1153f21"
+            },
+            "order_items": {
+              "count": 147072,
+              "sample": 20000,
+              "checksum": "0ddb4f9ede330178cdbec14c"
+            },
+            "events": {
+              "count": 300000,
+              "sample": 20000,
+              "checksum": "ef5de25f9b0dfcdcf2d391d6"
+            },
+            "inventory": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "5203826630895c79378d2c39"
+            }
+          },
+          "fingerprint_seconds": 1.42,
+          "summary": {
+            "strategies": 3,
+            "ok": 3,
+            "verified": [
+              "mysqlsh_dump",
+              "mysqldump",
+              "clone"
+            ],
+            "pitr_ok": [
+              "clone"
+            ]
+          },
+          "_seconds": 44.6
+        },
+        "logging": {
+          "sink": "slow query log file (long_query_time)",
+          "slow_threshold_ms": 100,
+          "settings": {
+            "binlog_format": "ROW",
+            "general_log": "OFF",
+            "general_log_file": "/var/log/mysql/general.log",
+            "innodb_print_all_deadlocks": "ON",
+            "log_bin": "ON",
+            "log_error": "/var/log/mysql/error.log",
+            "log_error_services": "log_filter_internal; log_sink_internal; log_sink_json",
+            "log_error_verbosity": "3",
+            "log_output": "FILE",
+            "log_queries_not_using_indexes": "OFF",
+            "log_slow_extra": "ON",
+            "log_timestamps": "SYSTEM",
+            "long_query_time": "0.100000",
+            "min_examined_row_limit": "0",
+            "performance_schema": "ON",
+            "slow_query_log": "ON",
+            "slow_query_log_file": "/var/log/mysql/slow.log"
+          },
+          "slow_query": {
+            "threshold_ms": 100,
+            "sink": "slow query log file (long_query_time)",
+            "slow_query_ms": 301.7,
+            "slow_logged": true,
+            "seen_after_s": 0.6,
+            "sample": "# Time: 2026-09-14T12:31:53.904504-00:00\n# User@Host: lab[lab] @  [10.42.0.1]  Id:   194\n# Query_time: 0.300207  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 1 Thread_id: 194 Errno: 0 Killed: 0 Bytes_received: 45 Bytes_sent: 74 Read_first: 0 Read_last: 0 Read_key: 0 Read_next: 0 Read_prev: 0 Read_rnd: 0 Read_rnd_next: 0 Sort_merge_passes: 0 Sort_range_count: 0 Sort_rows: 0 Sort_scan_count: 0 Created_tmp_disk_tables: 0 Created_tmp_tables: 0 Count_hit_tmp_table_size: 0  Start: 2026-09-14T12:31:53.604297-00:00 End: 2026-09-14T12:31:53.904504-00:00\nSET timestamp=1789389113;\nSELECT SLEEP(0.3) A",
+            "fast_logged": false
+          },
+          "audit": {
+            "mechanism": "general log (no audit plugin in MySQL Community)",
+            "event_found": true,
+            "seen_after_s": 0.2,
+            "sample": "2026-09-14T12:31:54.736813-00:00\t  196 Query\tCREATE TABLE audit_rdlab_mk_dbde3f5dad (id INTEGER)",
+            "status": "ok"
+          },
+          "overhead": {
+            "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+            "workers": 8,
+            "seconds": 4,
+            "baseline": {
+              "qps": 18499,
+              "p50_ms": 0.411102,
+              "p99_ms": 0.8325668799999999,
+              "errors": 0
+            },
+            "full_logging": "SET GLOBAL long_query_time = 0 (every statement written to the slow log, new connections)",
+            "full": {
+              "qps": 18579,
+              "p50_ms": 0.402059,
+              "p99_ms": 0.9453672800000004,
+              "errors": 0
+            },
+            "log_bytes_written": 47338856,
+            "bytes_per_statement": 637.0,
+            "overhead_pct": -0.4,
+            "status": "ok"
+          },
+          "container_logging": {
+            "rdlab-my-source": {
+              "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+              "options": {},
+              "pod": "rdlab-mysql/source-6d4dc8d5b7-2vmkt"
+            },
+            "rdlab-my-replica": {
+              "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+              "options": {},
+              "pod": "rdlab-mysql/replica-787dddc977-zqxfp"
+            },
+            "rdlab-my-proxysql": {
+              "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+              "options": {},
+              "pod": "rdlab-mysql/proxysql-8557df5b5d-8b8tw"
+            }
+          },
+          "extra": {
+            "performance_schema_top5": [
+              {
+                "calls": 180988,
+                "total_ms": 25739.0,
+                "avg_ms": 0.142,
+                "digest": "SELECT `id` , NAME , `email` FROM `customers` WHERE `id` = ?"
+              },
+              {
+                "calls": 1,
+                "total_ms": 6037.1,
+                "avg_ms": 6037.055,
+                "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE EVENTS FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY ?"
+              },
+              {
+                "calls": 1,
+                "total_ms": 3130.8,
+                "avg_ms": 3130.846,
+                "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `order_items` FIELDS TERMINATED BY ? OPTIONALLY ENCLOS"
+              },
+              {
+                "calls": 3,
+                "total_ms": 1601.6,
+                "avg_ms": 533.877,
+                "digest": "SELECT `id` , `customer_id` , `event_type` , `occurred_at` , `payload` , `value_num` FROM "
+              },
+              {
+                "calls": 1,
+                "total_ms": 1007.9,
+                "avg_ms": 1007.874,
+                "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `orders` FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY"
+              }
+            ],
+            "error_log_last": [
+              "(datetime.datetime(2026, 9, 14, 12, 28, 24, 858879), 'Note', 'Repl', 'Start binlog_dump to source_thread_id(93) replica_server(99), pos(, 4)')",
+              "(datetime.datetime(2026, 9, 14, 12, 28, 18, 30313), 'Note', 'InnoDB', 'Clone End Master Task ID: 0 Passed, code: 0: ')",
+              "(datetime.datetime(2026, 9, 14, 12, 28, 18, 30158), 'Note', 'InnoDB', 'Clone Apply End Master Task ID: 0 Passed, code: 0: ')",
+              "(datetime.datetime(2026, 9, 14, 12, 28, 18, 29890), 'Note', 'InnoDB', 'Clone Apply State DONE')",
+              "(datetime.datetime(2026, 9, 14, 12, 28, 17, 751774), 'Note', 'InnoDB', 'Clone Apply State FLUSH REDO: ')"
+            ]
+          },
+          "collected": [
+            "results-k3s/mysql/logs/my-source__var_log_mysql_slow.log",
+            "results-k3s/mysql/logs/my-source__var_log_mysql_error.log",
+            "results-k3s/mysql/logs/my-source__var_log_mysql_error.log.00.json",
+            "results-k3s/mysql/logs/my-source__var_log_mysql_general.log"
+          ],
+          "_seconds": 21.9
+        }
+      }
+    },
+    "postgres": {
+      "engine": "postgres",
+      "display": "PostgreSQL 18",
+      "category": "row-store OLTP",
+      "dialect": "postgres",
+      "driver": "psycopg",
+      "image": "pgvector/pgvector:pg18",
+      "run_id": "20260914-152536-149b80",
+      "started": "2026-09-14T12:25:36+00:00",
+      "scale": 0.3,
+      "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+      "harness_log": "results-k3s/logs/postgres/20260914-152536-149b80.log",
+      "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+      "finished": "2026-09-14T12:25:59+00:00",
+      "phases": {
+        "load": {
+          "scale": 0.3,
+          "tables": {
+            "customers": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.09,
+              "rows_per_s": 64681,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "categories": {
+              "rows": 200,
+              "counted": 200,
+              "expected": 200,
+              "seconds": 0.01,
+              "rows_per_s": 29125,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "products": {
+              "rows": 1500,
+              "counted": 1500,
+              "expected": 1500,
+              "seconds": 0.05,
+              "rows_per_s": 31617,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "orders": {
+              "rows": 60000,
+              "counted": 60000,
+              "expected": 60000,
+              "seconds": 0.81,
+              "rows_per_s": 74101,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "order_items": {
+              "rows": 147072,
+              "counted": 147072,
+              "expected": 147072,
+              "seconds": 3.35,
+              "rows_per_s": 43907,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "events": {
+              "rows": 300000,
+              "counted": 300000,
+              "expected": 300000,
+              "seconds": 2.19,
+              "rows_per_s": 137011,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            },
+            "inventory": {
+              "rows": 6000,
+              "counted": 6000,
+              "expected": 6000,
+              "seconds": 0.05,
+              "rows_per_s": 118820,
+              "method": "COPY FROM STDIN (raw csv stream)",
+              "ok": true
+            }
+          },
+          "errors": [],
+          "schema_seconds": 0.13,
+          "load_seconds": 6.59,
+          "fts_setup": [
+            "CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description))"
+          ],
+          "after_load": [
+            "ANALYZE customers",
+            "ANALYZE categories",
+            "ANALYZE products",
+            "ANALYZE orders",
+            "ANALYZE order_items",
+            "ANALYZE events",
+            "ANALYZE inventory"
+          ],
+          "post_seconds": 0.65,
+          "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+          "_seconds": 7.4
+        },
+        "backup": {
+          "backup_dir": "/backups",
+          "strategies": {
+            "pg_dump": {
+              "status": "ok",
+              "kind": "logical",
+              "tool": "pg_dump -Fd -j4 --compress=zstd | pg_restore -j4",
+              "backup_seconds": 0.67,
+              "backup_bytes": 9659463,
+              "backup_mb": 9.2,
+              "restore_seconds": 1.51,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 0.97
+              },
+              "pitr": {},
+              "notes": "directory format, 4 parallel jobs, zstd; globals dumped separately with pg_dumpall",
+              "error": null,
+              "steps": [
+                {
+                  "name": "prepare",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'rm -rf /backups/dump /backups/globals.sql'; else exec su -s /bin/sh postgres -c 'rm -rf /backups/dump /backups/globals.sql'; fi",
+                  "rc": 0,
+                  "seconds": 0.42,
+                  "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                },
+                {
+                  "name": "pg_dump -Fd",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_dump -U lab -d lab -Fd -j 4 --compress=zstd -f /backups/dump'; else exec su -s /bin/sh postgres -c 'pg_dump -U lab -d lab -Fd -j 4 --compress=zstd -f /backups/dump'; fi",
+                  "rc": 0,
+                  "seconds": 0.67,
+                  "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                },
+                {
+                  "name": "pg_dumpall --globals-only",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_dumpall -U lab --globals-only -f /backups/globals.sql'; else exec su -s /bin/sh postgres -c 'pg_dumpall -U lab --globals-only -f /backups/globals.sql'; fi",
+                  "rc": 0,
+                  "seconds": 0.28,
+                  "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                },
+                {
+                  "name": "create restore db",
+                  "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+                  "rc": 0,
+                  "seconds": 0.08,
+                  "out": ""
+                },
+                {
+                  "name": "pg_restore -j",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_restore -U lab -d lab_restore -j 4 --no-owner /backups/dump'; else exec su -s /bin/sh postgres -c 'pg_restore -U lab -d lab_restore -j 4 --no-owner /backups/dump'; fi",
+                  "rc": 0,
+                  "seconds": 1.51,
+                  "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                },
+                {
+                  "name": "drop restore db",
+                  "cmd": "DROP DATABASE lab_restore",
+                  "rc": 0,
+                  "seconds": 0.37,
+                  "out": ""
+                }
+              ],
+              "restore_warnings": "",
+              "seconds": 4.6,
+              "description": "parallel directory-format dump restored into a second database"
+            },
+            "pg_basebackup": {
+              "status": "ok",
+              "kind": "physical",
+              "tool": "pg_basebackup -Fp -Xs",
+              "backup_seconds": 1.38,
+              "backup_bytes": 118886019,
+              "backup_mb": 113.4,
+              "restore_seconds": 0.24,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 0.8
+              },
+              "pitr": {},
+              "notes": "plain-format full copy with streamed WAL (-Xs), verified with pg_verifybackup; restored by copying into a scratch container",
+              "error": null,
+              "steps": [
+                {
+                  "name": "prepare",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'rm -rf /backups/full /backups/incr1 && mkdir -p /backups/wal'; else exec su -s /bin/sh postgres -c 'rm -rf /backups/full /backups/incr1 && mkdir -p /backups/wal'; fi",
+                  "rc": 0,
+                  "seconds": 0.22,
+                  "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                },
+                {
+                  "name": "pg_basebackup",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_basebackup -U lab -D /backups/full -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C'; else exec su -s /bin/sh postgres -c 'pg_basebackup -U lab -D /backups/full -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C'; fi",
+                  "rc": 0,
+                  "seconds": 1.38,
+                  "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                },
+                {
+                  "name": "pg_verifybackup",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_verifybackup /backups/full'; else exec su -s /bin/sh postgres -c 'pg_verifybackup /backups/full'; fi",
+                  "rc": 0,
+                  "seconds": 0.32,
+                  "out": "backup successfully verified\n\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                }
+              ],
+              "pg_verifybackup": "backup successfully verified\n\nDefaulted container \"primary\" out of: primary, init-backup-init (init)",
+              "ready_after_s": 0.24,
+              "seconds": 7.0,
+              "description": "full physical copy restored in a scratch container"
+            },
+            "incremental": {
+              "status": "ok",
+              "kind": "incremental",
+              "tool": "pg_basebackup --incremental + pg_combinebackup",
+              "backup_seconds": 2.86,
+              "backup_bytes": 21703542,
+              "backup_mb": 20.7,
+              "restore_seconds": 0.25,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 0.87
+              },
+              "pitr": {
+                "match": true,
+                "probe_rows_expected": 1000,
+                "probe_rows_restored": 1000,
+                "note": "rows inserted after the full backup are present in the combined (full+incremental) restore"
+              },
+              "notes": "block-level incremental (summarize_wal=on, PG17+), restored with pg_combinebackup full incr -o PGDATA",
+              "error": null,
+              "steps": [
+                {
+                  "name": "pg_basebackup --incremental",
+                  "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_basebackup -U lab -D /backups/incr1 -Fp -Xs --checkpoint=fast --incremental=/backups/full/backup_manifest'; else exec su -s /bin/sh postgres -c 'pg_basebackup -U lab -D /backups/incr1 -Fp -Xs --checkpoint=fast --incremental=/backups/full/backup_manifest'; fi",
+                  "rc": 0,
+                  "seconds": 2.86,
+                  "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+                }
+              ],
+              "wal_switch": {
+                "segment": "000000010000000000000011",
+                "archived_after_s": 0.3
+              },
+              "full_backup_bytes": 118886019,
+              "incremental_pct_of_full": 18.26,
+              "seconds": 9.0,
+              "description": "PG17+ block-level incremental on top of the full backup"
+            },
+            "pitr": {
+              "status": "ok",
+              "kind": "pitr",
+              "tool": "archive_command + restore_command + recovery_target_name",
+              "backup_seconds": 0.0,
+              "backup_bytes": 318772277,
+              "backup_mb": 304.0,
+              "restore_seconds": 0.26,
+              "verify": {
+                "match": true,
+                "tables": 7,
+                "rows": 520772,
+                "mismatch": [],
+                "seconds": 0.92
+              },
+              "pitr": {
+                "match": true,
+                "target": "recovery_target_name='rdlab_pitr'",
+                "probe_rows_at_restore_point": 1000,
+                "probe_rows_on_primary_after_delete": 0,
+                "probe_rows_recovered": 1000
+              },
+              "notes": "WAL archive (archive_command -> /backups/wal) replayed on top of the full backup up to the named restore point; the DELETE that followed is not replayed",
+              "error": null,
+              "steps": [],
+              "wal_switch": {
+                "segment": "000000010000000000000013",
+                "archived_after_s": 0.3
+              },
+              "archiver": {
+                "archived_count": 22,
+                "failed_count": 0,
+                "last_archived_wal": "000000010000000000000013",
+                "last_failed_wal": null
+              },
+              "scratch_log_tail": "b LOG:  disconnection: session time: 0:00:00.918 user=lab database=lab host=10.42.0.1 port=62384\n2026-09-14 12:19:59.416 UTC [54] [unknown]@[unknown] app=[unknown] LOG:  connection received: host=10.42.0.1 port=56654\n2026-09-14 12:19:59.425 UTC [54] lab@lab app=[unknown] LOG:  connection authenticated: identity=\"lab\" method=scram-sha-256 (/var/lib/postgresql/18/docker/pg_hba.conf:128)\n2026-09-14 12:19:59.425 UTC [54] lab@lab app=[unknown] LOG:  connection authorized: user=lab database=lab application_name=rdlab\n2026-09-14 12:19:59.426 UTC [54] lab@lab app=rdlab LOG:  connection ready: setup total=11.479 ms, fork=1.080 ms, authentication=8.188 ms\n2026-09-14 12:19:59.428 UTC [54] lab@lab app=rdlab LOG:  disconnection: session time: 0:00:00.012 user=lab database=lab host=10.42.0.1 port=56654\n",
+              "seconds": 7.0,
+              "description": "WAL-archive point-in-time recovery to a restore point before a destructive DELETE"
+            }
+          },
+          "order": [
+            "pg_dump",
+            "pg_basebackup",
+            "incremental",
+            "pitr"
+          ],
+          "source_fingerprint": {
+            "customers": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "a187be706ac6cc57f65a464b"
+            },
+            "categories": {
+              "count": 200,
+              "sample": 200,
+              "checksum": "86d483590462358a1656764d"
+            },
+            "products": {
+              "count": 1500,
+              "sample": 1500,
+              "checksum": "2bc3123ba4e02738250e0776"
+            },
+            "orders": {
+              "count": 60000,
+              "sample": 20000,
+              "checksum": "b5d8b2d0bf165d4ca1153f21"
+            },
+            "order_items": {
+              "count": 147072,
+              "sample": 20000,
+              "checksum": "0ddb4f9ede330178cdbec14c"
+            },
+            "events": {
+              "count": 300000,
+              "sample": 20000,
+              "checksum": "08c9ab7a8dd04a5ed9affae7"
+            },
+            "inventory": {
+              "count": 6000,
+              "sample": 6000,
+              "checksum": "5203826630895c79378d2c39"
+            }
+          },
+          "fingerprint_seconds": 0.86,
+          "summary": {
+            "strategies": 4,
+            "ok": 4,
+            "verified": [
+              "pg_dump",
+              "pg_basebackup",
+              "incremental",
+              "pitr"
+            ],
+            "pitr_ok": [
+              "incremental",
+              "pitr"
+            ]
+          },
+          "_seconds": 28.4
+        },
+        "logging": {
+          "sink": "jsonlog file (logging_collector) via log_min_duration_statement",
+          "slow_threshold_ms": 100,
+          "settings": {
+            "logging_collector": "on",
+            "log_destination": "stderr,jsonlog",
+            "log_directory": "/var/lib/postgresql/log",
+            "log_filename": "postgresql-%Y-%m-%d.log",
+            "log_rotation_size": "100MB",
+            "log_rotation_age": "1d",
+            "log_min_duration_statement": "100ms",
+            "log_min_duration_sample": "-1",
+            "log_statement_sample_rate": "1",
+            "log_statement": "none",
+            "log_lock_waits": "on",
+            "log_temp_files": "0",
+            "log_checkpoints": "on",
+            "log_connections": "all",
+            "log_disconnections": "on",
+            "log_autovacuum_min_duration": "1s",
+            "log_line_prefix": "%m [%p] %q%u@%d app=%a ",
+            "log_error_verbosity": "default",
+            "shared_preload_libraries": "pg_stat_statements,auto_explain",
+            "auto_explain.log_min_duration": "500ms",
+            "auto_explain.log_format": "json",
+            "track_io_timing": "on",
+            "archive_mode": "on",
+            "summarize_wal": "on",
+            "log_files": [
+              "postgresql-2026-09-14.json",
+              "postgresql-2026-09-14.log"
+            ],
+            "current_logfile_json": "/var/lib/postgresql/log/postgresql-2026-09-14.json"
+          },
+          "slow_query": {
+            "threshold_ms": 100,
+            "sink": "jsonlog file (logging_collector) via log_min_duration_statement",
+            "slow_query_ms": 314.2,
+            "slow_logged": true,
+            "seen_after_s": 0.45,
+            "sample": "{\"timestamp\": \"2026-09-14 12:20:33.335 UTC\", \"user\": \"lab\", \"dbname\": \"lab\", \"application_name\": \"rdlab\", \"message\": \"duration: 300.994 ms  statement: SELECT pg_sleep(0.3) AS rdlab_mk_6acd61c57e\", \"error_severity\": \"LOG\"}",
+            "duration_ms": 300.994,
+            "fast_logged": false
+          },
+          "audit": {
+            "mechanism": "log_statement=ddl (pgaudit not bundled in the image)",
+            "event_found": true,
+            "seen_after_s": 0.22,
+            "sample": "{\"timestamp\": \"2026-09-14 12:20:34.020 UTC\", \"user\": \"lab\", \"dbname\": \"lab\", \"application_name\": \"rdlab\", \"message\": \"statement: CREATE TABLE audit_rdlab_mk_582bee7122 (id INTEGER)\"}",
+            "status": "ok"
+          },
+          "overhead": {
+            "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+            "workers": 8,
+            "seconds": 4,
+            "baseline": {
+              "qps": 23086,
+              "p50_ms": 0.32981000000000005,
+              "p99_ms": 0.6076105000000003,
+              "errors": 0
+            },
+            "full_logging": "ALTER SYSTEM SET log_min_duration_statement = 0 + pg_reload_conf() (every statement logged with its duration)",
+            "full": {
+              "qps": 21072,
+              "p50_ms": 0.362959,
+              "p99_ms": 0.6269809399999999,
+              "errors": 0
+            },
+            "log_bytes_written": 123106743,
+            "bytes_per_statement": 1460.6,
+            "overhead_pct": 8.7,
+            "status": "ok"
+          },
+          "container_logging": {
+            "rdlab-pg-primary": {
+              "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+              "options": {},
+              "pod": "rdlab-postgres/primary-5867494588-d255v"
+            },
+            "rdlab-pg-replica": {
+              "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+              "options": {},
+              "pod": "rdlab-postgres/replica-7fc79588f5-9sj4s"
+            },
+            "rdlab-pg-pgbouncer": {
+              "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+              "options": {},
+              "pod": "rdlab-postgres/pgbouncer-55c5b7df79-gkmc9"
+            },
+            "rdlab-pg-haproxy": {
+              "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+              "options": {},
+              "pod": "rdlab-postgres/haproxy-84bb9cf664-tt6jh"
+            }
+          },
+          "extra": {
+            "pg_stat_statements_top5": [
+              {
+                "calls": 1,
+                "total_ms": 3279.0,
+                "mean_ms": 3279.04,
+                "query": "COPY order_items (id, order_id, product_id, qty, unit_price) FROM STDIN (FORMAT csv, HEADE"
+              },
+              {
+                "calls": 221896,
+                "total_ms": 2902.2,
+                "mean_ms": 0.01,
+                "query": "SELECT id, name, email FROM customers WHERE id = $1"
+              },
+              {
+                "calls": 1,
+                "total_ms": 1853.2,
+                "mean_ms": 1853.21,
+                "query": "COPY events (id, customer_id, event_type, occurred_at, payload, value_num) FROM STDIN (FOR"
+              },
+              {
+                "calls": 355644,
+                "total_ms": 996.2,
+                "mean_ms": 0.0,
+                "query": "SELECT $2 FROM ONLY \"public\".\"categories\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY S"
+              },
+              {
+                "calls": 1,
+                "total_ms": 847.2,
+                "mean_ms": 847.17,
+                "query": "COPY public.events (id, customer_id, event_type, occurred_at, payload, value_num) FROM std"
+              }
+            ],
+            "log_dir_bytes": 123473078
+          },
+          "collected": [
+            "results-k3s/postgres/logs/pg-primary__var_lib_postgresql_log_postgresql-2026-09-14.json",
+            "results-k3s/postgres/logs/pg-primary__var_lib_postgresql_log_postgresql-2026-09-14.log",
+            "results-k3s/postgres/logs/pg-replica__var_lib_postgresql_log_postgresql-2026-09-14.json"
+          ],
+          "_seconds": 20.3
+        },
+        "replication": {
+          "kind": "physical streaming (async, slot)",
+          "topology": {
+            "primary": {
+              "role_reported": "primary",
+              "role_configured": "primary",
+              "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+              "status": {
+                "in_recovery": false,
+                "pg_stat_replication": [
+                  [
+                    "walreceiver",
+                    "10.42.0.48/32",
+                    "streaming",
+                    "async",
+                    0.0,
+                    0.00027,
+                    0.000576,
+                    0.000781
+                  ]
+                ],
+                "current_lsn": "0/B66DB08",
+                "synchronous_standby_names": "",
+                "synchronous_commit": "on"
+              }
+            },
+            "replica": {
+              "role_reported": "replica",
+              "role_configured": "replica",
+              "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+              "status": {
+                "in_recovery": true,
+                "wal_receiver": [
+                  "streaming",
+                  "primary",
+                  "0/B66DB08",
+                  "0/B66DB08",
+                  0.44616
+                ],
+                "last_replay_lsn": "0/B66DB08"
+              }
+            },
+            "pgbouncer": {
+              "role_reported": "primary",
+              "role_configured": "proxy",
+              "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+              "status": {
+                "in_recovery": false,
+                "pg_stat_replication": [
+                  [
+                    "walreceiver",
+                    "10.42.0.48/32",
+                    "streaming",
+                    "async",
+                    0.0,
+                    0.00027,
+                    0.000576,
+                    0.000781
+                  ]
+                ],
+                "current_lsn": "0/B66DB08",
+                "synchronous_standby_names": "",
+                "synchronous_commit": "on"
+              }
+            },
+            "haproxy-ro": {
+              "role_reported": "replica",
+              "role_configured": "proxy",
+              "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+              "status": {
+                "in_recovery": true,
+                "wal_receiver": [
+                  "streaming",
+                  "primary",
+                  "0/B66DB08",
+                  "0/B66DB08",
+                  0.506484
+                ],
+                "last_replay_lsn": "0/B66DB08"
+              }
+            }
+          },
+          "visibility_lag": {
+            "replica": {
+              "replica": "replica",
+              "n": 30,
+              "visible": 30,
+              "timeouts": 0,
+              "lag_ms": {
+                "n": 30,
+                "min": 0.42496598325669765,
+                "p50": 0.8977800025604665,
+                "p90": 3.2543961424380674,
+                "p95": 14.457238779868916,
+                "p99": 27.578940895618885,
+                "max": 32.00448502320796,
+                "mean": 2.937387469379852,
+                "stdev": 6.370183770056223
+              }
+            }
+          },
+          "write_rejection": {
+            "replica": {
+              "replica": "replica",
+              "writes_rejected": true,
+              "error_code": "25006",
+              "error": "ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction"
+            }
+          },
+          "lag_under_load": {
+            "rows": 20000,
+            "batch": 500,
+            "write_seconds": 0.67,
+            "rows_per_s": 30036,
+            "catchup_ms_after_last_commit": {
+              "replica": 3.6
+            }
+          },
+          "read_scaling": {
+            "primary_only": {
+              "targets": [
+                "primary"
+              ],
+              "workers": 32,
+              "queries": 205751,
+              "qps": 51438,
+              "errors": 0,
+              "latency_ms": {
+                "n": 205751,
+                "min": 0.246159,
+                "p50": 0.586002,
+                "p90": 0.862452,
+                "p95": 0.968751,
+                "p99": 1.250209,
+                "max": 7.206513,
+                "mean": 0.6205111877512138,
+                "stdev": 0.2069584577713848
+              }
+            },
+            "primary_plus_replicas": {
+              "targets": [
+                "primary",
+                "replica"
+              ],
+              "workers": 32,
+              "queries": 194017,
+              "qps": 48504,
+              "errors": 0,
+              "latency_ms": {
+                "n": 194017,
+                "min": 0.236697,
+                "p50": 0.606635,
+                "p90": 0.9602999999999998,
+                "p95": 1.1060673999999997,
+                "p99": 1.5071124399999978,
+                "max": 8.099579,
+                "mean": 0.65813792254287,
+                "stdev": 0.25827826703161433
+              }
+            },
+            "gain": 0.94
+          },
+          "failover": {
+            "kind": "physical streaming (async, slot)",
+            "killed": "primary",
+            "probe_table": "repl_probe",
+            "stopped_at": 0.0,
+            "write_error_after_kill": "ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction",
+            "promote_cmd": "pg_ctl promote -D /var/lib/postgresql/18/docker",
+            "promote_ms": 1024.0,
+            "write_attempts_until_success": 1,
+            "last_error_before_success": null,
+            "downtime_ms": 6407.9,
+            "new_primary": "replica",
+            "verified_via": "replica",
+            "new_primary_role": "primary",
+            "new_primary_status": {
+              "in_recovery": false,
+              "pg_stat_replication": [],
+              "current_lsn": "0/C001FB0",
+              "synchronous_standby_names": "",
+              "synchronous_commit": "on"
+            },
+            "old_primary_restart_error": "RuntimeError: no pod with rdlab.io/container=rdlab-pg-primary (is the stack deployed? kubectl get pod -A -l rdlab.io/container=rdlab-pg-primary)"
+          },
+          "_seconds": 23.6
+        }
+      }
+    }
+  }
+}

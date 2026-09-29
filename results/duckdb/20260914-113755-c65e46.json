@@ -1,0 +1,312 @@
+{
+  "engine": "duckdb",
+  "display": "DuckDB",
+  "category": "embedded analytical (columnar)",
+  "dialect": "duckdb",
+  "driver": "duckdb",
+  "image": "(embedded, python duckdb package)",
+  "run_id": "20260914-113755-c65e46",
+  "started": "2026-09-14T08:37:55+00:00",
+  "scale": 0.3,
+  "notes": "Embedded columnar/vectorised OLAP engine; single process (multiple cursors share one database handle), parallel query execution, no replication.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.07,
+          "rows_per_s": 88457,
+          "method": "read_csv",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 29254,
+          "method": "read_csv",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.07,
+          "rows_per_s": 21841,
+          "method": "read_csv",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 0.33,
+          "rows_per_s": 183648,
+          "method": "read_csv",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 0.75,
+          "rows_per_s": 197157,
+          "method": "read_csv",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 0.82,
+          "rows_per_s": 364006,
+          "method": "read_csv",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.04,
+          "rows_per_s": 146681,
+          "method": "read_csv",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR NOT NULL,\n  email VARCHAR NOT NULL,\n  country_code VARCHAR NOT NULL,\n  tier VARCHAR NOT NULL,\n  created_at TIMESTAMP NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR NOT NULL,\n  name VARCHAR NOT NULL,\n  description VARCHAR NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR NOT NULL,\n  ordered_at TIMESTAMP NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR NOT NULL,\n  occurred_at TIMESTAMP NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.02,
+      "load_seconds": 2.09,
+      "fts_setup": [
+        "INSTALL fts",
+        "LOAD fts",
+        "PRAGMA create_fts_index('products', 'id', 'description', overwrite = 1)"
+      ],
+      "after_load": [
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE"
+      ],
+      "post_seconds": 0.2,
+      "server_version": "DuckDB 1.5.5",
+      "_seconds": 2.3
+    },
+    "backup": {
+      "backup_dir": "data/duckdb/backups",
+      "strategies": {
+        "export_database": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "EXPORT DATABASE (FORMAT parquet) / IMPORT DATABASE",
+          "backup_seconds": 0.162,
+          "backup_bytes": 7586440,
+          "backup_mb": 7.2,
+          "restore_seconds": 1.99,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.81
+          },
+          "pitr": {},
+          "notes": "schema.sql + load.sql + one zstd parquet file per table: portable across DuckDB versions; IMPORT DATABASE replays it",
+          "error": null,
+          "steps": [
+            {
+              "name": "EXPORT DATABASE (parquet)",
+              "cmd": "EXPORT DATABASE '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/export-parquet' (FORMAT parquet, COMPRESSION zstd)",
+              "rc": 0,
+              "seconds": 0.16,
+              "out": ""
+            },
+            {
+              "name": "IMPORT DATABASE",
+              "cmd": "ATTACH '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/lab-import.duckdb' AS imp; USE imp; IMPORT DATABASE '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/export-parquet'; USE lab; DETACH imp",
+              "rc": 0,
+              "seconds": 1.99,
+              "out": ""
+            }
+          ],
+          "files": [
+            "categories.parquet",
+            "customers.parquet",
+            "events.parquet",
+            "fts_main_products_dict.parquet",
+            "fts_main_products_docs.parquet",
+            "fts_main_products_fields.parquet",
+            "fts_main_products_stats.parquet",
+            "fts_main_products_stopwords.parquet",
+            "fts_main_products_terms.parquet",
+            "inventory.parquet",
+            "load.sql",
+            "order_items.parquet"
+          ],
+          "seconds": 3.0,
+          "description": "portable parquet export replayed into a new file"
+        },
+        "copy_from_database": {
+          "status": "error",
+          "kind": "physical",
+          "tool": "ATTACH + COPY FROM DATABASE",
+          "backup_seconds": null,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "ConstraintException: Constraint Error: Violates foreign key constraint because key \"id: 86\" does not exist in the referenced table",
+          "steps": [
+            {
+              "name": "COPY FROM DATABASE",
+              "cmd": "ATTACH '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/lab-copy.duckdb' AS cp; COPY FROM DATABASE lab TO cp; DETACH cp",
+              "rc": 1,
+              "seconds": 0.01,
+              "out": "ConstraintException: Constraint Error: Violates foreign key constraint because key \"id: 86\" does not exist in the referenced table"
+            }
+          ],
+          "seconds": 0.0,
+          "description": "binary copy into a second .duckdb file"
+        }
+      },
+      "order": [
+        "export_database",
+        "copy_from_database"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 0.72,
+      "summary": {
+        "strategies": 2,
+        "ok": 1,
+        "verified": [
+          "export_database"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 3.7
+    },
+    "logging": {
+      "sink": "duckdb_logs() QueryLog (every statement; in-memory or CSV file storage)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "enable_logging": 1,
+        "logging_level": "INFO",
+        "logging_storage": "memory",
+        "enable_profiling": null,
+        "profiling_output": "",
+        "threads": 28,
+        "memory_limit": "100.5 GiB",
+        "duckdb_version": "v1.5.5"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "duckdb_logs() QueryLog (every statement; in-memory or CSV file storage)",
+        "slow_query_ms": 200.0,
+        "slow_logged": true,
+        "seen_after_s": 0.0,
+        "sample": "2026-09-14 11:38:01.323583+03 | QueryLog | INFO | SELECT COUNT(*) AS rdlab_mk_624108b4c3 FROM range(300000000)",
+        "note": "QueryLog has no duration threshold: every statement is logged",
+        "fast_logged": true
+      },
+      "audit": {
+        "mechanism": "QueryLog records every statement (DDL included)",
+        "setup": "QueryLog",
+        "event_found": true,
+        "seen_after_s": 0.0,
+        "sample": "2026-09-14 11:38:01.527177+03 | CREATE TABLE audit_rdlab_mk_0b54eb6b64 (id INTEGER)",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 1605,
+          "p50_ms": 3.83856,
+          "p99_ms": 17.318027999999998,
+          "errors": 0
+        },
+        "full_logging": "CALL enable_logging('QueryLog') vs CALL disable_logging() (workload threads share the database handle)",
+        "full": {
+          "qps": 1679,
+          "p50_ms": 3.7053215,
+          "p99_ms": 16.32991970000001,
+          "errors": 0
+        },
+        "log_bytes_written": 335859,
+        "bytes_per_statement": 50.0,
+        "overhead_pct": -4.6,
+        "status": "ok"
+      },
+      "container_logging": {},
+      "extra": {
+        "log_entries": 13157,
+        "exported": "results/duckdb/logs/duckdb_logs/duckdb_log_entries.csv"
+      },
+      "collected": [],
+      "_seconds": 9.8
+    }
+  },
+  "harness_log": "results/logs/duckdb/20260914-113755-c65e46.log",
+  "server_version": "DuckDB 1.5.5",
+  "finished": "2026-09-14T08:38:11+00:00"
+}

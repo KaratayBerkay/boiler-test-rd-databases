@@ -1,0 +1,4 @@
+1 | PRIMARY | <derived2> | ALL | None | None | None | None | 21623 | Using filesort
+1 | PRIMARY | <derived4> | ref | key0 | key0 | 5 | first_orders.customer_id | 10 | Using where
+2 | DERIVED | orders | ALL | None | None | None | None | 194613 | Using temporary; Using filesort
+4 | DERIVED | o | ALL | ix_orders_customer_id | None | None | None | 194613 | Using temporary; Using filesort

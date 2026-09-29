@@ -1,0 +1,20 @@
+{
+  "engine": "citus",
+  "display": "Citus 13 (PG 18) sharded, 5x2",
+  "category": "distributed SQL (sharded PostgreSQL)",
+  "dialect": "citus",
+  "driver": "psycopg",
+  "image": "citusdata/citus:latest",
+  "run_id": "20260913-000101-34f801",
+  "started": "2026-09-12T21:01:01+00:00",
+  "scale": 1.0,
+  "notes": "Citus coordinator + 5 worker primaries + 5 streaming replicas (registered as Citus secondary nodes), every PostgreSQL instance limited to 0.8 CPU / 1.5 GiB. Clients enter through HAProxy -> 3 PgBouncer instances (transaction pooling) -> coordinator. Tables are hash-distributed (customers/orders/events by customer_id, order_items by order_id, inventory by product_id); products and categories are reference tables. Manual worker failover = promote replica + citus_update_node().",
+  "phases": {
+    "load": {
+      "_error": "FeatureNotSupported: cannot create constraint on \"customers\" DETAIL: Distributed relations cannot have UNIQUE, EXCLUDE, or PRIMARY KEY constraints that do not include the partition column (with an equality operator if EXCLUDE).",
+      "_seconds": 0.1
+    }
+  },
+  "server_version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "finished": "2026-09-12T21:01:01+00:00"
+}

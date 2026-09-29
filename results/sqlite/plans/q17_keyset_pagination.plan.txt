@@ -1,0 +1,2 @@
+4 | 0 | 0 | SCAN orders
+23 | 0 | 0 | USE TEMP B-TREE FOR ORDER BY

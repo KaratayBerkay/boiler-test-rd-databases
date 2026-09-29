@@ -1,0 +1,24 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  ->  Distributed Subplan 57_1
+        ->  HashAggregate  (cost=500.00..502.50 rows=200 width=40)
+              Group Key: remote_scan.d
+              ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=40)
+                    Task Count: 32
+                    Tasks Shown: One of 32
+                    ->  Task
+                          Node: host=w1 port=5432 dbname=lab
+                          ->  HashAggregate  (cost=155.75..166.93 rows=745 width=40)
+                                Group Key: date_trunc('day'::text, ordered_at)
+                                ->  Seq Scan on orders_102042 orders  (cost=0.00..152.03 rows=745 width=14)
+                                      Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-04-01 00:00:00'::timestamp without time zone))
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=localhost port=5432 dbname=lab
+        ->  WindowAgg  (cost=60.01..92.33 rows=1000 width=104)
+              Window: w2 AS (ORDER BY intermediate_result.d)
+              ->  WindowAgg  (cost=59.85..77.33 rows=1000 width=72)
+                    Window: w1 AS (ORDER BY intermediate_result.d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+                    ->  Sort  (cost=59.83..62.33 rows=1000 width=40)
+                          Sort Key: intermediate_result.d
+                          ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..10.00 rows=1000 width=40)

@@ -1,0 +1,806 @@
+{
+  "engine": "citus",
+  "display": "Citus 13 (PG 18) sharded, 5x2",
+  "category": "distributed SQL (sharded PostgreSQL)",
+  "dialect": "citus",
+  "driver": "psycopg",
+  "image": "citusdata/citus:latest",
+  "run_id": "20260914-124857-d4de8a",
+  "started": "2026-09-14T09:48:57+00:00",
+  "scale": 1.0,
+  "notes": "Citus coordinator + 5 worker primaries + 5 streaming replicas (registered as Citus secondary nodes), every PostgreSQL instance limited to 0.8 CPU / 1.5 GiB. Clients enter through HAProxy -> 3 PgBouncer instances (transaction pooling) -> coordinator. Tables are hash-distributed on their primary keys (Citus needs PK/UNIQUE to contain the distribution column); products and categories are reference tables. Manual worker failover = promote replica + citus_update_node().",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.63,
+          "rows_per_s": 31923,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.02,
+          "rows_per_s": 11735,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.26,
+          "rows_per_s": 19046,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 1.64,
+          "rows_per_s": 122145,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 4.0,
+          "rows_per_s": 122046,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 7.03,
+          "rows_per_s": 142318,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.52,
+          "rows_per_s": 38161,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs JSONB,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSONB,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload JSONB,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)",
+        "SELECT create_reference_table('categories')",
+        "SELECT create_reference_table('products')",
+        "SELECT create_distributed_table('customers', 'id')",
+        "SELECT create_distributed_table('orders', 'id')",
+        "SELECT create_distributed_table('events', 'id')",
+        "SELECT create_distributed_table('order_items', 'id')",
+        "SELECT create_distributed_table('inventory', 'product_id')"
+      ],
+      "errors": [],
+      "schema_seconds": 0.4,
+      "load_seconds": 14.28,
+      "fts_setup": [
+        "CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description))"
+      ],
+      "after_load": [
+        "ANALYZE customers",
+        "ANALYZE categories",
+        "ANALYZE products",
+        "ANALYZE orders",
+        "ANALYZE order_items",
+        "ANALYZE events",
+        "ANALYZE inventory"
+      ],
+      "post_seconds": 4.11,
+      "server_version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+      "_seconds": 18.8
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "pg_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "pg_dump -Fd -j | pg_restore -j",
+          "backup_seconds": 4.29,
+          "backup_bytes": 34612984,
+          "backup_mb": 33.0,
+          "restore_seconds": 12.27,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 1.34
+          },
+          "pitr": {},
+          "notes": "logical backup of the whole cluster via the coordinator; the restore yields plain local tables (re-run create_distributed_table/create_reference_table to shard them again; Citus metadata is not in the dump)",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/dump",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "pg_dump -Fd (coordinator)",
+              "cmd": "pg_dump -U lab -d lab -Fd -j 2 --compress=zstd -f /backups/dump",
+              "rc": 0,
+              "seconds": 4.29,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": ""
+            },
+            {
+              "name": "pg_restore -j",
+              "cmd": "pg_restore -U lab -d lab_restore -j 2 --no-owner /backups/dump",
+              "rc": 0,
+              "seconds": 12.27,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 1.27,
+              "out": ""
+            }
+          ],
+          "restore_warnings": "",
+          "seconds": 19.4,
+          "description": "logical dump through the coordinator, restored into a second database"
+        },
+        "cluster_pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "pg_basebackup per node + citus_create_restore_point + recovery_target_name",
+          "backup_seconds": 12.75,
+          "backup_bytes": 591797540,
+          "backup_mb": 564.4,
+          "restore_seconds": 8.95,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 4.53
+          },
+          "pitr": {
+            "match": true,
+            "target": "recovery_target_name='rdlab_citus_pitr' on every node",
+            "probe_rows_at_restore_point": 1000,
+            "probe_rows_on_live_cluster_after_delete": 0,
+            "probe_rows_recovered": 1000,
+            "workers_reachable": true
+          },
+          "notes": "pg_basebackup of 6 primaries + per-node WAL archives; citus_create_restore_point gives one consistent recovery target; the 6 nodes restored to it on an isolated network reusing the node names, so pg_dist_node needs no edit",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare coordinator",
+              "cmd": "rm -rf /backups/coordinator && mkdir -p /backups/wal/coordinator",
+              "rc": 0,
+              "seconds": 0.09,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup coordinator",
+              "cmd": "pg_basebackup -U lab -D /backups/coordinator -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.75,
+              "out": ""
+            },
+            {
+              "name": "prepare w1",
+              "cmd": "rm -rf /backups/w1 && mkdir -p /backups/wal/w1",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w1",
+              "cmd": "pg_basebackup -U lab -D /backups/w1 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.7,
+              "out": ""
+            },
+            {
+              "name": "prepare w2",
+              "cmd": "rm -rf /backups/w2 && mkdir -p /backups/wal/w2",
+              "rc": 0,
+              "seconds": 0.07,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w2",
+              "cmd": "pg_basebackup -U lab -D /backups/w2 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.61,
+              "out": ""
+            },
+            {
+              "name": "prepare w3",
+              "cmd": "rm -rf /backups/w3 && mkdir -p /backups/wal/w3",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w3",
+              "cmd": "pg_basebackup -U lab -D /backups/w3 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 4.31,
+              "out": ""
+            },
+            {
+              "name": "prepare w4",
+              "cmd": "rm -rf /backups/w4 && mkdir -p /backups/wal/w4",
+              "rc": 0,
+              "seconds": 0.07,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w4",
+              "cmd": "pg_basebackup -U lab -D /backups/w4 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.76,
+              "out": ""
+            },
+            {
+              "name": "prepare w5",
+              "cmd": "rm -rf /backups/w5 && mkdir -p /backups/wal/w5",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup w5",
+              "cmd": "pg_basebackup -U lab -D /backups/w5 -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.62,
+              "out": ""
+            }
+          ],
+          "nodes": [
+            "coordinator",
+            "w1",
+            "w2",
+            "w3",
+            "w4",
+            "w5"
+          ],
+          "basebackups": {
+            "coordinator": {
+              "seconds": 1.75,
+              "bytes": 54577010
+            },
+            "w1": {
+              "seconds": 1.7,
+              "bytes": 112440346
+            },
+            "w2": {
+              "seconds": 1.61,
+              "bytes": 112399386
+            },
+            "w3": {
+              "seconds": 4.31,
+              "bytes": 104080510
+            },
+            "w4": {
+              "seconds": 1.76,
+              "bytes": 104309886
+            },
+            "w5": {
+              "seconds": 1.62,
+              "bytes": 103990402
+            }
+          },
+          "probe_shards_per_worker": {
+            "r1": 7,
+            "r2": 7,
+            "r3": 6,
+            "r4": 6,
+            "r5": 6,
+            "w1": 7,
+            "w2": 7,
+            "w3": 6,
+            "w4": 6,
+            "w5": 6
+          },
+          "restore_point": {
+            "name": "rdlab_citus_pitr",
+            "coordinator_lsn": "0/F045D50",
+            "seconds": 0.027
+          },
+          "wal_archive": {
+            "coordinator": {
+              "segment": "00000001000000000000000F",
+              "archived_after_s": 0.3,
+              "archived_count": 16,
+              "failed_count": 0
+            },
+            "w1": {
+              "segment": "00000001000000000000000B",
+              "archived_after_s": 0.3,
+              "archived_count": 13,
+              "failed_count": 0
+            },
+            "w2": {
+              "segment": "00000001000000000000000B",
+              "archived_after_s": 0.3,
+              "archived_count": 13,
+              "failed_count": 0
+            },
+            "w3": {
+              "segment": "00000001000000000000000A",
+              "archived_after_s": 0.3,
+              "archived_count": 12,
+              "failed_count": 0
+            },
+            "w4": {
+              "segment": "00000001000000000000000A",
+              "archived_after_s": 0.3,
+              "archived_count": 12,
+              "failed_count": 0
+            },
+            "w5": {
+              "segment": "00000001000000000000000A",
+              "archived_after_s": 0.3,
+              "archived_count": 12,
+              "failed_count": 0
+            }
+          },
+          "wal_archive_bytes": 1124077190,
+          "promoted_after_s": {
+            "coordinator": 0.14,
+            "w1": 0.14,
+            "w2": 0.14,
+            "w3": 0.14,
+            "w4": 0.15,
+            "w5": 0.78
+          },
+          "restored_pg_dist_node": [
+            [
+              "coordinator",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "w1",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r1",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w2",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r2",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w3",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r3",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w4",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r4",
+              "5432",
+              "secondary",
+              "True"
+            ],
+            [
+              "w5",
+              "5432",
+              "primary",
+              "True"
+            ],
+            [
+              "r5",
+              "5432",
+              "secondary",
+              "True"
+            ]
+          ],
+          "restored_worker_connectivity": {
+            "w1": true,
+            "w2": true,
+            "w3": true,
+            "w4": true,
+            "w5": true
+          },
+          "restored_shard_count": 406,
+          "restored_probe_rows_per_worker": {
+            "r1": 227,
+            "r2": 216,
+            "r3": 190,
+            "r4": 184,
+            "r5": 183,
+            "w1": 227,
+            "w2": 216,
+            "w3": 190,
+            "w4": 184,
+            "w5": 183
+          },
+          "scratch_log_tail": ": host=172.25.0.1 port=51302\n2026-09-14 09:50:10.689 UTC [87] lab@lab app=[unknown] LOG:  connection authenticated: user=\"lab\" method=trust (/var/lib/postgresql/18/docker/pg_hba.conf:130)\n2026-09-14 09:50:10.689 UTC [87] lab@lab app=[unknown] LOG:  connection authorized: user=lab database=lab application_name=rdlab\n2026-09-14 09:50:10.691 UTC [87] lab@lab app=rdlab LOG:  connection ready: setup total=4.454 ms, fork=1.017 ms, authentication=0.367 ms\n2026-09-14 09:50:10.731 UTC [87] lab@lab app=rdlab LOG:  disconnection: session time: 0:00:00.043 user=lab database=lab host=172.25.0.1 port=51302\n",
+          "seconds": 33.0,
+          "description": "cluster-consistent point-in-time recovery of coordinator and all workers, verified through the restored coordinator"
+        }
+      },
+      "order": [
+        "pg_dump",
+        "cluster_pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "c14c8d8d7120620e54c397dd"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "07e841680e53a9a4bb003312"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "d9f66ab3891c7e4923de5aed"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 4.67,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "pg_dump",
+          "cluster_pitr"
+        ],
+        "pitr_ok": [
+          "cluster_pitr"
+        ]
+      },
+      "_seconds": 57.2
+    },
+    "logging": {
+      "sink": "jsonlog file (logging_collector) via log_min_duration_statement",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "logging_collector": "on",
+        "log_destination": "stderr,jsonlog",
+        "log_directory": "/var/lib/postgresql/log",
+        "log_filename": "postgresql-%Y-%m-%d.log",
+        "log_rotation_size": "100MB",
+        "log_rotation_age": "1d",
+        "log_min_duration_statement": "100ms",
+        "log_min_duration_sample": "-1",
+        "log_statement_sample_rate": "1",
+        "log_statement": "none",
+        "log_lock_waits": "on",
+        "log_temp_files": "0",
+        "log_checkpoints": "on",
+        "log_connections": "all",
+        "log_disconnections": "on",
+        "log_autovacuum_min_duration": "1s",
+        "log_line_prefix": "%m [%p] %q%u@%d app=%a ",
+        "log_error_verbosity": "default",
+        "shared_preload_libraries": "citus,pg_stat_statements,auto_explain",
+        "auto_explain.log_min_duration": "500ms",
+        "auto_explain.log_format": "json",
+        "track_io_timing": "off",
+        "archive_mode": "on",
+        "summarize_wal": "off",
+        "log_files": [
+          "postgresql-2026-09-14.json",
+          "postgresql-2026-09-14.log"
+        ],
+        "current_logfile_json": "/var/lib/postgresql/log/postgresql-2026-09-14.json"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "jsonlog file (logging_collector) via log_min_duration_statement",
+        "slow_query_ms": 307.5,
+        "slow_logged": true,
+        "seen_after_s": 0.08,
+        "sample": "{\"timestamp\": \"2026-09-14 09:50:13.376 UTC\", \"user\": \"lab\", \"dbname\": \"lab\", \"application_name\": \"rdlab\", \"message\": \"duration: 303.197 ms  statement: SELECT pg_sleep(0.3) AS rdlab_mk_3388312410\", \"error_severity\": \"LOG\"}",
+        "duration_ms": 303.197,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "log_statement=ddl (pgaudit not bundled in the image)",
+        "setup": "log_statement=ddl",
+        "event_found": true,
+        "seen_after_s": 0.08,
+        "sample": "{\"timestamp\": \"2026-09-14 09:50:13.557 UTC\", \"user\": \"lab\", \"dbname\": \"lab\", \"application_name\": \"rdlab\", \"message\": \"statement: CREATE TABLE audit_rdlab_mk_eaa6deaeb7 (id INTEGER)\"}",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 2460,
+          "p50_ms": 0.7497615,
+          "p99_ms": 75.22552149000003,
+          "errors": 0
+        },
+        "full_logging": "ALTER SYSTEM SET log_min_duration_statement = 0 + pg_reload_conf() (every statement logged with its duration)",
+        "full": {
+          "qps": 1337,
+          "p50_ms": 1.280442,
+          "p99_ms": 81.16527000999999,
+          "errors": 0
+        },
+        "log_bytes_written": 7878514,
+        "bytes_per_statement": 1473.2,
+        "overhead_pct": 45.7,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-citus-coordinator": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6981,
+          "docker_logs_lines": 123
+        },
+        "rdlab-citus-haproxy": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 79,
+          "docker_logs_lines": 2
+        },
+        "rdlab-citus-w1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6910,
+          "docker_logs_lines": 122
+        },
+        "rdlab-citus-w2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6910,
+          "docker_logs_lines": 122
+        },
+        "rdlab-citus-w3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6981,
+          "docker_logs_lines": 123
+        },
+        "rdlab-citus-w4": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6981,
+          "docker_logs_lines": 123
+        },
+        "rdlab-citus-w5": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6910,
+          "docker_logs_lines": 122
+        },
+        "rdlab-citus-r1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1197,
+          "docker_logs_lines": 18
+        },
+        "rdlab-citus-r2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1197,
+          "docker_logs_lines": 18
+        },
+        "rdlab-citus-r3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1197,
+          "docker_logs_lines": 18
+        },
+        "rdlab-citus-r4": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1197,
+          "docker_logs_lines": 18
+        },
+        "rdlab-citus-r5": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1197,
+          "docker_logs_lines": 18
+        }
+      },
+      "extra": {
+        "pg_stat_statements_top5": [
+          {
+            "calls": 19488,
+            "total_ms": 48240.4,
+            "mean_ms": 2.48,
+            "query": "SELECT id, name, email FROM customers WHERE id = $1"
+          },
+          {
+            "calls": 1,
+            "total_ms": 7786.8,
+            "mean_ms": 7786.85,
+            "query": "COPY public.events (id, customer_id, event_type, occurred_at, payload, value_num) FROM std"
+          },
+          {
+            "calls": 1,
+            "total_ms": 6746.8,
+            "mean_ms": 6746.76,
+            "query": "COPY events (id, customer_id, event_type, occurred_at, payload, value_num) FROM STDIN (FOR"
+          },
+          {
+            "calls": 1,
+            "total_ms": 3454.2,
+            "mean_ms": 3454.2,
+            "query": "COPY order_items (id, order_id, product_id, qty, unit_price) FROM STDIN (FORMAT csv, HEADE"
+          },
+          {
+            "calls": 1,
+            "total_ms": 2808.1,
+            "mean_ms": 2808.07,
+            "query": "COPY public.events (id, customer_id, event_type, occurred_at, payload, value_num) TO stdou"
+          }
+        ],
+        "log_dir_bytes": 8249173
+      },
+      "collected": [
+        "results/citus/logs/citus-coordinator__var_lib_postgresql_log_postgresql-2026-09-14.json",
+        "results/citus/logs/citus-coordinator__var_lib_postgresql_log_postgresql-2026-09-14.log",
+        "results/citus/logs/citus-r1__var_lib_postgresql_log_postgresql-2026-09-14.json"
+      ],
+      "_seconds": 18.4
+    }
+  },
+  "harness_log": "results/logs/citus/20260914-124857-d4de8a.log",
+  "server_version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "finished": "2026-09-14T09:50:31+00:00"
+}

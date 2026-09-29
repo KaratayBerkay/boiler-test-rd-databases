@@ -1,0 +1,7 @@
+Count
+    Async Filter workers: 27
+      filter: month(ordered_at)=5
+        PageFrame
+            Row forward scan
+            Interval forward scan on: orders
+              intervals: [("2025-01-01T00:00:00.000000Z","2025-12-31T23:59:59.999999Z")]

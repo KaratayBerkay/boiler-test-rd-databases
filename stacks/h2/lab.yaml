@@ -1,0 +1,33 @@
+display: H2 2.x
+category: embedded / Java server
+dialect: h2
+driver: psycopg
+image: rdlab/h2:2.3.232 (eclipse-temurin:21-jre + h2 jar)
+project: rdlab-h2
+scale: 1
+notes: >-
+  H2 in server mode using its PostgreSQL-protocol emulation (MODE=PostgreSQL); accessed with psycopg. The PG emulation is
+  partial (no COPY, limited pg_catalog), so loading uses executemany. Single node; H2 has no replication (clustering mode is deprecated).
+docs:
+  - https://h2database.com/html/advanced.html#odbc_driver
+  - https://h2database.com/html/commands.html
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 15435
+    user: sa
+    password: sa
+    database: lab
+    container: rdlab-h2
+backup:
+  dir: /backups
+  volume: h2-backups
+  strategies: [backup_zip, script]
+logging:
+  slow_ms: 100
+features:
+  bulk_load: inline_multirow
+  prepare_statements: false
+  connection_storm: true

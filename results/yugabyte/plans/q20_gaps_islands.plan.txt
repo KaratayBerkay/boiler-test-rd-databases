@@ -1,0 +1,9 @@
+GroupAggregate  (cost=77576.49..81857.82 rows=498 width=12)
+  Group Key: w.customer_id
+  ->  Subquery Scan on w  (cost=77576.49..81850.33 rows=503 width=4)
+        Filter: (CASE WHEN ((w.prev_at IS NULL) OR (EXTRACT(epoch FROM (w.occurred_at - w.prev_at)) > '1800'::numeric)) THEN 1 ELSE 0 END = 1)
+        ->  WindowAgg  (cost=77576.49..79839.11 rows=100561 width=28)
+              ->  Sort  (cost=77576.49..77827.89 rows=100561 width=20)
+                    Sort Key: events.customer_id, events.occurred_at, events.id
+                    ->  Seq Scan on events  (cost=23.10..67156.02 rows=100561 width=20)
+                          Storage Filter: (customer_id <= 2000)

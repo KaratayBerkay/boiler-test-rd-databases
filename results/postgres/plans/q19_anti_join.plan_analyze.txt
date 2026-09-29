@@ -1,0 +1,20 @@
+Sort  (cost=2979.63..2979.64 rows=1 width=4) (actual time=56.873..56.877 rows=0.00 loops=1)
+  Sort Key: p.id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=1088
+  ->  Hash Right Join  (cost=177.75..2979.62 rows=1 width=4) (actual time=56.869..56.872 rows=0.00 loops=1)
+        Hash Cond: (oi.product_id = p.id)
+        Filter: (oi.id IS NULL)
+        Rows Removed by Filter: 147072
+        Buffers: shared hit=1088
+        ->  Seq Scan on order_items oi  (cost=0.00..2414.72 rows=147072 width=8) (actual time=0.009..17.883 rows=147072.00 loops=1)
+              Buffers: shared hit=944
+        ->  Hash  (cost=159.00..159.00 rows=1500 width=4) (actual time=0.671..0.673 rows=1500.00 loops=1)
+              Buckets: 2048  Batches: 1  Memory Usage: 69kB
+              Buffers: shared hit=144
+              ->  Seq Scan on products p  (cost=0.00..159.00 rows=1500 width=4) (actual time=0.007..0.377 rows=1500.00 loops=1)
+                    Buffers: shared hit=144
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.144 ms
+Execution Time: 56.902 ms

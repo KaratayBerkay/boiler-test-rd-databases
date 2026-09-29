@@ -1,0 +1,1028 @@
+{
+  "engine": "mariadb",
+  "display": "MariaDB 11",
+  "category": "row-store OLTP",
+  "dialect": "mariadb",
+  "driver": "pymysql",
+  "image": "mariadb:11",
+  "run_id": "20260912-221008-4a9b21",
+  "started": "2026-09-12T19:10:08+00:00",
+  "scale": 1.0,
+  "notes": "MariaDB 11.8 LTS. Replica configured by the official image (MARIADB_MASTER_HOST) using GTID slave_pos; MaxScale readwritesplit routes SELECTs to the replica and performs automatic failover (mariadbmon) when the primary dies.",
+  "phases": {
+    "capabilities": {
+      "materialized_view": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'MATERIALIZED VIEW mv_lab AS SELECT country_code, COUNT(*) AS n FROM customers...' at line 1\")",
+        "error_code": "1064",
+        "ms": 3.0
+      },
+      "partitioning": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 1.4
+      },
+      "generated_column": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 1.4
+      },
+      "identity": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 1.4
+      },
+      "returning": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 1.3
+      },
+      "sequence": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 1.4
+      },
+      "arrays": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '[1,2,3]' at line 1\")",
+        "error_code": "1064",
+        "ms": 1.3
+      },
+      "filter_clause": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '(WHERE status = 'delivered') FROM orders' at line 1\")",
+        "error_code": "1064",
+        "ms": 1.2
+      },
+      "distinct_on": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'ON (customer_id) customer_id, id FROM orders WHERE customer_id <= 20 ORDER BY...' at line 1\")",
+        "error_code": "1064",
+        "ms": 1.1
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near 'ROW_NUMBER() OVER (ORDER BY id) <= 5' at line 1\")",
+        "error_code": "1064",
+        "ms": 1.1
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "detail": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "ms": 1.5
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "1290",
+        "detail": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "ms": 1.3
+      },
+      "savepoint": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 1.7
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[('[{\"id\": 1, \"name\": \"Category 1\"},{\"id\": 2, \"name\": \"Category 2\"},{\"id\": 3, \"name\": \"Category 3\"}]',)]",
+        "ms": 2.2
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 1.5
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 1.3
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 1.2
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 4.0
+      },
+      "statement_timeout": {
+        "status": "supported",
+        "note": "expects error 1969",
+        "error_code": "1969",
+        "detail": "OperationalError: (1969, 'Query execution was interrupted (max_statement_time exceeded)')",
+        "ms": 202.4
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "system-versioned tables",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 2.0
+      },
+      "vector_type": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 1.7
+      },
+      "invisible_index": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": "1290",
+        "ms": 2.0
+      },
+      "_seconds": 0.2
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 FROM DUAL",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.24,
+          "p50": 0.275,
+          "p90": 0.407,
+          "p95": 0.492,
+          "p99": 0.509,
+          "max": 0.515,
+          "mean": 0.305,
+          "stdev": 0.076,
+          "first_ms": 0.341
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | None | None | None | None | None | None | None | No tables used",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.012153426\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"table\": {\n      \"message\": \"No tables used\"\n    }\n  }\n}"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.611,
+          "p50": 0.861,
+          "p90": 0.987,
+          "p95": 0.991,
+          "p99": 1.04,
+          "max": 1.058,
+          "mean": 0.851,
+          "stdev": 0.112,
+          "first_ms": 2.0
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | customers | const | PRIMARY | PRIMARY | 4 | const | 1 | ",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.075115669\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 0.003955217,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"customers\",\n          \"access_type\": \"const\",\n          \"possible_keys\": [\"PRIMARY\"],\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"ref\": [\"const\"],\n          \"r_loops\": 0,\n          \"rows\": 1,\n          \"r_rows\": null,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 2\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": null,\n          \"r_filtered\": null\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 55.705,
+          "p50": 58.125,
+          "p90": 62.354,
+          "p95": 62.74,
+          "p99": 63.049,
+          "max": 63.126,
+          "mean": 58.718,
+          "stdev": 2.22,
+          "first_ms": 94.068
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | ALL | None | None | None | None | 199640 | Using where; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.037244546\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 55.46868687,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 500,\n          \"filesort\": {\n            \"sort_key\": \"orders.ordered_at, orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 54.73090706,\n            \"r_limit\": 500,\n            \"r_used_priority_queue\": true,\n            \"r_output_rows\": 501,\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 37.02874005,\n              \"r_other_time_ms\": 18.42578985,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 1717\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 0.686,\n              \"attached_condition\": \"orders.ordered_at >= TIMESTAMP'2025-03-01 00:00:00' and orders.ordered_at < TIMESTAMP'2025-03-08 00:00:00' and orders.`status` = 'delivered'\",\n              \"r_filtered\": 0.686\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, DATE_FORMAT(o.ordered_at, '%Y-%m-01') AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_FORMAT(o.ordered_at, '%Y-%m-01') ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 409.426,
+          "p50": 412.596,
+          "p90": 416.365,
+          "p95": 420.323,
+          "p99": 423.489,
+          "max": 424.28,
+          "mean": 413.295,
+          "stdev": 4.063,
+          "first_ms": 428.266
+        },
+        "rows": 50,
+        "checksum": "15706fd152f91e4c81069483",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | o | ALL | PRIMARY,ix_orders_customer_id | None | None | None | 199640 | Using where; Using temporary; Using filesort\n1 | SIMPLE | c | eq_ref | PRIMARY | PRIMARY | 4 | lab.o.customer_id | 1 | \n1 | SIMPLE | oi | ref | ix_order_items_order_id | ix_order_items_order_id | 4 | lab.o.id | 2 | ",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.266121383\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 774.9232388,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 409.5594436,\n    \"filesort\": {\n      \"sort_key\": \"sum(oi.qty * oi.unit_price) desc, c.country_code, date_format(o.ordered_at,'%Y-%m-01')\",\n      \"r_loops\": 1,\n      \"r_total_time_ms\": 0.052858369,\n      \"r_limit\": 50,\n      \"r_used_priority_queue\": true,\n      \"r_output_rows\": 51,\n      \"r_sort_mode\": \"sort_key,rowid\",\n      \"temporary_table\": {\n        \"filesort\": {\n          \"sort_key\": \"c.country_code, date_format(o.ordered_at,'%Y-%m-01')\",\n          \"r_loops\": 1,\n          \"r_total_time_ms\": 59.37537758,\n          \"r_used_priority_queue\": false,\n          \"r_output_rows\": 84255,\n          \"r_sort_passes\": 1,\n          \"r_buffer_size\": \"2047KiB\",\n          \"r_sort_mode\": \"sort_key,rowid\",\n          \"temporary_table\": {\n            \"nested_loop\": [\n              {\n                \"table\": {\n                  \"table_name\": \"o\",\n                  \"access_type\": \"ALL\",\n                  \"possible_keys\": [\"PRIMARY\", \"ix_orders_customer_id\"],\n                  \"loops\": 1,\n                  \"r_loops\": 1,\n                  \"rows\": 199640,\n                  \"r_rows\": 200000,\n                  \"cost\": 33.1813076,\n                  \"r_table_time_ms\": 47.07979787,\n                  \"r_other_time_ms\": 27.59072755,\n                  \"r_engine_stats\": {\n                    \"pages_accessed\": 714\n                  },\n                  \"filtered\": 100,\n                  \"r_total_filtered\": 17.3395,\n                  \"attached_condition\": \"o.`status` = 'delivered' and o.ordered_at >= TIMESTAMP'2025-01-01 00:00:00' and o.ordered_at < TIMESTAMP'2025-07-01 00:00:00'\",\n                  \"r_filtered\": 17.3395\n                }\n              },\n              {\n                \"table\": {\n                  \"table_name\": \"c\",\n                  \"access_type\": \"eq_ref\",\n                  \"possible_keys\": [\"PRIMARY\"],\n                  \"key\": \"PRIMARY\",\n                  \"key_length\": \"4\",\n                  \"used_key_parts\": [\"id\"],\n                  \"ref\": [\"lab.o.customer_id\"],\n                  \"loops\": 199640,\n                  \"r_loops\": 34679,\n                  \"rows\": 1,\n                  \"r_rows\": 1,\n                  \"cost\": 178.6978928,\n                  \"r_table_time_ms\": 44.14271097,\n                  \"r_other_time_ms\": 3.817552347,\n                  \"r_engine_stats\": {\n                    \"pages_accessed\": 69839\n                  },\n                  \"filtered\": 100,\n                  \"r_total_filtered\": 100,\n                  \"r_filtered\": 100\n                }\n              },\n              {\n                \"table\": {\n                  \"table_name\": \"oi\",\n                  \"access_type\": \"ref\",\n                  \"possible_keys\": [\"ix_order_items_order_id\"],\n                  \"key\": \"ix_order_items_order_id\",\n                  \"key_length\": \"4\",\n                  \"used_key_parts\": [\"order_id\"],\n                  \"ref\": [\"lab.o.id\"],\n                  \"loops\": 199640,\n                  \"r_loops\": 34679,\n                  \"rows\": 2,\n                  \"r_rows\": 2.429568327,\n                  \"cost\": 563.0440384,\n                  \"r_table_time_ms\": 147.708936,\n                  \"r_other_time_ms\": 48.47060558,\n                  \"r_engine_stats\": {\n                    \"pages_accessed\": 322229\n                  },\n                  \"filtered\": 100,\n                  \"r_total_filtered\": 100,\n                  \"r_filtered\": 100\n                }\n              }\n            ]\n          }\n        }\n      }\n    }\n  }\n}"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 878.218,
+          "p50": 894.55,
+          "p90": 918.838,
+          "p95": 920.24,
+          "p99": 921.362,
+          "max": 921.643,
+          "mean": 897.41,
+          "stdev": 12.759,
+          "first_ms": 909.009
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | <derived2> | ALL | None | None | None | None | 473554 | Using where; Using filesort\n2 | DERIVED | p | index | PRIMARY | ix_products_category_id | 4 | None | 4882 | Using index; Using temporary\n2 | DERIVED | oi | ref | ix_order_items_product_id | ix_order_items_product_id | 4 | lab.p.id | 97 | ",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.094438345\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 416.7994539,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 895.5092069,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 600,\n          \"filesort\": {\n            \"sort_key\": \"t.category_id, t.rn\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 0.390377366,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 600,\n            \"r_buffer_size\": \"136KiB\",\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"<derived2>\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 473554,\n              \"r_rows\": 5000,\n              \"cost\": 95.50618699,\n              \"r_table_time_ms\": 0.226611037,\n              \"r_other_time_ms\": 1.247747705,\n              \"filtered\": 100,\n              \"r_total_filtered\": 12,\n              \"attached_condition\": \"t.rn <= 3\",\n              \"r_filtered\": 12,\n              \"materialized\": {\n                \"query_block\": {\n                  \"select_id\": 2,\n                  \"cost\": 476.5457937,\n                  \"r_loops\": 1,\n                  \"r_total_time_ms\": 895.0538768,\n                  \"window_functions_computation\": {\n                    \"sorts\": [\n                      {\n                        \"filesort\": {\n                          \"sort_key\": \"p.category_id, sum(oi.qty * oi.unit_price) desc, oi.product_id\",\n                          \"r_loops\": 1,\n                          \"r_total_time_ms\": 0.735841933,\n                          \"r_used_priority_queue\": false,\n                          \"r_output_rows\": 5000,\n                          \"r_buffer_size\": \"220KiB\",\n                          \"r_sort_mode\": \"sort_key,rowid\"\n                        }\n                      }\n                    ],\n                    \"temporary_table\": {\n                      \"nested_loop\": [\n                        {\n                          \"table\": {\n                            \"table_name\": \"p\",\n                            \"access_type\": \"index\",\n                            \"possible_keys\": [\"PRIMARY\"],\n                            \"key\": \"ix_products_category_id\",\n                            \"key_length\": \"4\",\n                            \"used_key_parts\": [\"category_id\"],\n                            \"loops\": 1,\n                            \"r_loops\": 1,\n                            \"rows\": 4882,\n                            \"r_rows\": 5000,\n                            \"cost\": 0.72532649,\n                            \"r_table_time_ms\": 1.422710445,\n                            \"r_other_time_ms\": 0.789065039,\n                            \"r_engine_stats\": {\n                              \"pages_accessed\": 6\n                            },\n                            \"filtered\": 100,\n                            \"r_total_filtered\": 100,\n                            \"r_filtered\": 100,\n                            \"using_index\": true\n                          }\n                        },\n                        {\n                          \"table\": {\n                            \"table_name\": \"oi\",\n                            \"access_type\": \"ref\",\n                            \"possible_keys\": [\"ix_order_items_product_id\"],\n                            \"key\": \"ix_order_items_product_id\",\n                            \"key_length\": \"4\",\n                            \"used_key_parts\": [\"product_id\"],\n                            \"ref\": [\"lab.p.id\"],\n                            \"loops\": 4882,\n                            \"r_loops\": 5000,\n                            \"rows\": 97,\n                            \"r_rows\": 97.5212,\n                            \"cost\": 475.8204672,\n                            \"r_table_time_ms\": 729.3896227,\n                            \"r_other_time_ms\": 161.12402,\n                            \"r_engine_stats\": {\n                              \"pages_accessed\": 1473375\n                            },\n                            \"filtered\": 100,\n                            \"r_total_filtered\": 100,\n                            \"r_filtered\": 100\n                          }\n                        }\n                      ]\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE(ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE(ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 64.518,
+          "p50": 66.153,
+          "p90": 67.152,
+          "p95": 67.275,
+          "p99": 67.373,
+          "max": 67.398,
+          "mean": 66.115,
+          "stdev": 0.857,
+          "first_ms": 64.404
+        },
+        "rows": 90,
+        "checksum": "39f1b6619fae5745061db2c7",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | <derived2> | ALL | None | None | None | None | 199640 | Using temporary; Using filesort\n2 | DERIVED | orders | ALL | None | None | None | None | 199640 | Using where; Using temporary; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.077169404\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 143.7082015,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 65.46747525,\n    \"filesort\": {\n      \"sort_key\": \"s.d\",\n      \"r_loops\": 1,\n      \"r_total_time_ms\": 0.007758601,\n      \"r_used_priority_queue\": false,\n      \"r_output_rows\": 90,\n      \"r_buffer_size\": \"1KiB\",\n      \"r_sort_mode\": \"sort_key,rowid\",\n      \"window_functions_computation\": {\n        \"sorts\": [\n          {\n            \"filesort\": {\n              \"sort_key\": \"s.d\",\n              \"r_loops\": 1,\n              \"r_total_time_ms\": 0.009122599,\n              \"r_used_priority_queue\": false,\n              \"r_output_rows\": 90,\n              \"r_buffer_size\": \"1KiB\",\n              \"r_sort_mode\": \"sort_key,rowid\"\n            }\n          }\n        ],\n        \"temporary_table\": {\n          \"nested_loop\": [\n            {\n              \"table\": {\n                \"table_name\": \"<derived2>\",\n                \"access_type\": \"ALL\",\n                \"loops\": 1,\n                \"r_loops\": 1,\n                \"rows\": 199640,\n                \"r_rows\": 90,\n                \"cost\": 8.930833544,\n                \"r_table_time_ms\": 0.004541222,\n                \"r_other_time_ms\": 0.077367667,\n                \"filtered\": 100,\n                \"r_total_filtered\": 100,\n                \"r_filtered\": 100,\n                \"materialized\": {\n                  \"query_block\": {\n                    \"select_id\": 2,\n                    \"cost\": 167.9586756,\n                    \"r_loops\": 1,\n                    \"r_total_time_ms\": 65.30996298,\n                    \"filesort\": {\n                      \"sort_key\": \"cast(orders.ordered_at as date)\",\n                      \"r_loops\": 1,\n                      \"r_total_time_ms\": 0.020216532,\n                      \"r_used_priority_queue\": false,\n                      \"r_output_rows\": 90,\n                      \"r_buffer_size\": \"1KiB\",\n                      \"r_sort_mode\": \"sort_key,rowid\",\n                      \"temporary_table\": {\n                        \"nested_loop\": [\n                          {\n                            \"table\": {\n                              \"table_name\": \"orders\",\n                              \"access_type\": \"ALL\",\n                              \"loops\": 1,\n                              \"r_loops\": 1,\n                              \"rows\": 199640,\n                              \"r_rows\": 200000,\n                              \"cost\": 33.1813076,\n                              \"r_table_time_ms\": 36.49336147,\n                              \"r_other_time_ms\": 28.75677257,\n                              \"r_engine_stats\": {\n                                \"pages_accessed\": 714\n                              },\n                              \"filtered\": 100,\n                              \"r_total_filtered\": 12.467,\n                              \"attached_condition\": \"orders.ordered_at >= TIMESTAMP'2025-01-01 00:00:00' and orders.ordered_at < TIMESTAMP'2025-04-01 00:00:00'\",\n                              \"r_filtered\": 12.467\n                            }\n                          }\n                        ]\n                      }\n                    }\n                  }\n                }\n              }\n            }\n          ]\n        }\n      }\n    }\n  }\n}"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS CHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(CONCAT(t.path, ' > ', c.name) AS CHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.335,
+          "p50": 4.445,
+          "p90": 4.541,
+          "p95": 4.627,
+          "p99": 4.696,
+          "max": 4.713,
+          "mean": 4.461,
+          "stdev": 0.099,
+          "first_ms": 4.528
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | <derived2> | ALL | None | None | None | None | 200 | Using filesort\n2 | DERIVED | categories | ALL | None | None | None | None | 200 | Using where\n3 | RECURSIVE UNION | c | ALL | None | None | None | None | 200 | Using where\n3 | RECURSIVE UNION | <derived2> | ref | key0 | key0 | 5 | lab.c.parent_id | 10 | \nNone | UNION RESULT | <union2,3> | ALL | None | None | None | None | None | ",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.128711877\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.148571927,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 1.225839665,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 200,\n          \"filesort\": {\n            \"sort_key\": \"tree.`path`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 0.2524195,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 200,\n            \"r_buffer_size\": \"213KiB\",\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"<derived2>\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 200,\n              \"r_rows\": 200,\n              \"cost\": 0.01893692,\n              \"r_table_time_ms\": 0.061513335,\n              \"r_other_time_ms\": 0.284154933,\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100,\n              \"materialized\": {\n                \"query_block\": {\n                  \"recursive_union\": {\n                    \"table_name\": \"<union2,3>\",\n                    \"access_type\": \"ALL\",\n                    \"r_loops\": 0,\n                    \"r_rows\": null,\n                    \"query_specifications\": [\n                      {\n                        \"query_block\": {\n                          \"select_id\": 2,\n                          \"cost\": 0.0434548,\n                          \"r_loops\": 1,\n                          \"r_total_time_ms\": 0.085132541,\n                          \"nested_loop\": [\n                            {\n                              \"table\": {\n                                \"table_name\": \"categories\",\n                                \"access_type\": \"ALL\",\n                                \"loops\": 1,\n                                \"r_loops\": 1,\n                                \"rows\": 200,\n                                \"r_rows\": 200,\n                                \"cost\": 0.0434548,\n                                \"r_table_time_ms\": 0.058682443,\n                                \"r_other_time_ms\": 0.023344818,\n                                \"r_engine_stats\": {\n                                  \"pages_accessed\": 1\n                                },\n                                \"filtered\": 100,\n                                \"r_total_filtered\": 5,\n                                \"attached_condition\": \"categories.parent_id is null\",\n                                \"r_filtered\": 5\n                              }\n                            }\n                          ]\n                        }\n                      },\n                      {\n                        \"query_block\": {\n                          \"select_id\": 3,\n                          \"operation\": \"UNION\",\n                          \"cost\": 0.2990968,\n                          \"r_loops\": 4,\n                          \"r_total_time_ms\": 0.700413124,\n                          \"nested_loop\": [\n                            {\n                              \"table\": {\n                                \"table_name\": \"c\",\n                                \"access_type\": \"ALL\",\n                                \"loops\": 1,\n                                \"r_loops\": 4,\n                                \"rows\": 200,\n                                \"r_rows\": 200,\n                                \"cost\": 0.0434548,\n                                \"r_table_time_ms\": 0.277758657,\n                                \"r_other_time_ms\": 0.08868956,\n                                \"r_engine_stats\": {\n                                  \"pages_accessed\": 4\n                                },\n                                \"filtered\": 100,\n                                \"r_total_filtered\": 95,\n                                \"attached_condition\": \"c.parent_id is not null\",\n                                \"r_filtered\": 95\n                              }\n                            },\n                            {\n                              \"table\": {\n                                \"table_name\": \"<derived2>\",\n                                \"access_type\": \"ref\",\n                                \"possible_keys\": [\"key0\"],\n                                \"key\": \"key0\",\n                                \"key_length\": \"5\",\n                                \"used_key_parts\": [\"id\"],\n                                \"ref\": [\"lab.c.parent_id\"],\n                                \"loops\": 200,\n                                \"r_loops\": 760,\n                                \"rows\": 10,\n                                \"r_rows\": 0.25,\n                                \"cost\": 0.255642,\n                                \"r_table_time_ms\": 0.149113704,\n                                \"r_other_time_ms\": 0.257080767,\n                                \"filtered\": 100,\n                                \"r_total_filtered\": 100,\n                                \"r_filtered\": 100\n                              }\n                            }\n                          ]\n                        }\n                      }\n                    ]\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_FORMAT(first_at, '%Y-%m-01') AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_FORMAT(o.ordered_at, '%Y-%m-01') AS m FROM orders o GROUP BY o.customer_id, DATE_FORMAT(o.ordered_at, '%Y-%m-01')) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 633.178,
+          "p50": 638.073,
+          "p90": 647.27,
+          "p95": 648.295,
+          "p99": 649.114,
+          "max": 649.319,
+          "mean": 640.248,
+          "stdev": 5.572,
+          "first_ms": 642.719
+        },
+        "rows": 22,
+        "checksum": "1cc7de9f356629a89218cf95",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | <derived2> | ALL | None | None | None | None | 19964 | Using filesort\n1 | PRIMARY | <derived4> | ref | key0 | key0 | 5 | first_orders.customer_id | 10 | Using where\n2 | DERIVED | orders | ALL | None | None | None | None | 199640 | Using temporary; Using filesort\n4 | DERIVED | o | ALL | ix_orders_customer_id | None | None | None | 199640 | Using temporary; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.135346988\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 299.5176716,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 643.0411769,\n    \"const_condition\": \"1\",\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 20000,\n          \"filesort\": {\n            \"sort_key\": \"date_format(first_orders.first_at,'%Y-%m-01')\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 15.5015528,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 20000,\n            \"r_sort_passes\": 1,\n            \"r_buffer_size\": \"2047KiB\",\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"<derived2>\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 19964,\n              \"r_rows\": 20000,\n              \"cost\": 0.902083354,\n              \"r_table_time_ms\": 1.500447449,\n              \"r_other_time_ms\": 19.44290939,\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100,\n              \"materialized\": {\n                \"query_block\": {\n                  \"select_id\": 2,\n                  \"cost\": 167.9586756,\n                  \"r_loops\": 1,\n                  \"r_total_time_ms\": 118.6493115,\n                  \"filesort\": {\n                    \"sort_key\": \"orders.customer_id\",\n                    \"r_loops\": 1,\n                    \"r_total_time_ms\": 1.96959036,\n                    \"r_used_priority_queue\": false,\n                    \"r_output_rows\": 20000,\n                    \"r_buffer_size\": \"390KiB\",\n                    \"r_sort_mode\": \"sort_key,rowid\",\n                    \"temporary_table\": {\n                      \"nested_loop\": [\n                        {\n                          \"table\": {\n                            \"table_name\": \"orders\",\n                            \"access_type\": \"ALL\",\n                            \"loops\": 1,\n                            \"r_loops\": 1,\n                            \"rows\": 199640,\n                            \"r_rows\": 200000,\n                            \"cost\": 33.1813076,\n                            \"r_table_time_ms\": 38.82809085,\n                            \"r_other_time_ms\": 74.77961681,\n                            \"r_engine_stats\": {\n                              \"pages_accessed\": 714\n                            },\n                            \"filtered\": 100,\n                            \"r_total_filtered\": 100,\n                            \"r_filtered\": 100\n                          }\n                        }\n                      ]\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      },\n      {\n        \"table\": {\n          \"table_name\": \"<derived4>\",\n          \"access_type\": \"ref\",\n          \"possible_keys\": [\"key0\"],\n          \"key\": \"key0\",\n          \"key_length\": \"5\",\n          \"used_key_parts\": [\"customer_id\"],\n          \"ref\": [\"first_orders.customer_id\"],\n          \"loops\": 19964,\n          \"r_loops\": 20000,\n          \"rows\": 10,\n          \"r_rows\": 8.1809,\n          \"cost\": 163.8382203,\n          \"r_table_time_ms\": 40.78978708,\n          \"r_other_time_ms\": 147.1410812,\n          \"filtered\": 100,\n          \"r_total_filtered\": 87.77640602,\n          \"attached_condition\": \"trigcond(a.m > date_format(first_orders.first_at,'%Y-%m-01'))\",\n          \"r_filtered\": 87.77640602,\n          \"materialized\": {\n            \"query_block\": {\n              \"select_id\": 4,\n              \"cost\": 0.026140704,\n              \"r_loops\": 1,\n              \"r_total_time_ms\": 369.9953996,\n              \"filesort\": {\n                \"sort_key\": \"o.customer_id, date_format(o.ordered_at,'%Y-%m-01')\",\n                \"r_loops\": 1,\n                \"r_total_time_ms\": 90.36912384,\n                \"r_used_priority_queue\": false,\n                \"r_output_rows\": 163618,\n                \"r_sort_passes\": 1,\n                \"r_buffer_size\": \"2047KiB\",\n                \"r_sort_mode\": \"sort_key,rowid\",\n                \"temporary_table\": {\n                  \"nested_loop\": [\n                    {\n                      \"table\": {\n                        \"table_name\": \"o\",\n                        \"access_type\": \"ALL\",\n                        \"possible_keys\": [\"ix_orders_customer_id\"],\n                        \"loops\": 1,\n                        \"r_loops\": 1,\n                        \"rows\": 199640,\n                        \"r_rows\": 200000,\n                        \"cost\": 33.1813076,\n                        \"r_table_time_ms\": 38.34718769,\n                        \"r_other_time_ms\": 189.7868909,\n                        \"r_engine_stats\": {\n                          \"pages_accessed\": 714\n                        },\n                        \"filtered\": 100,\n                        \"r_total_filtered\": 100,\n                        \"r_filtered\": 100\n                      }\n                    }\n                  ]\n                }\n              }\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 262.773,
+          "p50": 268.259,
+          "p90": 269.801,
+          "p95": 271.075,
+          "p99": 272.094,
+          "max": 272.349,
+          "mean": 267.644,
+          "stdev": 2.59,
+          "first_ms": 275.878
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | c | index | PRIMARY | PRIMARY | 4 | None | 200 | Using where\n1 | PRIMARY | <subquery2> | eq_ref | distinct_key | distinct_key | 4 | func | 1 | \n2 | MATERIALIZED | o | ALL | ix_orders_customer_id | None | None | None | 199640 | Using where\n3 | MATERIALIZED | e | ALL | ix_events_customer_id | None | None | None | 1042267 | Using where",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.124199097\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 73.48629159,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 278.0908475,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"c\",\n          \"access_type\": \"index\",\n          \"possible_keys\": [\"PRIMARY\"],\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 19972,\n          \"r_rows\": 549,\n          \"cost\": 3.77736194,\n          \"r_table_time_ms\": 0.14969469,\n          \"r_other_time_ms\": 0.317889307,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 6\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 62.29508197,\n          \"attached_condition\": \"!<in_optimizer>(c.`id`,c.`id` in (subquery#3))\",\n          \"r_filtered\": 62.29508197\n        }\n      },\n      {\n        \"table\": {\n          \"table_name\": \"<subquery2>\",\n          \"access_type\": \"eq_ref\",\n          \"possible_keys\": [\"distinct_key\"],\n          \"key\": \"distinct_key\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"customer_id\"],\n          \"ref\": [\"func\"],\n          \"r_loops\": 342,\n          \"r_table_loops\": 16945,\n          \"rows\": 1,\n          \"r_rows\": 0.584795322,\n          \"r_table_time_ms\": 2.682895585,\n          \"r_other_time_ms\": 0.351995528,\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"r_filtered\": 100,\n          \"materialized\": {\n            \"unique\": 1,\n            \"query_block\": {\n              \"select_id\": 2,\n              \"nested_loop\": [\n                {\n                  \"table\": {\n                    \"table_name\": \"o\",\n                    \"access_type\": \"ALL\",\n                    \"possible_keys\": [\"ix_orders_customer_id\"],\n                    \"loops\": 1,\n                    \"r_loops\": 1,\n                    \"rows\": 199640,\n                    \"r_rows\": 200000,\n                    \"cost\": 33.1813076,\n                    \"r_table_time_ms\": 41.39619018,\n                    \"r_other_time_ms\": 11.73400492,\n                    \"r_engine_stats\": {\n                      \"pages_accessed\": 714\n                    },\n                    \"filtered\": 100,\n                    \"r_total_filtered\": 8.3015,\n                    \"attached_condition\": \"o.ordered_at >= TIMESTAMP'2025-11-01 00:00:00'\",\n                    \"r_filtered\": 8.3015\n                  }\n                }\n              ]\n            }\n          }\n        }\n      }\n    ],\n    \"subqueries\": [\n      {\n        \"materialization\": {\n          \"r_strategy\": \"index_lookup\",\n          \"r_loops\": 549,\n          \"query_block\": {\n            \"select_id\": 3,\n            \"cost\": 0.09771584,\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 221.4382305,\n            \"nested_loop\": [\n              {\n                \"table\": {\n                  \"table_name\": \"e\",\n                  \"access_type\": \"ALL\",\n                  \"possible_keys\": [\"ix_events_customer_id\"],\n                  \"loops\": 1,\n                  \"r_loops\": 1,\n                  \"rows\": 1042267,\n                  \"r_rows\": 1000000,\n                  \"cost\": 175.6796786,\n                  \"r_table_time_ms\": 165.7173078,\n                  \"r_other_time_ms\": 55.71908693,\n                  \"r_engine_stats\": {\n                    \"pages_accessed\": 6633\n                  },\n                  \"filtered\": 100,\n                  \"r_total_filtered\": 1.0008,\n                  \"attached_condition\": \"e.event_type = 'churn'\",\n                  \"r_filtered\": 1.0008\n                }\n              }\n            ]\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.77,
+          "p50": 14.349,
+          "p90": 14.885,
+          "p95": 14.979,
+          "p99": 15.054,
+          "max": 15.073,
+          "mean": 14.059,
+          "stdev": 1.148,
+          "first_ms": 14.58
+        },
+        "rows": 500,
+        "checksum": "6bc68625c58e84ac582dbee2",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | p | index | None | PRIMARY | 4 | None | 500 | Using where\n2 | DEPENDENT SUBQUERY | p2 | ref | ix_products_category_id | ix_products_category_id | 4 | lab.p.category_id | 24 | ",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.05375808\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.998096,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 6.206623296,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 593,\n          \"cost\": 0.998096,\n          \"r_table_time_ms\": 0.16314268,\n          \"r_other_time_ms\": 0.237077138,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 20\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 84.31703204,\n          \"attached_condition\": \"p.active = 1\",\n          \"r_filtered\": 84.31703204\n        }\n      }\n    ],\n    \"subqueries\": [\n      {\n        \"subquery_cache\": {\n          \"r_loops\": 500,\n          \"r_hit_ratio\": 64,\n          \"query_block\": {\n            \"select_id\": 2,\n            \"cost\": 0.04514928,\n            \"r_loops\": 180,\n            \"r_total_time_ms\": 5.65236332,\n            \"nested_loop\": [\n              {\n                \"table\": {\n                  \"table_name\": \"p2\",\n                  \"access_type\": \"ref\",\n                  \"possible_keys\": [\"ix_products_category_id\"],\n                  \"key\": \"ix_products_category_id\",\n                  \"key_length\": \"4\",\n                  \"used_key_parts\": [\"category_id\"],\n                  \"ref\": [\"lab.p.category_id\"],\n                  \"loops\": 1,\n                  \"r_loops\": 180,\n                  \"rows\": 24,\n                  \"r_rows\": 25.36666667,\n                  \"cost\": 0.04514928,\n                  \"r_table_time_ms\": 4.897361002,\n                  \"r_other_time_ms\": 0.651013479,\n                  \"r_engine_stats\": {\n                    \"pages_accessed\": 9496\n                  },\n                  \"filtered\": 100,\n                  \"r_total_filtered\": 100,\n                  \"r_filtered\": 100\n                }\n              }\n            ]\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "Unsupported: mariadb: no syntax for cross_lateral"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 5.784,
+          "p50": 5.871,
+          "p90": 6.032,
+          "p95": 6.125,
+          "p99": 6.2,
+          "max": 6.219,
+          "mean": 5.898,
+          "stdev": 0.126,
+          "first_ms": 6.33
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | <derived2> | ALL | None | None | None | None | 998 | Using where; Using filesort\n2 | DERIVED | orders | range | ix_orders_customer_id | ix_orders_customer_id | 4 | None | 998 | Using index condition; Using temporary",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.078089193\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.707717924,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 2.247663979,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 300,\n          \"filesort\": {\n            \"sort_key\": \"t.customer_id, t.ordered_at desc\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 0.066094293,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 300,\n            \"r_buffer_size\": \"29KiB\",\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"<derived2>\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 998,\n              \"r_rows\": 998,\n              \"cost\": 0.054595231,\n              \"r_table_time_ms\": 0.043171098,\n              \"r_other_time_ms\": 0.32271412,\n              \"filtered\": 100,\n              \"r_total_filtered\": 30.06012024,\n              \"attached_condition\": \"t.rn <= 3\",\n              \"r_filtered\": 30.06012024,\n              \"materialized\": {\n                \"query_block\": {\n                  \"select_id\": 2,\n                  \"cost\": 1.59764056,\n                  \"r_loops\": 1,\n                  \"r_total_time_ms\": 2.155544556,\n                  \"window_functions_computation\": {\n                    \"sorts\": [\n                      {\n                        \"filesort\": {\n                          \"sort_key\": \"orders.customer_id, orders.ordered_at desc, orders.`id` desc\",\n                          \"r_loops\": 1,\n                          \"r_total_time_ms\": 0.15439653,\n                          \"r_used_priority_queue\": false,\n                          \"r_output_rows\": 998,\n                          \"r_buffer_size\": \"34KiB\",\n                          \"r_sort_mode\": \"sort_key,rowid\"\n                        }\n                      }\n                    ],\n                    \"temporary_table\": {\n                      \"nested_loop\": [\n                        {\n                          \"table\": {\n                            \"table_name\": \"orders\",\n                            \"access_type\": \"range\",\n                            \"possible_keys\": [\"ix_orders_customer_id\"],\n                            \"key\": \"ix_orders_customer_id\",\n                            \"key_length\": \"4\",\n                            \"used_key_parts\": [\"customer_id\"],\n                            \"loops\": 1,\n                            \"r_loops\": 1,\n                            \"rows\": 998,\n                            \"r_index_rows\": 998,\n                            \"r_rows\": 998,\n                            \"cost\": 1.59764056,\n                            \"r_table_time_ms\": 1.346564562,\n                            \"r_other_time_ms\": 0.242869423,\n                            \"r_engine_stats\": {\n                              \"pages_accessed\": 2002\n                            },\n                            \"filtered\": 100,\n                            \"r_total_filtered\": 100,\n                            \"index_condition\": \"orders.customer_id <= 100\",\n                            \"r_icp_filtered\": 100,\n                            \"r_filtered\": 100\n                          }\n                        }\n                      ]\n                    }\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY shipping_country, status WITH ROLLUP",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 84.283,
+          "p50": 85.424,
+          "p90": 86.522,
+          "p95": 86.856,
+          "p99": 87.124,
+          "max": 87.19,
+          "mean": 85.593,
+          "stdev": 0.797,
+          "first_ms": 86.571
+        },
+        "rows": 79,
+        "checksum": "36792a55606ee54971e90f0e",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | ALL | None | None | None | None | 199640 | Using where; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.036820414\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 167.9586756,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 87.52169606,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 25268,\n          \"filesort\": {\n            \"sort_key\": \"orders.shipping_country, orders.`status`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 78.02649143,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 25268,\n            \"r_sort_passes\": 1,\n            \"r_buffer_size\": \"2047KiB\",\n            \"r_sort_mode\": \"sort_key,packed_addon_fields\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 43.84049572,\n              \"r_other_time_ms\": 34.18053219,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 714\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 12.634,\n              \"attached_condition\": \"orders.ordered_at >= TIMESTAMP'2025-06-01 00:00:00' and orders.ordered_at < TIMESTAMP'2025-09-01 00:00:00'\",\n              \"r_filtered\": 12.634\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE JSON_UNQUOTE(JSON_EXTRACT(attrs, '$.color')) = 'red' AND CAST(JSON_EXTRACT(attrs, '$.weight') AS DECIMAL(12,2)) > 10 ORDER BY id LIMIT 100",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.656,
+          "p50": 2.716,
+          "p90": 2.782,
+          "p95": 2.782,
+          "p99": 2.782,
+          "max": 2.782,
+          "mean": 2.721,
+          "stdev": 0.046,
+          "first_ms": 2.706
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | products | index | None | PRIMARY | 4 | None | 100 | Using where",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.037386341\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.998096,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 1.556940218,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"products\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 928,\n          \"cost\": 0.998096,\n          \"r_table_time_ms\": 0.485116451,\n          \"r_other_time_ms\": 1.069541235,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 30\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 10.77586207,\n          \"attached_condition\": \"json_unquote(json_extract(products.attrs,'$.color')) = 'red' and cast(json_extract(products.attrs,'$.weight') as decimal(12,2)) > 10\",\n          \"r_filtered\": 10.77586207\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE MATCH(description) AGAINST('bluetooth waterproof' IN NATURAL LANGUAGE MODE) ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 6.431,
+          "p50": 6.821,
+          "p90": 6.86,
+          "p95": 6.86,
+          "p99": 6.861,
+          "max": 6.861,
+          "mean": 6.768,
+          "stdev": 0.125,
+          "first_ms": 7.276
+        },
+        "rows": 50,
+        "checksum": "fac90c1b3c4c577a1a28c703",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | products | fulltext | ft_products_description | ft_products_description | 0 |  | 1 | Using where; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 1.451345198\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.00009287,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 4.359051979,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 50,\n          \"filesort\": {\n            \"sort_key\": \"products.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 4.30083926,\n            \"r_limit\": 50,\n            \"r_used_priority_queue\": true,\n            \"r_output_rows\": 51,\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"products\",\n              \"access_type\": \"fulltext\",\n              \"possible_keys\": [\"ft_products_description\"],\n              \"key\": \"ft_products_description\",\n              \"key_length\": \"0\",\n              \"used_key_parts\": [\"description\"],\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 1,\n              \"r_rows\": 2020,\n              \"cost\": 0.00009287,\n              \"r_table_time_ms\": 0.045889891,\n              \"r_other_time_ms\": 0.006059145,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 8182\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"attached_condition\": \"(match products.description against ('bluetooth waterproof'))\",\n              \"r_filtered\": 100\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO inventory (product_id, warehouse_id, qty, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE qty = qty + VALUES(qty), updated_at = CURRENT_TIMESTAMP",
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 78.009,
+          "p50": 79.824,
+          "p90": 80.411,
+          "p95": 80.551,
+          "p99": 80.663,
+          "max": 80.691,
+          "mean": 79.637,
+          "stdev": 0.831,
+          "first_ms": 80.475
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | ALL | None | None | None | None | 199640 | Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.019183808\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 79.50234718,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 100050,\n          \"filesort\": {\n            \"sort_key\": \"orders.ordered_at, orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 75.32223449,\n            \"r_limit\": 100050,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 200000,\n            \"r_sort_passes\": 1,\n            \"r_buffer_size\": \"2047KiB\",\n            \"r_sort_mode\": \"sort_key,addon_fields\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 34.98473924,\n              \"r_other_time_ms\": 40.33249728,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 714\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 54.195,
+          "p50": 55.952,
+          "p90": 56.54,
+          "p95": 56.631,
+          "p99": 56.703,
+          "max": 56.721,
+          "mean": 55.841,
+          "stdev": 0.683,
+          "first_ms": 54.856
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | ALL | PRIMARY | None | None | None | 199640 | Using where; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.040770612\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 57.43909537,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 50,\n          \"filesort\": {\n            \"sort_key\": \"orders.ordered_at, orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 57.34114728,\n            \"r_limit\": 50,\n            \"r_used_priority_queue\": true,\n            \"r_output_rows\": 51,\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"possible_keys\": [\"PRIMARY\"],\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 32.5534082,\n              \"r_other_time_ms\": 24.87143484,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 814\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 49.978,\n              \"attached_condition\": \"orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00' or orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00' and orders.`id` > 0\",\n              \"r_filtered\": 49.978\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 54.097,
+          "p50": 56.636,
+          "p90": 57.019,
+          "p95": 57.525,
+          "p99": 57.93,
+          "max": 58.031,
+          "mean": 56.359,
+          "stdev": 1.004,
+          "first_ms": 55.874
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | ALL | None | None | None | None | 199640 | Using where; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.027801966\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 58.17631176,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 50,\n          \"filesort\": {\n            \"sort_key\": \"orders.ordered_at, orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 58.07746521,\n            \"r_limit\": 50,\n            \"r_used_priority_queue\": true,\n            \"r_output_rows\": 51,\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 32.1789341,\n              \"r_other_time_ms\": 25.98313411,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 814\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 49.978,\n              \"attached_condition\": \"(orders.ordered_at,orders.`id`) > <cache>((TIMESTAMP'2025-01-01 00:00:00',0))\",\n              \"r_filtered\": 49.978\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 368.59,
+          "p50": 372.29,
+          "p90": 374.302,
+          "p95": 374.311,
+          "p99": 374.317,
+          "max": 374.319,
+          "mean": 372.221,
+          "stdev": 1.774,
+          "first_ms": 368.13
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | events | ALL | None | None | None | None | 1042267 | Using where",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.040893585\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 175.6796786,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 379.7849145,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"events\",\n          \"access_type\": \"ALL\",\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 1042267,\n          \"r_rows\": 1000000,\n          \"cost\": 175.6796786,\n          \"r_table_time_ms\": 175.958894,\n          \"r_other_time_ms\": 203.8219222,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 6633\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 49.9245,\n          \"attached_condition\": \"`events`.occurred_at >= TIMESTAMP'2025-01-01 00:00:00'\",\n          \"r_filtered\": 49.9245\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 11.256,
+          "p50": 11.703,
+          "p90": 12.419,
+          "p95": 12.471,
+          "p99": 12.513,
+          "max": 12.523,
+          "mean": 11.785,
+          "stdev": 0.415,
+          "first_ms": 13.233
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | p | index | None | PRIMARY | 4 | None | 4882 | \n1 | SIMPLE | oi | ref | ix_order_items_product_id | ix_order_items_product_id | 4 | lab.p.id | 97 | Using where; Using index; Not exists",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.040960091\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 395.7775954,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 11.47980022,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 5000,\n          \"cost\": 0.72532649,\n          \"r_table_time_ms\": 1.03292243,\n          \"r_other_time_ms\": 0.367101564,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 156\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"r_filtered\": 100\n        }\n      },\n      {\n        \"table\": {\n          \"table_name\": \"oi\",\n          \"access_type\": \"ref\",\n          \"possible_keys\": [\"ix_order_items_product_id\"],\n          \"key\": \"ix_order_items_product_id\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"product_id\"],\n          \"ref\": [\"lab.p.id\"],\n          \"loops\": 4882,\n          \"r_loops\": 5000,\n          \"rows\": 97,\n          \"r_rows\": 1,\n          \"cost\": 73.75900193,\n          \"r_table_time_ms\": 9.782371987,\n          \"r_other_time_ms\": 0.29541534,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 10186\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"attached_condition\": \"trigcond(oi.`id` is null)\",\n          \"r_filtered\": 100,\n          \"using_index\": true,\n          \"not_exists\": true\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.799,
+          "p50": 11.428,
+          "p90": 11.65,
+          "p95": 11.715,
+          "p99": 11.767,
+          "max": 11.78,
+          "mean": 11.333,
+          "stdev": 0.319,
+          "first_ms": 11.606
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | p | index | None | PRIMARY | 4 | None | 4882 | Using where\n2 | DEPENDENT SUBQUERY | oi | index_subquery | ix_order_items_product_id | ix_order_items_product_id | 4 | func | 97 | Using index",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.052954991\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 3.950487766,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 11.28373086,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 5000,\n          \"cost\": 0.72532649,\n          \"r_table_time_ms\": 1.053628762,\n          \"r_other_time_ms\": 0.529805473,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 156\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 0,\n          \"attached_condition\": \"!<in_optimizer>(p.`id`,<exists>(subquery#2))\",\n          \"r_filtered\": 0\n        }\n      }\n    ],\n    \"subqueries\": [\n      {\n        \"query_block\": {\n          \"select_id\": 2,\n          \"cost\": 0.015874365,\n          \"nested_loop\": [\n            {\n              \"table\": {\n                \"table_name\": \"oi\",\n                \"access_type\": \"index_subquery\",\n                \"possible_keys\": [\"ix_order_items_product_id\"],\n                \"key\": \"ix_order_items_product_id\",\n                \"key_length\": \"4\",\n                \"used_key_parts\": [\"product_id\"],\n                \"ref\": [\"func\"],\n                \"loops\": 1,\n                \"r_loops\": 0,\n                \"rows\": 97,\n                \"r_rows\": null,\n                \"cost\": 0.015874365,\n                \"r_table_time_ms\": 9.467061352,\n                \"r_other_time_ms\": 0.231167317,\n                \"r_engine_stats\": {\n                  \"pages_accessed\": 10186\n                },\n                \"filtered\": 100,\n                \"r_total_filtered\": null,\n                \"r_filtered\": null,\n                \"using_index\": true\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR TIMESTAMPDIFF(SECOND, prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 356.081,
+          "p50": 369.392,
+          "p90": 382.586,
+          "p95": 399.735,
+          "p99": 413.455,
+          "max": 416.885,
+          "mean": 374.528,
+          "stdev": 15.467,
+          "first_ms": 358.249
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | PRIMARY | <derived3> | ALL | None | None | None | None | 224094 | Using where; Using temporary; Using filesort\n3 | DERIVED | events | ALL | ix_events_customer_id | None | None | None | 1042267 | Using where; Using temporary",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.138249405\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 161.4108994,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 369.7890749,\n    \"filesort\": {\n      \"sort_key\": \"w.customer_id\",\n      \"r_loops\": 1,\n      \"r_total_time_ms\": 0.171588926,\n      \"r_used_priority_queue\": false,\n      \"r_output_rows\": 2000,\n      \"r_buffer_size\": \"41KiB\",\n      \"r_sort_mode\": \"sort_key,rowid\",\n      \"temporary_table\": {\n        \"nested_loop\": [\n          {\n            \"table\": {\n              \"table_name\": \"<derived3>\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 224094,\n              \"r_rows\": 99904,\n              \"cost\": 10.02355075,\n              \"r_table_time_ms\": 4.15528592,\n              \"r_other_time_ms\": 61.18125432,\n              \"filtered\": 100,\n              \"r_total_filtered\": 99.86086643,\n              \"attached_condition\": \"case when w.prev_at is null or timestampdiff(SECOND,w.prev_at,w.occurred_at) > 1800 then 1 else 0 end = 1\",\n              \"r_filtered\": 99.86086643,\n              \"materialized\": {\n                \"query_block\": {\n                  \"select_id\": 3,\n                  \"cost\": 175.6796786,\n                  \"r_loops\": 1,\n                  \"r_total_time_ms\": 335.3837617,\n                  \"window_functions_computation\": {\n                    \"sorts\": [\n                      {\n                        \"filesort\": {\n                          \"sort_key\": \"`events`.customer_id, `events`.occurred_at, `events`.`id`\",\n                          \"r_loops\": 1,\n                          \"r_total_time_ms\": 34.0878757,\n                          \"r_used_priority_queue\": false,\n                          \"r_output_rows\": 99904,\n                          \"r_sort_passes\": 1,\n                          \"r_buffer_size\": \"2048KiB\",\n                          \"r_sort_mode\": \"sort_key,rowid\"\n                        }\n                      }\n                    ],\n                    \"temporary_table\": {\n                      \"nested_loop\": [\n                        {\n                          \"table\": {\n                            \"table_name\": \"events\",\n                            \"access_type\": \"ALL\",\n                            \"possible_keys\": [\"ix_events_customer_id\"],\n                            \"loops\": 1,\n                            \"r_loops\": 1,\n                            \"rows\": 1042267,\n                            \"r_rows\": 1000000,\n                            \"cost\": 175.6796786,\n                            \"r_table_time_ms\": 181.2846959,\n                            \"r_other_time_ms\": 50.49203748,\n                            \"r_engine_stats\": {\n                              \"pages_accessed\": 6646\n                            },\n                            \"filtered\": 21.50063324,\n                            \"r_total_filtered\": 9.9904,\n                            \"attached_condition\": \"`events`.customer_id <= 2000\",\n                            \"r_filtered\": 9.9904\n                          }\n                        }\n                      ]\n                    }\n                  }\n                }\n              }\n            }\n          }\n        ]\n      }\n    }\n  }\n}"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT DISTINCT shipping_country, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_amount) OVER (PARTITION BY shipping_country) AS median FROM orders ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 289.432,
+          "p50": 297.11,
+          "p90": 304.541,
+          "p95": 308.506,
+          "p99": 311.679,
+          "max": 312.472,
+          "mean": 298.35,
+          "stdev": 6.087,
+          "first_ms": 305.052
+        },
+        "rows": 13,
+        "checksum": "aed577b8503f2718cc990366",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | ALL | None | None | None | None | 199640 | Using temporary; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.043853724\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 167.9586756,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 298.4444252,\n    \"filesort\": {\n      \"sort_key\": \"orders.shipping_country\",\n      \"r_loops\": 1,\n      \"r_total_time_ms\": 1.1039231,\n      \"r_used_priority_queue\": false,\n      \"r_output_rows\": 13,\n      \"r_buffer_size\": \"1KiB\",\n      \"r_sort_mode\": \"sort_key,rowid\",\n      \"duplicate_removal\": {\n        \"window_functions_computation\": {\n          \"sorts\": [\n            {\n              \"filesort\": {\n                \"sort_key\": \"orders.shipping_country, orders.total_amount\",\n                \"r_loops\": 1,\n                \"r_total_time_ms\": 81.72055157,\n                \"r_used_priority_queue\": false,\n                \"r_output_rows\": 200000,\n                \"r_sort_passes\": 1,\n                \"r_buffer_size\": \"2047KiB\",\n                \"r_sort_mode\": \"sort_key,rowid\"\n              }\n            }\n          ],\n          \"temporary_table\": {\n            \"nested_loop\": [\n              {\n                \"table\": {\n                  \"table_name\": \"orders\",\n                  \"access_type\": \"ALL\",\n                  \"loops\": 1,\n                  \"r_loops\": 1,\n                  \"rows\": 199640,\n                  \"r_rows\": 200000,\n                  \"cost\": 33.1813076,\n                  \"r_table_time_ms\": 37.74379827,\n                  \"r_other_time_ms\": 39.74899479,\n                  \"r_engine_stats\": {\n                    \"pages_accessed\": 714\n                  },\n                  \"filtered\": 100,\n                  \"r_total_filtered\": 100,\n                  \"r_filtered\": 100\n                }\n              }\n            ]\n          }\n        }\n      }\n    }\n  }\n}"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, GROUP_CONCAT(p.sku ORDER BY p.sku SEPARATOR ',') AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 7.547,
+          "p50": 10.414,
+          "p90": 10.73,
+          "p95": 10.961,
+          "p99": 11.146,
+          "max": 11.192,
+          "mean": 10.176,
+          "stdev": 0.928,
+          "first_ms": 15.424
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | o | range | PRIMARY | PRIMARY | 4 | None | 500 | Using where\n1 | SIMPLE | oi | ref | ix_order_items_order_id,ix_order_items_product_id | ix_order_items_order_id | 4 | lab.o.id | 2 | \n1 | SIMPLE | p | eq_ref | PRIMARY | PRIMARY | 4 | lab.oi.product_id | 1 | ",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.122824224\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 4.3198222,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 5.545042494,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"o\",\n          \"access_type\": \"range\",\n          \"possible_keys\": [\"PRIMARY\"],\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 500,\n          \"r_rows\": 500,\n          \"cost\": 0.10093644,\n          \"r_table_time_ms\": 0.141278559,\n          \"r_other_time_ms\": 0.082391997,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 8\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"attached_condition\": \"o.`id` <= 500\",\n          \"r_filtered\": 100\n        }\n      },\n      {\n        \"table\": {\n          \"table_name\": \"oi\",\n          \"access_type\": \"ref\",\n          \"possible_keys\": [\"ix_order_items_order_id\", \"ix_order_items_product_id\"],\n          \"key\": \"ix_order_items_order_id\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"order_id\"],\n          \"ref\": [\"lab.o.id\"],\n          \"loops\": 500,\n          \"r_loops\": 500,\n          \"rows\": 2,\n          \"r_rows\": 2.418,\n          \"cost\": 2.4856864,\n          \"r_table_time_ms\": 2.77378695,\n          \"r_other_time_ms\": 0.183618124,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 4632\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"r_filtered\": 100\n        }\n      },\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"eq_ref\",\n          \"possible_keys\": [\"PRIMARY\"],\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"ref\": [\"lab.oi.product_id\"],\n          \"loops\": 1000,\n          \"r_loops\": 1209,\n          \"rows\": 1,\n          \"r_rows\": 1,\n          \"cost\": 1.07876,\n          \"r_table_time_ms\": 1.834273906,\n          \"r_other_time_ms\": 0.525876607,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 2487\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"r_filtered\": 100\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 514.767,
+          "p50": 520.631,
+          "p90": 523.559,
+          "p95": 524.208,
+          "p99": 524.727,
+          "max": 524.856,
+          "mean": 520.342,
+          "stdev": 2.906,
+          "first_ms": 531.19
+        },
+        "rows": 13,
+        "checksum": "d401f3c5ea9ee1c46a856a36",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | o | ALL | ix_orders_customer_id | None | None | None | 199640 | Using temporary; Using filesort\n1 | SIMPLE | c | eq_ref | PRIMARY | PRIMARY | 4 | lab.o.customer_id | 1 | ",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.064971222\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 346.6565684,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 520.7450223,\n    \"filesort\": {\n      \"sort_key\": \"c.country_code\",\n      \"r_loops\": 1,\n      \"r_total_time_ms\": 0.014189593,\n      \"r_used_priority_queue\": false,\n      \"r_output_rows\": 13,\n      \"r_buffer_size\": \"1KiB\",\n      \"r_sort_mode\": \"sort_key,rowid\",\n      \"temporary_table\": {\n        \"nested_loop\": [\n          {\n            \"table\": {\n              \"table_name\": \"o\",\n              \"access_type\": \"ALL\",\n              \"possible_keys\": [\"ix_orders_customer_id\"],\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 50.19514478,\n              \"r_other_time_ms\": 21.847746,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 714\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100\n            }\n          },\n          {\n            \"table\": {\n              \"table_name\": \"c\",\n              \"access_type\": \"eq_ref\",\n              \"possible_keys\": [\"PRIMARY\"],\n              \"key\": \"PRIMARY\",\n              \"key_length\": \"4\",\n              \"used_key_parts\": [\"id\"],\n              \"ref\": [\"lab.o.customer_id\"],\n              \"loops\": 199640,\n              \"r_loops\": 200000,\n              \"r_table_loops\": 199992,\n              \"rows\": 1,\n              \"r_rows\": 1,\n              \"cost\": 178.6978928,\n              \"r_table_time_ms\": 230.9132993,\n              \"r_other_time_ms\": 217.7499877,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 402986\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100\n            }\n          }\n        ]\n      }\n    }\n  }\n}"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 0.426,
+          "p50": 0.667,
+          "p90": 0.745,
+          "p95": 0.748,
+          "p99": 0.771,
+          "max": 0.777,
+          "mean": 0.648,
+          "stdev": 0.087,
+          "first_ms": 1.01
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | index_merge | PRIMARY,ix_orders_customer_id | ix_orders_customer_id,PRIMARY | 4,4 | None | 13 | Using union(ix_orders_customer_id,PRIMARY); Using where; Using filesort",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.051705182\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.036914111,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 0.075260811,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 13,\n          \"filesort\": {\n            \"sort_key\": \"orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 0.06418319,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 13,\n            \"r_buffer_size\": \"2047KiB\",\n            \"r_sort_mode\": \"sort_key,addon_fields\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"index_merge\",\n              \"possible_keys\": [\"PRIMARY\", \"ix_orders_customer_id\"],\n              \"key_length\": \"4,4\",\n              \"index_merge\": {\n                \"union\": [\n                  {\n                    \"range\": {\n                      \"key\": \"ix_orders_customer_id\",\n                      \"used_key_parts\": [\"customer_id\"]\n                    }\n                  },\n                  {\n                    \"range\": {\n                      \"key\": \"PRIMARY\",\n                      \"used_key_parts\": [\"id\"]\n                    }\n                  }\n                ]\n              },\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 13,\n              \"r_rows\": 13,\n              \"cost\": 0.028622979,\n              \"r_table_time_ms\": 0.017503594,\n              \"r_other_time_ms\": 0.007796246,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 32\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"attached_condition\": \"orders.customer_id = 14824 or orders.`id` = 146741\",\n              \"r_filtered\": 100\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 8.113,
+          "p50": 8.725,
+          "p90": 9.109,
+          "p95": 9.201,
+          "p99": 9.274,
+          "max": 9.292,
+          "mean": 8.716,
+          "stdev": 0.362,
+          "first_ms": 7.435
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | range | PRIMARY | PRIMARY | 4 | None | 500 | Using where",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.797623801\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 1.196055448,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 1.473103495,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"orders\",\n          \"access_type\": \"range\",\n          \"possible_keys\": [\"PRIMARY\"],\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 500,\n          \"r_rows\": 500,\n          \"cost\": 0.87018612,\n          \"r_table_time_ms\": 1.258199584,\n          \"r_other_time_ms\": 0.209503132,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 1006\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"attached_condition\": \"orders.`id` in (47,281,457,869,942,950,1298,3027,3073,3269,3737,4023,4216,4413,4589,4762,4833,4939,5265,5718,5897,6511,7606,8169,8453,9031,9687,10378,10923,10974,11327,11479,11859,12255,12654,12840,12970,13207,13312,13532,14258,14524,15081,15902,16269,16854,17034,17315,17465,18380,18540,18983,19173,19517,19560,19706,20028,20045,20117,20309,21123,21953,21992,22037,22147,22148,22307,22507,23218,23452,23529,23673,23781,23817,23880,24103,24275,26089,26663,27468,27504,27862,28693,29538,29583,31065,31390,31469,31696,31898,32998,33358,33374,33876,33963,34032,34762,34890,34981,36326,36519,36595,36627,36886,37157,37714,37946,38647,39038,39156,39181,40699,41297,41699,42323,42378,42795,43866,44765,45796,46636,47487,47593,47962,48063,48589,49665,49768,50439,51313,51981,52069,52233,52686,52893,52991,53330,53797,53968,54493,55008,55052,55237,56409,56614,57068,57113,57679,58303,59915,60180,60278,60487,60656,61030,61548,62505,62565,62686,63495,63986,64081,64110,64404,65059,65131,65359,65654,66112,66379,66569,67003,67042,67727,67793,68202,68303,68632,68655,69008,69152,69251,69325,69615,69617,69660,70218,70427,70458,70497,70527,70842,70896,70916,71047,71283,72131,72750,73120,73155,73288,73568,73859,73908,74496,74854,74875,75028,75319,75914,75978,76012,76247,76824,77452,78060,78551,78863,79155,79756,79802,79956,80684,81147,81704,81787,81794,82734,82858,83700,84813,85079,85495,85734,86227,86855,86973,87251,87906,88658,88677,88907,89642,89838,90090,90168,90965,91109,93477,94255,94410,94558,95458,95732,96550,97576,97872,98594,98729,98794,99846,100042,100286,100359,100811,101410,102110,102279,102635,102997,103046,103280,103306,103382,104402,104730,104794,104869,106090,106279,106417,106486,107712,108209,108498,108755,109100,109514,110692,111464,111495,112047,112132,112212,112524,112917,113204,113293,114358,116835,116871,116880,117193,117821,117955,118165,118191,118329,118748,118955,119787,120317,120443,120676,121809,122133,122249,123781,123980,124065,124220,124425,124456,125570,126464,126664,127291,127350,127439,128266,128350,128405,128896,129486,129550,129660,129762,130306,130519,130586,131096,131231,131797,131851,131963,132218,132314,132525,132555,132630,132808,132825,133365,133946,134287,134475,134804,134948,135407,135643,137300,137381,137408,137886,138128,138376,138724,138734,139221,139315,140300,140667,143107,143413,143599,143938,143977,144208,144281,144455,144983,145268,145720,146099,146415,148836,149024,149322,149579,150545,152430,153109,153508,153827,153925,154450,156385,156967,157210,158169,159431,161197,161737,162191,162831,162976,163559,163958,164162,164452,164566,164803,165053,165065,165386,165589,165883,166315,166452,166718,167018,168497,168530,168613,168617,168950,169291,170376,170422,170796,171133,171966,171972,172101,172372,172575,172832,173534,174386,175342,175779,176162,176202,177133,177203,178433,178675,179017,179227,179955,180029,180288,180409,181453,181584,181637,181752,183611,183777,184376,185264,185827,185995,186001,186434,186915,187436,187694,188632,188922,189834,190627,191063,191191,191982,192173,192375,193145,193658,193733,193942,193963,194220,194830,195489,195518,195950,196154,196519,196750,196801,197162,197308,197360,198091,198123,198297,199033,199098,199664)\",\n          \"r_filtered\": 100\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 44.455,
+          "p50": 46.128,
+          "p90": 47.058,
+          "p95": 47.187,
+          "p99": 47.291,
+          "max": 47.317,
+          "mean": 46.09,
+          "stdev": 0.803,
+          "first_ms": 70.723
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan": "1 | SIMPLE | orders | ALL | None | None | None | None | 199640 | Using where",
+        "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.031622917\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 48.28989321,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"orders\",\n          \"access_type\": \"ALL\",\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 199640,\n          \"r_rows\": 200000,\n          \"cost\": 33.1813076,\n          \"r_table_time_ms\": 29.42952469,\n          \"r_other_time_ms\": 18.85663541,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 714\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 4.145,\n          \"attached_condition\": \"year(orders.ordered_at) = 2025 and month(orders.ordered_at) = 5\",\n          \"r_filtered\": 4.145\n        }\n      }\n    ]\n  }\n}"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')",
+        "error_code": null
+      },
+      "_seconds": 56.3
+    }
+  },
+  "server_version": "11.8.9-MariaDB-ubu2404-log",
+  "finished": "2026-09-12T19:11:04+00:00"
+}

@@ -1,0 +1,50 @@
+Limit  (cost=17348.09..23343.04 rows=200 width=25) (actual time=480.375..480.461 rows=200 loops=1)
+  ->  YB Batched Nested Loop Anti Join  (cost=17348.09..277888.73 rows=8692 width=25) (actual time=480.373..480.392 rows=200 loops=1)
+        Join Filter: (e.customer_id = c.id)
+        Sort Keys: c.id
+        ->  Merge Join  (cost=17295.89..17569.19 rows=16932 width=25) (actual time=291.842..293.170 rows=411 loops=1)
+              Merge Cond: (c.id = o.customer_id)
+              ->  Sort  (cost=3678.84..3728.84 rows=20000 width=25) (actual time=26.557..26.768 rows=713 loops=1)
+                    Sort Key: c.id
+                    Sort Method: quicksort  Memory: 2167kB
+                    ->  Seq Scan on customers c  (cost=23.09..2250.07 rows=20000 width=25) (actual time=1.356..16.714 rows=20000 loops=1)
+                          Storage Table Read Requests: 20
+                          Storage Table Read Execution Time: 12.096 ms
+                          Storage Table Read Ops: 20
+                          Storage Table Rows Scanned: 20000
+              ->  Sort  (cost=13617.04..13645.93 rows=11555 width=4) (actual time=265.268..265.349 rows=411 loops=1)
+                    Sort Key: o.customer_id
+                    Sort Method: quicksort  Memory: 385kB
+                    ->  HashAggregate  (cost=12721.75..12837.30 rows=11555 width=4) (actual time=252.111..255.175 rows=11206 loops=1)
+                          Group Key: o.customer_id
+                          Batches: 1  Memory Usage: 1169kB
+                          ->  Seq Scan on orders o  (cost=23.10..12679.42 rows=16932 width=4) (actual time=15.108..235.977 rows=16603 loops=1)
+                                Storage Filter: (ordered_at >= '2025-11-01 00:00:00'::timestamp without time zone)
+                                Storage Table Read Requests: 17
+                                Storage Table Read Execution Time: 229.547 ms
+                                Storage Table Read Ops: 17
+                                Storage Table Rows Scanned: 200000
+        ->  Index Scan using ix_events_customer_id on events e  (cost=52.20..15737.14 rows=501 width=4) (actual time=16.233..186.068 rows=168 loops=1)
+              Index Cond: (customer_id = ANY (ARRAY[c.id, $1, $2, ..., $1023]))
+              Storage Filter: ((event_type)::text = 'churn'::text)
+              Storage Table Read Requests: 21
+              Storage Table Read Execution Time: 170.160 ms
+              Storage Table Read Ops: 21
+              Storage Table Rows Scanned: 20688
+              Storage Index Read Requests: 21
+              Storage Index Read Execution Time: 3.908 ms
+              Storage Index Read Ops: 21
+              Storage Index Rows Scanned: 20688
+Planning Time: 1.154 ms
+Execution Time: 481.075 ms
+Storage Read Requests: 79
+Storage Read Execution Time: 415.712 ms
+Storage Read Ops: 79
+Storage Rows Scanned: 261376
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 415.712 ms
+Peak Memory Usage: 5931 kB

@@ -1,0 +1,5 @@
+Eval[id, customer_id, status, total_amount] (rows=500)
+  └ Fetch[id, customer_id, status, total_amount, ordered_at] (rows=500)
+    └ Limit[500::bigint;0] (rows=500)
+      └ OrderBy[ordered_at ASC id ASC] (rows=15501)
+        └ Collect[doc.orders | [_fetchid, id, ordered_at] | (((ordered_at >= 1740787200000::bigint) AND (ordered_at < 1741392000000::bigint)) AND (status = 'delivered'))] (rows=15501)

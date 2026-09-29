@@ -1,0 +1,10 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=coordinator port=5432 dbname=lab
+        ->  Limit  (cost=443.12..443.14 rows=8 width=22)
+              ->  Sort  (cost=443.12..443.14 rows=8 width=22)
+                    Sort Key: id
+                    ->  Seq Scan on products_102009 products  (cost=0.00..443.00 rows=8 width=22)
+                          Filter: (((attrs ->> 'color'::text) = 'red'::text) AND (((attrs ->> 'weight'::text))::numeric > '10'::numeric))

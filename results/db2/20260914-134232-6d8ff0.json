@@ -1,0 +1,252 @@
+{
+  "engine": "db2",
+  "display": "IBM Db2 12.1 CE",
+  "category": "row-store OLTP",
+  "dialect": "db2",
+  "driver": "ibm_db",
+  "image": "icr.io/db2_community/db2:latest",
+  "run_id": "20260914-134232-6d8ff0",
+  "started": "2026-09-14T10:42:32+00:00",
+  "scale": 0.3,
+  "notes": "Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but needs two instances with matching configuration and a takeover procedure; not automated in this stack.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "offline_full": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE ... COMPRESS (offline) / RESTORE ... INTO",
+          "backup_seconds": 10.58,
+          "backup_bytes": 137095336,
+          "backup_mb": 130.7,
+          "restore_seconds": 14.77,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 3.17
+          },
+          "pitr": {},
+          "notes": "offline (no connections) compressed full image; restored into a new database on the same instance (rollforward complete only needed once the source uses archive logging)",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/*.001 /backups/logs /backups/lt && mkdir -p /backups/logs /backups/lt && chmod 777 /backups/logs /backups/lt",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE (offline)",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'for i in 1 2 3 4 5 6; do db2 force applications all >/dev/null; sleep 1; db2 deactivate db lab >/dev/null; if db2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"'; then break; fi; sleep 2; done' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 10.58,
+              "out": "backup db lab to /backups compress without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914104239\n\n\n"
+            },
+            {
+              "name": "RESTORE DATABASE ... INTO labr",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab from /backups taken at 20260914104239 into labr replace existing without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\ndb2 rollforward db labr complete >/dev/null 2>&1; true' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 14.77,
+              "out": "restore db lab from /backups taken at 20260914104239 into labr replace existing without prompting\nDB20000I  The RESTORE DATABASE command completed successfully.\n\n"
+            },
+            {
+              "name": "drop labr",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'drop db labr'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 1.24,
+              "out": "drop db labr\nDB20000I  The DROP DATABASE command completed successfully.\n\n"
+            }
+          ],
+          "timestamp": "20260914104239",
+          "seconds": 29.9,
+          "description": "offline full image restored into a new database"
+        },
+        "online_incremental": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "LOGARCHMETH1 + BACKUP ONLINE INCREMENTAL + RESTORE INCREMENTAL AUTOMATIC",
+          "backup_seconds": 7.41,
+          "backup_bytes": 411252904,
+          "backup_mb": 392.2,
+          "restore_seconds": 24.23,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 5.71
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "table created after the online full comes from the incremental image"
+          },
+          "notes": "archive logging (LOGARCHMETH1 DISK) enables online backups; TRACKMOD ON makes incremental images possible; manual chain restore: target image, base full, target image",
+          "error": null,
+          "steps": [
+            {
+              "name": "LOGARCHMETH1 + TRACKMOD, offline backup",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'update db cfg for lab using LOGARCHMETH1 DISK:/backups/logs/ TRACKMOD ON'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\nfor i in 1 2 3 4 5 6; do db2 force applications all >/dev/null; sleep 1; db2 deactivate db lab >/dev/null; if db2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"'; then break; fi; sleep 2; done' ) > $__o 2>&1; __rc=$?;",
+              "rc": 0,
+              "seconds": 11.53,
+              "out": "\nbackup db lab to /backups compress without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914104309\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCLUDE LOGS",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online to /backups compress include logs without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 7.41,
+              "out": "backup db lab online to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914104319\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCREMENTAL",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online incremental to /backups compress include logs without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 7.42,
+              "out": "backup db lab online incremental to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914104328\n\n\n"
+            },
+            {
+              "name": "logtarget dir",
+              "cmd": "rm -rf /backups/lt && mkdir -p /backups/lt && chmod 777 /backups/lt",
+              "rc": 0,
+              "seconds": 0.05,
+              "out": ""
+            },
+            {
+              "name": "ARCHIVE LOG (so the archive holds every log the rollforward needs)",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'archive log for db lab'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 2.37,
+              "out": "archive log for db lab\nDB20000I  The ARCHIVE LOG command completed successfully.\n\n"
+            },
+            {
+              "name": "RESTORE INCREMENTAL chain INTO labi + ROLLFORWARD",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab incremental from /backups taken at 20260914104328 into labi logtarget /backups/lt replace existing without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\ndb2 -v '\"'\"'restore db lab incremental from /backups taken at 20260914104319 into labi without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\ndb2 -v '\"'\"'restore db lab",
+              "rc": 0,
+              "seconds": 24.23,
+              "out": " Next log file to be read               =\n Log files processed                    = S0000158.LOG - S0000161.LOG\n Last committed transaction             = 2026-09-14-10.43.32.000000 UTC\n\nDB20000I  The ROLLFORWARD command completed successfully.\n\n"
+            },
+            {
+              "name": "drop labi",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'drop db labi'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 1.25,
+              "out": "drop db labi\nDB20000I  The DROP DATABASE command completed successfully.\n\n"
+            }
+          ],
+          "archive_base_timestamp": "20260914104309",
+          "online_full_timestamp": "20260914104319",
+          "incremental": {
+            "timestamp": "20260914104328",
+            "seconds": 7.42,
+            "bytes": 97054720
+          },
+          "seconds": 62.6,
+          "description": "online full + incremental chain restored with rollforward"
+        },
+        "pitr": {
+          "status": "error",
+          "kind": "pitr",
+          "tool": "ARCHIVE LOG + ROLLFORWARD ... TO <timestamp>",
+          "backup_seconds": 11.73,
+          "backup_bytes": 638976,
+          "backup_mb": 0.6,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "RuntimeError: RESTORE chain INTO labp + ROLLFORWARD TO timestamp failed rc=4: restore db lab incremental from /backups taken at 20260914104328 into labp logtarget /backups/lt replace existing without prompting SQL2574N A backup image restored as part of an incremental RESTORE operation cannot be newer than the target image.",
+          "steps": [
+            {
+              "name": "ARCHIVE LOG",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'archive log for db lab'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 11.73,
+              "out": "archive log for db lab\nDB20000I  The ARCHIVE LOG command completed successfully.\n\n"
+            },
+            {
+              "name": "logtarget dir",
+              "cmd": "rm -rf /backups/lt && mkdir -p /backups/lt && chmod 777 /backups/lt",
+              "rc": 0,
+              "seconds": 0.11,
+              "out": ""
+            },
+            {
+              "name": "RESTORE chain INTO labp + ROLLFORWARD TO timestamp",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab incremental from /backups taken at 20260914104328 into labp logtarget /backups/lt replace existing without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\ndb2 -v '\"'\"'restore db lab incremental from /backups taken at 20260914104319 into labp without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\ndb2 -v '\"'\"'restore db lab",
+              "rc": 4,
+              "seconds": 2.34,
+              "out": "restore db lab incremental from /backups taken at 20260914104328 into labp logtarget /backups/lt replace existing without prompting\nSQL2574N  A backup image restored as part of an incremental RESTORE operation \ncannot be newer than the target image.\n\n"
+            }
+          ],
+          "archive_dir": "/backups/logs/db2inst1/LAB/NODE0000/LOGSTREAM0000/C0000000",
+          "seconds": 18.5,
+          "description": "point-in-time rollforward from archived logs"
+        }
+      },
+      "order": [
+        "offline_full",
+        "online_incremental",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 3.24,
+      "summary": {
+        "strategies": 3,
+        "ok": 2,
+        "verified": [
+          "offline_full",
+          "online_incremental"
+        ],
+        "pitr_ok": [
+          "online_incremental"
+        ]
+      },
+      "_seconds": 114.3
+    }
+  },
+  "harness_log": "results/logs/db2/20260914-134232-6d8ff0.log",
+  "server_version": "DB2 v12.1.5.0",
+  "finished": "2026-09-14T10:44:26+00:00"
+}

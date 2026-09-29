@@ -1,0 +1,489 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260912-213353-04bfc9",
+  "started": "2026-09-12T18:33:53+00:00",
+  "scale": 1.0,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 43.266,
+            "p95_ms": 45.203,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=23466.80..23466.81 rows=1 width=40) (actual time=35.006..39.540 rows=1.00 loops=1)\n  Buffers: shared hit=15043\n  ->  Gather  (cost=23466.57..23466.78 rows=2 width=40) (actual time=34.885..39.527 rows=3.00 loops=1)\n        Workers Planned: 2\n        Workers Launched: 2\n        Buffers: shared hit=15043\n        ->  Partial Aggregate  (cost=22466.57..22466.58 rows=1 width=40) (actual time=32.180..32.181 rows=1.00 loops=3)\n              Buffers: shared hit=15043\n              ->  Parallel Seq Scan on events  (cost=0.00..22459.92 rows=1330 width=6) (actual time=0.055..31.985 rows=1048.33 loops=3)\n                    Filter: ((occurred_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (occurred_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((event_type)::text = 'checkout'::text))\n                    Rows Removed by Filter: 338952\n                    Buffers: shared hit=15043\nPlanning Time: 0.109 ms\nExecution Time: 39.581 ms"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "ANALYZE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.802,
+            "p95_ms": 5.126,
+            "rows": 1,
+            "plan_analyze": "Aggregate  (cost=3810.12..3810.13 rows=1 width=40) (actual time=4.051..4.052 rows=1.00 loops=1)\n  Buffers: shared hit=3055\n  ->  Bitmap Heap Scan on events  (cost=712.42..3794.29 rows=3166 width=6) (actual time=2.087..3.541 rows=3145.00 loops=1)\n        Recheck Cond: ((occurred_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (occurred_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((event_type)::text = 'checkout'::text))\n        Heap Blocks: exact=2858\n        Buffers: shared hit=3055\n        ->  Bitmap Index Scan on ix_ev_ts_type  (cost=0.00..711.62 rows=3166 width=0) (actual time=1.748..1.748 rows=3145.00 loops=1)\n              Index Cond: ((occurred_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (occurred_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((event_type)::text = 'checkout'::text))\n              Index Searches: 1\n              Buffers: shared hit=197\nPlanning Time: 0.085 ms\nExecution Time: 4.070 ms"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "ANALYZE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.631,
+            "p95_ms": 2.961,
+            "rows": 1,
+            "plan_analyze": "Aggregate  (cost=3082.08..3082.09 rows=1 width=40) (actual time=2.266..2.267 rows=1.00 loops=1)\n  Buffers: shared hit=3164\n  ->  Index Scan using ix_ev_type_ts on events  (cost=0.42..3066.05 rows=3206 width=6) (actual time=0.014..1.617 rows=3145.00 loops=1)\n        Index Cond: (((event_type)::text = 'checkout'::text) AND (occurred_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (occurred_at < '2025-07-01 00:00:00'::timestamp without time zone))\n        Index Searches: 1\n        Buffers: shared hit=3164\nPlanning Time: 0.072 ms\nExecution Time: 2.288 ms"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 16.44
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.184,
+            "p95_ms": 4.28,
+            "rows": 2430,
+            "plan_analyze": "Incremental Sort  (cost=0.46..178.45 rows=2413 width=12) (actual time=0.054..1.763 rows=2460.00 loops=1)\n  Sort Key: order_id, product_id\n  Presorted Key: order_id\n  Full-sort Groups: 75  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB\n  Buffers: shared hit=24\n  ->  Index Scan using ix_order_items_order_id on order_items  (cost=0.42..70.28 rows=2413 width=12) (actual time=0.014..0.825 rows=2460.00 loops=1)\n        Index Cond: ((order_id >= 163290) AND (order_id < 164290))\n        Index Searches: 1\n        Buffers: shared hit=24\nPlanning Time: 0.081 ms\nExecution Time: 1.930 ms"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "setup": [
+              "CREATE INDEX ix_oi_cover ON order_items (order_id) INCLUDE (product_id, qty)",
+              "ANALYZE order_items"
+            ],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.141,
+            "p95_ms": 4.726,
+            "rows": 2430,
+            "plan_analyze": "Incremental Sort  (cost=0.46..178.56 rows=2562 width=12) (actual time=0.060..2.100 rows=2460.00 loops=1)\n  Sort Key: order_id, product_id\n  Presorted Key: order_id\n  Full-sort Groups: 75  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB\n  Buffers: shared hit=14\n  ->  Index Only Scan using ix_oi_cover on order_items  (cost=0.42..63.76 rows=2562 width=12) (actual time=0.029..0.774 rows=2460.00 loops=1)\n        Index Cond: ((order_id >= 163290) AND (order_id < 164290))\n        Heap Fetches: 0\n        Index Searches: 1\n        Buffers: shared hit=14\nPlanning Time: 0.137 ms\nExecution Time: 2.358 ms"
+          }
+        ],
+        "best_variant": "covering_include",
+        "speedup_vs_first": 1.01
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 36.49,
+            "p95_ms": 38.481,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=5225.16..5225.17 rows=1 width=8) (actual time=33.378..35.688 rows=1.00 loops=1)\n  Buffers: shared hit=1872\n  ->  Gather  (cost=5224.95..5225.16 rows=2 width=8) (actual time=33.321..35.683 rows=2.00 loops=1)\n        Workers Planned: 1\n        Workers Launched: 1\n        Buffers: shared hit=1872\n        ->  Partial Aggregate  (cost=4224.95..4224.96 rows=1 width=8) (actual time=31.408..31.408 rows=1.00 loops=2)\n              Buffers: shared hit=1872\n              ->  Parallel Seq Scan on orders  (cost=0.00..4224.94 rows=3 width=0) (actual time=0.024..31.148 rows=4145.00 loops=2)\n                    Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))\n                    Rows Removed by Filter: 95855\n                    Buffers: shared hit=1872\nPlanning Time: 0.084 ms\nExecution Time: 35.709 ms"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 13.016,
+            "p95_ms": 13.769,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=4648.85..4648.86 rows=1 width=8) (actual time=9.962..12.338 rows=1.00 loops=1)\n  Buffers: shared hit=1872\n  ->  Gather  (cost=4648.63..4648.84 rows=2 width=8) (actual time=9.905..12.335 rows=2.00 loops=1)\n        Workers Planned: 1\n        Workers Launched: 1\n        Buffers: shared hit=1872\n        ->  Partial Aggregate  (cost=3648.63..3648.64 rows=1 width=8) (actual time=7.932..7.932 rows=1.00 loops=2)\n              Buffers: shared hit=1872\n              ->  Parallel Seq Scan on orders  (cost=0.00..3636.71 rows=4771 width=0) (actual time=0.012..7.657 rows=4145.00 loops=2)\n                    Filter: ((ordered_at >= '2025-05-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-06-01 00:00:00'::timestamp without time zone))\n                    Rows Removed by Filter: 95855\n                    Buffers: shared hit=1872\nPlanning Time: 0.068 ms\nExecution Time: 12.366 ms"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.488,
+            "p95_ms": 1.556,
+            "rows": 1,
+            "plan_analyze": "Aggregate  (cost=294.15..294.16 rows=1 width=8) (actual time=1.436..1.436 rows=1.00 loops=1)\n  Buffers: shared hit=169\n  ->  Index Only Scan using ix_orders_ordered_at on orders  (cost=0.42..273.24 rows=8362 width=0) (actual time=0.015..0.968 rows=8290.00 loops=1)\n        Index Cond: ((ordered_at >= '2025-05-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-06-01 00:00:00'::timestamp without time zone))\n        Heap Fetches: 144\n        Index Searches: 1\n        Buffers: shared hit=169\nPlanning Time: 0.046 ms\nExecution Time: 1.451 ms"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 27.971,
+            "p95_ms": 31.995,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=4352.61..4352.62 rows=1 width=8) (actual time=25.501..27.623 rows=1.00 loops=1)\n  Buffers: shared hit=3928\n  ->  Gather  (cost=4352.39..4352.60 rows=2 width=8) (actual time=25.398..27.619 rows=3.00 loops=1)\n        Workers Planned: 2\n        Workers Launched: 2\n        Buffers: shared hit=3928\n        ->  Partial Aggregate  (cost=3352.39..3352.40 rows=1 width=8) (actual time=22.686..22.687 rows=1.00 loops=3)\n              Buffers: shared hit=3928\n              ->  Parallel Index Only Scan using ix_orders_ordered_at on orders  (cost=0.42..3352.39 rows=2 width=0) (actual time=13.102..22.524 rows=2763.33 loops=3)\n                    Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))\n                    Rows Removed by Filter: 63903\n                    Heap Fetches: 3484\n                    Index Searches: 1\n                    Buffers: shared hit=3928\nPlanning Time: 0.081 ms\nExecution Time: 27.658 ms"
+          }
+        ],
+        "best_variant": "sargable_with_index",
+        "speedup_vs_first": 24.52
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 64.012,
+            "p95_ms": 65.528,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=21731.64..21731.77 rows=50 width=16) (actual time=83.139..83.149 rows=50.00 loops=1)\n  Buffers: shared hit=1872\n  ->  Sort  (cost=21481.64..21981.64 rows=200000 width=16) (actual time=70.238..79.747 rows=100050.00 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: quicksort  Memory: 13957kB\n        Buffers: shared hit=1872\n        ->  Seq Scan on orders  (cost=0.00..3872.00 rows=200000 width=16) (actual time=0.008..20.696 rows=200000.00 loops=1)\n              Buffers: shared hit=1872\nPlanning Time: 0.080 ms\nExecution Time: 83.203 ms"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 21.31,
+            "p95_ms": 22.502,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=6894.29..6899.99 rows=50 width=16) (actual time=22.811..25.280 rows=50.00 loops=1)\n  Buffers: shared hit=1916\n  ->  Gather Merge  (cost=6894.29..18346.06 rows=100480 width=16) (actual time=22.810..25.275 rows=50.00 loops=1)\n        Workers Planned: 1\n        Workers Launched: 1\n        Buffers: shared hit=1916\n        ->  Sort  (cost=5894.28..6042.05 rows=59106 width=16) (actual time=20.527..20.530 rows=40.50 loops=2)\n              Sort Key: ordered_at, id\n              Sort Method: top-N heapsort  Memory: 28kB\n              Buffers: shared hit=1916\n              Worker 0:  Sort Method: top-N heapsort  Memory: 28kB\n              ->  Parallel Seq Scan on orders  (cost=0.00..3930.82 rows=59106 width=16) (actual time=0.019..12.503 rows=49978.00 loops=2)\n                    Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))\n                    Rows Removed by Filter: 50022\n                    Buffers: shared hit=1872\nPlanning:\n  Buffers: shared hit=4\nPlanning Time: 0.108 ms\nExecution Time: 25.300 ms"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 43.649,
+            "p95_ms": 47.014,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=2954.62..2956.10 rows=50 width=16) (actual time=47.818..47.841 rows=50.00 loops=1)\n  Buffers: shared hit=100384\n  ->  Index Scan using ix_orders_ts_id on orders  (cost=0.42..5908.82 rows=200000 width=16) (actual time=0.010..44.074 rows=100050.00 loops=1)\n        Index Searches: 1\n        Buffers: shared hit=100384\nPlanning Time: 0.068 ms\nExecution Time: 47.869 ms"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 44.316,
+            "p95_ms": 47.67,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=0.42..4.10 rows=50 width=16) (actual time=45.409..45.438 rows=50.00 loops=1)\n  Buffers: shared hit=100428\n  ->  Index Scan using ix_orders_ts_id on orders  (cost=0.42..7408.82 rows=100604 width=16) (actual time=45.408..45.432 rows=50.00 loops=1)\n        Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))\n        Rows Removed by Filter: 100044\n        Index Searches: 1\n        Buffers: shared hit=100428\nPlanning:\n  Buffers: shared hit=4\nPlanning Time: 0.140 ms\nExecution Time: 45.473 ms"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.641,
+            "p95_ms": 0.862,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=0.42..2.54 rows=50 width=16) (actual time=0.012..0.038 rows=50.00 loops=1)\n  Buffers: shared hit=53\n  ->  Index Scan using ix_orders_ts_id on orders  (cost=0.42..4231.84 rows=99870 width=16) (actual time=0.012..0.034 rows=50.00 loops=1)\n        Index Cond: (ROW(ordered_at, id) > ROW('2025-01-01 00:00:00'::timestamp without time zone, 0))\n        Index Searches: 1\n        Buffers: shared hit=53\nPlanning Time: 0.048 ms\nExecution Time: 0.051 ms"
+          }
+        ],
+        "best_variant": "keyset_rowvalue_with_index",
+        "speedup_vs_first": 99.86
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 12.609,
+            "p95_ms": 12.77,
+            "rows": 500,
+            "plan_analyze": "Limit  (cost=0.28..14436.78 rows=500 width=42) (actual time=0.048..11.139 rows=500.00 loops=1)\n  Buffers: shared hit=13656\n  ->  Index Scan using products_pkey on products p  (cost=0.28..122190.80 rows=4232 width=42) (actual time=0.047..11.074 rows=500.00 loops=1)\n        Filter: active\n        Rows Removed by Filter: 93\n        Index Searches: 1\n        Buffers: shared hit=13656\n        SubPlan 1\n          ->  Aggregate  (cost=28.76..28.77 rows=1 width=32) (actual time=0.021..0.021 rows=1.00 loops=500)\n                Buffers: shared hit=13614\n                ->  Bitmap Heap Scan on products p2  (cost=1.58..28.70 rows=25 width=6) (actual time=0.005..0.015 rows=26.25 loops=500)\n                      Recheck Cond: (category_id = p.category_id)\n                      Heap Blocks: exact=12614\n                      Buffers: shared hit=13614\n                      ->  Bitmap Index Scan on ix_products_category_id  (cost=0.00..1.57 rows=25 width=0) (actual time=0.002..0.002 rows=26.25 loops=500)\n                            Index Cond: (category_id = p.category_id)\n                            Index Searches: 500\n                            Buffers: shared hit=1000\nPlanning Time: 0.099 ms\nExecution Time: 11.190 ms"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 5.185,
+            "p95_ms": 5.455,
+            "rows": 500,
+            "plan_analyze": "Limit  (cost=1010.22..1011.47 rows=500 width=42) (actual time=4.281..4.339 rows=500.00 loops=1)\n  Buffers: shared hit=656\n  ->  Sort  (cost=1010.22..1020.80 rows=4232 width=42) (actual time=4.280..4.304 rows=500.00 loops=1)\n        Sort Key: p.id\n        Sort Method: top-N heapsort  Memory: 60kB\n        Buffers: shared hit=656\n        ->  Hash Join  (cost=410.00..799.34 rows=4232 width=42) (actual time=1.989..3.543 rows=4232.00 loops=1)\n              Hash Cond: (p.category_id = a.category_id)\n              Buffers: shared hit=656\n              ->  Seq Scan on products p  (cost=0.00..378.00 rows=4232 width=14) (actual time=0.007..0.856 rows=4232.00 loops=1)\n                    Filter: active\n                    Rows Removed by Filter: 768\n                    Buffers: shared hit=328\n              ->  Hash  (cost=407.50..407.50 rows=200 width=36) (actual time=1.979..1.980 rows=200.00 loops=1)\n                    Buckets: 1024  Batches: 1  Memory Usage: 18kB\n                    Buffers: shared hit=328\n                    ->  Subquery Scan on a  (cost=403.00..407.50 rows=200 width=36) (actual time=1.833..1.948 rows=200.00 loops=1)\n                          Buffers: shared hit=328\n                          ->  HashAggregate  (cost=403.00..405.50 rows=200 width=36) (actual time=1.832..1.929 rows=200.00 loops=1)\n                                Group Key: products.category_id\n                                Batches: 1  Memory Usage: 88kB\n                                Buffers: shared hit=328\n                                ->  Seq Scan on products  (cost=0.00..378.00 rows=5000 width=10) (actual time=0.002..0.401 rows=5000.00 loops=1)\n                                      Buffers: shared hit=328\nPlanning Time: 0.159 ms\nExecution Time: 4.387 ms"
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 2.43
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 71.773,
+            "p95_ms": 76.373,
+            "rows": 0,
+            "plan_analyze": "Sort  (cost=9451.60..9451.61 rows=1 width=4) (actual time=105.813..105.816 rows=0.00 loops=1)\n  Sort Key: p.id\n  Sort Method: quicksort  Memory: 25kB\n  Buffers: shared hit=3136\n  ->  Hash Right Join  (cost=174.49..9451.59 rows=1 width=4) (actual time=105.809..105.812 rows=0.00 loops=1)\n        Hash Cond: (oi.product_id = p.id)\n        Filter: (oi.id IS NULL)\n        Rows Removed by Filter: 487606\n        Buffers: shared hit=3136\n        ->  Seq Scan on order_items oi  (cost=0.00..7996.06 rows=487606 width=8) (actual time=0.006..27.633 rows=487606.00 loops=1)\n              Buffers: shared hit=3120\n        ->  Hash  (cost=111.99..111.99 rows=5000 width=4) (actual time=1.091..1.092 rows=5000.00 loops=1)\n              Buckets: 8192  Batches: 1  Memory Usage: 240kB\n              Buffers: shared hit=16\n              ->  Index Only Scan using products_pkey on products p  (cost=0.28..111.99 rows=5000 width=4) (actual time=0.013..0.544 rows=5000.00 loops=1)\n                    Heap Fetches: 0\n                    Index Searches: 1\n                    Buffers: shared hit=16\nPlanning:\n  Buffers: shared hit=14\nPlanning Time: 0.275 ms\nExecution Time: 105.845 ms"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 10.547,
+            "p95_ms": 10.797,
+            "rows": 0,
+            "plan_analyze": "Nested Loop Anti Join  (cost=0.70..2508.15 rows=1 width=4) (actual time=10.720..10.721 rows=0.00 loops=1)\n  Buffers: shared hit=15017\n  ->  Index Only Scan using products_pkey on products p  (cost=0.28..111.99 rows=5000 width=4) (actual time=0.013..0.626 rows=5000.00 loops=1)\n        Heap Fetches: 0\n        Index Searches: 1\n        Buffers: shared hit=16\n  ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=0.42..2.24 rows=97 width=4) (actual time=0.002..0.002 rows=1.00 loops=5000)\n        Index Cond: (product_id = p.id)\n        Heap Fetches: 0\n        Index Searches: 5000\n        Buffers: shared hit=15001\nPlanning:\n  Buffers: shared hit=14\nPlanning Time: 0.180 ms\nExecution Time: 10.734 ms"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 101.276,
+            "p95_ms": 102.414,
+            "rows": 0,
+            "plan_analyze": "Index Only Scan using products_pkey on products p  (cost=9215.36..9339.57 rows=2500 width=4) (actual time=129.243..129.244 rows=0.00 loops=1)\n  Filter: (NOT (ANY (id = (hashed SubPlan 1).col1)))\n  Rows Removed by Filter: 5000\n  Heap Fetches: 0\n  Index Searches: 1\n  Buffers: shared hit=3136\n  SubPlan 1\n    ->  Seq Scan on order_items oi  (cost=0.00..7996.06 rows=487606 width=4) (actual time=0.007..51.913 rows=487606.00 loops=1)\n          Buffers: shared hit=3120\nPlanning Time: 0.092 ms\nExecution Time: 129.273 ms"
+          }
+        ],
+        "best_variant": "not_exists",
+        "speedup_vs_first": 6.81
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.496,
+            "p95_ms": 0.557,
+            "rows": 13,
+            "plan_analyze": "Sort  (cost=15.37..15.40 rows=11 width=4) (actual time=0.053..0.056 rows=12.00 loops=1)\n  Sort Key: id\n  Sort Method: quicksort  Memory: 25kB\n  Buffers: shared hit=17\n  ->  Bitmap Heap Scan on orders  (cost=3.00..15.18 rows=11 width=4) (actual time=0.032..0.048 rows=12.00 loops=1)\n        Recheck Cond: ((customer_id = '3342'::smallint) OR (id = 150456))\n        Heap Blocks: exact=12\n        Buffers: shared hit=17\n        ->  BitmapOr  (cost=3.00..3.00 rows=11 width=0) (actual time=0.018..0.019 rows=0.00 loops=1)\n              Buffers: shared hit=5\n              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..1.47 rows=10 width=0) (actual time=0.012..0.012 rows=11.00 loops=1)\n                    Index Cond: (customer_id = '3342'::smallint)\n                    Index Searches: 1\n                    Buffers: shared hit=2\n              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..1.53 rows=1 width=0) (actual time=0.005..0.005 rows=1.00 loops=1)\n                    Index Cond: (id = 150456)\n                    Index Searches: 1\n                    Buffers: shared hit=3\nPlanning Time: 0.102 ms\nExecution Time: 0.080 ms"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.568,
+            "p95_ms": 0.705,
+            "rows": 13,
+            "plan_analyze": "Unique  (cost=15.45..15.51 rows=11 width=4) (actual time=0.023..0.028 rows=12.00 loops=1)\n  Buffers: shared hit=17\n  ->  Sort  (cost=15.45..15.48 rows=11 width=4) (actual time=0.022..0.024 rows=12.00 loops=1)\n        Sort Key: orders.id\n        Sort Method: quicksort  Memory: 25kB\n        Buffers: shared hit=17\n        ->  Append  (cost=0.29..15.26 rows=11 width=4) (actual time=0.008..0.019 rows=12.00 loops=1)\n              Buffers: shared hit=17\n              ->  Index Scan using ix_orders_customer_id on orders  (cost=0.29..12.57 rows=10 width=4) (actual time=0.008..0.013 rows=11.00 loops=1)\n                    Index Cond: (customer_id = '3342'::smallint)\n                    Index Searches: 1\n                    Buffers: shared hit=13\n              ->  Index Only Scan using orders_pkey on orders orders_1  (cost=0.42..2.64 rows=1 width=4) (actual time=0.004..0.004 rows=1.00 loops=1)\n                    Index Cond: (id = 150456)\n                    Heap Fetches: 0\n                    Index Searches: 1\n                    Buffers: shared hit=4\nPlanning Time: 0.082 ms\nExecution Time: 0.044 ms"
+          }
+        ],
+        "best_variant": "or_predicate",
+        "speedup_vs_first": 1.0
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 13.107,
+            "p95_ms": 13.709,
+            "rows": 644,
+            "plan_analyze": "Gather Merge  (cost=4947.57..5022.90 rows=661 width=16) (actual time=9.625..11.933 rows=644.00 loops=1)\n  Workers Planned: 1\n  Workers Launched: 1\n  Buffers: shared hit=1916\n  ->  Sort  (cost=3947.56..3948.53 rows=389 width=16) (actual time=7.507..7.524 rows=322.00 loops=2)\n        Sort Key: ordered_at, id\n        Sort Method: quicksort  Memory: 38kB\n        Buffers: shared hit=1916\n        Worker 0:  Sort Method: quicksort  Memory: 31kB\n        ->  Parallel Seq Scan on orders  (cost=0.00..3930.82 rows=389 width=16) (actual time=0.055..7.371 rows=322.00 loops=2)\n              Filter: ((ordered_at >= '2025-09-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-10-01 00:00:00'::timestamp without time zone) AND ((status)::text = 'pending'::text))\n              Rows Removed by Filter: 99678\n              Buffers: shared hit=1872\nPlanning Time: 0.092 ms\nExecution Time: 11.990 ms"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.46,
+            "p95_ms": 1.673,
+            "rows": 644,
+            "plan_analyze": "Incremental Sort  (cost=1.26..570.76 rows=652 width=16) (actual time=0.051..0.471 rows=644.00 loops=1)\n  Sort Key: ordered_at, id\n  Presorted Key: ordered_at\n  Full-sort Groups: 21  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB\n  Buffers: shared hit=649\n  ->  Index Scan using ix_orders_status_ts on orders  (cost=0.42..541.42 rows=652 width=16) (actual time=0.026..0.336 rows=644.00 loops=1)\n        Index Cond: (((status)::text = 'pending'::text) AND (ordered_at >= '2025-09-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-10-01 00:00:00'::timestamp without time zone))\n        Index Searches: 1\n        Buffers: shared hit=649\nPlanning Time: 0.065 ms\nExecution Time: 0.523 ms"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "setup": [
+              "CREATE INDEX ix_orders_pending_ts ON orders (ordered_at) WHERE status = 'pending'",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.371,
+            "p95_ms": 1.554,
+            "rows": 644,
+            "plan_analyze": "Sort  (cost=647.06..648.73 rows=670 width=16) (actual time=0.611..0.641 rows=644.00 loops=1)\n  Sort Key: ordered_at, id\n  Sort Method: quicksort  Memory: 45kB\n  Buffers: shared hit=547\n  ->  Bitmap Heap Scan on orders  (cost=9.36..615.61 rows=670 width=16) (actual time=0.145..0.480 rows=644.00 loops=1)\n        Recheck Cond: ((ordered_at >= '2025-09-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-10-01 00:00:00'::timestamp without time zone) AND ((status)::text = 'pending'::text))\n        Heap Blocks: exact=544\n        Buffers: shared hit=547\n        ->  Bitmap Index Scan on ix_orders_pending_ts  (cost=0.00..9.19 rows=670 width=0) (actual time=0.069..0.069 rows=644.00 loops=1)\n              Index Cond: ((ordered_at >= '2025-09-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-10-01 00:00:00'::timestamp without time zone))\n              Index Searches: 1\n              Buffers: shared hit=3\nPlanning Time: 0.065 ms\nExecution Time: 0.713 ms"
+          }
+        ],
+        "best_variant": "partial_index_pending",
+        "speedup_vs_first": 9.56
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 49.306,
+            "p95_ms": 52.683,
+            "rows": 13,
+            "plan_analyze": "Finalize GroupAggregate  (cost=22219.22..22223.12 rows=13 width=11) (actual time=49.460..54.131 rows=13.00 loops=1)\n  Group Key: c.country_code\n  Buffers: shared hit=16109\n  ->  Gather Merge  (cost=22219.22..22222.83 rows=31 width=11) (actual time=49.453..54.117 rows=39.00 loops=1)\n        Workers Planned: 2\n        Workers Launched: 2\n        Buffers: shared hit=16109\n        ->  Sort  (cost=21219.20..21219.23 rows=13 width=11) (actual time=45.765..45.768 rows=13.00 loops=3)\n              Sort Key: c.country_code\n              Sort Method: quicksort  Memory: 25kB\n              Buffers: shared hit=16109\n              Worker 0:  Sort Method: quicksort  Memory: 25kB\n              Worker 1:  Sort Method: quicksort  Memory: 25kB\n              ->  Partial HashAggregate  (cost=21218.83..21218.96 rows=13 width=11) (actual time=45.720..45.723 rows=13.00 loops=3)\n                    Group Key: c.country_code\n                    Batches: 1  Memory Usage: 32kB\n                    Buffers: shared hit=16093\n                    Worker 0:  Batches: 1  Memory Usage: 32kB\n                    Worker 1:  Batches: 1  Memory Usage: 32kB\n                    ->  Hash Join  (cost=800.00..21177.33 rows=8300 width=3) (actual time=42.121..44.444 rows=6666.67 loops=3)\n                          Hash Cond: (e.customer_id = c.id)\n                          Buffers: shared hit=16093\n                          ->  Parallel Seq Scan on events e  (cost=0.00..20355.50 rows=8316 width=4) (actual time=36.052..37.064 rows=6666.67 loops=3)\n                                Filter: ((event_type)::text = 'bench_stats'::text)\n                                Rows Removed by Filter: 333333\n                                Buffers: shared hit=15043\n                          ->  Hash  (cost=550.00..550.00 rows=20000 width=7) (actual time=5.952..5.952 rows=20000.00 loops=3)\n                                Buckets: 32768  Batches: 1  Memory Usage: 1038kB\n                                Buffers: shared hit=1050\n                                ->  Seq Scan on customers c  (cost=0.00..550.00 rows=20000 width=7) (actual time=0.025..2.578 rows=20000.00 loops=3)\n                                      Buffers: shared hit=1050\nPlanning:\n  Buffers: shared hit=18\nPlanning Time: 0.267 ms\nExecution Time: 54.177 ms"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "ANALYZE events"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 49.634,
+            "p95_ms": 52.521,
+            "rows": 13,
+            "plan_analyze": "Finalize GroupAggregate  (cost=22216.71..22220.61 rows=13 width=11) (actual time=49.669..54.574 rows=13.00 loops=1)\n  Group Key: c.country_code\n  Buffers: shared hit=16109\n  ->  Gather Merge  (cost=22216.71..22220.32 rows=31 width=11) (actual time=49.663..54.562 rows=39.00 loops=1)\n        Workers Planned: 2\n        Workers Launched: 2\n        Buffers: shared hit=16109\n        ->  Sort  (cost=21216.69..21216.72 rows=13 width=11) (actual time=46.250..46.252 rows=13.00 loops=3)\n              Sort Key: c.country_code\n              Sort Method: quicksort  Memory: 25kB\n              Buffers: shared hit=16109\n              Worker 0:  Sort Method: quicksort  Memory: 25kB\n              Worker 1:  Sort Method: quicksort  Memory: 25kB\n              ->  Partial HashAggregate  (cost=21216.32..21216.45 rows=13 width=11) (actual time=46.209..46.213 rows=13.00 loops=3)\n                    Group Key: c.country_code\n                    Batches: 1  Memory Usage: 32kB\n                    Buffers: shared hit=16093\n                    Worker 0:  Batches: 1  Memory Usage: 32kB\n                    Worker 1:  Batches: 1  Memory Usage: 32kB\n                    ->  Hash Join  (cost=800.00..21176.44 rows=7976 width=3) (actual time=42.516..44.940 rows=6666.67 loops=3)\n                          Hash Cond: (e.customer_id = c.id)\n                          Buffers: shared hit=16093\n                          ->  Parallel Seq Scan on events e  (cost=0.00..20355.50 rows=7976 width=4) (actual time=36.442..37.504 rows=6666.67 loops=3)\n                                Filter: ((event_type)::text = 'bench_stats'::text)\n                                Rows Removed by Filter: 333333\n                                Buffers: shared hit=15043\n                          ->  Hash  (cost=550.00..550.00 rows=20000 width=7) (actual time=5.949..5.950 rows=20000.00 loops=3)\n                                Buckets: 32768  Batches: 1  Memory Usage: 1038kB\n                                Buffers: shared hit=1050\n                                ->  Seq Scan on customers c  (cost=0.00..550.00 rows=20000 width=7) (actual time=0.025..2.556 rows=20000.00 loops=3)\n                                      Buffers: shared hit=1050\nPlanning:\n  Buffers: shared hit=24\nPlanning Time: 0.288 ms\nExecution Time: 54.619 ms"
+          }
+        ],
+        "best_variant": "after_bulk_insert_no_analyze",
+        "speedup_vs_first": 1.0
+      },
+      "opt10_batch_inserts": {
+        "title": "Batch size for inserts: 1-row autocommit vs executemany(100) vs executemany(1000) in one transaction",
+        "what": "round-trips and commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 4.733,
+            "rows_per_s": 634,
+            "error": null
+          },
+          {
+            "name": "txn_batch_100",
+            "rows": 3000,
+            "seconds": 0.158,
+            "rows_per_s": 18990,
+            "error": null
+          },
+          {
+            "name": "txn_batch_1000",
+            "rows": 3000,
+            "seconds": 0.088,
+            "rows_per_s": 34082,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups (psycopg prepare=True)",
+        "what": "server-side prepared statements skip parse/plan per execution",
+        "variants": [
+          {
+            "name": "unprepared",
+            "p50_ms": 0.848,
+            "p99_ms": 1.0304,
+            "n": 300,
+            "error": null
+          },
+          {
+            "name": "prepared",
+            "p50_ms": 0.5487,
+            "p99_ms": 0.7978,
+            "n": 300,
+            "error": null
+          },
+          {
+            "name": "unprepared_again",
+            "p50_ms": 0.8389,
+            "p99_ms": 1.0266,
+            "n": 300,
+            "error": null
+          }
+        ]
+      },
+      "_seconds": 20.3
+    }
+  },
+  "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "finished": "2026-09-12T18:34:14+00:00"
+}

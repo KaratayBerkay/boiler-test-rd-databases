@@ -1,0 +1,12 @@
+query_log: duration_ms=6 read_rows=60000 read_bytes=720000 memory=6684647 result_rows=500
+(Expression)
+ExpressionTransform
+  (Sorting)
+  RemoveVirtualRowTransform
+    (Expression)
+    ExpressionTransform
+      (Expression)
+      ExpressionTransform
+        (ReadFromMergeTree)
+        VirtualRowTransform
+          MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1

@@ -1,0 +1,37 @@
+planning time: 205µs
+execution time: 192ms
+distribution: local
+plan type: generic, reused
+rows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)
+regions: lab
+
+• top-k
+│ sql nodes: n1
+│ regions: lab
+│ execution time: 1ms
+│ sql cpu time: 1ms
+│ actual row count: 500
+│ estimated row count: 500
+│ order: +ordered_at,+id
+│ k: 500
+│
+└── • filter
+    │ sql nodes: n1
+    │ regions: lab
+    │ execution time: 4ms
+    │ sql cpu time: 4ms
+    │ actual row count: 1,372
+    │ estimated row count: 529
+    │ filter: ((ordered_at >= '2025-03-01 00:00:00') AND (ordered_at < '2025-03-08 00:00:00')) AND (status = 'delivered')
+    │
+    └── • scan
+          sql nodes: n1
+          kv nodes: n1
+          regions: lab
+          KV time: 187ms
+          KV rows decoded: 200,000
+          sql cpu time: 78ms
+          actual row count: 200,000
+          estimated row count: 200,000 (100% of the table; stats collected 3 minutes ago)
+          table: orders@orders_pkey
+          spans: FULL SCAN

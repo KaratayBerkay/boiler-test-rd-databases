@@ -1,0 +1,21 @@
+Plan hash value: 101034194
+ 
+------------------------------------------------------------------------------------
+| Id  | Operation               | Name     | Rows  | Bytes | Cost (%CPU)| Time     |
+------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT        |          |     3 |    63 |   137   (2)| 00:00:01 |
+|*  1 |  COUNT STOPKEY          |          |       |       |            |          |
+|   2 |   VIEW                  |          |     3 |    63 |   137   (2)| 00:00:01 |
+|*  3 |    SORT ORDER BY STOPKEY|          |     3 |   468 |   137   (2)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL   | PRODUCTS |     3 |   468 |   136   (1)| 00:00:01 |
+------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   1 - filter(ROWNUM<=100)
+   3 - filter(ROWNUM<=100)
+   4 - filter(JSON_VALUE("ATTRS" /*+ LOB_BY_VALUE */  FORMAT OSON , 
+              '$.color' RETURNING VARCHAR2(4000) NULL ON ERROR TYPE(LAX) )='red' AND 
+              JSON_VALUE("ATTRS" /*+ LOB_BY_VALUE */  FORMAT OSON , '$.weight' RETURNING 
+              NUMBER NULL ON ERROR TYPE(LAX) )>10)

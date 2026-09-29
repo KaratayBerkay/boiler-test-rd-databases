@@ -1,0 +1,89 @@
+planning time: 251µs
+execution time: 656ms
+distribution: local
+plan type: generic, reused
+rows decoded from KV: 400,000 (25 MiB, 4 gRPC calls)
+regions: lab
+
+• sort
+│ sql nodes: n1
+│ regions: lab
+│ execution time: 44µs
+│ sql cpu time: 43µs
+│ actual row count: 22
+│ estimated row count: 20,035
+│ order: +cohort
+│
+└── • group (hash)
+    │ sql nodes: n1
+    │ regions: lab
+    │ execution time: 55ms
+    │ sql cpu time: 55ms
+    │ actual row count: 22
+    │ estimated row count: 20,035
+    │ group by: cohort
+    │
+    └── • render
+        │
+        └── • hash join (right outer)
+            │ sql nodes: n1
+            │ regions: lab
+            │ execution time: 152ms
+            │ sql cpu time: 152ms
+            │ actual row count: 143,628
+            │ estimated row count: 66,667
+            │ equality: (customer_id) = (customer_id)
+            │ right cols are key
+            │ pred: column25 > cohort
+            │
+            ├── • distinct
+            │   │ sql nodes: n1
+            │   │ regions: lab
+            │   │ execution time: 43ms
+            │   │ sql cpu time: 43ms
+            │   │ actual row count: 163,618
+            │   │ estimated row count: 200,000
+            │   │ distinct on: column25, customer_id
+            │   │
+            │   └── • render
+            │       │ execution time: 96ms
+            │       │ sql cpu time: 95ms
+            │       │ actual row count: 200,000
+            │       │
+            │       └── • scan
+            │             sql nodes: n1
+            │             kv nodes: n1
+            │             regions: lab
+            │             KV time: 128ms
+            │             KV rows decoded: 200,000
+            │             sql cpu time: 54ms
+            │             actual row count: 200,000
+            │             estimated row count: 200,000 (100% of the table; stats collected 4 minutes ago)
+            │             table: orders@orders_pkey
+            │             spans: FULL SCAN
+            │
+            └── • render
+                │ execution time: 8ms
+                │ sql cpu time: 8ms
+                │ actual row count: 20,000
+                │
+                └── • group (hash)
+                    │ sql nodes: n1
+                    │ regions: lab
+                    │ execution time: 43ms
+                    │ sql cpu time: 43ms
+                    │ actual row count: 20,000
+                    │ estimated row count: 20,035
+                    │ group by: customer_id
+                    │
+                    └── • scan
+                          sql nodes: n1
+                          kv nodes: n1
+                          regions: lab
+                          KV time: 131ms
+                          KV rows decoded: 200,000
+                          sql cpu time: 48ms
+                          actual row count: 200,000
+                          estimated row count: 200,000 (100% of the table; stats collected 4 minutes ago)
+                          table: orders@orders_pkey
+                          spans: FULL SCAN

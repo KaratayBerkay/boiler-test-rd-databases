@@ -1,0 +1,30 @@
+{"ts": "2026-09-14T12:27:43.298+00:00", "level": "DEBUG", "stack": "mysql", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152743-9ed071.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152743-9ed071.jsonl"}
+{"ts": "2026-09-14T12:27:43.298+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "[mysql] run 20260914-152743-9ed071 phases=['backup'] scale=0.3 (log: results-k3s/logs/mysql/20260914-152743-9ed071.log)"}
+{"ts": "2026-09-14T12:27:43.313+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "[mysql] phase: backup"}
+{"ts": "2026-09-14T12:27:44.735+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "  source fingerprint: 7 tables, 520,772 rows (1.42s)"}
+{"ts": "2026-09-14T12:27:44.736+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "  strategy mysqlsh_dump: MySQL Shell parallel zstd dump loaded into a second schema"}
+{"ts": "2026-09-14T12:27:45.759+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    prepare                            rc=0    1.02s"}
+{"ts": "2026-09-14T12:27:48.094+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    mysqlsh dump-tables                rc=0    2.33s"}
+{"ts": "2026-09-14T12:27:48.339+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    create restore db                  ok    0.05s"}
+{"ts": "2026-09-14T12:27:58.694+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    mysqlsh load-dump                  rc=0   10.35s"}
+{"ts": "2026-09-14T12:28:00.060+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:28:00.131+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    drop restore db                    ok    0.07s"}
+{"ts": "2026-09-14T12:28:00.132+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "  mysqlsh_dump: backup 2.33s / 9.2 MB, restore 10.35s, verified=True"}
+{"ts": "2026-09-14T12:28:00.132+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "  strategy mysqldump: classic logical dump restored into a second schema"}
+{"ts": "2026-09-14T12:28:01.123+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    mysqldump                          rc=0    0.99s"}
+{"ts": "2026-09-14T12:28:01.379+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    create restore db                  ok    0.04s"}
+{"ts": "2026-09-14T12:28:14.233+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    restore                            rc=0   12.85s"}
+{"ts": "2026-09-14T12:28:15.616+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:28:15.676+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    drop restore db                    ok    0.06s"}
+{"ts": "2026-09-14T12:28:15.677+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "  mysqldump: backup 0.99s / 43.3 MB, restore 12.85s, verified=True"}
+{"ts": "2026-09-14T12:28:15.678+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "  strategy clone: clone-plugin physical copy started in a scratch container, PITR by GTID replication"}
+{"ts": "2026-09-14T12:28:15.871+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    prepare                            rc=0    0.19s"}
+{"ts": "2026-09-14T12:28:15.880+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    install clone plugin               ok    0.01s"}
+{"ts": "2026-09-14T12:28:18.059+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    CLONE LOCAL DATA DIRECTORY         ok    2.18s"}
+{"ts": "2026-09-14T12:28:18.256+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    clone status                       ok    0.00s"}
+{"ts": "2026-09-14T12:28:24.822+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:28:24.857+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    START REPLICA UNTIL SQL_BEFORE_GTIDS ok    0.04s"}
+{"ts": "2026-09-14T12:28:25.370+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "    pitr via replication until GTID: 1000 probe rows (MATCH)"}
+{"ts": "2026-09-14T12:28:27.904+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "  clone: backup 2.18s / 258.0 MB, restore 1.53s, verified=True, pitr=True"}
+{"ts": "2026-09-14T12:28:27.919+00:00", "level": "INFO", "stack": "mysql", "phase": "backup", "msg": "[mysql] phase backup done in 44.6s"}
+{"ts": "2026-09-14T12:28:27.926+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/mysql/20260914-152743-9ed071.json"}

@@ -1,0 +1,22 @@
+Sort  (cost=2837.01..2837.05 rows=13 width=59) (actual time=41.331..41.335 rows=13.00 loops=1)
+  Sort Key: c.country_code
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=744
+  ->  HashAggregate  (cost=2836.61..2836.77 rows=13 width=59) (actual time=41.308..41.318 rows=13.00 loops=1)
+        Group Key: c.country_code
+        Batches: 1  Memory Usage: 32kB
+        Buffers: shared hit=744
+        ->  Hash Join  (cost=287.00..1636.61 rows=60000 width=18) (actual time=1.746..21.103 rows=60000.00 loops=1)
+              Hash Cond: (o.customer_id = c.id)
+              Buffers: shared hit=744
+              ->  Seq Scan on orders o  (cost=0.00..1192.00 rows=60000 width=19) (actual time=0.010..4.993 rows=60000.00 loops=1)
+                    Buffers: shared hit=592
+              ->  Hash  (cost=212.00..212.00 rows=6000 width=7) (actual time=1.730..1.731 rows=6000.00 loops=1)
+                    Buckets: 8192  Batches: 1  Memory Usage: 299kB
+                    Buffers: shared hit=152
+                    ->  Seq Scan on customers c  (cost=0.00..212.00 rows=6000 width=7) (actual time=0.006..0.853 rows=6000.00 loops=1)
+                          Buffers: shared hit=152
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.169 ms
+Execution Time: 41.373 ms

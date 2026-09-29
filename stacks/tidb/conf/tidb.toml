@@ -1,0 +1,14 @@
+# TiDB server config (logging strategy). The main log stays on stdout (Docker json-file, JSON format) so
+# `docker logs` and log shippers keep working; the slow log goes to a file because INFORMATION_SCHEMA.SLOW_QUERY
+# and CLUSTER_SLOW_QUERY are views over that file.
+[log]
+level = "info"
+format = "json"
+slow-threshold = 100                 # ms; runtime: SET GLOBAL tidb_slow_log_threshold
+expensive-threshold = 10000
+slow-query-file = "/var/log/tidb/tidb-slow.log"
+
+[log.file]
+max-size = 100                       # MB, applies to the slow log too
+max-days = 3
+max-backups = 3

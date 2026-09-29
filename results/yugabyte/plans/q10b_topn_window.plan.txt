@@ -1,0 +1,7 @@
+Subquery Scan on t  (cost=12331.55..12363.73 rows=990 width=22)
+  ->  WindowAgg  (cost=12331.55..12353.83 rows=990 width=30)
+        Run Condition: (row_number() OVER (?) <= 3)
+        ->  Sort  (cost=12331.55..12334.03 rows=990 width=22)
+              Sort Key: orders.customer_id, orders.ordered_at DESC, orders.id DESC
+              ->  Seq Scan on orders  (cost=23.10..12282.29 rows=990 width=22)
+                    Storage Filter: (customer_id <= 100)

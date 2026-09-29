@@ -1,0 +1,5 @@
+Limit  (cost=13393.87..13395.12 rows=500 width=31)
+  ->  Sort  (cost=13393.87..13397.02 rows=1259 width=31)
+        Sort Key: ordered_at, id
+        ->  Seq Scan on orders  (cost=23.10..13331.13 rows=1259 width=31)
+              Storage Filter: ((ordered_at >= '2025-03-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-03-08 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))

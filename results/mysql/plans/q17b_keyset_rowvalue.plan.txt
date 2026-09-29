@@ -1,0 +1,4 @@
+-> Limit: 50 row(s)  (cost=20148 rows=50)
+    -> Sort: orders.ordered_at, orders.id, limit input to 50 row(s) per chunk  (cost=20148 rows=199640)
+        -> Filter: ((orders.ordered_at,orders.id) > (TIMESTAMP'2025-01-01 00:00:00',0))  (cost=20148 rows=199640)
+            -> Table scan on orders  (cost=20148 rows=199640)

@@ -1,0 +1,174 @@
+analyzed_plan | ┌─────────────────────────────────────┐
+│┌───────────────────────────────────┐│
+││    Query Profiling Information    ││
+│└───────────────────────────────────┘│
+└─────────────────────────────────────┘
+EXPLAIN ANALYZE SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR date_diff('second', prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id
+┌────────────────────────────────────────────────┐
+│┌──────────────────────────────────────────────┐│
+││              Total Time: 0.0171s             ││
+│└──────────────────────────────────────────────┘│
+└────────────────────────────────────────────────┘
+┌───────────────────────────┐
+│           QUERY           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│      EXPLAIN_ANALYZE      │
+│    ────────────────────   │
+│                           │
+│           0 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_integ│
+│     ral_integer(#0, 1)    │
+│             #1            │
+│                           │
+│                           │
+│                           │
+│         2,000 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│     s.customer_id ASC     │
+│                           │
+│                           │
+│                           │
+│         2,000 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_compress_integra│
+│     l_usmallint(#0, 1)    │
+│             #1            │
+│                           │
+│                           │
+│                           │
+│         2,000 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_integ│
+│     ral_integer(#0, 1)    │
+│             #1            │
+│                           │
+│                           │
+│                           │
+│         2,000 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│   PERFECT_HASH_GROUP_BY   │
+│    ────────────────────   │
+│         Groups: #0        │
+│                           │
+│        Aggregates:        │
+│        count_star()       │
+│                           │
+│                           │
+│                           │
+│         2,000 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│        customer_id        │
+│                           │
+│                           │
+│                           │
+│        99,765 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_compress_integra│
+│     l_usmallint(#0, 1)    │
+│                           │
+│                           │
+│                           │
+│        99,765 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│                           │
+│                           │
+│                           │
+│        99,765 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           FILTER          │
+│    ────────────────────   │
+│ (CASE  WHEN (((prev_at IS │
+│    NULL) OR (date_diff(   │
+│     'second', prev_at,    │
+│   occurred_at) > 1800)))  │
+│  THEN (1) ELSE 0 END = 1) │
+│                           │
+│                           │
+│                           │
+│        99,765 rows        │
+│           0.01s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│             #2            │
+│             #3            │
+│                           │
+│                           │
+│                           │
+│        99,904 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           WINDOW          │
+│    ────────────────────   │
+│        Projections:       │
+│   LAG(occurred_at) OVER   │
+│ (PARTITION BY customer_id │
+│  ORDER BY occurred_at ASC │
+│  NULLS LAST, id ASC NULLS │
+│            LAST)          │
+│                           │
+│                           │
+│                           │
+│        99,904 rows        │
+│           0.15s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         TABLE_SCAN        │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.events      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│        customer_id        │
+│        occurred_at        │
+│             id            │
+│                           │
+│          Filters:         │
+│     customer_id<=2000     │
+│                           │
+│                           │
+│                           │
+│        99,904 rows        │
+│           0.01s           │
+└───────────────────────────┘

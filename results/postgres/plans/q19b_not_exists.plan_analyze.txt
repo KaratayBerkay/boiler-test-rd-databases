@@ -1,0 +1,17 @@
+Sort  (cost=707.41..707.42 rows=1 width=4) (actual time=3.165..3.166 rows=0.00 loops=1)
+  Sort Key: p.id
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=4644
+  ->  Nested Loop Anti Join  (cost=0.29..707.40 rows=1 width=4) (actual time=3.163..3.164 rows=0.00 loops=1)
+        Buffers: shared hit=4644
+        ->  Seq Scan on products p  (cost=0.00..159.00 rows=1500 width=4) (actual time=0.005..0.169 rows=1500.00 loops=1)
+              Buffers: shared hit=144
+        ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=0.29..2.81 rows=98 width=4) (actual time=0.002..0.002 rows=1.00 loops=1500)
+              Index Cond: (product_id = p.id)
+              Heap Fetches: 1500
+              Index Searches: 1500
+              Buffers: shared hit=4500
+Planning:
+  Buffers: shared hit=12
+Planning Time: 0.143 ms
+Execution Time: 3.182 ms

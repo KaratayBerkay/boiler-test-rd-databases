@@ -1,0 +1,63 @@
+planning time: 288µs
+execution time: 199ms
+distribution: local
+plan type: generic, reused
+rows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)
+regions: lab
+
+• sort
+│ sql nodes: n1
+│ regions: lab
+│ execution time: 29µs
+│ sql cpu time: 29µs
+│ actual row count: 90
+│ estimated row count: 24,508
+│ order: +column12
+│
+└── • window
+    │ sql nodes: n1
+    │ regions: lab
+    │ execution time: 125µs
+    │ sql cpu time: 125µs
+    │ actual row count: 90
+    │ estimated row count: 24,508
+    │
+    └── • render
+        │ execution time: 22µs
+        │ sql cpu time: 22µs
+        │ actual row count: 90
+        │
+        └── • group (hash)
+            │ sql nodes: n1
+            │ regions: lab
+            │ execution time: 5ms
+            │ sql cpu time: 5ms
+            │ actual row count: 90
+            │ estimated row count: 24,508
+            │ group by: column12
+            │
+            └── • render
+                │ execution time: 12ms
+                │ sql cpu time: 12ms
+                │ actual row count: 24,934
+                │
+                └── • filter
+                    │ sql nodes: n1
+                    │ regions: lab
+                    │ execution time: 5ms
+                    │ sql cpu time: 5ms
+                    │ actual row count: 24,934
+                    │ estimated row count: 24,623
+                    │ filter: (ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-04-01 00:00:00')
+                    │
+                    └── • scan
+                          sql nodes: n1
+                          kv nodes: n1
+                          regions: lab
+                          KV time: 177ms
+                          KV rows decoded: 200,000
+                          sql cpu time: 71ms
+                          actual row count: 200,000
+                          estimated row count: 200,000 (100% of the table; stats collected 3 minutes ago)
+                          table: orders@orders_pkey
+                          spans: FULL SCAN

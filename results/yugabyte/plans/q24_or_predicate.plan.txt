@@ -1,0 +1,8 @@
+Sort  (cost=78.08..78.11 rows=11 width=4)
+  Sort Key: id
+  ->  YB Bitmap Table Scan on orders  (cost=76.26..77.89 rows=11 width=4)
+        ->  BitmapOr  (cost=50.16..50.16 rows=11 width=0)
+              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..26.95 rows=10 width=0)
+                    Index Cond: (customer_id = '14824'::smallint)
+              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..23.21 rows=1 width=0)
+                    Index Cond: (id = 146741)

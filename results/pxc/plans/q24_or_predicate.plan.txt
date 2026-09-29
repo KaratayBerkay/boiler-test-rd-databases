@@ -1,0 +1,5 @@
+-> Sort: orders.id  (cost=7.02 rows=13)
+    -> Filter: ((orders.customer_id = 14824) or (orders.id = 146741))  (cost=7.02 rows=13)
+        -> Deduplicate rows sorted by row ID  (cost=7.02 rows=13)
+            -> Covering index range scan on orders using ix_orders_customer_id over (customer_id = 14824)  (cost=1.46 rows=12)
+            -> Index range scan on orders using PRIMARY over (id = 146741)  (cost=0.36 rows=1)

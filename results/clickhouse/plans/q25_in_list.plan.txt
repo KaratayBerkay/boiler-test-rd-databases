@@ -1,0 +1,21 @@
+Output: id, total_amount
+
+Sorting (Sorting for ORDER BY)
+│  Prefix sort description: id ASC
+│  Result sort description: id ASC
+└──ReadFromMergeTree (lab.orders)
+      Read type: InOrder
+      Parts: 1 | Granules: 7
+      Output: id, total_amount
+      Prewhere filter
+      Prewhere filter column:  id IN (71, 115, 218, 236, 238, 325, 757, 818, 935, 1006, ... 490 more)
+      Virtual row conversions
+      Indexes:
+        PrimaryKey
+          Keys:
+            id
+          Condition: (id in 500-element set)
+          Parts: 1/1
+          Granules: 7/7
+          Search Algorithm: generic exclusion search
+        Ranges: 1

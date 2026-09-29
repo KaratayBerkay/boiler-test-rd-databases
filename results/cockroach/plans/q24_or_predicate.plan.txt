@@ -1,0 +1,19 @@
+distribution: local
+
+• distinct
+│ estimated row count: 12
+│ distinct on: id
+│ order key: id
+│
+└── • union all
+    │ estimated row count: 12
+    │
+    ├── • scan
+    │     estimated row count: 11 (<0.01% of the table; stats collected 5 minutes ago)
+    │     table: orders@ix_orders_customer_id
+    │     spans: [/14824 - /14824]
+    │
+    └── • scan
+          estimated row count: 1 (<0.01% of the table; stats collected 5 minutes ago)
+          table: orders@orders_pkey
+          spans: [/146741 - /146741]

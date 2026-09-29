@@ -1,0 +1,94 @@
+planning time: 166µs
+execution time: 33ms
+distribution: full
+plan type: generic, reused
+rows decoded from KV: 4,081 (622 KiB, 8 gRPC calls)
+DistSQL network usage: 30 KiB (45 messages)
+regions: lab
+
+• group (streaming)
+│ sql nodes: n1, n3
+│ regions: lab
+│ execution time: 791µs
+│ sql cpu time: 790µs
+│ actual row count: 500
+│ estimated row count: 391
+│ group by: id
+│ ordered: +id
+│
+└── • sort
+    │ sql nodes: n1, n3
+    │ regions: lab
+    │ execution time: 640µs
+    │ sql cpu time: 640µs
+    │ actual row count: 1,209
+    │ estimated row count: 762
+    │ order: +id,+sku
+    │ already ordered: +id
+    │
+    └── • render
+        │ execution time: 128µs
+        │ sql cpu time: 128µs
+        │ actual row count: 1,209
+        │
+        └── • lookup join (streamer)
+            │ sql nodes: n1, n3
+            │ kv nodes: n3
+            │ regions: lab
+            │ KV time: 25ms
+            │ KV rows decoded: 1,163
+            │ execution time: 30ms
+            │ sql cpu time: 4ms
+            │ actual row count: 1,209
+            │ estimated row count: 762
+            │ table: products@products_pkey
+            │ equality: (product_id) = (id)
+            │ equality cols are key
+            │
+            └── • lookup join (streamer)
+                │ sql nodes: n1, n3
+                │ kv nodes: n1
+                │ regions: lab
+                │ KV time: 18ms
+                │ KV rows decoded: 1,209
+                │ execution time: 22ms
+                │ sql cpu time: 4ms
+                │ actual row count: 1,209
+                │ estimated row count: 762
+                │ table: order_items@order_items_pkey
+                │ equality: (id) = (id)
+                │ equality cols are key
+                │
+                └── • merge join
+                    │ sql nodes: n1, n3
+                    │ regions: lab
+                    │ execution time: 463µs
+                    │ sql cpu time: 667µs
+                    │ actual row count: 1,209
+                    │ estimated row count: 762
+                    │ equality: (order_id) = (id)
+                    │ right cols are key
+                    │
+                    ├── • scan
+                    │     sql nodes: n3
+                    │     kv nodes: n3
+                    │     regions: lab
+                    │     KV time: 872µs
+                    │     KV rows decoded: 1,209
+                    │     sql cpu time: 254µs
+                    │     actual row count: 1,209
+                    │     estimated row count: 2,098 (0.43% of the table; stats collected 5 minutes ago)
+                    │     table: order_items@ix_order_items_order_id
+                    │     spans: [ - /500]
+                    │
+                    └── • scan
+                          sql nodes: n1
+                          kv nodes: n1
+                          regions: lab
+                          KV time: 875µs
+                          KV rows decoded: 500
+                          sql cpu time: 183µs
+                          actual row count: 500
+                          estimated row count: 519 (0.26% of the table; stats collected 5 minutes ago)
+                          table: orders@orders_pkey
+                          spans: [ - /500]

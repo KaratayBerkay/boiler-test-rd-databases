@@ -1,0 +1,6 @@
+Limit  (cost=409.19..409.21 rows=8 width=22)
+  ->  Sort  (cost=409.19..409.21 rows=8 width=22)
+        Sort Key: id
+        ->  Seq Scan on products  (cost=23.08..409.07 rows=8 width=22)
+              Storage Filter: ((attrs ->> 'color'::text) = 'red'::text)
+              Filter: (((attrs ->> 'weight'::text))::numeric > '10'::numeric)

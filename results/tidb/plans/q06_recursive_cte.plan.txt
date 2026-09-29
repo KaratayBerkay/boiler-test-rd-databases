@@ -1,0 +1,16 @@
+Sort_33 | 29.75 | root |  | Column#37
+└─Projection_35 | 29.75 | root |  | lab.categories.id, Column#36, Column#37
+  └─CTEFullScan_36 | 29.75 | root | CTE:tree | data:CTE_0
+CTE_0 | 29.75 | root |  | Recursive CTE
+├─Projection_17(Seed Part) | 10.00 | root |  | lab.categories.id, lab.categories.parent_id, lab.categories.name, 0->Column#15, cast(lab.categories.name, var_string(400))->Column#16
+│ └─TableReader_20 | 10.00 | root |  | data:Selection_19
+│   └─Selection_19 | 10.00 | cop[tikv] |  | isnull(lab.categories.parent_id)
+│     └─TableFullScan_18 | 200.00 | cop[tikv] | table:categories | keep order:false
+└─Projection_24(Recursive Part) | 19.75 | root |  | lab.categories.id, lab.categories.parent_id, lab.categories.name, cast(plus(Column#24, 1), bigint BINARY)->Column#31, cast(concat(Column#25,  > , lab.categories.name), var_string(400))->Column#32
+  └─Projection_25 | 19.75 | root |  | lab.categories.id, lab.categories.parent_id, lab.categories.name, Column#24, Column#25
+    └─HashJoin_27 | 19.75 | root |  | inner join, equal:[eq(lab.categories.id, lab.categories.parent_id)]
+      ├─Selection_28(Build) | 8.00 | root |  | not(isnull(lab.categories.id))
+      │ └─CTETable_29 | 10.00 | root |  | Scan on CTE_0
+      └─TableReader_32(Probe) | 190.00 | root |  | data:Selection_31
+        └─Selection_31 | 190.00 | cop[tikv] |  | not(isnull(lab.categories.parent_id))
+          └─TableFullScan_30 | 200.00 | cop[tikv] | table:c | keep order:false

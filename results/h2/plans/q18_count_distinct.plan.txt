@@ -1,0 +1,6 @@
+SELECT
+    COUNT(DISTINCT "customer_id") AS "uniq"
+FROM "public"."events"
+    /* public.events.tableScan */
+WHERE "occurred_at" >= TIMESTAMP '2025-01-01 00:00:00'
+GROUP BY ()

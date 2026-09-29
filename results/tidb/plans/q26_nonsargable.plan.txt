@@ -1,0 +1,5 @@
+HashAgg_13 | 1.00 | root |  | funcs:count(Column#8)->Column#7
+└─TableReader_14 | 1.00 | root |  | data:HashAgg_6
+  └─HashAgg_6 | 1.00 | cop[tikv] |  | funcs:count(1)->Column#8
+    └─Selection_12 | 160000.00 | cop[tikv] |  | eq(month(lab.orders.ordered_at), 5), eq(year(lab.orders.ordered_at), 2025)
+      └─TableFullScan_11 | 200000.00 | cop[tikv] | table:orders | keep order:false

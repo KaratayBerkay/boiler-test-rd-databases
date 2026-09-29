@@ -1,0 +1,1 @@
+1 | SIMPLE | products | fulltext | ft_products_description | ft_products_description | 0 |  | 1 | Using where; Using filesort

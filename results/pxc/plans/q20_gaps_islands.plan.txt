@@ -1,0 +1,9 @@
+-> Sort: customer_id
+    -> Table scan on <temporary>
+        -> Aggregate using temporary table
+            -> Filter: ((case when ((w.prev_at is null) or (timestampdiff(SECOND,w.prev_at,w.occurred_at) > 1800)) then 1 else 0 end) = 1)  (cost=20772..23371 rows=207722)
+                -> Table scan on w  (cost=20772..23371 rows=207722)
+                    -> Materialize  (cost=20772..20772 rows=207722)
+                        -> Window aggregate with buffering: lag(`events`.occurred_at) OVER (PARTITION BY `events`.customer_id ORDER BY `events`.occurred_at,`events`.id )   (cost=0 rows=207722)
+                            -> Sort: `events`.customer_id, `events`.occurred_at, `events`.id  (cost=93475 rows=207722)
+                                -> Index range scan on events using ix_events_customer_id over (customer_id <= 2000), with index condition: (`events`.customer_id <= 2000)  (cost=93475 rows=207722)

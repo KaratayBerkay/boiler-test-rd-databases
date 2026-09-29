@@ -1,0 +1,13 @@
+Result *RESULT*  (cost=0.00..0.01 rows=1 width=4) (actual time=0.001..0.001 rows=1 loops=1)
+Planning Time: 0.029 ms
+Execution Time: 0.097 ms
+Storage Read Requests: 0
+Storage Read Ops: 0
+Storage Rows Scanned: 0
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 0.000 ms
+Peak Memory Usage: 64 kB

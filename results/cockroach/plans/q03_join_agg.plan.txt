@@ -1,0 +1,48 @@
+distribution: full
+
+• top-k
+│ estimated row count: 50
+│ order: -sum,+country_code,+column34
+│ k: 50
+│
+└── • group (hash)
+    │ estimated row count: 12,466
+    │ group by: country_code, column34
+    │
+    └── • render
+        │
+        └── • lookup join
+            │ estimated row count: 33,054
+            │ table: order_items@order_items_pkey
+            │ equality: (id) = (id)
+            │ equality cols are key
+            │
+            └── • lookup join
+                │ estimated row count: 33,054
+                │ table: order_items@ix_order_items_order_id
+                │ equality: (id) = (order_id)
+                │
+                └── • hash join
+                    │ estimated row count: 13,690
+                    │ equality: (id) = (customer_id)
+                    │ left cols are key
+                    │
+                    ├── • scan
+                    │     estimated row count: 20,000 (100% of the table; stats collected 3 minutes ago)
+                    │     table: customers@customers_pkey
+                    │     spans: FULL SCAN
+                    │
+                    └── • filter
+                        │ estimated row count: 13,690
+                        │ filter: ((ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-07-01 00:00:00')) AND (status = 'delivered')
+                        │
+                        └── • scan
+                              estimated row count: 200,000 (100% of the table; stats collected 3 minutes ago)
+                              table: orders@orders_pkey
+                              spans: FULL SCAN
+
+index recommendations: 2
+1. type: index replacement
+   SQL commands: CREATE INDEX ON lab.public.order_items (order_id) STORING (qty, unit_price) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.order_items@ix_order_items_order_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.order_items@ix_order_items_order_id` */;
+2. type: index creation
+   SQL command: CREATE INDEX ON lab.public.orders (status, ordered_at) STORING (customer_id);

@@ -1,0 +1,6 @@
+Sort  (cost=707.41..707.42 rows=1 width=4)
+  Sort Key: p.id
+  ->  Nested Loop Anti Join  (cost=0.29..707.40 rows=1 width=4)
+        ->  Seq Scan on products p  (cost=0.00..159.00 rows=1500 width=4)
+        ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=0.29..2.81 rows=98 width=4)
+              Index Cond: (product_id = p.id)

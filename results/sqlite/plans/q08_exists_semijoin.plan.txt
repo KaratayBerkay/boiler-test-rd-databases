@@ -1,0 +1,5 @@
+4 | 0 | 0 | SCAN c
+7 | 0 | 0 | CORRELATED SCALAR SUBQUERY 1
+12 | 7 | 0 | SEARCH o USING INDEX ix_orders_customer_id (customer_id=?)
+25 | 0 | 0 | CORRELATED SCALAR SUBQUERY 2
+30 | 25 | 0 | SEARCH e USING INDEX ix_events_customer_id (customer_id=?)

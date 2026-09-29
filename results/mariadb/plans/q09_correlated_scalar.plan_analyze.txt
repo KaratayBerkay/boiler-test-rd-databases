@@ -1,0 +1,76 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.051708631
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 0.996792,
+    "r_loops": 1,
+    "r_total_time_ms": 6.409310085,
+    "nested_loop": [
+      {
+        "table": {
+          "table_name": "p",
+          "access_type": "index",
+          "key": "PRIMARY",
+          "key_length": "4",
+          "used_key_parts": ["id"],
+          "loops": 1,
+          "r_loops": 1,
+          "rows": 4874,
+          "r_rows": 593,
+          "cost": 0.996792,
+          "r_table_time_ms": 0.200553693,
+          "r_other_time_ms": 0.250624336,
+          "r_engine_stats": {
+            "pages_accessed": 20
+          },
+          "filtered": 100,
+          "r_total_filtered": 84.31703204,
+          "attached_condition": "p.active = 1",
+          "r_filtered": 84.31703204
+        }
+      }
+    ],
+    "subqueries": [
+      {
+        "subquery_cache": {
+          "r_loops": 500,
+          "r_hit_ratio": 64,
+          "query_block": {
+            "select_id": 2,
+            "cost": 0.04514928,
+            "r_loops": 180,
+            "r_total_time_ms": 5.797235871,
+            "nested_loop": [
+              {
+                "table": {
+                  "table_name": "p2",
+                  "access_type": "ref",
+                  "possible_keys": ["ix_products_category_id"],
+                  "key": "ix_products_category_id",
+                  "key_length": "4",
+                  "used_key_parts": ["category_id"],
+                  "ref": ["lab.p.category_id"],
+                  "loops": 1,
+                  "r_loops": 180,
+                  "rows": 24,
+                  "r_rows": 25.36666667,
+                  "cost": 0.04514928,
+                  "r_table_time_ms": 5.019285602,
+                  "r_other_time_ms": 0.679366052,
+                  "r_engine_stats": {
+                    "pages_accessed": 9496
+                  },
+                  "filtered": 100,
+                  "r_total_filtered": 100,
+                  "r_filtered": 100
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

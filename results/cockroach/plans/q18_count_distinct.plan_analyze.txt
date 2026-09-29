@@ -1,0 +1,45 @@
+planning time: 218µs
+execution time: 698ms
+distribution: full
+plan type: generic, reused
+rows decoded from KV: 1,000,000 (107 MiB, 11 gRPC calls)
+DistSQL network usage: 152 B (51 messages)
+regions: lab
+
+• group (scalar)
+│ sql nodes: n3
+│ regions: lab
+│ execution time: 116µs
+│ sql cpu time: 115µs
+│ actual row count: 1
+│ estimated row count: 1
+│
+└── • distinct
+    │ sql nodes: n3
+    │ regions: lab
+    │ execution time: 28ms
+    │ sql cpu time: 28ms
+    │ actual row count: 20,000
+    │ estimated row count: 20,035
+    │ distinct on: customer_id
+    │
+    └── • filter
+        │ sql nodes: n3
+        │ regions: lab
+        │ execution time: 15ms
+        │ sql cpu time: 15ms
+        │ actual row count: 499,245
+        │ estimated row count: 499,312
+        │ filter: occurred_at >= '2025-01-01 00:00:00'
+        │
+        └── • scan
+              sql nodes: n3
+              kv nodes: n3
+              regions: lab
+              KV time: 652ms
+              KV rows decoded: 1,000,000
+              sql cpu time: 242ms
+              actual row count: 1,000,000
+              estimated row count: 1,000,000 (100% of the table; stats collected 4 minutes ago)
+              table: events@events_pkey
+              spans: FULL SCAN

@@ -1,0 +1,3 @@
+-> Limit/Offset: 50/100000 row(s)  (cost=20148 rows=50) (actual time=126..126 rows=50 loops=1)
+    -> Sort: orders.ordered_at, orders.id, limit input to 100050 row(s) per chunk  (cost=20148 rows=199640) (actual time=117..122 rows=100050 loops=1)
+        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.335..45 rows=200000 loops=1)

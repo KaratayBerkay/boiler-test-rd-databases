@@ -1,0 +1,12 @@
+Aggregate  (cost=8804.82..8804.83 rows=1 width=8)
+  ->  Sort  (cost=8304.82..8554.82 rows=100000 width=4)
+        Sort Key: remote_scan.uniq
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=4)
+              Task Count: 32
+              Tasks Shown: One of 32
+              ->  Task
+                    Node: host=w1 port=5432 dbname=lab
+                    ->  HashAggregate  (cost=897.21..1014.16 rows=11695 width=4)
+                          Group Key: customer_id
+                          ->  Seq Scan on events_102074 events  (cost=0.00..858.38 rows=15534 width=4)
+                                Filter: (occurred_at >= '2025-01-01 00:00:00'::timestamp without time zone)

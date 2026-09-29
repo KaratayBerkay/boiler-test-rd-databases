@@ -1,0 +1,51 @@
+display: SQL Server 2025
+category: row-store OLTP
+dialect: tsql
+driver: pymssql
+image: mcr.microsoft.com/mssql/server:2025-latest
+project: rdlab-mssql
+scale: 1
+notes: >-
+  SQL Server 2025 Developer on Linux (container image has no Full-Text Search component: q13 uses LIKE). Two replicas in a read-scale Availability Group (CLUSTER_TYPE = NONE): synchronous
+  commit, automatic seeding, readable secondary; failover is a manual FORCE_FAILOVER_ALLOW_DATA_LOSS on the secondary.
+docs:
+  - https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-availability-group-configure-rs
+  - https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-configure
+  # host port 11434 is taken by ollama on this machine, hence 11435 for the secondary
+oneshot: [volumes-init, init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 11433
+    user: sa
+    password: "LabPass_2026!"
+    database: lab
+    container: rdlab-mssql-1
+    sa_password: "LabPass_2026!"
+  - name: replica
+    role: replica
+    host: 127.0.0.1
+    port: 11435
+    user: sa
+    password: "LabPass_2026!"
+    database: lab
+    container: rdlab-mssql-2
+    sa_password: "LabPass_2026!"
+replication:
+  kind: Availability Group (read-scale, sync commit, auto seeding)
+  promote:
+    method: engine
+    target: replica
+    sql: ALTER AVAILABILITY GROUP [ag1] FORCE_FAILOVER_ALLOW_DATA_LOSS
+backup:
+  dir: /backups
+  volume: mssql-backups
+  data_dir: /var/opt/mssql/data
+  strategies: [full, differential, log_pitr]
+logging:
+  dir: /var/opt/mssql/log
+  slow_ms: 100
+features:
+  settle_seconds: 5
+  connection_storm: true

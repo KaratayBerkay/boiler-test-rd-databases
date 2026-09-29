@@ -1,0 +1,216 @@
+{
+  "engine": "monetdb",
+  "display": "MonetDB",
+  "category": "analytical (columnar)",
+  "dialect": "monetdb",
+  "driver": "pymonetdb",
+  "image": "monetdb/monetdb:latest",
+  "run_id": "20260914-123633-17a355",
+  "started": "2026-09-14T09:36:33+00:00",
+  "scale": 0.3,
+  "notes": "Column-store with full SQL:2003 transactions (optimistic concurrency). Bulk load via COPY INTO ... ON CLIENT. Replication: no built-in physical replication in the open-source release (monetdb replication is transaction-log based, experimental).",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.04,
+          "rows_per_s": 143057,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 13613,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.03,
+          "rows_per_s": 45213,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 0.13,
+          "rows_per_s": 457163,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 0.22,
+          "rows_per_s": 659499,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 0.89,
+          "rows_per_s": 337512,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.04,
+          "rows_per_s": 152963,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INT NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INT NOT NULL,\n  parent_id INT,\n  name VARCHAR(100) NOT NULL,\n  depth INT NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INT NOT NULL,\n  category_id INT NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INT NOT NULL,\n  customer_id INT NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INT NOT NULL,\n  order_id INT NOT NULL,\n  product_id INT NOT NULL,\n  qty INT NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INT NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INT NOT NULL,\n  warehouse_id INT NOT NULL,\n  qty INT NOT NULL,\n  updated_at TIMESTAMP NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.02,
+      "load_seconds": 1.38,
+      "fts_setup": [],
+      "after_load": [
+        "ANALYZE sys.customers",
+        "ANALYZE sys.categories",
+        "ANALYZE sys.products",
+        "ANALYZE sys.orders",
+        "ANALYZE sys.order_items",
+        "ANALYZE sys.events",
+        "ANALYZE sys.inventory"
+      ],
+      "post_seconds": 0.17,
+      "server_version": "MonetDB 11.55.7",
+      "_seconds": 1.6
+    },
+    "logging": {
+      "sink": "sys.querylog_calls (CALL sys.querylog_enable(threshold_ms))",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "querylog": "sys.querylog_enable(100)",
+        "gdk_dbpath": "/var/monetdb5/dbfarm/lab",
+        "sql_debug": "0",
+        "max_clients": "64",
+        "monet_version": "11.55.7",
+        "monet_release": "Dec2025-SP3"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "sys.querylog_calls (CALL sys.querylog_enable(threshold_ms))",
+        "slow_query_ms": 278.0,
+        "slow_logged": true,
+        "seen_after_s": 0.01,
+        "sample": "start=2026-09-14 09:36:35.274902 stop=2026-09-14 09:36:35.550001 run_us=275085 tuples=1 owner=monetdb query=select count(*) as rdlab_mk_f4f5e484ca from events e1, events e2 where e1.customer_id = e2.customer_",
+        "duration_ms": 275.08,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "sys.querylog_catalog (query text + owner) with threshold 0",
+        "setup": "sys.querylog_enable(0)",
+        "event_found": true,
+        "seen_after_s": 0.0,
+        "sample": "owner=monetdb defined=2026-09-14 09:36:35.574869 query=select q.owner, q.defined, q.query from sys.querylog_catalog q where q.query like '%audit_rdlab_mk_4c4e8ab017%' limit 1\n;",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 7776,
+          "p50_ms": 1.0075025,
+          "p99_ms": 1.5199030100000004,
+          "errors": 0
+        },
+        "full_logging": "CALL sys.querylog_enable(0) (every query logged into sys.querylog_calls)",
+        "full": {
+          "qps": 7662,
+          "p50_ms": 1.0127375,
+          "p99_ms": 1.7948409499999987,
+          "errors": 0
+        },
+        "log_bytes_written": 6129600,
+        "bytes_per_statement": 200.0,
+        "overhead_pct": 1.5,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-monetdb": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 101,
+          "docker_logs_lines": 3
+        }
+      },
+      "extra": {
+        "querylog_calls": 30653,
+        "top5": [
+          {
+            "query": "select id, name, email from customers where id = 3776\n;",
+            "calls": 16,
+            "avg_ms": 0.32
+          },
+          {
+            "query": "select id, name, email from customers where id = 5126\n;",
+            "calls": 15,
+            "avg_ms": 0.3
+          },
+          {
+            "query": "select id, name, email from customers where id = 4759\n;",
+            "calls": 15,
+            "avg_ms": 0.38
+          },
+          {
+            "query": "select id, name, email from customers where id = 4016\n;",
+            "calls": 15,
+            "avg_ms": 0.33
+          },
+          {
+            "query": "select id, name, email from customers where id = 3206\n;",
+            "calls": 14,
+            "avg_ms": 0.34
+          }
+        ]
+      },
+      "collected": [
+        "results/monetdb/logs/monetdb__var_monetdb5_dbfarm_merovingian.log"
+      ],
+      "_seconds": 16.9
+    }
+  },
+  "harness_log": "results/logs/monetdb/20260914-123633-17a355.log",
+  "server_version": "MonetDB 11.55.7",
+  "finished": "2026-09-14T09:36:52+00:00"
+}

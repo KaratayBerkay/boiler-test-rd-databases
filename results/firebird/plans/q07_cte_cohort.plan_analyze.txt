@@ -1,0 +1,16 @@
+Select Expression
+    -> Sort (record length: 52, key length: 8)
+        -> Aggregate
+            -> Sort (record length: 76, key length: 8)
+                -> Nested Loop Join (outer)
+                    -> Aggregate
+                        -> Table "ORDERS" as "C FIRST_ORDERS ORDERS" Access By ID
+                            -> Index "RDB$FOREIGN6" Full Scan
+                    -> Filter
+                        -> Aggregate
+                            -> Sort (record length: 52, key length: 16)
+                                -> Filter
+                                    -> Table "ORDERS" as "A O" Access By ID
+                                        -> Bitmap
+                                            -> Index "RDB$FOREIGN6" Range Scan (full match)
+fetches=10416399 reads=2570

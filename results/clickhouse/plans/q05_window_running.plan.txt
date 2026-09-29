@@ -1,0 +1,28 @@
+Output: toDate(ordered_at), sum(total_amount), sum(sum(total_amount)) OVER (ORDER BY toDate(ordered_at) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), LAG(sum(total_amount), 1) OVER (ORDER BY toDate(ordered_at) ASC)
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: toDate(ordered_at) ASC
+└──Window (Window step for window 'ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW')
+   │  Window: (ORDER BY toDate(ordered_at) ASC)
+   │  Functions: sum(sum(total_amount)) OVER (ORDER BY toDate(ordered_at) ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+   └──Window (Window step for window 'ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')
+      │  Window: (ORDER BY toDate(ordered_at) ASC)
+      │  Functions: LAG(sum(total_amount), 1) OVER (ORDER BY toDate(ordered_at) ASC)
+      └──Sorting (Sorting for window 'ORDER BY d ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')
+         │  Sort description: toDate(ordered_at) ASC
+         └──Aggregating
+            │  Keys: toDate(ordered_at)
+            │  Aggregates: sum(total_amount)
+            │  Skip merging: 0
+            └──ReadFromMergeTree (lab.orders)
+                  Read type: Default
+                  Parts: 1 | Granules: 7
+                  Output: ordered_at, total_amount
+                  Prewhere filter
+                  Prewhere filter column:  ordered_at < '2025-04-01 00:00:00.000000' AND ordered_at >= '2025-01-01 00:00:00.000000'
+                  Indexes:
+                    PrimaryKey
+                      Condition: true
+                      Parts: 1/1
+                      Granules: 7/7
+                    Ranges: 1

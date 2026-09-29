@@ -1,0 +1,8 @@
+WindowAgg  (cost=15647.94..17192.04 rows=24705 width=104)
+  ->  WindowAgg  (cost=15647.94..16821.47 rows=24705 width=72)
+        ->  GroupAggregate  (cost=15647.94..16203.84 rows=24705 width=40)
+              Group Key: (date_trunc('day'::text, orders.ordered_at))
+              ->  Sort  (cost=15647.94..15709.72 rows=24710 width=14)
+                    Sort Key: (date_trunc('day'::text, orders.ordered_at))
+                    ->  Seq Scan on orders  (cost=23.10..13845.00 rows=24710 width=14)
+                          Storage Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-04-01 00:00:00'::timestamp without time zone))

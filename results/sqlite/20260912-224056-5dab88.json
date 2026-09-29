@@ -1,0 +1,221 @@
+{
+  "engine": "sqlite",
+  "display": "SQLite 3",
+  "category": "embedded",
+  "dialect": "sqlite",
+  "driver": "sqlite3",
+  "image": "(embedded, python stdlib sqlite3)",
+  "run_id": "20260912-224056-5dab88",
+  "started": "2026-09-12T19:40:56+00:00",
+  "scale": 1.0,
+  "notes": "Embedded, single-writer database file (WAL mode, synchronous=NORMAL). No server, no network, no replication in core; libSQL / rqlite / Litestream provide replication on top of SQLite (see docs).",
+  "phases": {
+    "connections": {
+      "max_connections": null,
+      "connect_latency": {
+        "embedded": {
+          "target": "embedded",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 0.59987,
+            "p50": 0.6553585,
+            "p90": 0.7055868000000001,
+            "p95": 0.7220494,
+            "p99": 0.7511371400000001,
+            "max": 0.761877,
+            "mean": 0.6591606333333334,
+            "stdev": 0.037565133593518464
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "concurrency": {
+        "embedded": [
+          {
+            "workers": 1,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 331840,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 82960,
+            "latency_ms": {
+              "n": 331840,
+              "min": 0.008723,
+              "p50": 0.010476,
+              "p90": 0.014550100000000035,
+              "p95": 0.021335,
+              "p99": 0.027799,
+              "max": 0.183781,
+              "mean": 0.011631613337753133,
+              "stdev": 0.004146664373373121
+            },
+            "first_error": null,
+            "workers_reported": 1,
+            "mode": "threads (embedded engine)"
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 56151,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 14038,
+            "latency_ms": {
+              "n": 56151,
+              "min": 0.008845,
+              "p50": 0.24896,
+              "p90": 0.497257,
+              "p95": 0.5946205,
+              "p99": 0.8297355,
+              "max": 2.272872,
+              "mean": 0.28330734727787577,
+              "stdev": 0.16440391776210414
+            },
+            "first_error": null,
+            "workers_reported": 4,
+            "mode": "threads (embedded engine)"
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 34571,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 8643,
+            "latency_ms": {
+              "n": 34571,
+              "min": 0.055691,
+              "p50": 1.668152,
+              "p90": 3.22125,
+              "p95": 3.7888574999999998,
+              "p99": 5.003382900000011,
+              "max": 9.098446,
+              "mean": 1.8489204804315755,
+              "stdev": 1.0225547320333488
+            },
+            "first_error": null,
+            "workers_reported": 16,
+            "mode": "threads (embedded engine)"
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 31661,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 7915,
+            "latency_ms": {
+              "n": 31661,
+              "min": 0.059607,
+              "p50": 3.550729,
+              "p90": 7.349471,
+              "p95": 8.717949,
+              "p99": 11.704509000000002,
+              "max": 21.196784,
+              "mean": 4.040741637693061,
+              "stdev": 2.4516742540863103
+            },
+            "first_error": null,
+            "workers_reported": 32,
+            "mode": "threads (embedded engine)"
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 34229,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 8557,
+            "latency_ms": {
+              "n": 34229,
+              "min": 0.045083,
+              "p50": 6.402096,
+              "p90": 14.040020600000002,
+              "p95": 16.895194599999993,
+              "p99": 22.833414840000014,
+              "max": 43.630817,
+              "mean": 7.478672638961115,
+              "stdev": 4.832515868797461
+            },
+            "first_error": null,
+            "workers_reported": 64,
+            "mode": "threads (embedded engine)"
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 25873,
+        "qps": 6460,
+        "checkout_wait_ms": {
+          "n": 25873,
+          "min": 0.001302,
+          "p50": 0.003943,
+          "p90": 0.006372399999999998,
+          "p95": 0.007109,
+          "p99": 0.009736279999999998,
+          "max": 4000.664377,
+          "mean": 3.708314344567696,
+          "stdev": 121.5658236434375
+        },
+        "exec_ms": {
+          "n": 25873,
+          "min": 0.057523,
+          "p50": 1.093676,
+          "p90": 2.1791165999999995,
+          "p95": 2.5721825999999997,
+          "p99": 3.4084409599999987,
+          "max": 6.227739,
+          "mean": 1.230262636377691,
+          "stdev": 0.7057061915832163
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": null,
+          "error": "OperationalError: database is locked",
+          "ms": 0.1,
+          "t2": {
+            "outcome": "committed",
+            "ms": 0.2
+          },
+          "final_balance": 90
+        },
+        "write_conflict_serializable": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": null,
+          "error": "OperationalError: database is locked",
+          "ms": 0.1,
+          "t2": {
+            "outcome": "committed",
+            "ms": 0.1
+          },
+          "final_balance": 90
+        },
+        "deadlock": {
+          "detected": false,
+          "note": "second writer could not even start (single-writer engine: table/database-level write lock)",
+          "error": "OperationalError: database is locked",
+          "error_code": null
+        }
+      },
+      "_seconds": 35.0
+    }
+  },
+  "server_version": "SQLite 3.45.1",
+  "finished": "2026-09-12T19:41:31+00:00"
+}

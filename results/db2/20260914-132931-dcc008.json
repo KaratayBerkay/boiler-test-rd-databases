@@ -1,0 +1,375 @@
+{
+  "engine": "db2",
+  "display": "IBM Db2 12.1 CE",
+  "category": "row-store OLTP",
+  "dialect": "db2",
+  "driver": "ibm_db",
+  "image": "icr.io/db2_community/db2:latest",
+  "run_id": "20260914-132931-dcc008",
+  "started": "2026-09-14T10:29:31+00:00",
+  "scale": 0.3,
+  "notes": "Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but needs two instances with matching configuration and a takeover procedure; not automated in this stack.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.4,
+          "rows_per_s": 14891,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 24650,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.11,
+          "rows_per_s": 13952,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 3.77,
+          "rows_per_s": 15915,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 7.84,
+          "rows_per_s": 18757,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 22.66,
+          "rows_per_s": 13239,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.24,
+          "rows_per_s": 24990,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs VARCHAR(4000),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description VARCHAR(4000) NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs VARCHAR(4000),\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload VARCHAR(4000),\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 2.9,
+      "load_seconds": 35.08,
+      "fts_setup": [
+        "(Db2 Text Search not enabled in the community container; LIKE fallback used)"
+      ],
+      "after_load": [
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE CUSTOMERS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE CATEGORIES WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE PRODUCTS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDER_ITEMS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE EVENTS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE INVENTORY WITH DISTRIBUTION AND INDEXES ALL')"
+      ],
+      "post_seconds": 0.47,
+      "server_version": "DB2 v12.1.5.0",
+      "_seconds": 40.6
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "offline_full": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE ... COMPRESS (offline) / RESTORE ... INTO",
+          "backup_seconds": 6.43,
+          "backup_bytes": 100728832,
+          "backup_mb": 96.1,
+          "restore_seconds": 7.38,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 3.17
+          },
+          "pitr": {},
+          "notes": "offline (no connections) compressed full image; restored into a new database on the same instance (circular logging: no rollforward)",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/*.001 /backups/logs /backups/lt && mkdir -p /backups/logs && chmod 777 /backups/logs",
+              "rc": 0,
+              "seconds": 0.05,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE (offline)",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'force applications all'\"'\"' || exit $?\nsleep 2\ndb2 -v '\"'\"'deactivate db lab'\"'\"' || exit $?\ndb2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 6.43,
+              "out": "\nbackup db lab to /backups compress without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103019\n\n\n"
+            },
+            {
+              "name": "RESTORE DATABASE ... INTO labr",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab from /backups taken at 20260914103019 into labr replace existing without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 7.38,
+              "out": "restore db lab from /backups taken at 20260914103019 into labr replace existing without prompting\nDB20000I  The RESTORE DATABASE command completed successfully.\n\n"
+            },
+            {
+              "name": "drop labr",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'drop db labr'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 1.24,
+              "out": "drop db labr\nDB20000I  The DROP DATABASE command completed successfully.\n\n"
+            }
+          ],
+          "timestamp": "20260914103019",
+          "seconds": 18.3,
+          "description": "offline full image restored into a new database"
+        },
+        "online_incremental": {
+          "status": "error",
+          "kind": "incremental",
+          "tool": "LOGARCHMETH1 + BACKUP ONLINE INCREMENTAL + RESTORE INCREMENTAL AUTOMATIC",
+          "backup_seconds": 4.39,
+          "backup_bytes": 298295296,
+          "backup_mb": 284.5,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "RuntimeError: RESTORE INCREMENTAL AUTOMATIC INTO labi + ROLLFORWARD failed rc=4: restore db lab incremental automatic from /backups taken at 20260914103047 into labi logtarget /backups/lt replace existing without prompting SQL2581N Restore is unable to extract log files or restore a log directory from the backup image to the specified path. Reason code \"2\".",
+          "steps": [
+            {
+              "name": "LOGARCHMETH1 + TRACKMOD, offline backup",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'force applications all'\"'\"' || exit $?\nsleep 2\ndb2 -v '\"'\"'deactivate db lab'\"'\"' || exit $?\ndb2 -v '\"'\"'update db cfg for lab using LOGARCHMETH1 DISK:/backups/logs/ TRACKMOD ON'\"'\"' || exit $?\ndb2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 6.54,
+              "out": "\nbackup db lab to /backups compress without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103037\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCLUDE LOGS",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online to /backups compress include logs without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 4.39,
+              "out": "backup db lab online to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103042\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCREMENTAL",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online incremental to /backups compress include logs without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 3.52,
+              "out": "backup db lab online incremental to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103047\n\n\n"
+            },
+            {
+              "name": "RESTORE INCREMENTAL AUTOMATIC INTO labi + ROLLFORWARD",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab incremental automatic from /backups taken at 20260914103047 into labi logtarget /backups/lt replace existing without prompting'\"'\"' || exit $?\ndb2 -v '\"'\"'rollforward db labi to end of logs and complete overflow log path (/backups/lt)'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 4,
+              "seconds": 2.39,
+              "out": "restore db lab incremental automatic from /backups taken at 20260914103047 into labi logtarget /backups/lt replace existing without prompting\nSQL2581N  Restore is unable to extract log files or restore a log directory \nfrom the backup image to the specified path. Reason code \"2\".\n\n"
+            }
+          ],
+          "archive_base_timestamp": "20260914103037",
+          "online_full_timestamp": "20260914103042",
+          "incremental": {
+            "timestamp": "20260914103047",
+            "seconds": 3.52,
+            "bytes": 75534336
+          },
+          "seconds": 18.2,
+          "description": "online full + incremental chain restored with rollforward"
+        },
+        "pitr": {
+          "status": "n/a",
+          "kind": "pitr",
+          "tool": "ARCHIVE LOG + ROLLFORWARD ... TO <timestamp>",
+          "backup_seconds": null,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "needs the online incremental chain",
+          "error": null,
+          "steps": [],
+          "seconds": 0.0,
+          "description": "point-in-time rollforward from archived logs"
+        }
+      },
+      "order": [
+        "offline_full",
+        "online_incremental",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 2.41,
+      "summary": {
+        "strategies": 3,
+        "ok": 1,
+        "verified": [
+          "offline_full"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 40.8
+    },
+    "logging": {
+      "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "DIAGLEVEL": "3",
+        "DIAGPATH": "/database/config/db2inst1/sqllib/db2dump/ $m",
+        "LOGARCHMETH1": "DISK:/backups/logs/",
+        "TRACKMOD": "YES",
+        "MON_ACT_METRICS": "BASE",
+        "MON_REQ_METRICS": "BASE",
+        "MON_DEADLOCK": "WITHOUT_HIST",
+        "MON_LOCKWAIT": "NONE",
+        "NOTIFYLEVEL": "3",
+        "audit_log_path": null,
+        "event_monitor": "RDLAB_ACT (activities -> ACTIVITYSTMT_RDLAB_ACT)"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+        "slow_query_ms": 1162.9,
+        "slow_logged": false,
+        "seen_after_s": 25.12,
+        "sample": "",
+        "event_monitor": "completed=2026-09-14 10:31:19.542149 act_exec_time_us=376",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "db2audit policy RDLAB_POL (EXECUTE) -> db2audit archive/extract",
+        "setup": "CREATE AUDIT POLICY RDLAB_POL CATEGORIES EXECUTE, OBJMAINT; AUDIT DATABASE USING POLICY",
+        "event_found": false,
+        "seen_after_s": 20.28,
+        "sample": "",
+        "status": "not-found"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 2714,
+          "p50_ms": 1.301844,
+          "p99_ms": 24.23894806999997,
+          "errors": 0
+        },
+        "full_logging": "COLLECT ACTIVITY DATA ON ALL WITH DETAILS on the default workload (every statement into the RDLAB_ACT event monitor tables)",
+        "full": {
+          "qps": 1073,
+          "p50_ms": 1.400149,
+          "p99_ms": 77.12278050000343,
+          "errors": 0
+        },
+        "log_bytes_written": 1073100,
+        "bytes_per_statement": 250.1,
+        "overhead_pct": 60.5,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-db2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 918229,
+          "docker_logs_lines": 19578
+        }
+      },
+      "extra": {
+        "package_cache_top5": [],
+        "activity_rows": 9307
+      },
+      "collected": [
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2diag.log",
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2inst1.nfy"
+      ],
+      "_seconds": 76.3
+    }
+  },
+  "harness_log": "results/logs/db2/20260914-132931-dcc008.log",
+  "server_version": "DB2 v12.1.5.0",
+  "finished": "2026-09-14T10:32:09+00:00"
+}

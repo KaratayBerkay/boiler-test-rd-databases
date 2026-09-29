@@ -1,0 +1,21 @@
+Subquery Scan on t  (cost=646.11..681.24 rows=1081 width=22) (actual time=0.814..1.070 rows=300.00 loops=1)
+  Buffers: shared hit=470
+  ->  WindowAgg  (cost=646.11..670.43 rows=1081 width=30) (actual time=0.814..1.041 rows=300.00 loops=1)
+        Window: w1 AS (PARTITION BY orders.customer_id ORDER BY orders.ordered_at, orders.id ROWS UNBOUNDED PRECEDING)
+        Run Condition: (row_number() OVER w1 <= 3)
+        Storage: Memory  Maximum Storage: 17kB
+        Buffers: shared hit=470
+        ->  Sort  (cost=646.11..648.81 rows=1081 width=22) (actual time=0.810..0.861 rows=1004.00 loops=1)
+              Sort Key: orders.customer_id, orders.ordered_at DESC, orders.id DESC
+              Sort Method: quicksort  Memory: 64kB
+              Buffers: shared hit=470
+              ->  Bitmap Heap Scan on orders  (cost=10.87..591.64 rows=1081 width=22) (actual time=0.129..0.517 rows=1004.00 loops=1)
+                    Recheck Cond: (customer_id <= 100)
+                    Heap Blocks: exact=467
+                    Buffers: shared hit=470
+                    ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..10.60 rows=1081 width=0) (actual time=0.071..0.071 rows=1004.00 loops=1)
+                          Index Cond: (customer_id <= 100)
+                          Index Searches: 1
+                          Buffers: shared hit=3
+Planning Time: 0.076 ms
+Execution Time: 1.104 ms

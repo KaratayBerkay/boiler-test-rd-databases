@@ -1,0 +1,1 @@
+1 | SIMPLE | orders | ALL | None | None | None | None | 194613 | Using where; Using filesort

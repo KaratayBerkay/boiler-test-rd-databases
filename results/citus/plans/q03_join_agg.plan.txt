@@ -1,0 +1,22 @@
+Limit  (cost=9563.96..9564.09 rows=50 width=60)
+  ->  Sort  (cost=9563.96..9564.46 rows=200 width=60)
+        Sort Key: (sum(remote_scan.revenue)) DESC, remote_scan.country_code, remote_scan.month_start
+        ->  GroupAggregate  (cost=8304.82..9557.32 rows=200 width=60)
+              Group Key: remote_scan.country_code, remote_scan.month_start
+              ->  Sort  (cost=8304.82..8554.82 rows=100000 width=56)
+                    Sort Key: remote_scan.country_code, remote_scan.month_start, remote_scan.orders
+                    ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=56)
+                          Task Count: 24
+                          Tasks Shown: None, not supported for re-partition queries
+                          ->  MapMergeJob
+                                Map Task Count: 24
+                                Merge Task Count: 24
+                                ->  MapMergeJob
+                                      Map Task Count: 32
+                                      Merge Task Count: 24
+                                ->  MapMergeJob
+                                      Map Task Count: 32
+                                      Merge Task Count: 24
+                          ->  MapMergeJob
+                                Map Task Count: 32
+                                Merge Task Count: 24

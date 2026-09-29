@@ -1,0 +1,61 @@
+display: MariaDB 11
+category: row-store OLTP
+dialect: mariadb
+driver: pymysql
+image: mariadb:11
+project: rdlab-mariadb
+scale: 1
+notes: >-
+  MariaDB 11.8 LTS. Replica configured by the official image (MARIADB_MASTER_HOST) using GTID slave_pos; MaxScale
+  readwritesplit routes SELECTs to the replica and performs automatic failover (mariadbmon) when the primary dies.
+docs:
+  - https://hub.docker.com/_/mariadb
+  - https://mariadb.com/kb/en/setting-up-replication/
+  - https://mariadb.com/kb/en/mariadb-maxscale-2402-readwritesplit/
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 13316
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-mdb-primary
+    admin_user: root
+    admin_password: rootpass
+  - name: replica
+    role: replica
+    host: 127.0.0.1
+    port: 13317
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-mdb-replica
+    admin_user: root
+    admin_password: rootpass
+  - name: maxscale
+    role: proxy
+    host: 127.0.0.1
+    port: 14006
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-mdb-maxscale
+    splits_reads: true
+replication:
+  kind: GTID async (binlog row) + MaxScale auto-failover
+  promote:
+    method: none          # MaxScale mariadbmon promotes the replica automatically
+    target: replica
+backup:
+  dir: /backups
+  volume: mdb-backups
+  restore_port: 13319
+  source_host: primary
+  strategies: [mariadb_dump, mariadb_backup, flashback]
+logging:
+  dir: /var/log/mysql
+  slow_ms: 100
+features:
+  settle_seconds: 3

@@ -1,0 +1,8 @@
+Sort  (cost=1665.01..1665.21 rows=79 width=52)
+  Sort Key: shipping_country, status
+  ->  MixedAggregate  (cost=0.00..1662.52 rows=79 width=52)
+        Hash Key: shipping_country, status
+        Hash Key: shipping_country
+        Group Key: ()
+        ->  Seq Scan on orders  (cost=0.00..1492.00 rows=7535 width=18)
+              Filter: ((ordered_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-09-01 00:00:00'::timestamp without time zone))

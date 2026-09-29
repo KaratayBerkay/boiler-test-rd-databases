@@ -1,0 +1,1938 @@
+{
+  "engine": "firebird",
+  "display": "Firebird 5",
+  "category": "row-store OLTP",
+  "dialect": "firebird",
+  "driver": "firebird-driver",
+  "image": "firebirdsql/firebird:5",
+  "run_id": "20260913-035547-23c61a",
+  "started": "2026-09-13T00:55:47+00:00",
+  "scale": 0.3,
+  "notes": "Firebird 5 SuperServer. MVCC with SNAPSHOT / READ COMMITTED isolation, UPDATE OR INSERT and MERGE, no LATERAL/JSON. Built-in asynchronous replication (replication.conf + nbackup copy) exists since Firebird 4 but is not automated here. Loaded at scale 0.3 because firebird-driver executemany sends one row per round trip (a few thousand rows/s).",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 8.77,
+          "rows_per_s": 684,
+          "method": "executemany",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.25,
+          "rows_per_s": 787,
+          "method": "executemany",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 2.56,
+          "rows_per_s": 586,
+          "method": "executemany",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 77.37,
+          "rows_per_s": 775,
+          "method": "executemany",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 196.02,
+          "rows_per_s": 750,
+          "method": "executemany",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 390.3,
+          "rows_per_s": 769,
+          "method": "executemany",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 6.84,
+          "rows_per_s": 877,
+          "method": "executemany",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP NOT NULL,\n  attrs VARCHAR(2000),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description VARCHAR(4000) NOT NULL,\n  price DOUBLE PRECISION NOT NULL,\n  attrs VARCHAR(2000),\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP NOT NULL,\n  total_amount DOUBLE PRECISION NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DOUBLE PRECISION NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP NOT NULL,\n  payload VARCHAR(2000),\n  value_num DOUBLE PRECISION NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.19,
+      "load_seconds": 682.27,
+      "fts_setup": [],
+      "after_load": [],
+      "post_seconds": 0.0,
+      "server_version": "Firebird LI-V6.3.4.1812 Firebird 5.0",
+      "_seconds": 682.7
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -104 -Token unknown - line 1, column 8 -MATERIALIZED",
+        "error_code": "42000",
+        "ms": 87.5
+      },
+      "partitioning": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -104 -Token unknown - line 1, column 40 -PARTITION",
+        "error_code": "42000",
+        "ms": 94.1
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 127.7
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 128.0
+      },
+      "returning": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 7)]",
+        "ms": 116.8
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 84.8
+      },
+      "arrays": {
+        "status": "error",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -206 -Column unknown -ARRAY -At line 1, column 8",
+        "error_code": "42S22",
+        "ms": 71.1
+      },
+      "vector_type": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -104 -Token unknown - line 1, column 31 -(",
+        "error_code": "42000",
+        "ms": 77.5
+      },
+      "statement_timeout": {
+        "status": "supported",
+        "note": "Firebird 4+ statement timeout",
+        "error_code": "HY008",
+        "detail": "DatabaseError: operation was cancelled -unknown ISC error 335545128",
+        "ms": 284.1
+      },
+      "filter_clause": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42270,)]",
+        "ms": 207.7
+      },
+      "distinct_on": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -104 -Token unknown - line 1, column 17 -ON",
+        "error_code": "42000",
+        "ms": 99.9
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -104 -Token unknown - line 1, column 31 -ROW_NUMBER",
+        "error_code": "42000",
+        "ms": 97.3
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23000",
+        "detail": "DatabaseError: Operation violates CHECK constraint INTEG_49 on view or table CK_LAB -At trigger 'CHECK_1'",
+        "ms": 123.1
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23000",
+        "detail": "DatabaseError: violation of FOREIGN KEY constraint \"INTEG_36\" on table \"ORDER_ITEMS\" -Foreign key reference target does not exist -Problematic key value is (\"PRODUCT_ID\" = 999999999)",
+        "ms": 93.1
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 119.2
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -104 -Token unknown - line 1, column 32 -OF",
+        "error_code": "42000",
+        "ms": 90.6
+      },
+      "json_aggregate": {
+        "status": "error",
+        "note": "",
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -804 -Function unknown -JSON_ARRAYAGG",
+        "error_code": "39000",
+        "ms": 87.4
+      },
+      "isolation_serializable": {
+        "status": "error",
+        "note": "Firebird: SNAPSHOT TABLE STABILITY (set through the driver's TPB)",
+        "error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "error_code": null,
+        "ms": 79.9
+      },
+      "isolation_repeatable_read": {
+        "status": "error",
+        "note": "Firebird: SNAPSHOT",
+        "error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "error_code": null,
+        "ms": 80.1
+      },
+      "isolation_read_uncommitted": {
+        "status": "unsupported",
+        "note": "no dirty reads in Firebird",
+        "error": "Unsupported: firebird: isolation level READ UNCOMMITTED not available",
+        "error_code": null,
+        "ms": 81.4
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(139,)]",
+        "ms": 102.3
+      },
+      "_seconds": 2.3
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 FROM RDB$DATABASE",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.036,
+          "p50": 2.536,
+          "p90": 2.621,
+          "p95": 2.647,
+          "p99": 2.684,
+          "max": 2.696,
+          "mean": 2.472,
+          "stdev": 0.175,
+          "first_ms": 2.637
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Table \"RDB$DATABASE\" Full Scan\nfetches=2144 reads=92"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 3.238,
+          "p50": 4.123,
+          "p90": 4.235,
+          "p95": 4.447,
+          "p99": 4.521,
+          "max": 4.535,
+          "mean": 4.084,
+          "stdev": 0.249,
+          "first_ms": 10.857
+        },
+        "rows": 1,
+        "checksum": "b7d8c69a6f12eb2a8a6067fe",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Filter\n        -> Table \"CUSTOMERS\" Access By ID\n            -> Bitmap\n                -> Index \"RDB$PRIMARY1\" Unique Scan\nfetches=2569 reads=144"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id FETCH FIRST 500 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 42.885,
+          "p50": 45.806,
+          "p90": 50.208,
+          "p95": 50.394,
+          "p99": 50.543,
+          "max": 50.58,
+          "mean": 46.279,
+          "stdev": 2.55,
+          "first_ms": 122.288
+        },
+        "rows": 385,
+        "checksum": "2f41ee9208125486f4b60208",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> First N Records\n        -> Refetch\n            -> Sort (record length: 44, key length: 20)\n                -> Filter\n                    -> Table \"ORDERS\" Full Scan\nfetches=832292 reads=878"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, CAST(EXTRACT(YEAR FROM o.ordered_at) || '-' || LPAD(EXTRACT(MONTH FROM o.ordered_at), 2, '0') || '-01' AS DATE) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, CAST(EXTRACT(YEAR FROM o.ordered_at) || '-' || LPAD(EXTRACT(MONTH FROM o.ordered_at), 2, '0') || '-01' AS DATE) ORDER BY revenue DESC, c.country_code, month_start FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 196.449,
+          "p50": 197.47,
+          "p90": 204.614,
+          "p95": 206.4,
+          "p99": 207.83,
+          "max": 208.187,
+          "mean": 199.713,
+          "stdev": 3.809,
+          "first_ms": 402.234
+        },
+        "rows": 50,
+        "checksum": "6645f244218384f55e8ce0bf",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> First N Records\n        -> Sort (record length: 78, key length: 36)\n            -> Aggregate\n                -> Sort (record length: 174, key length: 24)\n                    -> Filter\n                        -> Hash Join (inner)\n                            -> Hash Join (inner)\n                                -> Table \"ORDER_ITEMS\" as \"OI\" Full Scan\n                                -> Record Buffer (record length: 89)\n                                    -> Filter\n                                        -> Table \"ORDERS\" as \"O\" Full Scan\n                            -> Record Buffer (record length: 41)\n                                -> Table \"CUSTOMERS\" as \"C\" Full Scan\nfetches=3723859 reads=2419"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 235.574,
+          "p50": 243.315,
+          "p90": 249.59,
+          "p95": 250.68,
+          "p99": 251.552,
+          "max": 251.77,
+          "mean": 243.288,
+          "stdev": 5.064,
+          "first_ms": 262.179
+        },
+        "rows": 592,
+        "checksum": "4a8870a7c181b4e70d2aea37",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Sort (record length: 84, key length: 20)\n        -> Filter\n            -> Window\n                -> Window Partition\n                    -> Record Buffer (record length: 74)\n                        -> Sort (record length: 84, key length: 28)\n                            -> Window Partition\n                                -> Window Buffer\n                                    -> Record Buffer (record length: 41)\n                                        -> Aggregate\n                                            -> Sort (record length: 76, key length: 16)\n                                                -> Filter\n                                                    -> Hash Join (inner)\n                                                        -> Table \"ORDER_ITEMS\" as \"T OI\" Full Scan\n                                                        -> Record Buffer (record length: 33)\n                                                            -> Table \"PRODUCTS\" as \"T P\" Full Scan\nfetches=5737195 reads=2518"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT CAST(ordered_at AS DATE) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY CAST(ordered_at AS DATE)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 25.887,
+          "p50": 26.408,
+          "p90": 26.939,
+          "p95": 27.03,
+          "p99": 27.102,
+          "max": 27.12,
+          "mean": 26.435,
+          "stdev": 0.428,
+          "first_ms": 29.199
+        },
+        "rows": 90,
+        "checksum": "0fe3a1a616d00fcb8eeb2df9",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Sort (record length: 92, key length: 8)\n        -> Window\n            -> Window Partition\n                -> Record Buffer (record length: 99)\n                    -> Sort (record length: 108, key length: 8)\n                        -> Window Partition\n                            -> Record Buffer (record length: 66)\n                                -> Sort (record length: 76, key length: 8)\n                                    -> Window Partition\n                                        -> Window Buffer\n                                            -> Record Buffer (record length: 41)\n                                                -> Aggregate\n                                                    -> Sort (record length: 52, key length: 8)\n                                                        -> Filter\n                                                            -> Table \"ORDERS\" as \"S ORDERS\" Full Scan\nfetches=6555305 reads=2518"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS VARCHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(t.path || ' > ' || c.name AS VARCHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 16.523,
+          "p50": 16.827,
+          "p90": 17.16,
+          "p95": 17.189,
+          "p99": 17.213,
+          "max": 17.219,
+          "mean": 16.868,
+          "stdev": 0.215,
+          "first_ms": 19.231
+        },
+        "rows": 200,
+        "checksum": "80c899112be7f518df5c93b0",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Sort (record length: 1662, key length: 1608)\n        -> Recursion\n            -> Filter\n                -> Table \"CATEGORIES\" as \"TREE CATEGORIES\" Full Scan\n            -> Filter\n                -> Table \"CATEGORIES\" as \"TREE C\" Full Scan\nfetches=7109365 reads=2523"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, CAST(EXTRACT(YEAR FROM first_at) || '-' || LPAD(EXTRACT(MONTH FROM first_at), 2, '0') || '-01' AS DATE) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, CAST(EXTRACT(YEAR FROM o.ordered_at) || '-' || LPAD(EXTRACT(MONTH FROM o.ordered_at), 2, '0') || '-01' AS DATE) AS m FROM orders o GROUP BY o.customer_id, CAST(EXTRACT(YEAR FROM o.ordered_at) || '-' || LPAD(EXTRACT(MONTH FROM o.ordered_at), 2, '0') || '-01' AS DATE)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 645.098,
+          "p50": 654.242,
+          "p90": 667.595,
+          "p95": 670.818,
+          "p99": 673.396,
+          "max": 674.041,
+          "mean": 656.326,
+          "stdev": 8.183,
+          "first_ms": 671.042
+        },
+        "rows": 20,
+        "checksum": "56c14f7442b3331d457d845b",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Sort (record length: 52, key length: 8)\n        -> Aggregate\n            -> Sort (record length: 76, key length: 8)\n                -> Nested Loop Join (outer)\n                    -> Aggregate\n                        -> Table \"ORDERS\" as \"C FIRST_ORDERS ORDERS\" Access By ID\n                            -> Index \"RDB$FOREIGN6\" Full Scan\n                    -> Filter\n                        -> Aggregate\n                            -> Sort (record length: 52, key length: 16)\n                                -> Filter\n                                    -> Table \"ORDERS\" as \"A O\" Access By ID\n                                        -> Bitmap\n                                            -> Index \"RDB$FOREIGN6\" Range Scan (full match)\nfetches=10416399 reads=2570"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id FETCH FIRST 200 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 27.199,
+          "p50": 29.399,
+          "p90": 39.236,
+          "p95": 40.56,
+          "p99": 41.619,
+          "max": 41.884,
+          "mean": 32.128,
+          "stdev": 5.141,
+          "first_ms": 1288.615
+        },
+        "rows": 200,
+        "checksum": "ebe9d361d39399ff1bac283c",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Sub-query\n    -> Filter\n        -> Table \"ORDERS\" as \"O\" Access By ID\n            -> Bitmap\n                -> Index \"RDB$FOREIGN6\" Range Scan (full match)\nSub-query\n    -> Filter\n        -> Table \"EVENTS\" as \"E\" Access By ID\n            -> Bitmap\n                -> Index \"IX_EVENTS_CUSTOMER_ID\" Range Scan (full match)\nSelect Expression\n    -> First N Records\n        -> Filter\n            -> Table \"CUSTOMERS\" as \"C\" Access By ID\n                -> Index \"RDB$PRIMARY1\" Full Scan\nfetches=10912390 reads=7606"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 22.916,
+          "p50": 25.041,
+          "p90": 27.512,
+          "p95": 27.959,
+          "p99": 28.318,
+          "max": 28.407,
+          "mean": 25.512,
+          "stdev": 1.725,
+          "first_ms": 23.329
+        },
+        "rows": 500,
+        "checksum": "7a737e77c1dbd9fba374ca76",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Sub-query\n    -> Singularity Check\n        -> Aggregate\n            -> Filter\n                -> Table \"PRODUCTS\" as \"P2\" Access By ID\n                    -> Bitmap\n                        -> Index \"RDB$FOREIGN4\" Range Scan (full match)\nSelect Expression\n    -> First N Records\n        -> Filter\n            -> Table \"PRODUCTS\" as \"P\" Access By ID\n                -> Index \"RDB$PRIMARY3\" Full Scan\nfetches=11015981 reads=7608"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 34.899,
+          "p50": 35.196,
+          "p90": 35.422,
+          "p95": 35.797,
+          "p99": 36.097,
+          "max": 36.171,
+          "mean": 35.241,
+          "stdev": 0.339,
+          "first_ms": 34.574
+        },
+        "rows": 300,
+        "checksum": "e36307e52519bf40ed90c919",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Sort (record length: 92, key length: 20)\n        -> Filter\n            -> Window\n                -> Window Partition\n                    -> Record Buffer (record length: 90)\n                        -> Sort (record length: 108, key length: 28)\n                            -> Window Partition\n                                -> Window Buffer\n                                    -> Record Buffer (record length: 49)\n                                        -> Filter\n                                            -> Table \"ORDERS\" as \"T ORDERS\" Access By ID\n                                                -> Bitmap\n                                                    -> Index \"RDB$FOREIGN6\" Range Scan (upper bound: 1/1)\nfetches=11036244 reads=7608"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "DatabaseError: Dynamic SQL Error -SQL error code = -104 -Token unknown - line 1, column 205 -SETS",
+        "error_code": null
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE description LIKE '%bluetooth%' AND description LIKE '%waterproof%' ORDER BY id FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 14.769,
+          "p50": 15.22,
+          "p90": 15.757,
+          "p95": 15.826,
+          "p99": 15.882,
+          "max": 15.896,
+          "mean": 15.284,
+          "stdev": 0.372,
+          "first_ms": 16.817
+        },
+        "rows": 50,
+        "checksum": "debd4daa75520ca5f0207109",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> First N Records\n        -> Filter\n            -> Table \"PRODUCTS\" Access By ID\n                -> Index \"RDB$PRIMARY3\" Full Scan\nfetches=11060321 reads=7608"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "UPDATE OR INSERT INTO inventory (product_id, warehouse_id, qty, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) MATCHING (product_id, warehouse_id)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 3.433,
+          "p50": 3.918,
+          "p90": 4.237,
+          "p95": 4.46,
+          "p99": 4.522,
+          "max": 4.546,
+          "mean": 3.949,
+          "stdev": 0.26,
+          "first_ms": 7.994
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INTEGER) AS product_id, CAST(? AS INTEGER) AS warehouse_id, CAST(? AS INTEGER) AS qty FROM RDB$DATABASE) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT_TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT_TIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.827,
+          "p50": 3.391,
+          "p90": 3.697,
+          "p95": 3.778,
+          "p99": 3.882,
+          "max": 3.915,
+          "mean": 3.423,
+          "stdev": 0.217,
+          "first_ms": 5.09
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 30000 ROWS FETCH NEXT 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 64.056,
+          "p50": 68.976,
+          "p90": 73.006,
+          "p95": 76.44,
+          "p99": 79.187,
+          "max": 79.874,
+          "mean": 69.575,
+          "stdev": 4.352,
+          "first_ms": 105.219
+        },
+        "rows": 50,
+        "checksum": "4c685a0a5a1df7a9be0fd20e",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> First N Records\n        -> Skip N Records\n            -> Refetch\n                -> Sort (record length: 44, key length: 20)\n                    -> Table \"ORDERS\" Full Scan\nfetches=12638909 reads=7659"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 31.209,
+          "p50": 33.326,
+          "p90": 34.825,
+          "p95": 34.89,
+          "p99": 34.943,
+          "max": 34.956,
+          "mean": 33.222,
+          "stdev": 1.224,
+          "first_ms": 33.212
+        },
+        "rows": 50,
+        "checksum": "ea16352e6271454d0ed47ac6",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> First N Records\n        -> Refetch\n            -> Sort (record length: 44, key length: 20)\n                -> Filter\n                    -> Table \"ORDERS\" Full Scan\nfetches=13458292 reads=7659"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 173.586,
+          "p50": 178.885,
+          "p90": 183.511,
+          "p95": 187.921,
+          "p99": 191.449,
+          "max": 192.331,
+          "mean": 179.77,
+          "stdev": 4.803,
+          "first_ms": 337.188
+        },
+        "rows": 1,
+        "checksum": "f0eb6560ccb5bd58d933ecab",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"EVENTS\" Full Scan\nfetches=17645468 reads=8141"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 109.322,
+          "p50": 112.02,
+          "p90": 116.886,
+          "p95": 121.502,
+          "p99": 125.195,
+          "max": 126.118,
+          "mean": 113.446,
+          "stdev": 4.81,
+          "first_ms": 158.648
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Filter\n        -> Nested Loop Join (outer)\n            -> Table \"PRODUCTS\" as \"P\" Access By ID\n                -> Index \"RDB$PRIMARY3\" Full Scan\n            -> Filter\n                -> Table \"ORDER_ITEMS\" as \"OI\" Access By ID\n                    -> Bitmap\n                        -> Index \"RDB$FOREIGN9\" Range Scan (full match)\nfetches=21506832 reads=8257"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 13.152,
+          "p50": 13.447,
+          "p90": 14.405,
+          "p95": 14.518,
+          "p99": 14.609,
+          "max": 14.631,
+          "mean": 13.606,
+          "stdev": 0.469,
+          "first_ms": 14.644
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Sub-query\n    -> Filter\n        -> Table \"ORDER_ITEMS\" as \"OI\" Access By ID\n            -> Bitmap\n                -> Index \"RDB$FOREIGN9\" Range Scan (full match)\nSelect Expression\n    -> Filter\n        -> Table \"PRODUCTS\" as \"P\" Access By ID\n            -> Index \"RDB$PRIMARY3\" Full Scan\nfetches=21627371 reads=8257"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR DATEDIFF(SECOND, prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 575.089,
+          "p50": 583.037,
+          "p90": 589.692,
+          "p95": 590.388,
+          "p99": 590.945,
+          "max": 591.084,
+          "mean": 582.738,
+          "stdev": 4.907,
+          "first_ms": 595.871
+        },
+        "rows": 2000,
+        "checksum": "c02522c38c57b126bba86d82",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Sort (record length: 68, key length: 8)\n            -> Filter\n                -> Window\n                    -> Window Partition\n                        -> Record Buffer (record length: 74)\n                            -> Sort (record length: 84, key length: 32)\n                                -> Window Partition\n                                    -> Window Buffer\n                                        -> Record Buffer (record length: 49)\n                                            -> Filter\n                                                -> Table \"EVENTS\" as \"S W EVENTS\" Access By ID\n                                                    -> Bitmap\n                                                        -> Index \"IX_EVENTS_CUSTOMER_ID\" Range Scan (upper bound: 1/1)\nfetches=23008629 reads=8322"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, LIST(p.sku, ',') AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 578.9,
+          "p50": 652.246,
+          "p90": 756.868,
+          "p95": 769.314,
+          "p99": 779.271,
+          "max": 781.761,
+          "mean": 672.663,
+          "stdev": 68.47,
+          "first_ms": 649.555
+        },
+        "rows": 500,
+        "checksum": "b0d3012a50c517d2e90b25d2",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Hash Join (inner)\n                -> Hash Join (inner)\n                    -> Filter\n                        -> Table \"ORDER_ITEMS\" as \"OI\" Access By ID\n                            -> Index \"RDB$FOREIGN8\" Range Scan (upper bound: 1/1)\n                    -> Record Buffer (record length: 113)\n                        -> Table \"PRODUCTS\" as \"P\" Full Scan\n                -> Record Buffer (record length: 25)\n                    -> Filter\n                        -> Table \"ORDERS\" as \"O\" Access By ID\n                            -> Bitmap\n                                -> Index \"RDB$PRIMARY5\" Range Scan (upper bound: 1/1)\nfetches=23076740 reads=8326"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 114.152,
+          "p50": 116.539,
+          "p90": 121.922,
+          "p95": 122.821,
+          "p99": 123.541,
+          "max": 123.721,
+          "mean": 117.794,
+          "stdev": 2.802,
+          "first_ms": 160.596
+        },
+        "rows": 13,
+        "checksum": "ff23d2a11d054072968a1331",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Sort (record length: 134, key length: 16)\n            -> Filter\n                -> Hash Join (inner)\n                    -> Table \"ORDERS\" as \"O\" Full Scan\n                    -> Record Buffer (record length: 41)\n                        -> Table \"CUSTOMERS\" as \"C\" Full Scan\nfetches=23981443 reads=8326"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 2.817,
+          "p50": 4.175,
+          "p90": 4.559,
+          "p95": 4.659,
+          "p99": 4.71,
+          "max": 4.723,
+          "mean": 3.934,
+          "stdev": 0.596,
+          "first_ms": 15.134
+        },
+        "rows": 12,
+        "checksum": "bbdd69140c75e98dd07a50ee",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Filter\n        -> Table \"ORDERS\" Access By ID\n            -> Index \"RDB$PRIMARY5\" Full Scan\n                -> Bitmap Or\n                    -> Bitmap\n                        -> Index \"RDB$FOREIGN6\" Range Scan (full match)\n                    -> Bitmap\n                        -> Index \"RDB$PRIMARY5\" Unique Scan\nfetches=23983404 reads=8363"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (71, 115, 218, 236, 238, 325, 757, 818, 935, 1006, 1054, 1104, 1148, 1186, 1191, 1209, 1235, 1277, 1475, 1628, 1827, 2043, 2258, 2422, 2595, 2731, 2744, 2832, 2870, 2965, 3064, 3302, 3328, 3565, 3631, 3771, 3976, 4153, 4214, 4329, 4367, 4595, 4635, 4746, 4755, 4793, 4880, 4890, 5012, 5030, 5078, 5489, 5498, 5510, 5537, 5577, 5627, 5805, 5863, 5883, 5919, 5955, 6026, 6043, 6169, 6523, 6867, 6876, 6966, 7174, 7385, 7396, 7767, 7924, 7971, 7975, 8019, 8469, 8491, 8508, 8691, 8723, 8746, 8988, 8996, 9130, 9157, 9222, 9290, 9371, 9429, 9487, 9662, 9789, 9796, 10122, 10175, 10325, 10425, 10581, 10582, 10669, 10699, 11659, 11872, 11899, 11991, 12016, 12148, 12417, 12829, 12996, 13018, 13059, 13069, 13172, 13224, 13277, 13450, 13492, 13752, 13810, 13939, 14103, 14267, 14279, 14391, 14576, 14662, 14979, 15045, 15070, 15122, 15164, 15258, 15387, 15627, 15771, 15874, 16021, 16028, 16101, 16231, 16265, 16414, 16528, 16588, 16643, 16751, 16949, 17013, 17076, 17158, 17164, 17252, 17288, 17313, 17332, 17404, 17405, 17555, 17607, 17615, 17625, 17632, 17724, 17729, 17821, 18166, 18280, 18289, 18322, 18477, 18624, 18714, 18830, 18979, 19003, 19062, 19206, 19363, 19638, 19789, 19843, 19939, 19951, 19989, 20171, 20287, 20426, 20447, 20709, 20715, 20875, 21204, 21270, 21340, 21374, 21434, 21557, 21714, 21726, 21744, 21977, 22150, 22225, 22227, 22460, 22542, 22742, 22778, 23370, 23372, 23564, 23640, 23865, 23933, 23984, 23999, 24649, 24683, 24962, 25011, 25072, 25189, 25353, 25528, 25714, 25762, 25820, 25827, 26101, 26183, 26465, 26523, 26570, 26605, 27275, 27305, 27379, 27609, 27673, 27874, 28072, 28131, 28230, 28281, 28324, 28866, 28975, 29049, 29209, 29218, 29299, 29330, 29456, 29542, 29583, 29634, 29645, 29739, 29947, 30060, 30080, 30111, 30169, 30453, 30534, 30563, 30654, 30995, 31055, 31107, 31114, 31329, 31393, 31616, 31838, 31860, 31934, 32067, 32088, 32224, 32372, 32388, 32415, 32441, 32630, 32774, 32950, 32963, 33055, 33079, 33132, 33139, 33158, 33202, 33207, 33277, 33303, 33342, 33566, 33572, 33619, 33701, 33737, 33791, 33852, 33911, 34290, 34325, 34346, 34472, 34532, 34681, 34806, 34829, 34950, 35075, 35167, 35777, 35854, 35985, 36114, 36246, 36311, 36604, 36669, 36814, 37209, 37256, 37395, 38108, 38278, 38377, 38457, 39097, 39242, 39303, 39543, 39724, 39858, 40143, 40435, 40548, 40708, 40744, 40890, 40990, 41041, 41113, 41142, 41201, 41267, 41398, 41471, 41579, 41680, 41755, 42125, 42133, 42155, 42170, 42594, 42606, 42699, 42993, 43026, 43093, 43144, 43208, 43271, 43597, 43768, 43875, 43945, 43985, 44041, 44051, 44284, 44301, 44609, 44669, 44755, 44807, 44989, 45072, 45103, 45364, 45396, 45399, 45410, 45438, 45824, 45903, 45945, 46082, 46094, 46290, 46316, 46457, 46501, 46609, 46859, 46924, 46932, 47231, 47327, 47459, 47657, 47766, 47798, 48044, 48094, 48287, 48486, 48555, 48708, 48873, 48935, 48988, 49039, 49188, 49340, 49531, 49575, 49775, 49807, 50090, 50265, 50278, 50872, 50918, 51053, 51377, 51383, 51667, 52278, 52296, 52402, 52536, 52670, 52736, 52912, 53033, 53230, 53275, 53546, 53669, 53673, 53725, 53733, 53754, 54058, 54160, 54545, 54556, 54698, 54719, 54742, 54777, 54853, 55051, 55066, 55134, 55413, 55453, 55679, 55919, 56114, 56543, 57052, 57409, 57420, 57436, 57445, 57613, 57663, 57799, 57829, 57858, 57995, 58122, 58244, 58455, 58508, 58511, 58513, 58568, 58590, 58674, 58788, 58833, 58842, 59369, 59631, 59669, 59731, 59801, 59994) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 15.211,
+          "p50": 17.693,
+          "p90": 18.682,
+          "p95": 18.783,
+          "p99": 18.864,
+          "max": 18.884,
+          "mean": 17.488,
+          "stdev": 1.109,
+          "first_ms": 19.706
+        },
+        "rows": 500,
+        "checksum": "59beb55aed72b07855929995",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Filter\n        -> Table \"ORDERS\" Access By ID\n            -> Index \"RDB$PRIMARY5\" List Scan (full match)\nfetches=24001642 reads=8363"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 22.974,
+          "p50": 24.145,
+          "p90": 31.376,
+          "p95": 33.604,
+          "p99": 35.387,
+          "max": 35.832,
+          "mean": 25.976,
+          "stdev": 3.996,
+          "first_ms": 54.651
+        },
+        "rows": 1,
+        "checksum": "4237a066301bf0a9f53fcf2d",
+        "error": null,
+        "error_code": null,
+        "plan_error": "AttributeError: 'NoneType' object has no attribute 'commit'",
+        "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"ORDERS\" Full Scan\nfetches=24819752 reads=8363"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.323,
+          "p50": 2.641,
+          "p90": 2.905,
+          "p95": 2.943,
+          "p99": 3.486,
+          "max": 3.7,
+          "mean": 2.662,
+          "stdev": 0.252,
+          "first_ms": 3.12
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.866,
+          "p50": 3.378,
+          "p90": 3.559,
+          "p95": 3.669,
+          "p99": 3.728,
+          "max": 3.742,
+          "mean": 3.328,
+          "stdev": 0.219,
+          "first_ms": 4.877
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 9.26,
+          "p50": 10.56,
+          "p90": 11.332,
+          "p95": 11.4,
+          "p99": 11.681,
+          "max": 11.793,
+          "mean": 10.593,
+          "stdev": 0.532,
+          "first_ms": 14.472
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 44.0
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 163.741,
+            "p95_ms": 171.133,
+            "rows": 1,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"EVENTS\" Full Scan\nfetches=4640873 reads=5872"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.787,
+            "p95_ms": 14.103,
+            "rows": 1,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"EVENTS\" Access By ID\n                -> Bitmap\n                    -> Index \"IX_EV_TS_TYPE\" Range Scan (lower bound: 1/2, upper bound: 1/2)\nfetches=5210189 reads=5879"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.084,
+            "p95_ms": 3.482,
+            "rows": 1,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"EVENTS\" Access By ID\n                -> Bitmap\n                    -> Index \"IX_EV_TYPE_TS\" Range Scan (lower bound: 2/2, upper bound: 2/2)\nfetches=5579804 reads=5884"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 53.09
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 37.847,
+            "p95_ms": 40.574,
+            "rows": 2442,
+            "plan_analyze": "Select Expression\n    -> Sort (record length: 44, key length: 16)\n        -> Filter\n            -> Table \"ORDER_ITEMS\" Access By ID\n                -> Bitmap\n                    -> Index \"RDB$FOREIGN8\" Range Scan (lower bound: 1/1, upper bound: 1/1)\nfetches=5612772 reads=6165"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "firebird: INCLUDE columns not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 24.926,
+            "p95_ms": 26.858,
+            "rows": 1,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"ORDERS\" Full Scan\nfetches=6431481 reads=6949"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 19.414,
+            "p95_ms": 20.017,
+            "rows": 1,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"ORDERS\" Full Scan\nfetches=7249589 reads=6949"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.259,
+            "p95_ms": 3.941,
+            "rows": 1,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"ORDERS\" Access By ID\n                -> Bitmap\n                    -> Index \"IX_ORDERS_ORDERED_AT\" Range Scan (lower bound: 1/1, upper bound: 1/1)\nfetches=7355038 reads=6949"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 24.518,
+            "p95_ms": 27.556,
+            "rows": 1,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Filter\n            -> Table \"ORDERS\" Full Scan\nfetches=8238383 reads=6949"
+          }
+        ],
+        "best_variant": "sargable_with_index",
+        "speedup_vs_first": 7.65
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 30000 ROWS FETCH NEXT 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 64.061,
+            "p95_ms": 67.482,
+            "rows": 50,
+            "plan_analyze": "Select Expression\n    -> First N Records\n        -> Skip N Records\n            -> Refetch\n                -> Sort (record length: 44, key length: 20)\n                    -> Table \"ORDERS\" Full Scan\nfetches=9813031 reads=6949"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 29.844,
+            "p95_ms": 31.504,
+            "rows": 50,
+            "plan_analyze": "Select Expression\n    -> First N Records\n        -> Refetch\n            -> Sort (record length: 44, key length: 20)\n                -> Filter\n                    -> Table \"ORDERS\" Full Scan\nfetches=10632413 reads=6949"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 30000 ROWS FETCH NEXT 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 29.937,
+            "p95_ms": 31.594,
+            "rows": 50,
+            "plan_analyze": "Select Expression\n    -> First N Records\n        -> Skip N Records\n            -> Table \"ORDERS\" Access By ID\n                -> Index \"IX_ORDERS_TS_ID\" Full Scan\nfetches=11843361 reads=6949"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 12.231,
+            "p95_ms": 13.54,
+            "rows": 50,
+            "plan_analyze": "Select Expression\n    -> First N Records\n        -> Filter\n            -> Table \"ORDERS\" Access By ID\n                -> Index \"IX_ORDERS_TS_ID\" Full Scan\n                    -> Bitmap Or\n                        -> Bitmap\n                            -> Index \"IX_ORDERS_TS_ID\" Range Scan (lower bound: 1/2)\n                        -> Bitmap\n                            -> Index \"IX_ORDERS_TS_ID\" Range Scan (lower bound: 2/2, upper bound: 1/2)\nfetches=11909704 reads=6949"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)"
+            ],
+            "ok": false,
+            "status": "n/a",
+            "error": "firebird: no syntax for keyset_pred"
+          }
+        ],
+        "best_variant": "keyset_with_index",
+        "speedup_vs_first": 5.24
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 28.92,
+            "p95_ms": 30.099,
+            "rows": 500,
+            "plan_analyze": "Sub-query\n    -> Singularity Check\n        -> Aggregate\n            -> Filter\n                -> Table \"PRODUCTS\" as \"P2\" Access By ID\n                    -> Bitmap\n                        -> Index \"RDB$FOREIGN4\" Range Scan (full match)\nSelect Expression\n    -> First N Records\n        -> Filter\n            -> Table \"PRODUCTS\" as \"P\" Access By ID\n                -> Index \"RDB$PRIMARY3\" Full Scan\nfetches=12077236 reads=7050"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 34.686,
+            "p95_ms": 35.014,
+            "rows": 500,
+            "plan_analyze": "Select Expression\n    -> First N Records\n        -> Refetch\n            -> Sort (record length: 60, key length: 8)\n                -> Nested Loop Join (inner)\n                    -> Aggregate\n                        -> Table \"PRODUCTS\" as \"A PRODUCTS\" Access By ID\n                            -> Index \"RDB$FOREIGN4\" Full Scan\n                    -> Filter\n                        -> Table \"PRODUCTS\" as \"P\" Access By ID\n                            -> Bitmap\n                                -> Index \"RDB$FOREIGN4\" Range Scan (full match)\nfetches=12157196 reads=7050"
+          }
+        ],
+        "best_variant": "correlated_subquery",
+        "speedup_vs_first": 1.0
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 112.611,
+            "p95_ms": 117.487,
+            "rows": 0,
+            "plan_analyze": "Select Expression\n    -> Filter\n        -> Nested Loop Join (outer)\n            -> Table \"PRODUCTS\" as \"P\" Access By ID\n                -> Index \"RDB$PRIMARY3\" Full Scan\n            -> Filter\n                -> Table \"ORDER_ITEMS\" as \"OI\" Access By ID\n                    -> Bitmap\n                        -> Index \"RDB$FOREIGN9\" Range Scan (full match)\nfetches=16021726 reads=8406"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 13.415,
+            "p95_ms": 14.218,
+            "rows": 0,
+            "plan_analyze": "Sub-query\n    -> Filter\n        -> Table \"ORDER_ITEMS\" as \"OI\" Access By ID\n            -> Bitmap\n                -> Index \"RDB$FOREIGN9\" Range Scan (full match)\nSelect Expression\n    -> Filter\n        -> Table \"PRODUCTS\" as \"P\" Access By ID\n            -> Index \"RDB$PRIMARY3\" Full Scan\nfetches=16142268 reads=8406"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 14.24,
+            "p95_ms": 14.788,
+            "rows": 0,
+            "plan_analyze": "Sub-query (invariant)\n    -> Table \"ORDER_ITEMS\" as \"OI\" Full Scan\nSub-query\n    -> Filter\n        -> Table \"ORDER_ITEMS\" as \"OI\" Access By ID\n            -> Bitmap Or\n                -> Bitmap\n                    -> Index \"RDB$FOREIGN9\" Range Scan (full match)\n                -> Bitmap\n                    -> Index \"RDB$FOREIGN9\" Range Scan (full match)\nSelect Expression\n    -> Filter\n        -> Table \"PRODUCTS\" as \"P\" Access By ID\n            -> Index \"RDB$PRIMARY3\" Full Scan\nfetches=16321268 reads=8406"
+          }
+        ],
+        "best_variant": "not_exists",
+        "speedup_vs_first": 8.39
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.254,
+            "p95_ms": 5.038,
+            "rows": 16,
+            "plan_analyze": "Select Expression\n    -> Filter\n        -> Table \"ORDERS\" Access By ID\n            -> Index \"RDB$PRIMARY5\" Full Scan\n                -> Bitmap Or\n                    -> Bitmap\n                        -> Index \"RDB$FOREIGN6\" Range Scan (full match)\n                    -> Bitmap\n                        -> Index \"RDB$PRIMARY5\" Unique Scan\nfetches=16322283 reads=8448"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.251,
+            "p95_ms": 3.4,
+            "rows": 16,
+            "plan_analyze": "Select Expression\n    -> Sort (record length: 44, key length: 8)\n        -> Unique Sort (record length: 44, key length: 8)\n            -> Union\n                -> Filter\n                    -> Table \"ORDERS\" as \"U ORDERS\" Access By ID\n                        -> Bitmap\n                            -> Index \"RDB$FOREIGN6\" Range Scan (full match)\n                -> Filter\n                    -> Table \"ORDERS\" as \"U ORDERS\" Access By ID\n                        -> Bitmap\n                            -> Index \"RDB$PRIMARY5\" Unique Scan\nfetches=16322643 reads=8448"
+          }
+        ],
+        "best_variant": "union_rewrite",
+        "speedup_vs_first": 1.31
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 27.247,
+            "p95_ms": 33.281,
+            "rows": 176,
+            "plan_analyze": "Select Expression\n    -> Sort (record length: 100, key length: 20)\n        -> Filter\n            -> Table \"ORDERS\" Full Scan\nfetches=17140751 reads=8448"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 8.205,
+            "p95_ms": 8.923,
+            "rows": 176,
+            "plan_analyze": "Select Expression\n    -> Sort (record length: 100, key length: 20)\n        -> Filter\n            -> Table \"ORDERS\" Access By ID\n                -> Bitmap\n                    -> Index \"IX_ORDERS_STATUS_TS\" Range Scan (lower bound: 2/2, upper bound: 2/2)\nfetches=17208362 reads=8449"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "firebird: partial indexes not supported"
+          }
+        ],
+        "best_variant": "full_index_(status,ordered_at)",
+        "speedup_vs_first": 3.32
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 220.521,
+            "p95_ms": 226.234,
+            "rows": 13,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Sort (record length: 150, key length: 16)\n            -> Nested Loop Join (inner)\n                -> Filter\n                    -> Table \"EVENTS\" as \"E\" Full Scan\n                -> Filter\n                    -> Table \"CUSTOMERS\" as \"C\" Access By ID\n                        -> Bitmap\n                            -> Index \"RDB$PRIMARY1\" Unique Scan\nfetches=22866552 reads=8585"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 220.775,
+            "p95_ms": 228.504,
+            "rows": 13,
+            "plan_analyze": "Select Expression\n    -> Aggregate\n        -> Sort (record length: 150, key length: 16)\n            -> Nested Loop Join (inner)\n                -> Filter\n                    -> Table \"EVENTS\" as \"E\" Full Scan\n                -> Filter\n                    -> Table \"CUSTOMERS\" as \"C\" Access By ID\n                        -> Bitmap\n                            -> Index \"RDB$PRIMARY1\" Unique Scan\nfetches=28524426 reads=8585"
+          }
+        ],
+        "best_variant": "after_bulk_insert_no_analyze",
+        "speedup_vs_first": 1.0
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 11.379,
+            "rows_per_s": 264,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 3.32,
+            "rows_per_s": 903,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.0,
+            "rows_per_s": null,
+            "error": "firebird: multi-row VALUES not supported"
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver firebird-driver: no server-side prepare toggle exposed"
+      },
+      "_seconds": 59.1
+    },
+    "connections": {
+      "max_connections": null,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 69.55655,
+            "p50": 84.761345,
+            "p90": 104.80053240000001,
+            "p95": 108.63449454999999,
+            "p99": 114.29462558,
+            "max": 115.436355,
+            "mean": 89.58828700000001,
+            "stdev": 11.305121935252886
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 100.3,
+            "connect_ms": {
+              "n": 10,
+              "min": 72.157906,
+              "p50": 90.55744100000001,
+              "p90": 92.0528656,
+              "p95": 92.3516593,
+              "p99": 92.59069426,
+              "max": 92.650453,
+              "mean": 88.6583266,
+              "stdev": 5.688317893043941
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 205.1,
+            "connect_ms": {
+              "n": 50,
+              "min": 90.385526,
+              "p50": 143.4022605,
+              "p90": 151.6273194,
+              "p95": 153.7347686,
+              "p99": 154.06563022,
+              "max": 154.175009,
+              "mean": 137.07910754,
+              "stdev": 16.871906549439228
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 257.8,
+            "connect_ms": {
+              "n": 100,
+              "min": 89.477453,
+              "p50": 157.59766050000002,
+              "p90": 204.46831700000004,
+              "p95": 211.1781402,
+              "p99": 214.90715338,
+              "max": 217.024207,
+              "mean": 158.80154903000002,
+              "stdev": 30.114493033264463
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 459.3,
+            "connect_ms": {
+              "n": 200,
+              "min": 185.710849,
+              "p50": 290.80037100000004,
+              "p90": 369.0902663,
+              "p95": 385.0149864,
+              "p99": 396.80671124,
+              "max": 411.227128,
+              "mean": 293.52241208,
+              "stdev": 56.751608384915244
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 1057,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 264,
+            "latency_ms": {
+              "n": 1057,
+              "min": 1.857071,
+              "p50": 3.931378,
+              "p90": 4.2646524,
+              "p95": 4.4637522,
+              "p99": 4.803928600000002,
+              "max": 13.507893,
+              "mean": 3.7830612970671713,
+              "stdev": 0.61648916285176
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 5102,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1276,
+            "latency_ms": {
+              "n": 5102,
+              "min": 1.225687,
+              "p50": 3.2182605,
+              "p90": 3.6967593,
+              "p95": 3.85778085,
+              "p99": 4.28761911,
+              "max": 16.67002,
+              "mean": 3.1341980070560567,
+              "stdev": 0.6639455106631559
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 24531,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 6133,
+            "latency_ms": {
+              "n": 24531,
+              "min": 1.61169,
+              "p50": 2.534446,
+              "p90": 2.990929,
+              "p95": 3.2042640000000002,
+              "p99": 4.336197,
+              "max": 16.344743,
+              "mean": 2.6078344658595247,
+              "stdev": 0.5338477451283661
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 22478,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 5620,
+            "latency_ms": {
+              "n": 22478,
+              "min": 4.252824,
+              "p50": 5.5910945000000005,
+              "p90": 6.2809903,
+              "p95": 6.563902949999998,
+              "p99": 8.90897625999999,
+              "max": 28.228632,
+              "mean": 5.696864244639203,
+              "stdev": 0.9877753605595713
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 22898,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 5724,
+            "latency_ms": {
+              "n": 22898,
+              "min": 8.801775,
+              "p50": 11.002862499999999,
+              "p90": 11.918368599999999,
+              "p95": 12.408742299999997,
+              "p99": 16.136637219999976,
+              "max": 44.594246,
+              "mean": 11.196210247139488,
+              "stdev": 1.546661021769136
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 1732,
+        "qps": 425,
+        "checkout_wait_ms": {
+          "n": 1732,
+          "min": 0.002381,
+          "p50": 0.00603,
+          "p90": 0.0086999,
+          "p95": 0.009462799999999992,
+          "p99": 4013.99038566,
+          "max": 4057.338251,
+          "mean": 55.78468966685912,
+          "stdev": 470.5534862573194
+        },
+        "exec_ms": {
+          "n": 1732,
+          "min": 5.982604,
+          "p50": 18.609627,
+          "p90": 24.8355507,
+          "p95": 26.482395999999998,
+          "p99": 29.89108657,
+          "max": 36.215268,
+          "mean": 18.76211108429561,
+          "stdev": 4.638219424730784
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "DatabaseError: deadlock -update conflicts with concurrent update -concurrent transaction number is 82703",
+          "ms": 4.3,
+          "t2": {
+            "outcome": "committed",
+            "ms": 6.5
+          },
+          "final_balance": 90
+        },
+        "write_conflict_serializable": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "DatabaseError: deadlock -update conflicts with concurrent update -concurrent transaction number is 82707",
+          "ms": 3.5,
+          "t2": {
+            "outcome": "committed",
+            "ms": 6.5
+          },
+          "final_balance": 90
+        },
+        "deadlock": {
+          "timed_out_after_s": 30,
+          "detected": true,
+          "victim": [
+            "t1"
+          ],
+          "error_codes": {
+            "t1": "40001"
+          },
+          "detection_ms": 10002.6,
+          "timeline_s": {
+            "t1": 10.003,
+            "t2": 39.704
+          }
+        }
+      },
+      "_seconds": 83.4
+    },
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-firebird"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 60000,
+          "batches": 60,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 4000,
+          "batch_ms": {
+            "n": 60,
+            "min": 906.172114,
+            "p50": 1022.7808565,
+            "p90": 1074.3979763,
+            "p95": 1087.2969616999999,
+            "p99": 1108.6510004,
+            "max": 1126.77783,
+            "mean": 1017.47095155,
+            "stdev": 46.866571156913714
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-firebird": {
+              "cpu_cores_avg": 0.879,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 323,
+              "mem_end_mb": 33,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.999
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 320000,
+          "batches": 320,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 21333,
+          "batch_ms": {
+            "n": 320,
+            "min": 565.248859,
+            "p50": 590.71664,
+            "p90": 632.6223599000003,
+            "p95": 813.219702800037,
+            "p99": 3907.88881836,
+            "max": 3909.186485,
+            "mean": 757.249323503125,
+            "stdev": 722.7269672432649
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-firebird": {
+              "cpu_cores_avg": 2.335,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 323,
+              "mem_end_mb": 34,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 2.73
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 288000,
+          "batches": 288,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 19200,
+          "batch_ms": {
+            "n": 288,
+            "min": 1259.316875,
+            "p50": 1674.0589420000001,
+            "p90": 2092.2396520999996,
+            "p95": 2100.3637752,
+            "p99": 2108.0455184,
+            "max": 2113.302189,
+            "mean": 1668.5820688090278,
+            "stdev": 225.84307014634066
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-firebird": {
+              "cpu_cores_avg": 2.639,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 323,
+              "mem_end_mb": 38,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.205
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "mode": "values",
+        "workers": 16,
+        "rows_per_s": 21333
+      },
+      "_seconds": 56.7
+    },
+    "replication": {
+      "kind": "none",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "Firebird LI-V6.3.4.1812 Firebird 5.0",
+          "status": {}
+        }
+      },
+      "status": "single-node",
+      "_seconds": 0.1
+    }
+  },
+  "server_version": "Firebird LI-V6.3.4.1812 Firebird 5.0",
+  "finished": "2026-09-13T01:11:16+00:00"
+}

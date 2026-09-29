@@ -1,0 +1,15 @@
+Sort_16 | 4000.00 | root |  | lab.products.category_id, Column#16
+└─Projection_18 | 4000.00 | root |  | lab.products.category_id, lab.order_items.product_id, Column#14, Column#16
+  └─Selection_19 | 4000.00 | root |  | le(Column#16, 3)
+    └─Shuffle_66 | 5000.00 | root |  | execution info: concurrency:5, data sources:[HashAgg_21]
+      └─Window_20 | 5000.00 | root |  | row_number()->Column#16 over(partition by lab.products.category_id order by Column#14 desc, lab.order_items.product_id rows between current row and current row)
+        └─Sort_65 | 5000.00 | root |  | lab.products.category_id, Column#14:desc, lab.order_items.product_id
+          └─ShuffleReceiver_70 | 5000.00 | root |  | 
+            └─HashAgg_21 | 5000.00 | root |  | group by:Column#29, Column#30, funcs:sum(Column#28)->Column#14, funcs:firstrow(Column#29)->lab.order_items.product_id, funcs:firstrow(Column#30)->lab.products.category_id
+              └─Projection_69 | 487606.00 | root |  | mul(cast(lab.order_items.qty, decimal(10,0) BINARY), lab.order_items.unit_price)->Column#28, lab.order_items.product_id->Column#29, lab.products.category_id->Column#30
+                └─Projection_22 | 487606.00 | root |  | lab.order_items.product_id, lab.order_items.qty, lab.order_items.unit_price, lab.products.category_id
+                  └─HashJoin_24 | 487606.00 | root |  | inner join, equal:[eq(lab.products.id, lab.order_items.product_id)]
+                    ├─IndexReader_60(Build) | 5000.00 | root |  | index:IndexFullScan_59
+                    │ └─IndexFullScan_59 | 5000.00 | cop[tikv] | table:p, index:fk_1(category_id) | keep order:false
+                    └─TableReader_64(Probe) | 487606.00 | root |  | data:TableFullScan_63
+                      └─TableFullScan_63 | 487606.00 | cop[tikv] | table:oi | keep order:false

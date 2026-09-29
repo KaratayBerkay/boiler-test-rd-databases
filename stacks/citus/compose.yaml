@@ -1,0 +1,611 @@
+# Citus (PostgreSQL 18 + Citus) sharded cluster:
+#   application -> HAProxy -> 3 x PgBouncer (transaction pooling) -> coordinator -> 5 worker primaries (w1..w5), each with a
+#   streaming replica (r1..r5) registered as a Citus secondary node. Every PostgreSQL instance is capped at 0.8 CPU / 1.5 GiB.
+#
+# Backup strategy (`rdlab run citus --phases backup`, harness/rdlab/backup/citus.py):
+#   - every primary (coordinator + w1..w5) archives WAL into its own directory on the shared `citus-backups` volume
+#     (archive_mode=on, archive_command -> /backups/wal/<node>/%f, archive_timeout=60)
+#   - pg_basebackup per node into /backups/<node>, one cluster-consistent named restore point (citus_create_restore_point:
+#     2PC is blocked while the point is written on every node), then every node is restored to that point in a
+#     throw-away container on an isolated docker network that reuses the node names, so the restored coordinator's
+#     pg_dist_node metadata points at the restored workers without editing it
+#   - pg_dump through the coordinator for the logical strategy (restored tables are plain, re-distribute afterwards)
+# Logging strategy: init/02-logging.sh (same block as stacks/postgres: logging_collector + jsonlog, slow statements >= 100 ms,
+#   lock waits, temp files, checkpoints, connections, auto_explain JSON plans); every container's stdout goes to the
+#   Docker json-file driver with rotation (x-logging).
+name: rdlab-citus
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-pg: &pg
+  image: citusdata/citus:latest
+  logging: *logging
+  environment: &pgenv
+    POSTGRES_USER: lab
+    POSTGRES_PASSWORD: labpass
+    POSTGRES_DB: lab
+    POSTGRES_HOST_AUTH_METHOD: trust      # lab only: lets coordinator<->worker and replication connections skip passwords
+    PGDATA: /var/lib/postgresql/18/docker
+  deploy:
+    resources:
+      limits:
+        cpus: "0.8"
+        memory: 1536M
+  shm_size: 256m
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U lab -d lab"]
+    interval: 3s
+    timeout: 3s
+    retries: 40
+x-replica-cmd: &replica-cmd
+  command:
+    - bash
+    - -ec
+    - |
+      mkdir -p "$$PGDATA" && chown postgres:postgres "$$PGDATA" && chmod 700 "$$PGDATA"
+      if [ ! -s "$$PGDATA/PG_VERSION" ]; then
+        until gosu postgres pg_basebackup -h "$$UPSTREAM" -p 5432 -U lab -D "$$PGDATA" -Fp -Xs -R -C -S "$$SLOT" -v; do
+          echo "waiting for $$UPSTREAM..."; rm -rf "$$PGDATA"/*; sleep 2; done
+      fi
+      exec gosu postgres postgres -c shared_preload_libraries=citus,pg_stat_statements,auto_explain -c hot_standby=on -c hot_standby_feedback=on -c max_connections=300 \
+           -c shared_buffers=384MB -c work_mem=16MB -c random_page_cost=1.1 -c jit=off
+
+services:
+  backup-init:
+    # one-shot: per-node WAL archive directories on the shared backup volume, writable by the postgres user of every container
+    image: citusdata/citus:latest
+    container_name: rdlab-citus-backup-init
+    entrypoint: ["sh", "-c", "mkdir -p /backups/wal/coordinator /backups/wal/w1 /backups/wal/w2 /backups/wal/w3 /backups/wal/w4 /backups/wal/w5 && chmod -R 1777 /backups && echo backups ready"]
+    volumes: [citus-backups:/backups]
+    logging: *logging
+    restart: "no"
+  coordinator:
+    <<: *pg
+    container_name: rdlab-citus-coordinator
+    hostname: coordinator
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements,auto_explain
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=384MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+      - -c
+      - hot_standby=on
+      - -c
+      - citus.enable_repartition_joins=on
+      - -c
+      - citus.max_adaptive_executor_pool_size=4
+      - -c
+      - citus.max_cached_conns_per_worker=1
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - jit=off
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - synchronous_commit=on
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backups/wal/coordinator/%f && cp %p /backups/wal/coordinator/%f
+      - -c
+      - archive_timeout=60
+    volumes:
+      - ./init/01-replication-hba.sh:/docker-entrypoint-initdb.d/zz-replication-hba.sh:ro
+      - ./init/02-logging.sh:/docker-entrypoint-initdb.d/zz-logging.sh:ro
+      - citus-coordinator:/var/lib/postgresql
+      - citus-backups:/backups
+    depends_on:
+      backup-init: { condition: service_completed_successfully }
+    ports: ["15531:5432"]
+  w1:
+    <<: *pg
+    container_name: rdlab-citus-w1
+    hostname: w1
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements,auto_explain
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=384MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+      - -c
+      - hot_standby=on
+      - -c
+      - citus.enable_repartition_joins=on
+      - -c
+      - citus.max_adaptive_executor_pool_size=4
+      - -c
+      - citus.max_cached_conns_per_worker=1
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - jit=off
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - synchronous_commit=on
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backups/wal/w1/%f && cp %p /backups/wal/w1/%f
+      - -c
+      - archive_timeout=60
+    volumes:
+      - ./init/01-replication-hba.sh:/docker-entrypoint-initdb.d/zz-replication-hba.sh:ro
+      - ./init/02-logging.sh:/docker-entrypoint-initdb.d/zz-logging.sh:ro
+      - citus-w1:/var/lib/postgresql
+      - citus-backups:/backups
+    depends_on:
+      backup-init: { condition: service_completed_successfully }
+    ports: ["15541:5432"]
+  w2:
+    <<: *pg
+    container_name: rdlab-citus-w2
+    hostname: w2
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements,auto_explain
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=384MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+      - -c
+      - hot_standby=on
+      - -c
+      - citus.enable_repartition_joins=on
+      - -c
+      - citus.max_adaptive_executor_pool_size=4
+      - -c
+      - citus.max_cached_conns_per_worker=1
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - jit=off
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - synchronous_commit=on
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backups/wal/w2/%f && cp %p /backups/wal/w2/%f
+      - -c
+      - archive_timeout=60
+    volumes:
+      - ./init/01-replication-hba.sh:/docker-entrypoint-initdb.d/zz-replication-hba.sh:ro
+      - ./init/02-logging.sh:/docker-entrypoint-initdb.d/zz-logging.sh:ro
+      - citus-w2:/var/lib/postgresql
+      - citus-backups:/backups
+    depends_on:
+      backup-init: { condition: service_completed_successfully }
+    ports: ["15542:5432"]
+  w3:
+    <<: *pg
+    container_name: rdlab-citus-w3
+    hostname: w3
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements,auto_explain
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=384MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+      - -c
+      - hot_standby=on
+      - -c
+      - citus.enable_repartition_joins=on
+      - -c
+      - citus.max_adaptive_executor_pool_size=4
+      - -c
+      - citus.max_cached_conns_per_worker=1
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - jit=off
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - synchronous_commit=on
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backups/wal/w3/%f && cp %p /backups/wal/w3/%f
+      - -c
+      - archive_timeout=60
+    volumes:
+      - ./init/01-replication-hba.sh:/docker-entrypoint-initdb.d/zz-replication-hba.sh:ro
+      - ./init/02-logging.sh:/docker-entrypoint-initdb.d/zz-logging.sh:ro
+      - citus-w3:/var/lib/postgresql
+      - citus-backups:/backups
+    depends_on:
+      backup-init: { condition: service_completed_successfully }
+    ports: ["15543:5432"]
+  w4:
+    <<: *pg
+    container_name: rdlab-citus-w4
+    hostname: w4
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements,auto_explain
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=384MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+      - -c
+      - hot_standby=on
+      - -c
+      - citus.enable_repartition_joins=on
+      - -c
+      - citus.max_adaptive_executor_pool_size=4
+      - -c
+      - citus.max_cached_conns_per_worker=1
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - jit=off
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - synchronous_commit=on
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backups/wal/w4/%f && cp %p /backups/wal/w4/%f
+      - -c
+      - archive_timeout=60
+    volumes:
+      - ./init/01-replication-hba.sh:/docker-entrypoint-initdb.d/zz-replication-hba.sh:ro
+      - ./init/02-logging.sh:/docker-entrypoint-initdb.d/zz-logging.sh:ro
+      - citus-w4:/var/lib/postgresql
+      - citus-backups:/backups
+    depends_on:
+      backup-init: { condition: service_completed_successfully }
+    ports: ["15544:5432"]
+  w5:
+    <<: *pg
+    container_name: rdlab-citus-w5
+    hostname: w5
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=citus,pg_stat_statements,auto_explain
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=384MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+      - -c
+      - hot_standby=on
+      - -c
+      - citus.enable_repartition_joins=on
+      - -c
+      - citus.max_adaptive_executor_pool_size=4
+      - -c
+      - citus.max_cached_conns_per_worker=1
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - jit=off
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - synchronous_commit=on
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backups/wal/w5/%f && cp %p /backups/wal/w5/%f
+      - -c
+      - archive_timeout=60
+    volumes:
+      - ./init/01-replication-hba.sh:/docker-entrypoint-initdb.d/zz-replication-hba.sh:ro
+      - ./init/02-logging.sh:/docker-entrypoint-initdb.d/zz-logging.sh:ro
+      - citus-w5:/var/lib/postgresql
+      - citus-backups:/backups
+    depends_on:
+      backup-init: { condition: service_completed_successfully }
+    ports: ["15545:5432"]
+  r1:
+    <<: [*pg, *replica-cmd]
+    container_name: rdlab-citus-r1
+    hostname: r1
+    environment:
+      <<: *pgenv
+      UPSTREAM: w1
+      SLOT: replica_r1
+    volumes:
+      - citus-r1:/var/lib/postgresql
+    ports: ["15551:5432"]
+    depends_on:
+      w1: { condition: service_healthy }
+  r2:
+    <<: [*pg, *replica-cmd]
+    container_name: rdlab-citus-r2
+    hostname: r2
+    environment:
+      <<: *pgenv
+      UPSTREAM: w2
+      SLOT: replica_r2
+    volumes:
+      - citus-r2:/var/lib/postgresql
+    ports: ["15552:5432"]
+    depends_on:
+      w2: { condition: service_healthy }
+  r3:
+    <<: [*pg, *replica-cmd]
+    container_name: rdlab-citus-r3
+    hostname: r3
+    environment:
+      <<: *pgenv
+      UPSTREAM: w3
+      SLOT: replica_r3
+    volumes:
+      - citus-r3:/var/lib/postgresql
+    ports: ["15553:5432"]
+    depends_on:
+      w3: { condition: service_healthy }
+  r4:
+    <<: [*pg, *replica-cmd]
+    container_name: rdlab-citus-r4
+    hostname: r4
+    environment:
+      <<: *pgenv
+      UPSTREAM: w4
+      SLOT: replica_r4
+    volumes:
+      - citus-r4:/var/lib/postgresql
+    ports: ["15554:5432"]
+    depends_on:
+      w4: { condition: service_healthy }
+  r5:
+    <<: [*pg, *replica-cmd]
+    container_name: rdlab-citus-r5
+    hostname: r5
+    environment:
+      <<: *pgenv
+      UPSTREAM: w5
+      SLOT: replica_r5
+    volumes:
+      - citus-r5:/var/lib/postgresql
+    ports: ["15555:5432"]
+    depends_on:
+      w5: { condition: service_healthy }
+  init:
+    image: citusdata/citus:latest
+    container_name: rdlab-citus-init
+    logging: *logging
+    entrypoint: ["bash", "/setup/setup.sh"]
+    volumes: ["./setup/setup.sh:/setup/setup.sh:ro"]
+    depends_on:
+      coordinator: { condition: service_healthy }
+      w1: { condition: service_healthy }
+      r1: { condition: service_healthy }
+      w2: { condition: service_healthy }
+      r2: { condition: service_healthy }
+      w3: { condition: service_healthy }
+      r3: { condition: service_healthy }
+      w4: { condition: service_healthy }
+      r4: { condition: service_healthy }
+      w5: { condition: service_healthy }
+      r5: { condition: service_healthy }
+    restart: "no"
+  pgbouncer1:
+    image: edoburu/pgbouncer:latest
+    container_name: rdlab-citus-pgbouncer1
+    logging: *logging
+    environment:
+      DB_HOST: coordinator
+      DB_PORT: "5432"
+      DB_USER: lab
+      DB_PASSWORD: labpass
+      DB_NAME: lab
+      AUTH_TYPE: trust
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "2000"
+      DEFAULT_POOL_SIZE: "6"        # 3 poolers x 6 = 18 coordinator backends max: fits the 1.5 GiB coordinator
+      MIN_POOL_SIZE: "2"
+      RESERVE_POOL_SIZE: "2"
+      RESERVE_POOL_TIMEOUT: "3"
+      QUERY_WAIT_TIMEOUT: "120"
+      MAX_PREPARED_STATEMENTS: "200"
+      SERVER_RESET_QUERY: DISCARD ALL
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,options
+      ADMIN_USERS: lab
+      STATS_USERS: lab
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    ports: ["15561:5432"]
+    depends_on:
+      init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U lab"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  pgbouncer2:
+    image: edoburu/pgbouncer:latest
+    container_name: rdlab-citus-pgbouncer2
+    logging: *logging
+    environment:
+      DB_HOST: coordinator
+      DB_PORT: "5432"
+      DB_USER: lab
+      DB_PASSWORD: labpass
+      DB_NAME: lab
+      AUTH_TYPE: trust
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "2000"
+      DEFAULT_POOL_SIZE: "6"        # 3 poolers x 6 = 18 coordinator backends max: fits the 1.5 GiB coordinator
+      MIN_POOL_SIZE: "2"
+      RESERVE_POOL_SIZE: "2"
+      RESERVE_POOL_TIMEOUT: "3"
+      QUERY_WAIT_TIMEOUT: "120"
+      MAX_PREPARED_STATEMENTS: "200"
+      SERVER_RESET_QUERY: DISCARD ALL
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,options
+      ADMIN_USERS: lab
+      STATS_USERS: lab
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    ports: ["15562:5432"]
+    depends_on:
+      init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U lab"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  pgbouncer3:
+    image: edoburu/pgbouncer:latest
+    container_name: rdlab-citus-pgbouncer3
+    logging: *logging
+    environment:
+      DB_HOST: coordinator
+      DB_PORT: "5432"
+      DB_USER: lab
+      DB_PASSWORD: labpass
+      DB_NAME: lab
+      AUTH_TYPE: trust
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "2000"
+      DEFAULT_POOL_SIZE: "6"        # 3 poolers x 6 = 18 coordinator backends max: fits the 1.5 GiB coordinator
+      MIN_POOL_SIZE: "2"
+      RESERVE_POOL_SIZE: "2"
+      RESERVE_POOL_TIMEOUT: "3"
+      QUERY_WAIT_TIMEOUT: "120"
+      MAX_PREPARED_STATEMENTS: "200"
+      SERVER_RESET_QUERY: DISCARD ALL
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,options
+      ADMIN_USERS: lab
+      STATS_USERS: lab
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    ports: ["15563:5432"]
+    depends_on:
+      init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U lab"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  haproxy:
+    image: haproxy:lts
+    container_name: rdlab-citus-haproxy
+    logging: *logging
+    volumes: ["./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"]
+    ports: ["15532:5432", "15533:8404"]
+    depends_on:
+      pgbouncer1: { condition: service_healthy }
+      pgbouncer2: { condition: service_healthy }
+      pgbouncer3: { condition: service_healthy }
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  citus-backups:
+  citus-coordinator:
+  citus-w1:
+  citus-r1:
+  citus-w2:
+  citus-r2:
+  citus-w3:
+  citus-r3:
+  citus-w4:
+  citus-r4:
+  citus-w5:
+  citus-r5:

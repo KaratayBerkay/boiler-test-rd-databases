@@ -1,0 +1,15 @@
+Incremental Sort  (cost=166708.81..232255.39 rows=487606 width=48)
+  Sort Key: p.category_id, (row_number() OVER (?))
+  Presorted Key: p.category_id
+  ->  WindowAgg  (cost=166413.14..177384.28 rows=487606 width=48)
+        Run Condition: (row_number() OVER (?) <= 3)
+        ->  Sort  (cost=166413.14..167632.16 rows=487606 width=40)
+              Sort Key: p.category_id, (sum(((oi.qty)::numeric * oi.unit_price))) DESC, oi.product_id
+              ->  HashAggregate  (cost=95201.49..107010.69 rows=487606 width=40)
+                    Group Key: p.category_id, oi.product_id
+                    Planned Partitions: 32
+                    ->  Hash Join  (cost=596.61..56497.76 rows=487606 width=18)
+                          Hash Cond: (oi.product_id = p.id)
+                          ->  Seq Scan on order_items oi  (cost=23.10..49219.67 rows=487606 width=14)
+                          ->  Hash  (cost=511.01..511.01 rows=5000 width=8)
+                                ->  Seq Scan on products p  (cost=23.08..511.01 rows=5000 width=8)

@@ -1,0 +1,46 @@
+query_log: duration_ms=41 read_rows=120000 read_bytes=1440000 memory=8081537 result_rows=21
+(Expression)
+ExpressionTransform
+  (Sorting)
+  MergingSortedTransform 28 → 1
+    MergeSortingTransform × 28
+      LimitsCheckingTransform × 28
+        PartialSortingTransform × 28
+          (Expression)
+          ExpressionTransform × 28
+            (Aggregating)
+            Resize 1 → 28
+              AggregatingTransform
+                (Expression)
+                ExpressionTransform
+                  (Join)
+                  ColumnPermuteTransform
+                    FillingRightJoinSide
+                      Resize 2 → 1
+                        DelayedPorts 2 → 2
+                          JoiningTransform 2 → 1
+                            DelayedJoinedBlocksWorkerTransform
+                              SimpleSquashingTransform
+                                DelayedJoinedBlocksTransform 0 → 1
+                                  (Expression)
+                                  ExpressionTransform
+                                    (Expression)
+                                    ExpressionTransform
+                                      (Aggregating)
+                                      AggregatingTransform
+                                        (Expression)
+                                        ExpressionTransform
+                                          (ReadFromMergeTree)
+                                          MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1
+                                  (Expression)
+                                  ExpressionTransform
+                                    (BuildRuntimeFilter)
+                                    BuildRuntimeFilterTransform
+                                      (Expression)
+                                      ExpressionTransform
+                                        (Aggregating)
+                                        AggregatingTransform
+                                          (Expression)
+                                          ExpressionTransform
+                                            (ReadFromMergeTree)
+                                            MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1

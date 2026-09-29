@@ -1,0 +1,3 @@
+1 | PRIMARY | <derived2> | ALL | None | None | None | None | 463030 | Using where; Using filesort
+2 | DERIVED | p | index | PRIMARY | ix_products_category_id | 4 | None | 4874 | Using index; Using temporary
+2 | DERIVED | oi | ref | ix_order_items_product_id | ix_order_items_product_id | 4 | lab.p.id | 95 | 

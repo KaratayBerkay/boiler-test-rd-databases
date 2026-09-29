@@ -1,0 +1,7 @@
+Projection_8 | 1.64 | root |  | Column#7->Column#12, Column#8->Column#13, Column#10, Column#11
+└─HashAgg_9 | 1.64 | root |  | group by:Column#7, Column#8, gid, funcs:count(1)->Column#10, funcs:sum(lab.orders.total_amount)->Column#11, funcs:firstrow(Column#7)->Column#7, funcs:firstrow(Column#8)->Column#8
+  └─Expand_12 | 25228.60 | root |  | level-projection:[lab.orders.total_amount, <nil>->Column#7, <nil>->Column#8, 0->gid],[lab.orders.total_amount, Column#7, <nil>->Column#8, 1->gid],[lab.orders.total_amount, Column#7, Column#8, 3->gid]; schema: [lab.orders.total_amount,Column#7,Column#8,gid]
+    └─TableReader_18 | 25228.60 | root |  | data:Projection_15
+      └─Projection_15 | 25228.60 | cop[tikv] |  | lab.orders.total_amount, lab.orders.shipping_country->Column#7, lab.orders.status->Column#8
+        └─Selection_17 | 25228.60 | cop[tikv] |  | ge(lab.orders.ordered_at, 2025-06-01 00:00:00), lt(lab.orders.ordered_at, 2025-09-01 00:00:00)
+          └─TableFullScan_16 | 200000.00 | cop[tikv] | table:orders | keep order:false

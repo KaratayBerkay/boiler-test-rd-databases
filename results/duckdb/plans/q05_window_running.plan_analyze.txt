@@ -1,0 +1,108 @@
+analyzed_plan | ┌─────────────────────────────────────┐
+│┌───────────────────────────────────┐│
+││    Query Profiling Information    ││
+│└───────────────────────────────────┘│
+└─────────────────────────────────────┘
+EXPLAIN ANALYZE SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE_TRUNC('day', ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE_TRUNC('day', ordered_at)) s ORDER BY d
+┌────────────────────────────────────────────────┐
+│┌──────────────────────────────────────────────┐│
+││              Total Time: 0.0075s             ││
+│└──────────────────────────────────────────────┘│
+└────────────────────────────────────────────────┘
+┌───────────────────────────┐
+│           QUERY           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│      EXPLAIN_ANALYZE      │
+│    ────────────────────   │
+│                           │
+│           0 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│          s.d ASC          │
+│                           │
+│                           │
+│                           │
+│          90 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│             #2            │
+│             #3            │
+│                           │
+│                           │
+│                           │
+│          90 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           WINDOW          │
+│    ────────────────────   │
+│        Projections:       │
+│ sum(daily) OVER (ORDER BY │
+│    d ASC NULLS LAST ROWS  │
+│      BETWEEN UNBOUNDED    │
+│ PRECEDING AND CURRENT ROW)│
+│ LAG(daily, 1) OVER (ORDER │
+│    BY d ASC NULLS LAST)   │
+│                           │
+│                           │
+│                           │
+│          90 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│         Groups: #0        │
+│                           │
+│        Aggregates:        │
+│    sum_no_overflow(#1)    │
+│                           │
+│                           │
+│                           │
+│          90 rows          │
+│           0.01s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│     date_trunc('day',     │
+│         ordered_at)       │
+│        total_amount       │
+│                           │
+│                           │
+│                           │
+│        24,934 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         TABLE_SCAN        │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.orders      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│         ordered_at        │
+│        total_amount       │
+│                           │
+│          Filters:         │
+│ ordered_at>='2025-01-01 00│
+│   :00:00'::TIMESTAMP AND  │
+│  ordered_at<'2025-04-01 00│
+│     :00:00'::TIMESTAMP    │
+│                           │
+│                           │
+│                           │
+│        24,934 rows        │
+│           0.00s           │
+└───────────────────────────┘

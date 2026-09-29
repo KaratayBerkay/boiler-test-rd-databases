@@ -1,0 +1,40 @@
+Output: country_code, countIf(status = 'delivered'), countIf(status = 'cancelled'), countIf(status = 'returned'), avg(total_amount)
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: country_code ASC
+└──Aggregating
+   │  Keys: country_code
+   │  Aggregates: countIf(status = 'delivered'), countIf(status = 'cancelled'), countIf(status = 'returned'), avg(total_amount)
+   │  Skip merging: 0
+   └──Join (JOIN FillRightFirst)
+      │  o[60000] ⋈ c[6000]
+      │  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)
+      │  Result rows: 61454
+      │  Join conditions: customer_id = id
+      │  Output:
+      │    Left:  status, total_amount
+      │    Right: country_code
+      ├──ReadFromMergeTree (lab.orders)
+      │     Read type: Default
+      │     Parts: 1 | Granules: 7
+      │     Output: customer_id, status, total_amount
+      │     Runtime filters: RF1(customer_id, id from lab.customers)
+      │     Indexes:
+      │       PrimaryKey
+      │         Condition: true
+      │         Parts: 1/1
+      │         Granules: 7/7
+      │       Ranges: 1
+      └──BuildRuntimeFilter (Build runtime join filter on id)
+         │  Filter id: RF1
+         │  Source table: lab.customers
+         └──ReadFromMergeTree (lab.customers)
+               Read type: Default
+               Parts: 1 | Granules: 1
+               Output: country_code, id
+               Indexes:
+                 PrimaryKey
+                   Condition: true
+                   Parts: 1/1
+                   Granules: 1/1
+                 Ranges: 1

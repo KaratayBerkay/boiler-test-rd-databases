@@ -1,0 +1,8 @@
+Aggregate  (cost=1792.01..1792.02 rows=1 width=8) (actual time=22.230..22.231 rows=1.00 loops=1)
+  Buffers: shared hit=592
+  ->  Seq Scan on orders  (cost=0.00..1792.00 rows=2 width=0) (actual time=0.042..22.041 rows=2530.00 loops=1)
+        Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))
+        Rows Removed by Filter: 57470
+        Buffers: shared hit=592
+Planning Time: 0.088 ms
+Execution Time: 22.260 ms

@@ -1,0 +1,7 @@
+2 | 0 | 0 | CO-ROUTINE w
+5 | 2 | 0 | CO-ROUTINE (subquery-4)
+9 | 5 | 0 | SEARCH events USING INDEX ix_events_customer_id (customer_id<?)
+30 | 5 | 0 | USE TEMP B-TREE FOR RIGHT PART OF ORDER BY
+54 | 2 | 0 | SCAN (subquery-4)
+114 | 0 | 0 | SCAN w
+130 | 0 | 0 | USE TEMP B-TREE FOR GROUP BY

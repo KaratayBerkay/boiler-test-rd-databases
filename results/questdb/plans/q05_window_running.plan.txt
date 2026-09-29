@@ -1,0 +1,15 @@
+Encode sort light
+  keys: [d]
+    CachedWindowLight
+      orderedFunctions: [[d] => [sum(daily) over (rows between unbounded preceding and current row),lag(daily, 1, NULL) over ()]]
+        VirtualRecord
+          functions: [timestamp_floor,memoize(daily)]
+            Async Group By workers: 27
+              keys: [timestamp_floor]
+              keyFunctions: [timestamp_floor('day',ordered_at)]
+              values: [sum(total_amount)]
+              filter: null
+                PageFrame
+                    Row forward scan
+                    Interval forward scan on: orders
+                      intervals: [("2025-01-01T00:00:00.000000Z","2025-03-31T23:59:59.999999Z")]

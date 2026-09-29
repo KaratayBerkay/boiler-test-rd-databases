@@ -1,0 +1,168 @@
+{
+  "engine": "cockroach",
+  "display": "CockroachDB",
+  "category": "distributed SQL",
+  "dialect": "cockroach",
+  "driver": "psycopg",
+  "image": "cockroachdb/cockroach:latest",
+  "run_id": "20260914-115049-5d6ee7",
+  "started": "2026-09-14T08:50:49+00:00",
+  "scale": 0.3,
+  "notes": "3-node insecure cluster; every range replicated 3x via Raft, any node serves reads and writes (no promotion needed). HAProxy round-robins connections across nodes (the recommended production pattern). Insecure mode: no passwords.",
+  "phases": {
+    "logging": {
+      "sink": "slow_query events (SQL_EXEC/SQL_PERF channels -> logs/cockroach-sql-exec.log, json) via sql.log.slow_query.latency_threshold",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "sql.log.slow_query.latency_threshold": 0.1,
+        "sql.log.slow_query.experimental_full_table_scans.enabled": false,
+        "sql.log.admin_audit.enabled": true,
+        "sql.log.user_audit": "",
+        "sql.log.all_statements.enabled": false,
+        "sql.trace.stmt.enable_threshold": 0.0,
+        "sql.log.slow_query.internal_queries.enabled": false,
+        "sql.stats.flush.enabled": true,
+        "server.auth_log.sql_connections.enabled": true,
+        "server.auth_log.sql_sessions.enabled": true,
+        "log_files": [
+          "cockroach-sql-audit.crdb1.root.2026-09-14T08_45_59Z.000001.log",
+          "cockroach-sql-audit.crdb1.root.2026-09-14T08_49_05Z.000001.log",
+          "cockroach-sql-audit.crdb1.root.2026-09-14T08_50_06Z.000001.log",
+          "cockroach-sql-audit.log",
+          "cockroach-sql-exec.crdb1.root.2026-09-14T08_46_17Z.000001.log",
+          "cockroach-sql-exec.log",
+          "cockroach-stderr.crdb1.root.2026-09-14T08_45_57Z.000001.log",
+          "cockroach-stderr.log"
+        ]
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "slow_query events (SQL_EXEC/SQL_PERF channels -> logs/cockroach-sql-exec.log, json) via sql.log.slow_query.latency_threshold",
+        "slow_query_ms": 302.8,
+        "slow_logged": true,
+        "seen_after_s": 0.74,
+        "sample": "{\"channel\": \"SQL_EXEC\", \"EventType\": \"slow_query\", \"User\": \"root\", \"ApplicationName\": \"rdlab\", \"Statement\": \"SELECT pg_sleep(\\u20390.3\\u203a) AS rdlab_mk_68de686ee2\", \"Age\": 300.78864, \"NumRows\": 1}",
+        "duration_ms": 300.78864,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "SENSITIVE_ACCESS channel: sql.log.admin_audit + ALTER TABLE ... EXPERIMENTAL_AUDIT SET READ WRITE",
+        "setup": "sql.log.admin_audit.enabled + ALTER TABLE inventory EXPERIMENTAL_AUDIT SET READ WRITE",
+        "event_found": true,
+        "seen_after_s": 0.09,
+        "sample": "{\"channel\": \"SENSITIVE_ACCESS\", \"EventType\": \"admin_query\", \"User\": \"root\", \"Statement\": \"CREATE TABLE lab.public.audit_rdlab_mk_28f62992a3 (id INT8 PRIMARY KEY)\", \"TableName\": null, \"AccessMode\": null}",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 9464,
+          "p50_ms": 0.738424,
+          "p99_ms": 1.6027346199999999,
+          "errors": 0
+        },
+        "full_logging": "SET CLUSTER SETTING sql.log.slow_query.latency_threshold = '1us' (every statement logged as a slow_query event)",
+        "full": {
+          "qps": 10406,
+          "p50_ms": 0.7387429999999999,
+          "p99_ms": 1.3871285800000006,
+          "errors": 0
+        },
+        "log_bytes_written": 63492987,
+        "bytes_per_statement": 1525.5,
+        "overhead_pct": -10.0,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-crdb-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2106,
+          "docker_logs_lines": 43
+        },
+        "rdlab-crdb-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2132,
+          "docker_logs_lines": 43
+        },
+        "rdlab-crdb-3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2132,
+          "docker_logs_lines": 43
+        },
+        "rdlab-crdb-haproxy": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 79,
+          "docker_logs_lines": 2
+        }
+      },
+      "extra": {
+        "statement_statistics_top5": [
+          {
+            "query": "SELECT id, name, email FROM customers WHERE id = _",
+            "calls": 365753.0,
+            "mean_ms": 0.208
+          },
+          {
+            "query": "INSERT INTO backup_probe(id, ts_ms) VALUES (_, __more__)",
+            "calls": 1000.0,
+            "mean_ms": 0.699
+          },
+          {
+            "query": "INSERT INTO system.job_info(job_id, info_key, written, value) VALUES (_, _, now(), _)",
+            "calls": 66.0,
+            "mean_ms": 0.722
+          },
+          {
+            "query": "SELECT claim_session_id FROM system.jobs WHERE id = _",
+            "calls": 40.0,
+            "mean_ms": 0.713
+          },
+          {
+            "query": "SET CLUSTER SETTING \"sql.log.slow_query.latency_threshold\" = _",
+            "calls": 9.0,
+            "mean_ms": 3.683
+          }
+        ]
+      },
+      "collected": [
+        "results/cockroach/logs/crdb-1__cockroach_cockroach-data_logs_cockroach-sql-audit.log",
+        "results/cockroach/logs/crdb-1__cockroach_cockroach-data_logs_cockroach.log",
+        "results/cockroach/logs/crdb-1__cockroach_cockroach-data_logs_cockroach-sql-exec.log"
+      ],
+      "_seconds": 24.9
+    }
+  },
+  "harness_log": "results/logs/cockroach/20260914-115049-5d6ee7.log",
+  "server_version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+  "finished": "2026-09-14T08:51:14+00:00"
+}

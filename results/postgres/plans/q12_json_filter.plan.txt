@@ -1,0 +1,5 @@
+Limit  (cost=181.51..181.51 rows=2 width=22)
+  ->  Sort  (cost=181.51..181.51 rows=2 width=22)
+        Sort Key: id
+        ->  Seq Scan on products  (cost=0.00..181.50 rows=2 width=22)
+              Filter: (((attrs ->> 'color'::text) = 'red'::text) AND (((attrs ->> 'weight'::text))::numeric > '10'::numeric))

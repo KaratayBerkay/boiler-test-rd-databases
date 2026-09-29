@@ -1,0 +1,13 @@
+Limit_22 | 200.00 | root |  | offset:0, count:200
+└─IndexJoin_102 | 200.00 | root |  | anti semi join, inner:IndexLookUp_101, outer key:lab.customers.id, inner key:lab.events.customer_id, equal cond:eq(lab.customers.id, lab.events.customer_id)
+  ├─IndexJoin_117(Build) | 250.00 | root |  | semi join, inner:IndexLookUp_116, outer key:lab.customers.id, inner key:lab.orders.customer_id, equal cond:eq(lab.customers.id, lab.orders.customer_id)
+  │ ├─TableReader_128(Build) | 312.50 | root |  | data:TableFullScan_127
+  │ │ └─TableFullScan_127 | 312.50 | cop[tikv] | table:c | keep order:true
+  │ └─IndexLookUp_116(Probe) | 260.07 | root |  | 
+  │   ├─IndexRangeScan_113(Build) | 3147.98 | cop[tikv] | table:o, index:fk_1(customer_id) | range: decided by [eq(lab.orders.customer_id, lab.customers.id)], keep order:false
+  │   └─Selection_115(Probe) | 260.07 | cop[tikv] |  | ge(lab.orders.ordered_at, 2025-11-01 00:00:00)
+  │     └─TableRowIDScan_114 | 3147.98 | cop[tikv] | table:o | keep order:false
+  └─IndexLookUp_101(Probe) | 157.52 | root |  | 
+    ├─IndexRangeScan_98(Build) | 15739.90 | cop[tikv] | table:e, index:ix_events_customer_id(customer_id) | range: decided by [eq(lab.events.customer_id, lab.customers.id)], keep order:false
+    └─Selection_100(Probe) | 157.52 | cop[tikv] |  | eq(lab.events.event_type, "churn")
+      └─TableRowIDScan_99 | 15739.90 | cop[tikv] | table:e | keep order:false

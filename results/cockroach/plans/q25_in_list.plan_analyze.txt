@@ -1,0 +1,18 @@
+planning time: 356µs
+execution time: 7ms
+distribution: local
+plan type: generic, reused
+rows decoded from KV: 500 (21 KiB, 1 gRPC calls)
+regions: lab
+
+• scan
+  sql nodes: n1
+  kv nodes: n1
+  regions: lab
+  KV time: 7ms
+  KV rows decoded: 500
+  sql cpu time: 388µs
+  actual row count: 500
+  estimated row count: 500 (0.25% of the table; stats collected 5 minutes ago)
+  table: orders@orders_pkey
+  spans: [/47 - /47] [/281 - /281] [/457 - /457] [/869 - /869] … (495 more)

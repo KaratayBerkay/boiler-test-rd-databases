@@ -1,0 +1,2 @@
+Index Scan using customers_pkey on customers  (cost=0.28..2.50 rows=1 width=42)
+  Index Cond: (id = '1101'::smallint)

@@ -1,0 +1,37 @@
+Sort  (cost=6788.62..6789.37 rows=300 width=22) (actual time=165.938..165.979 rows=300 loops=1)
+  Sort Key: c.id, o2.ordered_at DESC
+  Sort Method: quicksort  Memory: 43kB
+  ->  Nested Loop  (cost=77.86..6776.27 rows=300 width=22) (actual time=25.440..165.300 rows=300 loops=1)
+        ->  Seq Scan on customers c  (cost=23.09..1292.45 rows=100 width=4) (actual time=23.966..24.144 rows=100 loops=1)
+              Storage Filter: (id <= 100)
+              Storage Table Read Requests: 1
+              Storage Table Read Execution Time: 23.832 ms
+              Storage Table Read Ops: 1
+              Storage Table Rows Scanned: 20000
+        ->  Limit  (cost=54.77..54.78 rows=3 width=18) (actual time=1.402..1.404 rows=3 loops=100)
+              ->  Sort  (cost=54.77..54.80 rows=10 width=18) (actual time=1.397..1.398 rows=3 loops=100)
+                    Sort Key: o2.ordered_at DESC, o2.id DESC
+                    Sort Method: top-N heapsort  Memory: 25kB
+                    ->  Index Scan using ix_orders_customer_id on orders o2  (cost=52.19..54.64 rows=10 width=18) (actual time=1.269..1.301 rows=10 loops=100)
+                          Index Cond: (customer_id = c.id)
+                          Storage Table Read Requests: 1
+                          Storage Table Read Execution Time: 0.365 ms
+                          Storage Table Read Ops: 1
+                          Storage Table Rows Scanned: 10
+                          Storage Index Read Requests: 1
+                          Storage Index Read Execution Time: 0.742 ms
+                          Storage Index Read Ops: 1
+                          Storage Index Rows Scanned: 10
+Planning Time: 0.472 ms
+Execution Time: 166.432 ms
+Storage Read Requests: 201
+Storage Read Execution Time: 134.563 ms
+Storage Read Ops: 201
+Storage Rows Scanned: 21996
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 134.563 ms
+Peak Memory Usage: 292 kB

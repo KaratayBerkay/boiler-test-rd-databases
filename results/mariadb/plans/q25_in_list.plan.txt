@@ -1,0 +1,1 @@
+1 | SIMPLE | orders | range | PRIMARY | PRIMARY | 4 | None | 500 | Using where

@@ -1,0 +1,9 @@
+Aggregate  (cost=250.00..250.02 rows=1 width=8)
+  ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=8)
+        Task Count: 32
+        Tasks Shown: One of 32
+        ->  Task
+              Node: host=w1 port=5432 dbname=lab
+              ->  Aggregate  (cost=181.22..181.23 rows=1 width=8)
+                    ->  Seq Scan on orders_102042 orders  (cost=0.00..181.22 rows=1 width=0)
+                          Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))

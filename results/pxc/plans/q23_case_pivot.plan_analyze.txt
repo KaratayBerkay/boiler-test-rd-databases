@@ -1,0 +1,6 @@
+-> Sort: c.country_code  (actual time=597..597 rows=13 loops=1)
+    -> Table scan on <temporary>  (actual time=597..597 rows=13 loops=1)
+        -> Aggregate using temporary table  (actual time=597..597 rows=13 loops=1)
+            -> Nested loop inner join  (cost=69161 rows=191936) (actual time=0.0482..377 rows=200000 loops=1)
+                -> Table scan on c  (cost=1984 rows=19433) (actual time=0.0238..5.96 rows=20000 loops=1)
+                -> Index lookup on o using ix_orders_customer_id (customer_id=c.id)  (cost=2.47 rows=9.88) (actual time=0.0149..0.0178 rows=10 loops=20000)

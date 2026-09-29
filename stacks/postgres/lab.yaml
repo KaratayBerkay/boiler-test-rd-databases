@@ -1,0 +1,66 @@
+display: PostgreSQL 18
+category: row-store OLTP
+dialect: postgres
+driver: psycopg
+image: pgvector/pgvector:pg18
+project: rdlab-postgres
+scale: 1
+notes: >-
+  Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot;
+  PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.
+docs:
+  - https://hub.docker.com/_/postgres
+  - https://www.postgresql.org/docs/18/warm-standby.html
+  - https://www.pgbouncer.org/config.html
+oneshot: [backup-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 15432
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pg-primary
+  - name: replica
+    role: replica
+    host: 127.0.0.1
+    port: 15433
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pg-replica
+  - name: pgbouncer
+    role: proxy
+    host: 127.0.0.1
+    port: 16432
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pg-pgbouncer
+  - name: haproxy-ro
+    role: proxy
+    host: 127.0.0.1
+    port: 15001
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-pg-haproxy
+    splits_reads: true
+replication:
+  kind: physical streaming (async, slot)
+  promote:
+    method: engine
+    cmd: ["pg_ctl", "promote", "-D", "/var/lib/postgresql/18/docker"]
+    user: postgres
+backup:
+  dir: /backups                 # shared `pg-backups` volume (primary, replica and the scratch restore container)
+  volume: pg-backups
+  restore_port: 15439           # host port of the throw-away restore container
+  jobs: 4
+  strategies: [pg_dump, pg_basebackup, incremental, pitr]
+logging:
+  dir: /var/lib/postgresql/log  # logging_collector output: postgresql-<date>.log + .json (jsonlog)
+  slow_ms: 100
+features:
+  settle_seconds: 2

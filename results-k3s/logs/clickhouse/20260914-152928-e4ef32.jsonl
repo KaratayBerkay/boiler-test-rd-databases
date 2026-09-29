@@ -1,0 +1,28 @@
+{"ts": "2026-09-14T12:29:28.401+00:00", "level": "DEBUG", "stack": "clickhouse", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/clickhouse/20260914-152928-e4ef32.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/clickhouse/20260914-152928-e4ef32.jsonl"}
+{"ts": "2026-09-14T12:29:28.402+00:00", "level": "INFO", "stack": "clickhouse", "phase": "-", "msg": "[clickhouse] run 20260914-152928-e4ef32 phases=['backup'] scale=0.3 (log: results-k3s/logs/clickhouse/20260914-152928-e4ef32.log)"}
+{"ts": "2026-09-14T12:29:28.415+00:00", "level": "INFO", "stack": "clickhouse", "phase": "-", "msg": "[clickhouse] phase: backup"}
+{"ts": "2026-09-14T12:29:29.171+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "  source fingerprint: 7 tables, 520,772 rows (0.76s)"}
+{"ts": "2026-09-14T12:29:29.172+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "  strategy backup_disk: native backup of parts + metadata, restored as a new database"}
+{"ts": "2026-09-14T12:29:29.590+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    prepare                            rc=0    0.42s"}
+{"ts": "2026-09-14T12:29:29.648+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    BACKUP DATABASE TO Disk            ok    0.06s"}
+{"ts": "2026-09-14T12:29:29.922+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    drop old restore db                ok    0.02s"}
+{"ts": "2026-09-14T12:29:31.202+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    RESTORE DATABASE AS lab_restore    ok    1.28s"}
+{"ts": "2026-09-14T12:29:31.996+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:29:32.885+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    drop restore db                    ok    0.89s"}
+{"ts": "2026-09-14T12:29:32.885+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "  backup_disk: backup 0.06s / 13.5 MB, restore 1.28s, verified=True"}
+{"ts": "2026-09-14T12:29:32.886+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "  strategy backup_cluster: cluster-coordinated backup (shards once, replicas share)"}
+{"ts": "2026-09-14T12:29:33.376+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    BACKUP DATABASE ON CLUSTER         ok    0.49s"}
+{"ts": "2026-09-14T12:29:33.821+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    DROP TABLE inventory ON CLUSTER    ok    0.21s"}
+{"ts": "2026-09-14T12:29:34.234+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    RESTORE TABLE inventory ON CLUSTER ok    0.41s"}
+{"ts": "2026-09-14T12:29:34.971+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    verify after in-place RESTORE TABLE MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:29:35.040+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    verify inventory on replica        MATCH (1 tables, 6,000 rows)"}
+{"ts": "2026-09-14T12:29:35.041+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "  backup_cluster: backup 0.49s / 13.6 MB, restore 0.41s, verified=True"}
+{"ts": "2026-09-14T12:29:35.041+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "  strategy incremental: incremental on top of the full backup"}
+{"ts": "2026-09-14T12:29:35.579+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    BACKUP ... base_backup             ok    0.08s"}
+{"ts": "2026-09-14T12:29:35.819+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    drop old restore db                ok    0.02s"}
+{"ts": "2026-09-14T12:29:36.030+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    RESTORE DATABASE AS lab_restore3   ok    0.21s"}
+{"ts": "2026-09-14T12:29:36.730+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:29:37.023+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "    drop restore db                    ok    0.27s"}
+{"ts": "2026-09-14T12:29:37.024+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "  incremental: backup 0.08s / 0.1 MB, restore 0.21s, verified=True, pitr=True"}
+{"ts": "2026-09-14T12:29:37.326+00:00", "level": "INFO", "stack": "clickhouse", "phase": "backup", "msg": "[clickhouse] phase backup done in 8.9s"}
+{"ts": "2026-09-14T12:29:37.353+00:00", "level": "INFO", "stack": "clickhouse", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/clickhouse/20260914-152928-e4ef32.json"}

@@ -1,0 +1,3 @@
+source: https://github.com/fisker086/AIOps/tree/main/skills/mysql_explain
+license: Apache-2.0
+vendored: 2026-09-13

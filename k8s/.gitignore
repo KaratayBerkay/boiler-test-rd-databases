@@ -1,0 +1,10 @@
+# secrets and local state of the registry / cluster (never commit)
+.env
+.docker-robot/
+registries.yaml
+harbor/certs/
+harbor/data/
+harbor/logs/
+harbor/dist/
+harbor/harbor.yml
+.push.log

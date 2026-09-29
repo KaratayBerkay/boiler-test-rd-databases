@@ -1,0 +1,48 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=1.707..1.722 rows=300.00 loops=1)
+  ->  Distributed Subplan 125_1
+        Subplan Duration: 9.96 ms
+        Intermediate Data Size: 56 kB
+        Result destination: Write locally
+        ->  WindowAgg  (cost=8304.84..10554.82 rows=100000 width=42) (actual time=0.000..0.000 rows=998.00 loops=1)
+              Window: w1 AS (PARTITION BY remote_scan.customer_id ORDER BY remote_scan.ordered_at, remote_scan.id ROWS UNBOUNDED PRECEDING)
+              ->  Sort  (cost=8304.82..8554.82 rows=100000 width=34) (actual time=0.000..0.000 rows=998.00 loops=1)
+                    Sort Key: remote_scan.customer_id, remote_scan.ordered_at DESC, remote_scan.id DESC
+                    ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=34) (never executed)
+                          Task Count: 32
+                          Tuple data received from nodes: 27 kB
+                          Tasks Shown: One of 32
+                          ->  Task
+                                Tuple data received from node: 924 bytes
+                                Node: host=w1 port=5432 dbname=lab
+                                ->  Bitmap Heap Scan on orders_102042 orders  (cost=1.64..28.89 rows=33 width=22) (actual time=0.030..0.069 rows=33.00 loops=1)
+                                      Recheck Cond: (customer_id <= 100)
+                                      Heap Blocks: exact=25
+                                      Buffers: shared hit=27
+                                      ->  Bitmap Index Scan on ix_orders_customer_id_102042  (cost=0.00..1.63 rows=33 width=0) (actual time=0.011..0.011 rows=33.00 loops=1)
+                                            Index Cond: (customer_id <= 100)
+                                            Index Searches: 1
+                                            Buffers: shared hit=2
+                                    Planning:
+                                      Buffers: shared hit=3
+                                    Planning Time: 0.124 ms
+                                    Execution Time: 0.104 ms
+        Planning Time: 0.000 ms
+        Execution Time: 0.002 ms
+  Task Count: 1
+  Tuple data received from nodes: 8382 bytes
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 8382 bytes
+        Node: host=localhost port=5432 dbname=lab
+        ->  Sort  (cost=74.28..76.86 rows=1033 width=34) (actual time=0.631..0.645 rows=300.00 loops=1)
+              Sort Key: intermediate_result.customer_id, intermediate_result.ordered_at DESC
+              Sort Method: quicksort  Memory: 36kB
+              ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..22.56 rows=1033 width=34) (actual time=0.504..0.583 rows=300.00 loops=1)
+                    Filter: (rn <= 3)
+                    Rows Removed by Filter: 698
+            Planning Time: 0.038 ms
+            Execution Time: 0.676 ms
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.529 ms
+Execution Time: 11.710 ms

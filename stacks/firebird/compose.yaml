@@ -1,0 +1,45 @@
+# Firebird 5 — classic client/server RDBMS (port 3050). Official image; SuperServer.
+#
+# Backup strategy (`rdlab run firebird --phases backup`): gbak (transportable) and nbackup level 0 + level 1 (physical,
+#   incremental) into the shared `firebird-backups` volume, restored into second database files.
+# Logging strategy: system audit trace (conf/fbtrace.conf via AuditTraceConfigFile) -> /var/log/firebird/audit.log,
+#   firebird.log, Docker json-file rotation.
+name: rdlab-firebird
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+services:
+  volumes-init:
+    image: firebirdsql/firebird:5
+    container_name: rdlab-firebird-volumes-init
+    entrypoint: ["sh", "-c", "chmod 1777 /backups /var/log/firebird && echo volumes ready"]
+    volumes: [firebird-backups:/backups, firebird-logs:/var/log/firebird]
+    logging: *logging
+    restart: "no"
+  firebird:
+    image: firebirdsql/firebird:5
+    container_name: rdlab-firebird
+    logging: *logging
+    environment:
+      FIREBIRD_ROOT_PASSWORD: rootpass
+      FIREBIRD_USER: lab
+      FIREBIRD_PASSWORD: labpass
+      FIREBIRD_DATABASE: lab.fdb
+      FIREBIRD_DATABASE_DEFAULT_CHARSET: UTF8
+      FIREBIRD_CONF_WireCrypt: Enabled
+      FIREBIRD_CONF_DefaultDbCachePages: "65536"
+      FIREBIRD_CONF_TempCacheLimit: 1G
+      FIREBIRD_CONF_AuditTraceConfigFile: /etc/firebird/fbtrace.conf
+    volumes: [firebird:/var/lib/firebird/data, firebird-backups:/backups, firebird-logs:/var/log/firebird, ./conf/fbtrace.conf:/etc/firebird/fbtrace.conf:ro]
+    ports: ["13050:3050"]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'select 1 from rdb$$database;' | isql -u lab -p labpass localhost:/var/lib/firebird/data/lab.fdb >/dev/null 2>&1"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+volumes:
+  firebird:
+  firebird-backups:
+  firebird-logs:

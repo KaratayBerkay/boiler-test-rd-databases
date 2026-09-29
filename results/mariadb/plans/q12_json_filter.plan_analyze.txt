@@ -1,0 +1,36 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.037270808
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 0.996792,
+    "r_loops": 1,
+    "r_total_time_ms": 1.535682412,
+    "nested_loop": [
+      {
+        "table": {
+          "table_name": "products",
+          "access_type": "index",
+          "key": "PRIMARY",
+          "key_length": "4",
+          "used_key_parts": ["id"],
+          "loops": 1,
+          "r_loops": 1,
+          "rows": 4874,
+          "r_rows": 928,
+          "cost": 0.996792,
+          "r_table_time_ms": 0.455985214,
+          "r_other_time_ms": 1.077244594,
+          "r_engine_stats": {
+            "pages_accessed": 30
+          },
+          "filtered": 100,
+          "r_total_filtered": 10.77586207,
+          "attached_condition": "json_unquote(json_extract(products.attrs,'$.color')) = 'red' and cast(json_extract(products.attrs,'$.weight') as decimal(12,2)) > 10",
+          "r_filtered": 10.77586207
+        }
+      }
+    ]
+  }
+}

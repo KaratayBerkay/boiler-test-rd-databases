@@ -1,0 +1,17 @@
+Plan hash value: 4144441012
+ 
+----------------------------------------------------------------------------------------------------
+| Id  | Operation              | Name                      | Rows  | Bytes | Cost (%CPU)| Time     |
+----------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT       |                           |  4999 | 19996 | 12206   (1)| 00:00:01 |
+|   1 |  SORT ORDER BY         |                           |  4999 | 19996 | 12206   (1)| 00:00:01 |
+|*  2 |   FILTER               |                           |       |       |            |          |
+|   3 |    INDEX FAST FULL SCAN| SYS_C008735               |  5000 | 20000 |     5   (0)| 00:00:01 |
+|*  4 |    INDEX RANGE SCAN    | IX_ORDER_ITEMS_PRODUCT_ID |     2 |     8 |     3   (0)| 00:00:01 |
+----------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter( NOT EXISTS (SELECT 0 FROM "ORDER_ITEMS" "OI" WHERE "OI"."PRODUCT_ID"=:B1))
+   4 - access("OI"."PRODUCT_ID"=:B1)

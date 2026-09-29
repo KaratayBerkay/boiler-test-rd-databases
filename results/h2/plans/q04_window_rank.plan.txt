@@ -1,0 +1,33 @@
+SELECT
+    "category_id",
+    "product_id",
+    "revenue",
+    "rn"
+FROM (
+    SELECT
+        "p"."category_id",
+        "oi"."product_id",
+        SUM("oi"."qty" * "oi"."unit_price") AS "revenue",
+        ROW_NUMBER() OVER (PARTITION BY "p"."category_id" ORDER BY SUM("oi"."qty" * "oi"."unit_price") DESC, "oi"."product_id") AS "rn"
+    FROM "public"."order_items" "oi"
+    INNER JOIN "public"."products" "p"
+        ON 1=1
+    WHERE "p"."id" = "oi"."product_id"
+    GROUP BY "p"."category_id", "oi"."product_id"
+) "t"
+    /* SELECT
+        p.category_id,
+        oi.product_id,
+        SUM(oi.qty * oi.unit_price) AS revenue,
+        ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn
+    FROM public.products p
+        /* public.CONSTRAINT_INDEX_C */
+    INNER JOIN public.order_items oi
+        /* public.CONSTRAINT_INDEX_75: product_id = p.id */
+        ON 1=1
+    WHERE p.id = oi.product_id
+    GROUP BY p.category_id, oi.product_id
+    QUALIFY ?1 IS NOT DISTINCT FROM ?1: rn <= CAST(3 AS BIGINT)
+     */
+WHERE "rn" <= CAST(3 AS BIGINT)
+ORDER BY 1, 4

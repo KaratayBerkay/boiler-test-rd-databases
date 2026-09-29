@@ -1,0 +1,20 @@
+SELECT
+    "c"."id",
+    "c"."email"
+FROM "public"."customers" "c"
+    /* public.PRIMARY_KEY_6 */
+WHERE EXISTS(    SELECT
+        1
+    FROM "public"."orders" "o"
+        /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */
+    WHERE ("o"."ordered_at" >= TIMESTAMP '2025-11-01 00:00:00')
+        AND ("o"."customer_id" = "c"."id"))
+    AND (NOT EXISTS(    SELECT
+        1
+    FROM "public"."events" "e"
+        /* public.ix_events_customer_id: customer_id = c.id */
+    WHERE ("e"."event_type" = 'churn')
+        AND ("e"."customer_id" = "c"."id")))
+ORDER BY 1
+FETCH FIRST 200 ROWS ONLY
+/* index sorted */

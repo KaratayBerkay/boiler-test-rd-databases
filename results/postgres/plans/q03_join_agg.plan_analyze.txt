@@ -1,0 +1,37 @@
+Limit  (cost=8529.35..8529.47 rows=50 width=51) (actual time=97.014..97.031 rows=50.00 loops=1)
+  Buffers: shared hit=1688
+  ->  Sort  (cost=8529.35..8593.04 rows=25478 width=51) (actual time=97.012..97.023 rows=50.00 loops=1)
+        Sort Key: (sum(((oi.qty)::numeric * oi.unit_price))) DESC, c.country_code, (date_trunc('month'::text, o.ordered_at))
+        Sort Method: quicksort  Memory: 30kB
+        Buffers: shared hit=1688
+        ->  GroupAggregate  (cost=6854.95..7682.99 rows=25478 width=51) (actual time=83.974..96.939 rows=78.00 loops=1)
+              Group Key: c.country_code, (date_trunc('month'::text, o.ordered_at))
+              Buffers: shared hit=1688
+              ->  Sort  (cost=6854.95..6918.65 rows=25478 width=25) (actual time=83.869..86.448 rows=25303.00 loops=1)
+                    Sort Key: c.country_code, (date_trunc('month'::text, o.ordered_at)), o.id
+                    Sort Method: quicksort  Memory: 1955kB
+                    Buffers: shared hit=1688
+                    ->  Hash Join  (cost=2058.93..4990.35 rows=25478 width=25) (actual time=10.268..48.547 rows=25303.00 loops=1)
+                          Hash Cond: (o.customer_id = c.id)
+                          Buffers: shared hit=1688
+                          ->  Hash Join  (cost=1771.92..4572.73 rows=25478 width=26) (actual time=8.536..38.896 rows=25303.00 loops=1)
+                                Hash Cond: (oi.order_id = o.id)
+                                Buffers: shared hit=1536
+                                ->  Seq Scan on order_items oi  (cost=0.00..2414.72 rows=147072 width=14) (actual time=0.006..11.005 rows=147072.00 loops=1)
+                                      Buffers: shared hit=944
+                                ->  Hash  (cost=1642.00..1642.00 rows=10394 width=16) (actual time=8.514..8.515 rows=10363.00 loops=1)
+                                      Buckets: 16384  Batches: 1  Memory Usage: 614kB
+                                      Buffers: shared hit=592
+                                      ->  Seq Scan on orders o  (cost=0.00..1642.00 rows=10394 width=16) (actual time=0.008..6.704 rows=10363.00 loops=1)
+                                            Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))
+                                            Rows Removed by Filter: 49637
+                                            Buffers: shared hit=592
+                          ->  Hash  (cost=212.00..212.00 rows=6000 width=7) (actual time=1.723..1.724 rows=6000.00 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 299kB
+                                Buffers: shared hit=152
+                                ->  Seq Scan on customers c  (cost=0.00..212.00 rows=6000 width=7) (actual time=0.009..0.829 rows=6000.00 loops=1)
+                                      Buffers: shared hit=152
+Planning:
+  Buffers: shared hit=24
+Planning Time: 0.347 ms
+Execution Time: 97.432 ms

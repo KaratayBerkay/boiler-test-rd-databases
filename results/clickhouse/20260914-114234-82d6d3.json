@@ -1,0 +1,374 @@
+{
+  "engine": "clickhouse",
+  "display": "ClickHouse",
+  "category": "analytical (columnar)",
+  "dialect": "clickhouse",
+  "driver": "clickhouse-connect",
+  "image": "clickhouse/clickhouse-server:latest",
+  "run_id": "20260914-114234-82d6d3",
+  "started": "2026-09-14T08:42:34+00:00",
+  "scale": 0.3,
+  "notes": "Two replicas of one shard using ReplicatedMergeTree with ClickHouse Keeper; DDL runs ON CLUSTER. No transactions, no foreign keys; secondary \"indexes\" are data-skipping (bloom filter) indexes; UPDATE/DELETE are asynchronous mutations.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.23,
+          "rows_per_s": 25847,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.09,
+          "rows_per_s": 2189,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.15,
+          "rows_per_s": 9988,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 1.1,
+          "rows_per_s": 54676,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 0.95,
+          "rows_per_s": 154847,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 5.29,
+          "rows_per_s": 56694,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.15,
+          "rows_per_s": 39033,
+          "method": "client.insert (native batches)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers ON CLUSTER lab_cluster (\n  id Int32,\n  name String,\n  email String,\n  country_code String,\n  tier String,\n  created_at DateTime64(6),\n  attrs Nullable(String)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}') ORDER BY (id)",
+        "CREATE TABLE categories ON CLUSTER lab_cluster (\n  id Int32,\n  parent_id Nullable(Int32),\n  name String,\n  depth Int32\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}') ORDER BY (id)",
+        "CREATE TABLE products ON CLUSTER lab_cluster (\n  id Int32,\n  category_id Int32,\n  sku String,\n  name String,\n  description String,\n  price Decimal(12,2),\n  attrs Nullable(String),\n  active Bool\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}') ORDER BY (id)",
+        "CREATE TABLE orders ON CLUSTER lab_cluster (\n  id Int32,\n  customer_id Int32,\n  status String,\n  ordered_at DateTime64(6),\n  total_amount Decimal(14,2),\n  shipping_country String\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}') ORDER BY (id)",
+        "CREATE TABLE order_items ON CLUSTER lab_cluster (\n  id Int32,\n  order_id Int32,\n  product_id Int32,\n  qty Int32,\n  unit_price Decimal(12,2)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}') ORDER BY (id)",
+        "CREATE TABLE events ON CLUSTER lab_cluster (\n  id Int64,\n  customer_id Int32,\n  event_type String,\n  occurred_at DateTime64(6),\n  payload Nullable(String),\n  value_num Decimal(12,4)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}') ORDER BY (id)",
+        "CREATE TABLE inventory ON CLUSTER lab_cluster (\n  product_id Int32,\n  warehouse_id Int32,\n  qty Int32,\n  updated_at DateTime64(6)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}') ORDER BY (product_id, warehouse_id)",
+        "ALTER TABLE products ADD INDEX ix_products_category_id (category_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE products MATERIALIZE INDEX ix_products_category_id",
+        "ALTER TABLE orders ADD INDEX ix_orders_customer_id (customer_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE orders MATERIALIZE INDEX ix_orders_customer_id",
+        "ALTER TABLE order_items ADD INDEX ix_order_items_order_id (order_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE order_items MATERIALIZE INDEX ix_order_items_order_id",
+        "ALTER TABLE order_items ADD INDEX ix_order_items_product_id (product_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE order_items MATERIALIZE INDEX ix_order_items_product_id",
+        "ALTER TABLE events ADD INDEX ix_events_customer_id (customer_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE events MATERIALIZE INDEX ix_events_customer_id"
+      ],
+      "errors": [],
+      "schema_seconds": 3.0,
+      "load_seconds": 8.0,
+      "fts_setup": [],
+      "after_load": [],
+      "post_seconds": 0.0,
+      "server_version": "ClickHouse 26.8.2.7",
+      "_seconds": 11.0
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "backup_disk": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE TO Disk('backups', ...)",
+          "backup_seconds": 0.07,
+          "backup_bytes": 14054757,
+          "backup_mb": 13.4,
+          "restore_seconds": 0.19,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.71
+          },
+          "pitr": {},
+          "notes": "single-replica backup of every table's parts + metadata into the `backups` disk (/backups); restored under a new database name on the same server",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/inc1 /backups/cluster",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE TO Disk",
+              "cmd": "BACKUP DATABASE lab TO Disk('backups', 'full')",
+              "rc": 0,
+              "seconds": 0.07,
+              "out": ""
+            },
+            {
+              "name": "drop old restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore SYNC",
+              "rc": 0,
+              "seconds": 0.03,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_restore",
+              "cmd": "RESTORE DATABASE lab AS lab_restore FROM Disk('backups', 'full')",
+              "rc": 0,
+              "seconds": 0.19,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore SYNC",
+              "rc": 0,
+              "seconds": 0.29,
+              "out": ""
+            }
+          ],
+          "system_backups": {
+            "status": "BACKUP_CREATED",
+            "num_files": 130,
+            "total_size": 14054757,
+            "num_entries": 103,
+            "uncompressed_size": 14072583,
+            "compressed_size": 14072583,
+            "error": "",
+            "start": "2026-09-14 08:42:46.214623",
+            "end": "2026-09-14 08:42:46.271123"
+          },
+          "dir_bytes": 14179079,
+          "seconds": 1.5,
+          "description": "native backup of parts + metadata, restored as a new database"
+        },
+        "backup_cluster": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE ON CLUSTER",
+          "backup_seconds": 0.5,
+          "backup_bytes": 28109514,
+          "backup_mb": 26.8,
+          "restore_seconds": 0.41,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.75
+          },
+          "pitr": {},
+          "notes": "cluster-coordinated backup (each shard once, the replicas split the parts); drill: DROP TABLE ... ON CLUSTER then RESTORE TABLE ... ON CLUSTER in place",
+          "error": null,
+          "steps": [
+            {
+              "name": "BACKUP DATABASE ON CLUSTER",
+              "cmd": "BACKUP DATABASE lab ON CLUSTER lab_cluster TO Disk('backups', 'cluster')",
+              "rc": 0,
+              "seconds": 0.5,
+              "out": ""
+            },
+            {
+              "name": "DROP TABLE inventory ON CLUSTER",
+              "cmd": "DROP TABLE lab.inventory ON CLUSTER lab_cluster SYNC",
+              "rc": 0,
+              "seconds": 0.21,
+              "out": ""
+            },
+            {
+              "name": "RESTORE TABLE inventory ON CLUSTER",
+              "cmd": "RESTORE TABLE lab.inventory ON CLUSTER lab_cluster FROM Disk('backups', 'cluster')",
+              "rc": 0,
+              "seconds": 0.41,
+              "out": ""
+            }
+          ],
+          "system_backups": {
+            "status": "BACKUP_CREATED",
+            "num_files": 260,
+            "total_size": 28109514,
+            "num_entries": 104,
+            "uncompressed_size": 14107271,
+            "compressed_size": 14107271,
+            "error": "",
+            "start": "2026-09-14 08:42:47.620483",
+            "end": "2026-09-14 08:42:48.100340"
+          },
+          "dir_bytes": 14238343,
+          "replica_verify": {
+            "match": true,
+            "tables": 1,
+            "rows": 6000,
+            "mismatch": [],
+            "seconds": 0.07
+          },
+          "seconds": 2.0,
+          "description": "cluster-coordinated backup (shards once, replicas share)"
+        },
+        "incremental": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "BACKUP ... SETTINGS base_backup",
+          "backup_seconds": 0.07,
+          "backup_bytes": 14064289,
+          "backup_mb": 13.4,
+          "restore_seconds": 0.19,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.95
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "table created after the base backup restored from the incremental"
+          },
+          "notes": "only parts not present in the base backup are written; RESTORE from the incremental resolves the base automatically",
+          "error": null,
+          "steps": [
+            {
+              "name": "BACKUP ... base_backup",
+              "cmd": "BACKUP DATABASE lab TO Disk('backups', 'inc1') SETTINGS base_backup = Disk('backups', 'full')",
+              "rc": 0,
+              "seconds": 0.06,
+              "out": ""
+            },
+            {
+              "name": "drop old restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore3 SYNC",
+              "rc": 0,
+              "seconds": 0.02,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_restore3",
+              "cmd": "RESTORE DATABASE lab AS lab_restore3 FROM Disk('backups', 'inc1')",
+              "rc": 0,
+              "seconds": 0.19,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore3 SYNC",
+              "rc": 0,
+              "seconds": 0.28,
+              "out": ""
+            }
+          ],
+          "system_backups": {
+            "status": "BACKUP_CREATED",
+            "num_files": 153,
+            "total_size": 14064289,
+            "num_entries": 16,
+            "uncompressed_size": 34317,
+            "compressed_size": 34317,
+            "error": "",
+            "start": "2026-09-14 08:42:50.100421",
+            "end": "2026-09-14 08:42:50.140264"
+          },
+          "dir_bytes": 75277,
+          "seconds": 2.1,
+          "description": "incremental on top of the full backup"
+        }
+      },
+      "order": [
+        "backup_disk",
+        "backup_cluster",
+        "incremental"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "bde4b36d53228ad1212bb943"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "eb602730c3feb5ead2ea4025"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9cde6b51376675a09bc87c0a"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "2a6fdffe76ce0fe94d748f2f"
+        }
+      },
+      "fingerprint_seconds": 0.81,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "backup_disk",
+          "backup_cluster",
+          "incremental"
+        ],
+        "pitr_ok": [
+          "incremental"
+        ]
+      },
+      "_seconds": 6.6
+    }
+  },
+  "harness_log": "results/logs/clickhouse/20260914-114234-82d6d3.log",
+  "server_version": "ClickHouse 26.8.2.7",
+  "finished": "2026-09-14T08:42:52+00:00"
+}

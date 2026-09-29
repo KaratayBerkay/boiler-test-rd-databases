@@ -1,0 +1,13 @@
+Encode sort
+  keys: [id]
+    SelectedRecord
+        Filter filter: oi.id=null
+            Hash Left Outer Join Light
+              condition: oi.product_id=p.id
+                PageFrame
+                    Row forward scan
+                    Frame forward scan on: products
+                Hash
+                    PageFrame
+                        Row forward scan
+                        Frame forward scan on: order_items

@@ -1,0 +1,65 @@
+physical_plan | ┌───────────────────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│          s.d ASC          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│             #2            │
+│             #3            │
+│                           │
+│        ~20,006 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           WINDOW          │
+│    ────────────────────   │
+│        Projections:       │
+│ sum(daily) OVER (ORDER BY │
+│    d ASC NULLS LAST ROWS  │
+│      BETWEEN UNBOUNDED    │
+│ PRECEDING AND CURRENT ROW)│
+│ LAG(daily, 1) OVER (ORDER │
+│    BY d ASC NULLS LAST)   │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│         Groups: #0        │
+│                           │
+│        Aggregates:        │
+│    sum_no_overflow(#1)    │
+│                           │
+│        ~20,006 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│     date_trunc('day',     │
+│         ordered_at)       │
+│        total_amount       │
+│                           │
+│        ~40,012 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          SEQ_SCAN         │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.orders      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│         ordered_at        │
+│        total_amount       │
+│                           │
+│          Filters:         │
+│ ordered_at>='2025-01-01 00│
+│   :00:00'::TIMESTAMP AND  │
+│  ordered_at<'2025-04-01 00│
+│     :00:00'::TIMESTAMP    │
+│                           │
+│        ~40,012 rows       │
+└───────────────────────────┘

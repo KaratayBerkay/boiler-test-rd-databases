@@ -1,0 +1,2454 @@
+{
+  "engine": "citus",
+  "display": "Citus 13 (PG 18) sharded, 5x2",
+  "category": "distributed SQL (sharded PostgreSQL)",
+  "dialect": "citus",
+  "driver": "psycopg",
+  "image": "citusdata/citus:latest",
+  "run_id": "20260913-001049-586e90",
+  "started": "2026-09-12T21:10:49+00:00",
+  "scale": 1.0,
+  "notes": "Citus coordinator + 5 worker primaries + 5 streaming replicas (registered as Citus secondary nodes), every PostgreSQL instance limited to 0.8 CPU / 1.5 GiB. Clients enter through HAProxy -> 3 PgBouncer instances (transaction pooling) -> coordinator. Tables are hash-distributed on their primary keys (Citus needs PK/UNIQUE to contain the distribution column); products and categories are reference tables. Manual worker failover = promote replica + citus_update_node().",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.57,
+          "rows_per_s": 35124,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.02,
+          "rows_per_s": 10479,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.3,
+          "rows_per_s": 16584,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 1.51,
+          "rows_per_s": 132422,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 3.16,
+          "rows_per_s": 154289,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 7.4,
+          "rows_per_s": 135055,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.43,
+          "rows_per_s": 46180,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs JSONB,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSONB,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload JSONB,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)",
+        "SELECT create_reference_table('categories')",
+        "SELECT create_reference_table('products')",
+        "SELECT create_distributed_table('customers', 'id')",
+        "SELECT create_distributed_table('orders', 'id')",
+        "SELECT create_distributed_table('events', 'id')",
+        "SELECT create_distributed_table('order_items', 'id')",
+        "SELECT create_distributed_table('inventory', 'product_id')"
+      ],
+      "errors": [],
+      "schema_seconds": 0.46,
+      "load_seconds": 13.47,
+      "fts_setup": [
+        "CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description))"
+      ],
+      "after_load": [
+        "ANALYZE customers",
+        "ANALYZE categories",
+        "ANALYZE products",
+        "ANALYZE orders",
+        "ANALYZE order_items",
+        "ANALYZE events",
+        "ANALYZE inventory"
+      ],
+      "post_seconds": 4.36,
+      "server_version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+      "_seconds": 18.3
+    },
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-citus-coordinator",
+        "rdlab-citus-haproxy",
+        "rdlab-citus-pgbouncer1",
+        "rdlab-citus-pgbouncer2",
+        "rdlab-citus-pgbouncer3",
+        "rdlab-citus-r1",
+        "rdlab-citus-r2",
+        "rdlab-citus-r3",
+        "rdlab-citus-r4",
+        "rdlab-citus-r5",
+        "rdlab-citus-w1",
+        "rdlab-citus-w2",
+        "rdlab-citus-w3",
+        "rdlab-citus-w4",
+        "rdlab-citus-w5"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 178000,
+          "batches": 178,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 11867,
+          "batch_ms": {
+            "n": 178,
+            "min": 172.633028,
+            "p50": 323.0147075,
+            "p90": 471.6418186000001,
+            "p95": 584.1314009,
+            "p99": 679.5091388799991,
+            "max": 796.124562,
+            "mean": 336.4439757808989,
+            "stdev": 112.17973341067899
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 56.8,
+              "cpu_max_pct": 85.1,
+              "mem_max_mb": 258.0,
+              "samples": 5
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 2.2,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 46.0,
+              "samples": 5
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 1.8,
+              "cpu_max_pct": 4.9,
+              "mem_max_mb": 2.0,
+              "samples": 5
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.8,
+              "cpu_max_pct": 3.7,
+              "mem_max_mb": 3.0,
+              "samples": 5
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 1.6,
+              "cpu_max_pct": 4.1,
+              "mem_max_mb": 3.0,
+              "samples": 5
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 3.8,
+              "cpu_max_pct": 13.3,
+              "mem_max_mb": 150.0,
+              "samples": 5
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 3.8,
+              "cpu_max_pct": 12.4,
+              "mem_max_mb": 150.0,
+              "samples": 5
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 3.6,
+              "cpu_max_pct": 11.6,
+              "mem_max_mb": 140.0,
+              "samples": 5
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 3.6,
+              "cpu_max_pct": 12.0,
+              "mem_max_mb": 140.0,
+              "samples": 5
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 3.7,
+              "cpu_max_pct": 12.9,
+              "mem_max_mb": 140.0,
+              "samples": 5
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 19.0,
+              "cpu_max_pct": 28.1,
+              "mem_max_mb": 178.0,
+              "samples": 5
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 15.7,
+              "cpu_max_pct": 28.9,
+              "mem_max_mb": 179.0,
+              "samples": 5
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 13.9,
+              "cpu_max_pct": 25.7,
+              "mem_max_mb": 169.0,
+              "samples": 5
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 13.7,
+              "cpu_max_pct": 25.6,
+              "mem_max_mb": 171.0,
+              "samples": 5
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 14.4,
+              "cpu_max_pct": 20.0,
+              "mem_max_mb": 170.0,
+              "samples": 5
+            }
+          }
+        },
+        {
+          "workers": 8,
+          "target": "primary",
+          "mode": "values",
+          "rows": 167000,
+          "batches": 167,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 11133,
+          "batch_ms": {
+            "n": 167,
+            "min": 324.069767,
+            "p50": 702.882325,
+            "p90": 996.7178704,
+            "p95": 1087.865129,
+            "p99": 1164.7101280000002,
+            "max": 1355.854195,
+            "mean": 728.7291731796407,
+            "stdev": 192.95202524052354
+          },
+          "first_error": null,
+          "workers_reported": 8,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 21.2,
+              "cpu_max_pct": 21.2,
+              "mem_max_mb": 181.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 8.2,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 46.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 3.8,
+              "cpu_max_pct": 3.8,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 4.3,
+              "cpu_max_pct": 4.3,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.6,
+              "cpu_max_pct": 3.6,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 1.0,
+              "cpu_max_pct": 1.0,
+              "mem_max_mb": 150.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 1.1,
+              "cpu_max_pct": 1.1,
+              "mem_max_mb": 150.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 141.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.9,
+              "cpu_max_pct": 0.9,
+              "mem_max_mb": 140.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 1.1,
+              "cpu_max_pct": 1.1,
+              "mem_max_mb": 140.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 12.4,
+              "cpu_max_pct": 12.4,
+              "mem_max_mb": 174.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 12.9,
+              "cpu_max_pct": 12.9,
+              "mem_max_mb": 173.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 8.5,
+              "cpu_max_pct": 8.5,
+              "mem_max_mb": 160.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 15.9,
+              "cpu_max_pct": 15.9,
+              "mem_max_mb": 160.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 14.8,
+              "cpu_max_pct": 14.8,
+              "mem_max_mb": 160.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 144000,
+          "batches": 144,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 9600,
+          "batch_ms": {
+            "n": 144,
+            "min": 791.713214,
+            "p50": 1599.562074,
+            "p90": 2366.7380988000004,
+            "p95": 2943.14458015,
+            "p99": 3104.691363509999,
+            "max": 3445.723012,
+            "mean": 1701.0849694444446,
+            "stdev": 492.81329055404717
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 138.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 34.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 2.9,
+              "cpu_max_pct": 2.9,
+              "mem_max_mb": 8.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.1,
+              "cpu_max_pct": 3.1,
+              "mem_max_mb": 7.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.2,
+              "cpu_max_pct": 7.2,
+              "mem_max_mb": 156.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 155.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 146.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 8.5,
+              "cpu_max_pct": 8.5,
+              "mem_max_mb": 146.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 7.2,
+              "cpu_max_pct": 7.2,
+              "mem_max_mb": 146.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 178.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 178.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 168.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 168.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 167.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 135000,
+          "batches": 135,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 9000,
+          "batch_ms": {
+            "n": 135,
+            "min": 1801.393845,
+            "p50": 3497.507849,
+            "p90": 5657.8275842,
+            "p95": 6557.2525954,
+            "p99": 7521.75894202,
+            "max": 7856.00112,
+            "mean": 3847.31147037037,
+            "stdev": 1277.0570643373057
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 8.0,
+              "cpu_max_pct": 8.0,
+              "mem_max_mb": 164.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 34.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 160.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 160.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 149.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 149.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 149.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 183.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 184.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 172.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 172.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 172.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 64,
+          "target": "primary",
+          "mode": "values",
+          "rows": 132000,
+          "batches": 132,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 8800,
+          "batch_ms": {
+            "n": 132,
+            "min": 3092.709656,
+            "p50": 9964.286175,
+            "p90": 13349.1284681,
+            "p95": 13748.050637699997,
+            "p99": 14808.607830499997,
+            "max": 15568.423874,
+            "mean": 9273.366043393939,
+            "stdev": 3228.865846587141
+          },
+          "first_error": null,
+          "workers_reported": 64,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 213.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 34.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 2.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 163.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.6,
+              "cpu_max_pct": 0.6,
+              "mem_max_mb": 164.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 152.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 154.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 152.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 186.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 186.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 175.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 175.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 175.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "target": "pgbouncers",
+          "mode": "values",
+          "rows": 181000,
+          "batches": 181,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 12067,
+          "batch_ms": {
+            "n": 181,
+            "min": 178.938488,
+            "p50": 312.367073,
+            "p90": 459.168824,
+            "p95": 493.949598,
+            "p99": 615.6504799999999,
+            "max": 650.62209,
+            "mean": 332.5464790055249,
+            "stdev": 88.34918484693836
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 32.9,
+              "cpu_max_pct": 32.9,
+              "mem_max_mb": 172.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.4,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.7,
+              "cpu_max_pct": 0.7,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 169.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 169.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.3,
+              "cpu_max_pct": 7.3,
+              "mem_max_mb": 157.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 156.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 156.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 10.5,
+              "cpu_max_pct": 10.5,
+              "mem_max_mb": 198.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 8.8,
+              "cpu_max_pct": 8.8,
+              "mem_max_mb": 195.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 9.1,
+              "cpu_max_pct": 9.1,
+              "mem_max_mb": 182.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 8.4,
+              "cpu_max_pct": 8.4,
+              "mem_max_mb": 180.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 8.8,
+              "cpu_max_pct": 8.8,
+              "mem_max_mb": 180.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 8,
+          "target": "pgbouncers",
+          "mode": "values",
+          "rows": 166000,
+          "batches": 166,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 11067,
+          "batch_ms": {
+            "n": 166,
+            "min": 112.840097,
+            "p50": 696.905274,
+            "p90": 957.4490165,
+            "p95": 1088.36111925,
+            "p99": 1322.5376598999985,
+            "max": 1596.379644,
+            "mean": 720.8572514759036,
+            "stdev": 204.56962646991167
+          },
+          "first_error": null,
+          "workers_reported": 8,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 16.9,
+              "cpu_max_pct": 16.9,
+              "mem_max_mb": 193.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 10.8,
+              "cpu_max_pct": 10.8,
+              "mem_max_mb": 36.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 4.0,
+              "cpu_max_pct": 4.0,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 4.5,
+              "cpu_max_pct": 4.5,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 1.4,
+              "cpu_max_pct": 1.4,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 8.1,
+              "cpu_max_pct": 8.1,
+              "mem_max_mb": 174.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 7.4,
+              "cpu_max_pct": 7.4,
+              "mem_max_mb": 174.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 8.2,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 162.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 161.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 8.1,
+              "cpu_max_pct": 8.1,
+              "mem_max_mb": 161.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 206.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 207.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 193.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 194.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 194.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "pgbouncers",
+          "mode": "values",
+          "rows": 176000,
+          "batches": 176,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 11733,
+          "batch_ms": {
+            "n": 176,
+            "min": 896.525856,
+            "p50": 1394.9675385,
+            "p90": 1748.1526695,
+            "p95": 2151.4702507499996,
+            "p99": 2972.44572875,
+            "max": 3220.425091,
+            "mean": 1434.6879089034092,
+            "stdev": 375.5776461336236
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 302.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 1.1,
+              "cpu_max_pct": 1.1,
+              "mem_max_mb": 36.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 175.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 175.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 162.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 162.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 162.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 8.1,
+              "cpu_max_pct": 8.1,
+              "mem_max_mb": 221.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 7.8,
+              "cpu_max_pct": 7.8,
+              "mem_max_mb": 222.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 8.5,
+              "cpu_max_pct": 8.5,
+              "mem_max_mb": 208.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 8.4,
+              "cpu_max_pct": 8.4,
+              "mem_max_mb": 208.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 8.7,
+              "cpu_max_pct": 8.7,
+              "mem_max_mb": 207.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "pgbouncers",
+          "mode": "values",
+          "rows": 163000,
+          "batches": 163,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 10867,
+          "batch_ms": {
+            "n": 163,
+            "min": 1744.193251,
+            "p50": 3298.428298,
+            "p90": 3894.5416632,
+            "p95": 4150.2618584,
+            "p99": 4724.979345699997,
+            "max": 5440.664009,
+            "mean": 3186.7079456564416,
+            "stdev": 653.2064940020757
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 475.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 1.8,
+              "cpu_max_pct": 1.8,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 178.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 178.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 165.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 244.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 246.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 231.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 8.5,
+              "cpu_max_pct": 8.5,
+              "mem_max_mb": 233.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 8.5,
+              "cpu_max_pct": 8.5,
+              "mem_max_mb": 232.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 64,
+          "target": "pgbouncers",
+          "mode": "values",
+          "rows": 186000,
+          "batches": 186,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 12400,
+          "batch_ms": {
+            "n": 186,
+            "min": 1411.03271,
+            "p50": 6790.9979955,
+            "p90": 7899.8664275,
+            "p95": 8119.29411075,
+            "p99": 8716.7646286,
+            "max": 9993.240728,
+            "mean": 6284.748903306451,
+            "stdev": 1745.5732024433091
+          },
+          "first_error": null,
+          "workers_reported": 64,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 9.2,
+              "cpu_max_pct": 9.2,
+              "mem_max_mb": 577.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.8,
+              "cpu_max_pct": 7.8,
+              "mem_max_mb": 184.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 5.8,
+              "cpu_max_pct": 5.8,
+              "mem_max_mb": 187.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 6.4,
+              "cpu_max_pct": 6.4,
+              "mem_max_mb": 173.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.2,
+              "cpu_max_pct": 7.2,
+              "mem_max_mb": 172.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 7.8,
+              "cpu_max_pct": 7.8,
+              "mem_max_mb": 170.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 256.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 258.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 242.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 243.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 8.0,
+              "cpu_max_pct": 8.0,
+              "mem_max_mb": 243.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "copy",
+          "rows": 179000,
+          "batches": 179,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 11933,
+          "batch_ms": {
+            "n": 179,
+            "min": 186.538081,
+            "p50": 338.379874,
+            "p90": 427.78198960000003,
+            "p95": 441.9834747,
+            "p99": 577.2866077999998,
+            "max": 680.331009,
+            "mean": 334.0688079944134,
+            "stdev": 76.62601094504382
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 31.3,
+              "cpu_max_pct": 31.3,
+              "mem_max_mb": 750.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 9.4,
+              "cpu_max_pct": 9.4,
+              "mem_max_mb": 187.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 9.0,
+              "cpu_max_pct": 9.0,
+              "mem_max_mb": 187.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 9.3,
+              "cpu_max_pct": 9.3,
+              "mem_max_mb": 173.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 8.8,
+              "cpu_max_pct": 8.8,
+              "mem_max_mb": 173.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 8.6,
+              "cpu_max_pct": 8.6,
+              "mem_max_mb": 173.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 22.8,
+              "cpu_max_pct": 22.8,
+              "mem_max_mb": 295.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 22.1,
+              "cpu_max_pct": 22.1,
+              "mem_max_mb": 297.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 22.0,
+              "cpu_max_pct": 22.0,
+              "mem_max_mb": 275.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 21.9,
+              "cpu_max_pct": 21.9,
+              "mem_max_mb": 274.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 262.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 8,
+          "target": "primary",
+          "mode": "copy",
+          "rows": 192000,
+          "batches": 192,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 12800,
+          "batch_ms": {
+            "n": 192,
+            "min": 396.474414,
+            "p50": 599.3706755000001,
+            "p90": 786.1176902,
+            "p95": 925.0168511499999,
+            "p99": 1137.85249455,
+            "max": 1246.846124,
+            "mean": 628.9315698229167,
+            "stdev": 146.82145999087035
+          },
+          "first_error": null,
+          "workers_reported": 8,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 31.8,
+              "cpu_max_pct": 31.8,
+              "mem_max_mb": 766.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 8.4,
+              "cpu_max_pct": 8.4,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 4.6,
+              "cpu_max_pct": 4.6,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 4.0,
+              "cpu_max_pct": 4.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 192.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 192.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 176.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 17.6,
+              "cpu_max_pct": 17.6,
+              "mem_max_mb": 321.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 16.7,
+              "cpu_max_pct": 16.7,
+              "mem_max_mb": 319.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 15.3,
+              "cpu_max_pct": 15.3,
+              "mem_max_mb": 296.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 20.7,
+              "cpu_max_pct": 20.7,
+              "mem_max_mb": 293.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 22.3,
+              "cpu_max_pct": 22.3,
+              "mem_max_mb": 300.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "copy",
+          "rows": 186000,
+          "batches": 186,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 12400,
+          "batch_ms": {
+            "n": 186,
+            "min": 894.335858,
+            "p50": 1297.9055389999999,
+            "p90": 1643.8716525,
+            "p95": 1759.146826,
+            "p99": 1913.6374003500005,
+            "max": 2085.110775,
+            "mean": 1338.1409968924731,
+            "stdev": 239.8724697118259
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 752.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.2,
+              "cpu_max_pct": 7.2,
+              "mem_max_mb": 198.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 7.2,
+              "cpu_max_pct": 7.2,
+              "mem_max_mb": 199.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.0,
+              "cpu_max_pct": 7.0,
+              "mem_max_mb": 183.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.1,
+              "cpu_max_pct": 7.1,
+              "mem_max_mb": 183.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 7.2,
+              "cpu_max_pct": 7.2,
+              "mem_max_mb": 183.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 4.3,
+              "cpu_max_pct": 4.3,
+              "mem_max_mb": 286.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 286.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 8.4,
+              "cpu_max_pct": 8.4,
+              "mem_max_mb": 270.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 271.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 270.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "copy",
+          "rows": 195000,
+          "batches": 195,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 13000,
+          "batch_ms": {
+            "n": 195,
+            "min": 1509.571056,
+            "p50": 2591.305964,
+            "p90": 3378.9068224,
+            "p95": 3685.89911,
+            "p99": 3882.05597566,
+            "max": 4081.95219,
+            "mean": 2672.6590085179487,
+            "stdev": 501.675876031012
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 7.9,
+              "cpu_max_pct": 7.9,
+              "mem_max_mb": 778.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 9.3,
+              "cpu_max_pct": 9.3,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.6,
+              "cpu_max_pct": 7.6,
+              "mem_max_mb": 202.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 202.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.2,
+              "cpu_max_pct": 7.2,
+              "mem_max_mb": 186.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.9,
+              "cpu_max_pct": 7.9,
+              "mem_max_mb": 186.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 8.0,
+              "cpu_max_pct": 8.0,
+              "mem_max_mb": 185.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 288.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 290.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 272.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 8.2,
+              "cpu_max_pct": 8.2,
+              "mem_max_mb": 274.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 273.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 64,
+          "target": "primary",
+          "mode": "copy",
+          "rows": 198000,
+          "batches": 198,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 13200,
+          "batch_ms": {
+            "n": 198,
+            "min": 2888.058279,
+            "p50": 5248.656053500001,
+            "p90": 7830.834552200003,
+            "p95": 8364.5459038,
+            "p99": 8670.5412763,
+            "max": 9166.604387,
+            "mean": 5497.232263484849,
+            "stdev": 1354.0674331934147
+          },
+          "first_error": null,
+          "workers_reported": 64,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 829.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 9.7,
+              "cpu_max_pct": 9.7,
+              "mem_max_mb": 37.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 206.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 206.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 189.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 189.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 189.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 294.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 296.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 278.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 278.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 8.8,
+              "cpu_max_pct": 8.8,
+              "mem_max_mb": 279.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "target": "pgbouncers",
+          "mode": "copy",
+          "rows": 180000,
+          "batches": 180,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 12000,
+          "batch_ms": {
+            "n": 180,
+            "min": 199.571384,
+            "p50": 309.09389350000004,
+            "p90": 438.51332219999995,
+            "p95": 564.0488703999999,
+            "p99": 691.4885913200001,
+            "max": 696.868272,
+            "mean": 333.7579519722222,
+            "stdev": 96.28488643603627
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 33.6,
+              "cpu_max_pct": 33.6,
+              "mem_max_mb": 733.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.6,
+              "cpu_max_pct": 0.6,
+              "mem_max_mb": 36.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 4.1,
+              "cpu_max_pct": 4.1,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.9,
+              "cpu_max_pct": 3.9,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.9,
+              "cpu_max_pct": 7.9,
+              "mem_max_mb": 213.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 212.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.9,
+              "cpu_max_pct": 7.9,
+              "mem_max_mb": 195.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 8.1,
+              "cpu_max_pct": 8.1,
+              "mem_max_mb": 195.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 8.0,
+              "cpu_max_pct": 8.0,
+              "mem_max_mb": 194.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 22.0,
+              "cpu_max_pct": 22.0,
+              "mem_max_mb": 305.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 22.6,
+              "cpu_max_pct": 22.6,
+              "mem_max_mb": 305.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 22.9,
+              "cpu_max_pct": 22.9,
+              "mem_max_mb": 289.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 20.9,
+              "cpu_max_pct": 20.9,
+              "mem_max_mb": 285.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 23.5,
+              "cpu_max_pct": 23.5,
+              "mem_max_mb": 287.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 8,
+          "target": "pgbouncers",
+          "mode": "copy",
+          "rows": 199000,
+          "batches": 199,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 13267,
+          "batch_ms": {
+            "n": 199,
+            "min": 402.642531,
+            "p50": 598.922608,
+            "p90": 719.1429862,
+            "p95": 797.7779233,
+            "p99": 874.57098728,
+            "max": 931.512111,
+            "mean": 611.1826071457286,
+            "stdev": 96.22620635116121
+          },
+          "first_error": null,
+          "workers_reported": 8,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 16.7,
+              "cpu_max_pct": 16.7,
+              "mem_max_mb": 736.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.6,
+              "cpu_max_pct": 0.6,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.4,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.4,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 4.0,
+              "cpu_max_pct": 4.0,
+              "mem_max_mb": 218.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 218.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 200.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 199.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 199.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 11.3,
+              "cpu_max_pct": 11.3,
+              "mem_max_mb": 334.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 8.5,
+              "cpu_max_pct": 8.5,
+              "mem_max_mb": 325.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 10.6,
+              "cpu_max_pct": 10.6,
+              "mem_max_mb": 313.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 13.8,
+              "cpu_max_pct": 13.8,
+              "mem_max_mb": 299.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 9.5,
+              "cpu_max_pct": 9.5,
+              "mem_max_mb": 310.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "pgbouncers",
+          "mode": "copy",
+          "rows": 200000,
+          "batches": 200,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 13333,
+          "batch_ms": {
+            "n": 200,
+            "min": 790.238143,
+            "p50": 1203.459277,
+            "p90": 1494.5018549000001,
+            "p95": 1598.35084635,
+            "p99": 1764.8969859799988,
+            "max": 1906.844929,
+            "mean": 1243.6218087700001,
+            "stdev": 197.57815997509942
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 733.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 10.5,
+              "cpu_max_pct": 10.5,
+              "mem_max_mb": 37.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 1.3,
+              "cpu_max_pct": 1.3,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 4.0,
+              "cpu_max_pct": 4.0,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 0.6,
+              "cpu_max_pct": 0.6,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.6,
+              "cpu_max_pct": 7.6,
+              "mem_max_mb": 225.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 7.1,
+              "cpu_max_pct": 7.1,
+              "mem_max_mb": 225.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.4,
+              "cpu_max_pct": 7.4,
+              "mem_max_mb": 206.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.1,
+              "cpu_max_pct": 7.1,
+              "mem_max_mb": 205.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 205.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 8.4,
+              "cpu_max_pct": 8.4,
+              "mem_max_mb": 314.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 315.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 294.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.4,
+              "cpu_max_pct": 0.4,
+              "mem_max_mb": 294.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 294.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "pgbouncers",
+          "mode": "copy",
+          "rows": 214000,
+          "batches": 214,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 14267,
+          "batch_ms": {
+            "n": 214,
+            "min": 1099.474004,
+            "p50": 2469.457278,
+            "p90": 3208.2122568000004,
+            "p95": 3397.8979879,
+            "p99": 3667.4216974,
+            "max": 3994.670082,
+            "mean": 2462.7924944205606,
+            "stdev": 532.4120609938609
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 7.0,
+              "cpu_max_pct": 7.0,
+              "mem_max_mb": 735.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 35.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 4.0,
+              "cpu_max_pct": 4.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.6,
+              "cpu_max_pct": 3.6,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 7.5,
+              "cpu_max_pct": 7.5,
+              "mem_max_mb": 231.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 7.6,
+              "cpu_max_pct": 7.6,
+              "mem_max_mb": 231.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 7.8,
+              "cpu_max_pct": 7.8,
+              "mem_max_mb": 211.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 7.4,
+              "cpu_max_pct": 7.4,
+              "mem_max_mb": 210.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 7.8,
+              "cpu_max_pct": 7.8,
+              "mem_max_mb": 210.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 319.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 321.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 299.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 7.9,
+              "cpu_max_pct": 7.9,
+              "mem_max_mb": 299.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 8.9,
+              "cpu_max_pct": 8.9,
+              "mem_max_mb": 300.0,
+              "samples": 1
+            }
+          }
+        },
+        {
+          "workers": 64,
+          "target": "pgbouncers",
+          "mode": "copy",
+          "rows": 244000,
+          "batches": 244,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 16267,
+          "batch_ms": {
+            "n": 244,
+            "min": 1382.141322,
+            "p50": 4894.6707129999995,
+            "p90": 5493.7964358,
+            "p95": 5596.6222471,
+            "p99": 5978.144718,
+            "max": 6670.722702,
+            "mean": 4560.837276754099,
+            "stdev": 1086.412969050868
+          },
+          "first_error": null,
+          "workers_reported": 64,
+          "container_stats": {
+            "rdlab-citus-coordinator": {
+              "cpu_avg_pct": 0.2,
+              "cpu_max_pct": 0.2,
+              "mem_max_mb": 736.0,
+              "samples": 1
+            },
+            "rdlab-citus-haproxy": {
+              "cpu_avg_pct": 0.1,
+              "cpu_max_pct": 0.1,
+              "mem_max_mb": 36.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer1": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 3.0,
+              "samples": 1
+            },
+            "rdlab-citus-pgbouncer3": {
+              "cpu_avg_pct": 3.9,
+              "cpu_max_pct": 3.9,
+              "mem_max_mb": 4.0,
+              "samples": 1
+            },
+            "rdlab-citus-r1": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 235.0,
+              "samples": 1
+            },
+            "rdlab-citus-r2": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 235.0,
+              "samples": 1
+            },
+            "rdlab-citus-r3": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 214.0,
+              "samples": 1
+            },
+            "rdlab-citus-r4": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 213.0,
+              "samples": 1
+            },
+            "rdlab-citus-r5": {
+              "cpu_avg_pct": 0.0,
+              "cpu_max_pct": 0.0,
+              "mem_max_mb": 213.0,
+              "samples": 1
+            },
+            "rdlab-citus-w1": {
+              "cpu_avg_pct": 8.6,
+              "cpu_max_pct": 8.6,
+              "mem_max_mb": 324.0,
+              "samples": 1
+            },
+            "rdlab-citus-w2": {
+              "cpu_avg_pct": 8.6,
+              "cpu_max_pct": 8.6,
+              "mem_max_mb": 327.0,
+              "samples": 1
+            },
+            "rdlab-citus-w3": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 304.0,
+              "samples": 1
+            },
+            "rdlab-citus-w4": {
+              "cpu_avg_pct": 0.3,
+              "cpu_max_pct": 0.3,
+              "mem_max_mb": 303.0,
+              "samples": 1
+            },
+            "rdlab-citus-w5": {
+              "cpu_avg_pct": 8.3,
+              "cpu_max_pct": 8.3,
+              "mem_max_mb": 304.0,
+              "samples": 1
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "pgbouncers",
+        "mode": "copy",
+        "workers": 64,
+        "rows_per_s": 16267
+      },
+      "_seconds": 397.0
+    }
+  },
+  "server_version": "PostgreSQL 18.4 (Debian 18.4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit",
+  "finished": "2026-09-12T21:17:44+00:00"
+}

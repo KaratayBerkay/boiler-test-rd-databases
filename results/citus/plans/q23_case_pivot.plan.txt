@@ -1,0 +1,13 @@
+Sort  (cost=1514.14..1514.64 rows=200 width=68)
+  Sort Key: remote_scan.country_code
+  ->  HashAggregate  (cost=1500.00..1506.50 rows=200 width=68)
+        Group Key: remote_scan.country_code
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=76)
+              Task Count: 24
+              Tasks Shown: None, not supported for re-partition queries
+              ->  MapMergeJob
+                    Map Task Count: 32
+                    Merge Task Count: 24
+              ->  MapMergeJob
+                    Map Task Count: 32
+                    Merge Task Count: 24

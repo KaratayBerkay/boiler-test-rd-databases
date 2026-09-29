@@ -1,0 +1,123 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.120226353
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 71.87297782,
+    "r_loops": 1,
+    "r_total_time_ms": 291.243976,
+    "nested_loop": [
+      {
+        "table": {
+          "table_name": "c",
+          "access_type": "index",
+          "possible_keys": ["PRIMARY"],
+          "key": "PRIMARY",
+          "key_length": "4",
+          "used_key_parts": ["id"],
+          "loops": 1,
+          "r_loops": 1,
+          "rows": 20041,
+          "r_rows": 549,
+          "cost": 3.790902405,
+          "r_table_time_ms": 0.134707974,
+          "r_other_time_ms": 0.329365826,
+          "r_engine_stats": {
+            "pages_accessed": 6
+          },
+          "filtered": 100,
+          "r_total_filtered": 62.29508197,
+          "attached_condition": "!<in_optimizer>(c.`id`,c.`id` in (subquery#3))",
+          "r_filtered": 62.29508197
+        }
+      },
+      {
+        "table": {
+          "table_name": "<subquery2>",
+          "access_type": "eq_ref",
+          "possible_keys": ["distinct_key"],
+          "key": "distinct_key",
+          "key_length": "4",
+          "used_key_parts": ["customer_id"],
+          "ref": ["func"],
+          "r_loops": 342,
+          "r_table_loops": 16945,
+          "rows": 1,
+          "r_rows": 0.584795322,
+          "r_table_time_ms": 2.967663092,
+          "r_other_time_ms": 0.348719283,
+          "filtered": 100,
+          "r_total_filtered": 100,
+          "r_filtered": 100,
+          "materialized": {
+            "unique": 1,
+            "query_block": {
+              "select_id": 2,
+              "nested_loop": [
+                {
+                  "table": {
+                    "table_name": "o",
+                    "access_type": "ALL",
+                    "possible_keys": ["ix_orders_customer_id"],
+                    "loops": 1,
+                    "r_loops": 1,
+                    "rows": 194613,
+                    "r_rows": 200000,
+                    "cost": 32.3619066,
+                    "r_table_time_ms": 42.86538602,
+                    "r_other_time_ms": 12.10361963,
+                    "r_engine_stats": {
+                      "pages_accessed": 714
+                    },
+                    "filtered": 100,
+                    "r_total_filtered": 8.3015,
+                    "attached_condition": "o.ordered_at >= TIMESTAMP'2025-11-01 00:00:00'",
+                    "r_filtered": 8.3015
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "subqueries": [
+      {
+        "materialization": {
+          "r_strategy": "index_lookup",
+          "r_loops": 549,
+          "query_block": {
+            "select_id": 3,
+            "cost": 0.09227792,
+            "r_loops": 1,
+            "r_total_time_ms": 232.4741,
+            "nested_loop": [
+              {
+                "table": {
+                  "table_name": "e",
+                  "access_type": "ALL",
+                  "possible_keys": ["ix_events_customer_id"],
+                  "loops": 1,
+                  "r_loops": 1,
+                  "rows": 988682,
+                  "r_rows": 1000000,
+                  "cost": 166.8906164,
+                  "r_table_time_ms": 174.6933847,
+                  "r_other_time_ms": 57.77875573,
+                  "r_engine_stats": {
+                    "pages_accessed": 6633
+                  },
+                  "filtered": 100,
+                  "r_total_filtered": 1.0008,
+                  "attached_condition": "e.event_type = 'churn'",
+                  "r_filtered": 1.0008
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

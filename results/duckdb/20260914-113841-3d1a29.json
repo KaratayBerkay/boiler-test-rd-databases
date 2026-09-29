@@ -1,0 +1,156 @@
+{
+  "engine": "duckdb",
+  "display": "DuckDB",
+  "category": "embedded analytical (columnar)",
+  "dialect": "duckdb",
+  "driver": "duckdb",
+  "image": "(embedded, python duckdb package)",
+  "run_id": "20260914-113841-3d1a29",
+  "started": "2026-09-14T08:38:41+00:00",
+  "scale": 0.3,
+  "notes": "Embedded columnar/vectorised OLAP engine; single process (multiple cursors share one database handle), parallel query execution, no replication.",
+  "phases": {
+    "backup": {
+      "backup_dir": "data/duckdb/backups",
+      "strategies": {
+        "export_database": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "EXPORT DATABASE (FORMAT parquet) / IMPORT DATABASE",
+          "backup_seconds": 0.168,
+          "backup_bytes": 7586440,
+          "backup_mb": 7.2,
+          "restore_seconds": 2.177,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.0
+          },
+          "pitr": {},
+          "notes": "schema.sql + load.sql + one zstd parquet file per table: portable across DuckDB versions; IMPORT DATABASE replays it",
+          "error": null,
+          "steps": [
+            {
+              "name": "EXPORT DATABASE (parquet)",
+              "cmd": "EXPORT DATABASE '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/export-parquet' (FORMAT parquet, COMPRESSION zstd)",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": ""
+            },
+            {
+              "name": "IMPORT DATABASE",
+              "cmd": "ATTACH '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/lab-import.duckdb' AS imp; USE imp; IMPORT DATABASE '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/export-parquet'; USE lab; DETACH imp",
+              "rc": 0,
+              "seconds": 2.18,
+              "out": ""
+            }
+          ],
+          "files": [
+            "categories.parquet",
+            "customers.parquet",
+            "events.parquet",
+            "fts_main_products_dict.parquet",
+            "fts_main_products_docs.parquet",
+            "fts_main_products_fields.parquet",
+            "fts_main_products_stats.parquet",
+            "fts_main_products_stopwords.parquet",
+            "fts_main_products_terms.parquet",
+            "inventory.parquet",
+            "load.sql",
+            "order_items.parquet"
+          ],
+          "seconds": 3.4,
+          "description": "portable parquet export replayed into a new file"
+        },
+        "copy_from_database": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "ATTACH + COPY FROM DATABASE",
+          "backup_seconds": 2.423,
+          "backup_bytes": 32256000,
+          "backup_mb": 30.8,
+          "restore_seconds": 0.683,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.68
+          },
+          "pitr": {},
+          "notes": "schema copied with COPY FROM DATABASE (SCHEMA), rows inserted per table in FK order (plain COPY FROM DATABASE violates foreign keys because it copies alphabetically)",
+          "error": null,
+          "steps": [
+            {
+              "name": "COPY FROM DATABASE (SCHEMA) + INSERT per table",
+              "cmd": "ATTACH '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/duckdb/backups/lab-copy.duckdb' AS cp; COPY FROM DATABASE lab TO cp (SCHEMA); INSERT INTO cp.customers SELECT * FROM lab.customers; INSERT INTO cp.categories SELECT * FROM lab.categories; INSERT INTO cp.products SELECT * FROM lab.products; INSERT INTO cp.orders SELECT * FROM lab.orders; INSERT INTO cp.order_items SELEC",
+              "rc": 0,
+              "seconds": 2.42,
+              "out": ""
+            }
+          ],
+          "source_bytes": 134230016,
+          "seconds": 3.1,
+          "description": "binary copy into a second .duckdb file"
+        }
+      },
+      "order": [
+        "export_database",
+        "copy_from_database"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 0.9,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "export_database",
+          "copy_from_database"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 7.4
+    }
+  },
+  "harness_log": "results/logs/duckdb/20260914-113841-3d1a29.log",
+  "server_version": "DuckDB 1.5.5",
+  "finished": "2026-09-14T08:38:48+00:00"
+}

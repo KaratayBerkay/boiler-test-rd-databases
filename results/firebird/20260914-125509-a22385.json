@@ -1,0 +1,85 @@
+{
+  "engine": "firebird",
+  "display": "Firebird 5",
+  "category": "row-store OLTP",
+  "dialect": "firebird",
+  "driver": "firebird-driver",
+  "image": "firebirdsql/firebird:5",
+  "run_id": "20260914-125509-a22385",
+  "started": "2026-09-14T09:55:09+00:00",
+  "scale": 0.3,
+  "notes": "Firebird 5 SuperServer. MVCC with SNAPSHOT / READ COMMITTED isolation, UPDATE OR INSERT and MERGE, no LATERAL/JSON. Built-in asynchronous replication (replication.conf + nbackup copy) exists since Firebird 4 but is not automated here. Loaded at scale 0.3 because firebird-driver executemany sends one row per round trip (a few thousand rows/s).",
+  "phases": {
+    "logging": {
+      "sink": "system audit trace (fbtrace.conf, time_threshold=100) -> /var/log/firebird/audit.log",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "firebird_conf": "AuditTraceConfigFile =/etc/firebird/fbtrace.conf\nDefaultDbCachePages = 65536\nWireCryptPlugin = ChaCha64, ChaCha, Arc4\nWireCrypt = Enabled\n# Trace configuration. Following rules are used :\n# - configuration is processed from top to bottom\n# - there is two kind of sections allowed : \"database\" and \"services\"\n# - parameters at default section are used for all databases or services\n# - only one default section for each kind is allowed\n# - after processing of default database section, search is continued\n# - if database name matches pattern, options are immediately applied and\n#   search does not c",
+        "audit_log": "/var/log/firebird/audit.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "system audit trace (fbtrace.conf, time_threshold=100) -> /var/log/firebird/audit.log",
+        "slow_query_ms": 124.5,
+        "slow_logged": false,
+        "seen_after_s": 25.17,
+        "sample": "",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "audit trace: log_connections + log_statement_prepare (every statement, DDL included)",
+        "setup": "always on (AuditTraceConfigFile)",
+        "event_found": true,
+        "seen_after_s": 0.08,
+        "sample": ":55:34.8360 (41:0x754694339dc0) PREPARE_STATEMENT\n\t/var/lib/firebird/data/lab.fdb (ATT_669, LAB:NONE, UTF8, TCPv4:172.24.0.1/48756)\n\t/usr/bin/python3.12:1880305\n\t\t(TRA_99453, CONCURRENCY | WAIT | READ_WRITE)\n\n-------------------------------------------------------------------------------\nDROP TABLE audit_rdlab_mk_7c722dcc01\n      0 ms\n\n2026-09-14T09:55:34.8590 (41:0x754694339dc0) DETACH_DATABASE\n\t/var/lib/firebird/data/lab.fdb (ATT_669, LAB:NONE, UTF8, TCPv4:172.24.0.1/48756)\n\t/usr/bin/python3.1",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 2096,
+          "p50_ms": 2.332515,
+          "p99_ms": 87.23215267999997,
+          "errors": 0
+        },
+        "full_logging": "fbtracemgr -start user trace session with time_threshold=0 (every statement to full-trace.log)",
+        "full": {
+          "qps": 2315,
+          "p50_ms": 2.922952,
+          "p99_ms": 4.411782020000001,
+          "errors": 0
+        },
+        "log_bytes_written": 8759265,
+        "bytes_per_statement": 946.0,
+        "overhead_pct": -10.4,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-firebird": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1067,
+          "docker_logs_lines": 30
+        }
+      },
+      "extra": {},
+      "collected": [
+        "results/firebird/logs/firebird__var_log_firebird_audit.log",
+        "results/firebird/logs/firebird__var_log_firebird_full-trace.log",
+        "results/firebird/logs/firebird__opt_firebird_firebird.log"
+      ],
+      "_seconds": 43.5
+    }
+  },
+  "harness_log": "results/logs/firebird/20260914-125509-a22385.log",
+  "server_version": "Firebird LI-V6.3.4.1812 Firebird 5.0",
+  "finished": "2026-09-14T09:55:52+00:00"
+}

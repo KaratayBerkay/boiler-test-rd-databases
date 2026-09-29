@@ -1,0 +1,13 @@
+GroupAggregate  (cost=1213.79..1229.81 rows=519 width=36)
+  Group Key: o.id
+  ->  Sort  (cost=1213.79..1216.97 rows=1272 width=16)
+        Sort Key: o.id, p.sku
+        ->  Hash Join  (cost=178.34..1148.20 rows=1272 width=16)
+              Hash Cond: (oi.product_id = p.id)
+              ->  Nested Loop  (cost=0.58..967.10 rows=1272 width=8)
+                    ->  Index Only Scan using orders_pkey on orders o  (cost=0.29..17.67 rows=519 width=4)
+                          Index Cond: (id <= 500)
+                    ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=0.29..1.80 rows=3 width=8)
+                          Index Cond: (order_id = o.id)
+              ->  Hash  (cost=159.00..159.00 rows=1500 width=16)
+                    ->  Seq Scan on products p  (cost=0.00..159.00 rows=1500 width=16)

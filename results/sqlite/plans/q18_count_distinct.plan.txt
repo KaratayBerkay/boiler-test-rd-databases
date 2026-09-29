@@ -1,0 +1,2 @@
+3 | 0 | 0 | USE TEMP B-TREE FOR count(DISTINCT)
+5 | 0 | 0 | SCAN events

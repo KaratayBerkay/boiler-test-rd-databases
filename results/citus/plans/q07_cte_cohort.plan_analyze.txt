@@ -1,0 +1,78 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=326.144..326.149 rows=22.00 loops=1)
+  ->  Distributed Subplan 98_1
+        Subplan Duration: 255.98 ms
+        Intermediate Data Size: 430 kB
+        Result destination: Write locally
+        ->  HashAggregate  (cost=500.00..502.00 rows=200 width=12) (actual time=0.000..0.000 rows=20000.00 loops=1)
+              Group Key: remote_scan.customer_id
+              ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=12) (actual time=0.000..0.000 rows=171844.00 loops=1)
+                    Task Count: 32
+                    Tuple data received from nodes: 2014 kB
+                    Tasks Shown: One of 32
+                    ->  Task
+                          Tuple data received from node: 64 kB
+                          Node: host=w2 port=5432 dbname=lab
+                          ->  HashAggregate  (cost=152.41..206.85 rows=5444 width=12) (actual time=4.125..5.646 rows=5444.00 loops=1)
+                                Group Key: customer_id
+                                Batches: 1  Memory Usage: 409kB
+                                Buffers: shared hit=58
+                                ->  Seq Scan on orders_102058 orders  (cost=0.00..120.94 rows=6294 width=12) (actual time=0.011..0.833 rows=6294.00 loops=1)
+                                      Buffers: shared hit=58
+                              Planning Time: 0.081 ms
+                              Execution Time: 21.423 ms
+        Planning Time: 0.000 ms
+        Execution Time: 0.005 ms
+  ->  Distributed Subplan 98_2
+        Subplan Duration: 500.25 ms
+        Intermediate Data Size: 3515 kB
+        Result destination: Write locally
+        ->  HashAggregate  (cost=500.00..502.00 rows=200 width=12) (actual time=0.000..0.000 rows=163618.00 loops=1)
+              Group Key: remote_scan.customer_id, remote_scan.m
+              ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=12) (actual time=0.000..0.000 rows=198702.00 loops=1)
+                    Task Count: 32
+                    Tuple data received from nodes: 2329 kB
+                    Tasks Shown: One of 32
+                    ->  Task
+                          Tuple data received from node: 74 kB
+                          Node: host=w4 port=5432 dbname=lab
+                          ->  HashAggregate  (cost=168.37..247.21 rows=6307 width=12) (actual time=12.564..16.319 rows=6275.00 loops=1)
+                                Group Key: customer_id, date_trunc('month'::text, ordered_at)
+                                Batches: 1  Memory Usage: 409kB
+                                Buffers: shared hit=58
+                                ->  Seq Scan on orders_102050 o  (cost=0.00..136.84 rows=6307 width=12) (actual time=0.018..5.864 rows=6307.00 loops=1)
+                                      Buffers: shared hit=58
+                              Planning:
+                                Buffers: shared hit=13
+                              Planning Time: 0.148 ms
+                              Execution Time: 20.414 ms
+        Planning Time: 0.000 ms
+        Execution Time: 0.003 ms
+  Task Count: 1
+  Tuple data received from nodes: 528 bytes
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 528 bytes
+        Node: host=localhost port=5432 dbname=lab
+        ->  GroupAggregate  (cost=344438.65..344457.82 rows=200 width=24) (actual time=303.332..322.728 rows=22.00 loops=1)
+              Group Key: (date_trunc('month'::text, intermediate_result.first_at))
+              ->  Sort  (cost=344438.65..344442.82 rows=1667 width=16) (actual time=291.271..299.475 rows=143628.00 loops=1)
+                    Sort Key: (date_trunc('month'::text, intermediate_result.first_at)), intermediate_result.customer_id
+                    Sort Method: quicksort  Memory: 10633kB
+                    ->  Merge Left Join  (cost=17009.27..344349.44 rows=1667 width=16) (actual time=110.824..216.960 rows=143628.00 loops=1)
+                          Merge Cond: (intermediate_result.customer_id = intermediate_result_1.customer_id)
+                          Join Filter: (intermediate_result_1.m > date_trunc('month'::text, intermediate_result.first_at))
+                          Rows Removed by Join Filter: 20000
+                          ->  Sort  (cost=1582.48..1632.48 rows=20000 width=12) (actual time=11.626..14.663 rows=20000.00 loops=1)
+                                Sort Key: intermediate_result.customer_id
+                                Sort Method: quicksort  Memory: 1394kB
+                                ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..153.71 rows=20000 width=12) (actual time=4.735..6.617 rows=20000.00 loops=1)
+                          ->  Sort  (cost=15426.79..15835.83 rows=163618 width=12) (actual time=99.187..142.131 rows=163618.00 loops=1)
+                                Sort Key: intermediate_result_1.customer_id
+                                Sort Method: quicksort  Memory: 11258kB
+                                ->  Function Scan on read_intermediate_result intermediate_result_1  (cost=0.00..1257.49 rows=163618 width=12) (actual time=38.793..67.416 rows=163618.00 loops=1)
+            Planning Time: 0.161 ms
+            Execution Time: 324.681 ms
+Planning:
+  Buffers: shared hit=19
+Planning Time: 1.159 ms
+Execution Time: 1082.416 ms

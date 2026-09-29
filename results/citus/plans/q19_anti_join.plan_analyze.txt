@@ -1,0 +1,48 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=278.842..278.843 rows=0.00 loops=1)
+  ->  Distributed Subplan 192_1
+        Subplan Duration: 1659.43 ms
+        Intermediate Data Size: 8571 kB
+        Result destination: Send to 6 nodes
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=8) (actual time=0.000..0.000 rows=487606.00 loops=1)
+              Task Count: 32
+              Tuple data received from nodes: 3809 kB
+              Tasks Shown: One of 32
+              ->  Task
+                    Tuple data received from node: 120 kB
+                    Node: host=w2 port=5432 dbname=lab
+                    ->  Seq Scan on order_items_102107 oi  (cost=0.00..251.57 rows=15357 width=8) (actual time=0.009..1.508 rows=15357.00 loops=1)
+                          Buffers: shared hit=98
+                        Planning Time: 0.029 ms
+                        Execution Time: 10.543 ms
+        Planning Time: 0.000 ms
+        Execution Time: 0.002 ms
+  Task Count: 1
+  Tuple data received from nodes: 0 bytes
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 0 bytes
+        Node: host=coordinator port=5432 dbname=lab
+        ->  Sort  (cost=4954.55..4954.61 rows=25 width=4) (actual time=275.021..275.023 rows=0.00 loops=1)
+              Sort Key: p.id
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=16, temp read=1310 written=1310
+              ->  Hash Right Join  (cost=163.49..4953.97 rows=25 width=4) (actual time=275.016..275.018 rows=0.00 loops=1)
+                    Hash Cond: (intermediate_result.product_id = p.id)
+                    Filter: (intermediate_result.id IS NULL)
+                    Rows Removed by Filter: 487606
+                    Buffers: shared hit=16, temp read=1310 written=1310
+                    ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..3509.43 rows=487606 width=8) (actual time=132.619..181.771 rows=487606.00 loops=1)
+                          Buffers: temp read=1310 written=1310
+                    ->  Hash  (cost=100.99..100.99 rows=5000 width=4) (actual time=1.191..1.192 rows=5000.00 loops=1)
+                          Buckets: 8192  Batches: 1  Memory Usage: 240kB
+                          Buffers: shared hit=16
+                          ->  Index Only Scan using products_pkey_102009 on products_102009 p  (cost=0.28..100.99 rows=5000 width=4) (actual time=0.051..0.639 rows=5000.00 loops=1)
+                                Heap Fetches: 0
+                                Index Searches: 1
+                                Buffers: shared hit=16
+            Planning Time: 0.143 ms
+            Execution Time: 277.666 ms
+Planning:
+  Buffers: shared hit=10
+Planning Time: 0.572 ms
+Execution Time: 1938.295 ms

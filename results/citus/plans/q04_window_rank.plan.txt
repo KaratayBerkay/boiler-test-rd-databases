@@ -1,0 +1,28 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  ->  Distributed Subplan 41_1
+        ->  WindowAgg  (cost=760.14..764.64 rows=200 width=48)
+              Window: w1 AS (PARTITION BY remote_scan.category_id ORDER BY (sum(remote_scan.revenue)), remote_scan.product_id ROWS UNBOUNDED PRECEDING)
+              ->  Sort  (cost=760.14..760.64 rows=200 width=40)
+                    Sort Key: remote_scan.category_id, (sum(remote_scan.revenue)) DESC, remote_scan.product_id
+                    ->  HashAggregate  (cost=750.00..752.50 rows=200 width=40)
+                          Group Key: remote_scan.category_id, remote_scan.product_id
+                          ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=40)
+                                Task Count: 32
+                                Tasks Shown: One of 32
+                                ->  Task
+                                      Node: host=w1 port=5432 dbname=lab
+                                      ->  HashAggregate  (cost=914.60..1106.68 rows=15366 width=40)
+                                            Group Key: p.category_id, oi.product_id
+                                            ->  Hash Join  (cost=430.50..722.53 rows=15366 width=18)
+                                                  Hash Cond: (oi.product_id = p.id)
+                                                  ->  Seq Scan on order_items_102106 oi  (cost=0.00..251.66 rows=15366 width=14)
+                                                  ->  Hash  (cost=368.00..368.00 rows=5000 width=8)
+                                                        ->  Seq Scan on products_102009 p  (cost=0.00..368.00 rows=5000 width=8)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=localhost port=5432 dbname=lab
+        ->  Sort  (cost=26.45..27.29 rows=333 width=48)
+              Sort Key: intermediate_result.category_id, intermediate_result.rn
+              ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..12.50 rows=333 width=48)
+                    Filter: (rn <= 3)

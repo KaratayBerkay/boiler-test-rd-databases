@@ -1,0 +1,29 @@
+{"ts": "2026-09-14T12:31:05.138+00:00", "level": "DEBUG", "stack": "cockroach", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/cockroach/20260914-153105-941b62.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/cockroach/20260914-153105-941b62.jsonl"}
+{"ts": "2026-09-14T12:31:05.138+00:00", "level": "INFO", "stack": "cockroach", "phase": "-", "msg": "[cockroach] run 20260914-153105-941b62 phases=['backup'] scale=0.3 (log: results-k3s/logs/cockroach/20260914-153105-941b62.log)"}
+{"ts": "2026-09-14T12:31:05.160+00:00", "level": "INFO", "stack": "cockroach", "phase": "-", "msg": "[cockroach] phase: backup"}
+{"ts": "2026-09-14T12:31:06.610+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "  source fingerprint: 7 tables, 520,772 rows (1.45s)"}
+{"ts": "2026-09-14T12:31:06.611+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "  strategy full: distributed full backup restored under a new name"}
+{"ts": "2026-09-14T12:31:07.053+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    prepare                            rc=0    0.44s"}
+{"ts": "2026-09-14T12:31:08.167+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    BACKUP DATABASE (full, revision_history) ok    1.11s"}
+{"ts": "2026-09-14T12:31:08.384+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    drop lab_restore if exists         ok    0.00s"}
+{"ts": "2026-09-14T12:31:09.811+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    RESTORE DATABASE AS lab_restore    ok    1.43s"}
+{"ts": "2026-09-14T12:31:11.941+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:31:13.716+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    drop restore db                    ok    1.78s"}
+{"ts": "2026-09-14T12:31:13.718+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "  full: backup 1.11s / 21.7 MB, restore 1.43s, verified=True"}
+{"ts": "2026-09-14T12:31:13.718+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "  strategy incremental: incremental layer on the same collection"}
+{"ts": "2026-09-14T12:31:14.868+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    BACKUP DATABASE INTO LATEST (incremental) ok    0.40s"}
+{"ts": "2026-09-14T12:31:15.080+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    drop lab_restore2 if exists        ok    0.00s"}
+{"ts": "2026-09-14T12:31:16.207+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    RESTORE DATABASE AS lab_restore2   ok    1.13s"}
+{"ts": "2026-09-14T12:31:17.883+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:31:18.691+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    drop restore db                    ok    0.80s"}
+{"ts": "2026-09-14T12:31:18.691+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "  incremental: backup 0.41s / 0.1 MB, restore 1.13s, verified=True, pitr=True"}
+{"ts": "2026-09-14T12:31:18.692+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "  strategy pitr: point-in-time restore from the revision history"}
+{"ts": "2026-09-14T12:31:19.260+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    AS OF SYSTEM TIME stale read: 1000 rows (current 0)"}
+{"ts": "2026-09-14T12:31:19.829+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    BACKUP INTO LATEST (captures the DELETE) ok    0.37s"}
+{"ts": "2026-09-14T12:31:20.027+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    drop lab_pitr if exists            ok    0.00s"}
+{"ts": "2026-09-14T12:31:21.171+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    RESTORE DATABASE AS lab_pitr       ok    1.14s"}
+{"ts": "2026-09-14T12:31:22.976+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:31:23.724+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "    drop pitr db                       ok    0.74s"}
+{"ts": "2026-09-14T12:31:23.724+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "  pitr: backup 0.37s / 0.1 MB, restore 1.14s, verified=True, pitr=True"}
+{"ts": "2026-09-14T12:31:23.890+00:00", "level": "INFO", "stack": "cockroach", "phase": "backup", "msg": "[cockroach] phase backup done in 18.7s"}
+{"ts": "2026-09-14T12:31:23.900+00:00", "level": "INFO", "stack": "cockroach", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/cockroach/20260914-153105-941b62.json"}

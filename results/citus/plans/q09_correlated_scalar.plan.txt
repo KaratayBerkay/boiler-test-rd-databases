@@ -1,0 +1,14 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=coordinator port=5432 dbname=lab
+        ->  Limit  (cost=0.28..14430.22 rows=500 width=42)
+              ->  Index Scan using products_pkey_102009 on products_102009 p  (cost=0.28..122135.24 rows=4232 width=42)
+                    Filter: active
+                    SubPlan 1
+                      ->  Aggregate  (cost=28.75..28.76 rows=1 width=32)
+                            ->  Bitmap Heap Scan on products_102009 p2  (cost=1.58..28.69 rows=25 width=6)
+                                  Recheck Cond: (category_id = p.category_id)
+                                  ->  Bitmap Index Scan on ix_products_category_id_102009  (cost=0.00..1.57 rows=25 width=0)
+                                        Index Cond: (category_id = p.category_id)

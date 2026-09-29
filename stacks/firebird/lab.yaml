@@ -1,0 +1,36 @@
+display: Firebird 5
+category: row-store OLTP
+dialect: firebird
+driver: firebird-driver
+image: firebirdsql/firebird:5
+project: rdlab-firebird
+scale: 0.3
+notes: >-
+  Firebird 5 SuperServer. MVCC with SNAPSHOT / READ COMMITTED isolation, UPDATE OR INSERT and MERGE, no LATERAL/JSON.
+  Built-in asynchronous replication (replication.conf + nbackup copy) exists since Firebird 4 but is not automated here.
+  Loaded at scale 0.3 because firebird-driver executemany sends one row per round trip (a few thousand rows/s).
+docs:
+  - https://firebirdsql.org/file/documentation/html/en/refdocs/fblangref50/firebird-50-language-reference.html
+  - https://github.com/FirebirdSQL/firebird-docker
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 13050
+    user: lab
+    password: labpass
+    database: /var/lib/firebird/data/lab.fdb
+    container: rdlab-firebird
+backup:
+  dir: /backups
+  volume: firebird-backups
+  os_user: root            # the official image runs the server as root; nbackup opens the database file directly
+  strategies: [gbak, nbackup]
+logging:
+  audit_log: /var/log/firebird/audit.log
+  sysdba_password: rootpass
+  slow_ms: 100
+features:
+  fbclient: ${FIREBIRD_CLIENT_LIB}
+  connection_storm: true

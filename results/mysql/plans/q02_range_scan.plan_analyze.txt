@@ -1,0 +1,4 @@
+-> Limit: 500 row(s)  (cost=20148 rows=500) (actual time=90.8..90.8 rows=500 loops=1)
+    -> Sort: orders.ordered_at, orders.id, limit input to 500 row(s) per chunk  (cost=20148 rows=199640) (actual time=90.8..90.8 rows=500 loops=1)
+        -> Filter: ((orders.`status` = 'delivered') and (orders.ordered_at >= TIMESTAMP'2025-03-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-03-08 00:00:00'))  (cost=20148 rows=199640) (actual time=0.342..90.2 rows=1372 loops=1)
+            -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.335..55.6 rows=200000 loops=1)

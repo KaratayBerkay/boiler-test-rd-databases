@@ -1,0 +1,17 @@
+Select Expression
+    -> Sort (record length: 92, key length: 8)
+        -> Window
+            -> Window Partition
+                -> Record Buffer (record length: 99)
+                    -> Sort (record length: 108, key length: 8)
+                        -> Window Partition
+                            -> Record Buffer (record length: 66)
+                                -> Sort (record length: 76, key length: 8)
+                                    -> Window Partition
+                                        -> Window Buffer
+                                            -> Record Buffer (record length: 41)
+                                                -> Aggregate
+                                                    -> Sort (record length: 52, key length: 8)
+                                                        -> Filter
+                                                            -> Table "ORDERS" as "S ORDERS" Full Scan
+fetches=6555305 reads=2518

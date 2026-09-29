@@ -1,0 +1,27 @@
+Encode sort light
+  keys: [cohort]
+    GroupBy vectorized: false
+      keys: [cohort]
+      values: [count_distinct(customer_id),count_distinct(customer_id1)]
+        SelectedRecord
+            Hash Left Outer Join Light
+              condition: a.customer_id=c.customer_id
+              filter: c.cohort<a.m
+                VirtualRecord
+                  functions: [timestamp_floor('month',first_at),customer_id]
+                    GroupBy vectorized: true workers: 27
+                      keys: [customer_id]
+                      values: [min_designated(ordered_at)]
+                        PageFrame
+                            Row forward scan
+                            Frame forward scan on: orders
+                Hash
+                    VirtualRecord
+                      functions: [customer_id,timestamp_floor]
+                        Async Group By workers: 27
+                          keys: [customer_id,timestamp_floor]
+                          keyFunctions: [timestamp_floor('month',ordered_at)]
+                          filter: null
+                            PageFrame
+                                Row forward scan
+                                Frame forward scan on: orders

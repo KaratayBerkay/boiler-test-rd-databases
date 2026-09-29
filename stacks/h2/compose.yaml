@@ -1,0 +1,35 @@
+# H2 2.x — Java embedded/server database, here in server mode speaking the PostgreSQL wire protocol (-pg).
+#
+# Backup strategy (`rdlab run h2 --phases backup`): BACKUP TO 'lab.zip' (online zip of the .mv.db) restored with
+#   org.h2.tools.Restore, and SCRIPT TO / RUNSCRIPT FROM, into the shared `h2-backups` volume.
+# Logging strategy: SET QUERY_STATISTICS (INFORMATION_SCHEMA.QUERY_STATISTICS) + trace file (SET TRACE_LEVEL_FILE),
+#   Docker json-file rotation.
+name: rdlab-h2
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+services:
+  volumes-init:
+    image: rdlab/h2:2.3.232
+    container_name: rdlab-h2-volumes-init
+    entrypoint: ["sh", "-c", "mkdir -p /backups && chmod 1777 /backups && echo volumes ready"]
+    volumes: [h2-backups:/backups]
+    logging: *logging
+    restart: "no"
+  h2:
+    build: .
+    image: rdlab/h2:2.3.232
+    container_name: rdlab-h2
+    logging: *logging
+    volumes: [h2:/data, h2-backups:/backups]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+    ports: ["19092:9092", "15435:5435", "18082:8082"]
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/5435' 2>/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+volumes:
+  h2:
+  h2-backups:

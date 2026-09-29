@@ -1,0 +1,13 @@
+{"ts": "2026-09-14T12:27:23.607+00:00", "level": "DEBUG", "stack": "mysql", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152723-a55587.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152723-a55587.jsonl"}
+{"ts": "2026-09-14T12:27:23.608+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "[mysql] run 20260914-152723-a55587 phases=['load'] scale=0.3 (log: results-k3s/logs/mysql/20260914-152723-a55587.log)"}
+{"ts": "2026-09-14T12:27:23.622+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "[mysql] phase: load"}
+{"ts": "2026-09-14T12:27:23.785+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  schema created (13 statements, 0.14s)"}
+{"ts": "2026-09-14T12:27:23.968+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  customers        6,000 rows     0.18s     33,259 rows/s  [LOAD DATA LOCAL INFILE]"}
+{"ts": "2026-09-14T12:27:23.976+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  categories         200 rows     0.01s     34,254 rows/s  [LOAD DATA LOCAL INFILE]"}
+{"ts": "2026-09-14T12:27:24.083+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  products         1,500 rows     0.11s     14,259 rows/s  [LOAD DATA LOCAL INFILE]"}
+{"ts": "2026-09-14T12:27:25.108+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  orders          60,000 rows     1.02s     59,035 rows/s  [LOAD DATA LOCAL INFILE]"}
+{"ts": "2026-09-14T12:27:28.280+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  order_items    147,072 rows     3.15s     46,675 rows/s  [LOAD DATA LOCAL INFILE]"}
+{"ts": "2026-09-14T12:27:34.415+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  events         300,000 rows     6.09s     49,281 rows/s  [LOAD DATA LOCAL INFILE]"}
+{"ts": "2026-09-14T12:27:34.469+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "  inventory        6,000 rows     0.05s    114,231 rows/s  [LOAD DATA LOCAL INFILE]"}
+{"ts": "2026-09-14T12:27:34.895+00:00", "level": "INFO", "stack": "mysql", "phase": "load", "msg": "[mysql] phase load done in 11.3s"}
+{"ts": "2026-09-14T12:27:34.899+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/mysql/20260914-152723-a55587.json"}

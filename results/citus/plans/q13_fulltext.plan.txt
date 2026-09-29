@@ -1,0 +1,12 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=coordinator port=5432 dbname=lab
+        ->  Limit  (cost=283.82..283.95 rows=50 width=24)
+              ->  Sort  (cost=283.82..284.50 rows=271 width=24)
+                    Sort Key: id
+                    ->  Bitmap Heap Scan on products_102009 products  (cost=8.38..274.82 rows=271 width=24)
+                          Recheck Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)
+                          ->  Bitmap Index Scan on ix_products_fts_102009  (cost=0.00..8.31 rows=271 width=0)
+                                Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)

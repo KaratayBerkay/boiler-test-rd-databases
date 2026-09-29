@@ -1,0 +1,95 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.100369028
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 0.707717924,
+    "r_loops": 1,
+    "r_total_time_ms": 2.24591122,
+    "nested_loop": [
+      {
+        "read_sorted_file": {
+          "r_rows": 300,
+          "filesort": {
+            "sort_key": "t.customer_id, t.ordered_at desc",
+            "r_loops": 1,
+            "r_total_time_ms": 0.059360503,
+            "r_used_priority_queue": false,
+            "r_output_rows": 300,
+            "r_buffer_size": "29KiB",
+            "r_sort_mode": "sort_key,rowid",
+            "table": {
+              "table_name": "<derived2>",
+              "access_type": "ALL",
+              "loops": 1,
+              "r_loops": 1,
+              "rows": 998,
+              "r_rows": 998,
+              "cost": 0.054595231,
+              "r_table_time_ms": 0.039300462,
+              "r_other_time_ms": 0.324506502,
+              "filtered": 100,
+              "r_total_filtered": 30.06012024,
+              "attached_condition": "t.rn <= 3",
+              "r_filtered": 30.06012024,
+              "materialized": {
+                "query_block": {
+                  "select_id": 2,
+                  "cost": 1.59764056,
+                  "r_loops": 1,
+                  "r_total_time_ms": 2.160710792,
+                  "window_functions_computation": {
+                    "sorts": [
+                      {
+                        "filesort": {
+                          "sort_key": "orders.customer_id, orders.ordered_at desc, orders.`id` desc",
+                          "r_loops": 1,
+                          "r_total_time_ms": 0.147465264,
+                          "r_used_priority_queue": false,
+                          "r_output_rows": 998,
+                          "r_buffer_size": "34KiB",
+                          "r_sort_mode": "sort_key,rowid"
+                        }
+                      }
+                    ],
+                    "temporary_table": {
+                      "nested_loop": [
+                        {
+                          "table": {
+                            "table_name": "orders",
+                            "access_type": "range",
+                            "possible_keys": ["ix_orders_customer_id"],
+                            "key": "ix_orders_customer_id",
+                            "key_length": "4",
+                            "used_key_parts": ["customer_id"],
+                            "loops": 1,
+                            "r_loops": 1,
+                            "rows": 998,
+                            "r_index_rows": 998,
+                            "r_rows": 998,
+                            "cost": 1.59764056,
+                            "r_table_time_ms": 1.300167029,
+                            "r_other_time_ms": 0.282809329,
+                            "r_engine_stats": {
+                              "pages_accessed": 2002
+                            },
+                            "filtered": 100,
+                            "r_total_filtered": 100,
+                            "index_condition": "orders.customer_id <= 100",
+                            "r_icp_filtered": 100,
+                            "r_filtered": 100
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

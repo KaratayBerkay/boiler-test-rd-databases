@@ -1,0 +1,12 @@
+Limit  (cost=1659.84..1660.87 rows=411 width=31) (actual time=5.444..5.492 rows=385.00 loops=1)
+  Buffers: shared hit=592
+  ->  Sort  (cost=1659.84..1660.87 rows=411 width=31) (actual time=5.443..5.465 rows=385.00 loops=1)
+        Sort Key: ordered_at, id
+        Sort Method: quicksort  Memory: 52kB
+        Buffers: shared hit=592
+        ->  Seq Scan on orders  (cost=0.00..1642.00 rows=411 width=31) (actual time=0.044..5.317 rows=385.00 loops=1)
+              Filter: ((ordered_at >= '2025-03-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-03-08 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))
+              Rows Removed by Filter: 59615
+              Buffers: shared hit=592
+Planning Time: 0.051 ms
+Execution Time: 5.555 ms

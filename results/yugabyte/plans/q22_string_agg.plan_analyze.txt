@@ -1,0 +1,44 @@
+GroupAggregate  (cost=13103.97..13118.16 rows=461 width=36) (actual time=146.296..176.737 rows=500 loops=1)
+  Group Key: o.id
+  ->  Sort  (cost=13103.97..13106.78 rows=1124 width=16) (actual time=146.195..146.447 rows=1209 loops=1)
+        Sort Key: o.id
+        Sort Method: quicksort  Memory: 115kB
+        ->  YB Batched Nested Loop Join  (cost=98.37..13047.02 rows=1124 width=16) (actual time=137.662..144.803 rows=1209 loops=1)
+              Join Filter: (oi.product_id = p.id)
+              ->  YB Batched Nested Loop Join  (cost=75.29..12766.50 rows=1124 width=8) (actual time=129.542..134.089 rows=1209 loops=1)
+                    Join Filter: (o.id = oi.order_id)
+                    ->  Seq Scan on orders o  (cost=23.10..12255.98 rows=461 width=4) (actual time=113.051..113.271 rows=500 loops=1)
+                          Storage Filter: (id <= 500)
+                          Storage Table Read Requests: 1
+                          Storage Table Read Execution Time: 112.928 ms
+                          Storage Table Read Ops: 1
+                          Storage Table Rows Scanned: 200000
+                    ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=52.20..502.61 rows=1405 width=8) (actual time=15.421..18.277 rows=1209 loops=1)
+                          Index Cond: (order_id = ANY (ARRAY[o.id, $1, $2, ..., $1023]))
+                          Storage Table Read Requests: 2
+                          Storage Table Read Execution Time: 9.686 ms
+                          Storage Table Read Ops: 2
+                          Storage Table Rows Scanned: 1209
+                          Storage Index Read Requests: 2
+                          Storage Index Read Execution Time: 5.320 ms
+                          Storage Index Read Ops: 2
+                          Storage Index Rows Scanned: 1209
+              ->  Index Scan using products_pkey on products p  (cost=23.08..242.76 rows=1024 width=16) (actual time=2.956..3.517 rows=551 loops=2)
+                    Index Cond: (id = ANY (ARRAY[oi.product_id, $1025, $1026, ..., $2047]))
+                    Storage Table Read Requests: 1
+                    Storage Table Read Execution Time: 1.957 ms
+                    Storage Table Read Ops: 1
+                    Storage Table Rows Scanned: 551
+Planning Time: 5.185 ms
+Execution Time: 178.724 ms
+Storage Read Requests: 7
+Storage Read Execution Time: 131.848 ms
+Storage Read Ops: 7
+Storage Rows Scanned: 203520
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 131.848 ms
+Peak Memory Usage: 3335 kB

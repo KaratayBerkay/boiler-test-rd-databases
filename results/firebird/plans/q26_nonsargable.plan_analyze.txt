@@ -1,0 +1,5 @@
+Select Expression
+    -> Aggregate
+        -> Filter
+            -> Table "ORDERS" Full Scan
+fetches=24819752 reads=8363

@@ -1,0 +1,30 @@
+Sort  (cost=8304.82..8554.82 rows=100000 width=4) (actual time=5.134..5.135 rows=13.00 loops=1)
+  Sort Key: remote_scan.id
+  Sort Method: quicksort  Memory: 25kB
+  ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=4) (actual time=5.128..5.129 rows=13.00 loops=1)
+        Task Count: 32
+        Tuple data received from nodes: 52 bytes
+        Tasks Shown: One of 32
+        ->  Task
+              Tuple data received from node: 4 bytes
+              Node: host=w1 port=5432 dbname=lab
+              ->  Bitmap Heap Scan on orders_102057 orders  (cost=2.78..4.97 rows=2 width=4) (actual time=0.020..0.021 rows=1.00 loops=1)
+                    Recheck Cond: ((customer_id = '14824'::smallint) OR (id = 146741))
+                    Heap Blocks: exact=1
+                    Buffers: shared hit=5
+                    ->  BitmapOr  (cost=2.78..2.78 rows=2 width=0) (actual time=0.012..0.013 rows=0.00 loops=1)
+                          Buffers: shared hit=4
+                          ->  Bitmap Index Scan on ix_orders_customer_id_102057  (cost=0.00..1.39 rows=1 width=0) (actual time=0.008..0.008 rows=1.00 loops=1)
+                                Index Cond: (customer_id = '14824'::smallint)
+                                Index Searches: 1
+                                Buffers: shared hit=2
+                          ->  Bitmap Index Scan on orders_pkey_102057  (cost=0.00..1.39 rows=1 width=0) (actual time=0.004..0.004 rows=0.00 loops=1)
+                                Index Cond: (id = 146741)
+                                Index Searches: 1
+                                Buffers: shared hit=2
+                  Planning Time: 0.056 ms
+                  Execution Time: 0.038 ms
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.370 ms
+Execution Time: 5.145 ms

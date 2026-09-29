@@ -1,0 +1,2 @@
+operators (PhysicalOp, EstimateRows): 
+raw: <ShowPlanXML xmlns="http://schemas.microsoft.com/sqlserver/2004/07/showplan" Version="1.599" Build="17.0.4085.5"><BatchSequence><Batch><Statements><StmtSimple StatementText="SELECT 1" StatementId="1" StatementCompId="1" StatementType="SELECT WITHOUT QUERY" RetrievedFromCache="false"></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>

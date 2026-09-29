@@ -1,0 +1,1 @@
+Count[doc.orders | ((extract(YEAR FROM ordered_at) = 2025) AND (extract(MONTH FROM ordered_at) = 5))] (rows=1)

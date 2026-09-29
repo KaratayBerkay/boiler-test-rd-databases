@@ -1,0 +1,282 @@
+{
+  "engine": "sqlite",
+  "display": "SQLite 3",
+  "category": "embedded",
+  "dialect": "sqlite",
+  "driver": "sqlite3",
+  "image": "(embedded, python stdlib sqlite3)",
+  "run_id": "20260914-150526-daf556",
+  "started": "2026-09-14T12:05:26+00:00",
+  "scale": 1.0,
+  "notes": "Embedded, single-writer database file (WAL mode, synchronous=NORMAL). No server, no network, no replication in core; libSQL / rqlite / Litestream provide replication on top of SQLite (see docs).",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.5,
+          "rows_per_s": 40022,
+          "method": "executemany (single transaction)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.0,
+          "rows_per_s": 145084,
+          "method": "executemany (single transaction)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.13,
+          "rows_per_s": 39677,
+          "method": "executemany (single transaction)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 6.26,
+          "rows_per_s": 31950,
+          "method": "executemany (single transaction)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 6.25,
+          "rows_per_s": 78042,
+          "method": "executemany (single transaction)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 31.46,
+          "rows_per_s": 31785,
+          "method": "executemany (single transaction)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.48,
+          "rows_per_s": 41932,
+          "method": "executemany (single transaction)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name TEXT NOT NULL,\n  email TEXT NOT NULL,\n  country_code TEXT NOT NULL,\n  tier TEXT NOT NULL,\n  created_at TEXT NOT NULL,\n  attrs TEXT,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name TEXT NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku TEXT NOT NULL,\n  name TEXT NOT NULL,\n  description TEXT NOT NULL,\n  price NUMERIC NOT NULL,\n  attrs TEXT,\n  active INTEGER NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status TEXT NOT NULL,\n  ordered_at TEXT NOT NULL,\n  total_amount NUMERIC NOT NULL,\n  shipping_country TEXT NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price NUMERIC NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type TEXT NOT NULL,\n  occurred_at TEXT NOT NULL,\n  payload TEXT,\n  value_num NUMERIC NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TEXT NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 1.21,
+      "load_seconds": 45.08,
+      "fts_setup": [
+        "FAILED CREATE VIRTUAL TABLE products_fts USING fts5(description, content='products', content_rowid='id'): table products_fts already exists",
+        "INSERT INTO products_fts(products_fts) VALUES ('rebuild')"
+      ],
+      "after_load": [
+        "ANALYZE customers",
+        "ANALYZE categories",
+        "ANALYZE products",
+        "ANALYZE orders",
+        "ANALYZE order_items",
+        "ANALYZE events",
+        "ANALYZE inventory"
+      ],
+      "post_seconds": 0.19,
+      "server_version": "SQLite 3.45.1",
+      "_seconds": 46.5
+    },
+    "backup": {
+      "backup_dir": "data/sqlite/backups",
+      "strategies": {
+        "vacuum_into": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "VACUUM INTO 'file'",
+          "backup_seconds": 1.404,
+          "backup_bytes": 150900736,
+          "backup_mb": 143.9,
+          "restore_seconds": 0.734,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 0.73
+          },
+          "pitr": {},
+          "notes": "single SQL statement, consistent snapshot, output is compacted; restore = open the file",
+          "error": null,
+          "steps": [
+            {
+              "name": "VACUUM INTO",
+              "cmd": "VACUUM INTO '/home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/data/sqlite/backups/lab-vacuum.db'",
+              "rc": 0,
+              "seconds": 1.38,
+              "out": ""
+            }
+          ],
+          "source_bytes": 193601536,
+          "integrity_check": "ok",
+          "seconds": 5.7,
+          "description": "consistent compacted copy with one SQL statement"
+        },
+        "backup_api": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "sqlite3_backup API",
+          "backup_seconds": 1.01,
+          "backup_bytes": 193601536,
+          "backup_mb": 184.6,
+          "restore_seconds": 0.693,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 0.69
+          },
+          "pitr": {},
+          "notes": "sqlite3_backup API (page copy in steps, safe with concurrent writers); the mechanism Litestream/LiteFS build on",
+          "error": null,
+          "steps": [],
+          "seconds": 1.7,
+          "description": "online page-level copy"
+        }
+      },
+      "order": [
+        "vacuum_into",
+        "backup_api"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "cfef1712b00bc9937ab5a0f1"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "e3701091f3aac240f8804935"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "c357b83bed86fb28351a793e"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "43826bf6372e15436b7873ba"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "6a6f80d2fad7db25e4ebc16d"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "d8518ac31ece9e3dd5e1f4f1"
+        }
+      },
+      "fingerprint_seconds": 0.67,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "vacuum_into",
+          "backup_api"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 8.2
+    },
+    "logging": {
+      "sink": "application-side JSONL slow log (driver wrapper, RDLAB_SQLITE_SLOW_MS)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "RDLAB_SQLITE_SLOW_MS": "100",
+        "log": "results/sqlite/logs/slow.jsonl",
+        "journal_mode": "wal",
+        "synchronous": 1,
+        "wal_autocheckpoint": 1000,
+        "cache_size": -262144
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "application-side JSONL slow log (driver wrapper, RDLAB_SQLITE_SLOW_MS)",
+        "slow_query_ms": 650.9,
+        "slow_logged": true,
+        "seen_after_s": 0.45,
+        "sample": "{\"ts\": \"2026-09-14T12:06:21.905+00:00\", \"duration_ms\": 649.754, \"pid\": 3015899, \"database\": \"data/sqlite/lab.db\", \"sql\": \"WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 2000000) SELECT COUNT(*) AS rdlab_mk_1d997dd26e FROM c\"}",
+        "duration_ms": 649.754,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "n/a (no server; use the same wrapper or SQLite's sqlite3_trace_v2 hook)",
+        "status": "n/a"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 320261,
+          "p50_ms": 0.018866,
+          "p99_ms": 0.049595,
+          "errors": 0
+        },
+        "full_logging": "RDLAB_SQLITE_SLOW_MS=0 (every statement appended to slow.jsonl by every worker process)",
+        "full": {
+          "qps": 89011,
+          "p50_ms": 0.0776795,
+          "p99_ms": 0.13326657,
+          "errors": 0
+        },
+        "log_bytes_written": 61479662,
+        "bytes_per_statement": 172.7,
+        "overhead_pct": 72.2,
+        "status": "ok"
+      },
+      "container_logging": {},
+      "extra": {},
+      "collected": [],
+      "_seconds": 21.3
+    }
+  },
+  "harness_log": "results/logs/sqlite/20260914-150526-daf556.log",
+  "server_version": "SQLite 3.45.1",
+  "finished": "2026-09-14T12:06:42+00:00"
+}

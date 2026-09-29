@@ -1,0 +1,36 @@
+query_log: duration_ms=9 read_rows=66000 read_bytes=1463862 memory=9089709 result_rows=13
+(Expression)
+ExpressionTransform
+  (Sorting)
+  MergeSortingTransform
+    LimitsCheckingTransform
+      PartialSortingTransform
+        (Expression)
+        ExpressionTransform
+          (Aggregating)
+          AggregatingTransform
+            (Expression)
+            ExpressionTransform
+              (Join)
+              ColumnPermuteTransform
+                FillingRightJoinSide
+                  Resize 2 → 1
+                    DelayedPorts 2 → 2
+                      JoiningTransform 2 → 1
+                        DelayedJoinedBlocksWorkerTransform
+                          SimpleSquashingTransform
+                            DelayedJoinedBlocksTransform 0 → 1
+                              (Expression)
+                              ExpressionTransform
+                                (Expression)
+                                ExpressionTransform
+                                  (ReadFromMergeTree)
+                                  MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1
+                              (Expression)
+                              ExpressionTransform
+                                (BuildRuntimeFilter)
+                                BuildRuntimeFilterTransform
+                                  (Expression)
+                                  ExpressionTransform
+                                    (ReadFromMergeTree)
+                                    MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1

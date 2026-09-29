@@ -1,0 +1,32 @@
+display: MonetDB
+category: analytical (columnar)
+dialect: monetdb
+driver: pymonetdb
+image: monetdb/monetdb:latest
+project: rdlab-monetdb
+scale: 1
+notes: >-
+  Column-store with full SQL:2003 transactions (optimistic concurrency). Bulk load via COPY INTO ... ON CLIENT.
+  Replication: no built-in physical replication in the open-source release (monetdb replication is transaction-log based, experimental).
+docs:
+  - https://www.monetdb.org/documentation/user-guide/
+  - https://www.monetdb.org/documentation/user-guide/sql-manual/plan-explain/
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 50000
+    user: monetdb
+    password: labpass
+    database: lab
+    container: rdlab-monetdb
+backup:
+  dir: /backups
+  volume: monetdb-backups
+  dbfarm: /var/monetdb5/dbfarm
+  strategies: [msqldump, hot_snapshot]
+logging:
+  slow_ms: 100
+features:
+  connection_storm: true

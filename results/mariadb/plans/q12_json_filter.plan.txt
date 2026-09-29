@@ -1,0 +1,1 @@
+1 | SIMPLE | products | index | None | PRIMARY | 4 | None | 100 | Using where

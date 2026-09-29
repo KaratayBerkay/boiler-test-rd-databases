@@ -1,0 +1,3 @@
+Select Expression
+    -> Table "RDB$DATABASE" Full Scan
+fetches=2144 reads=92

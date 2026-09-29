@@ -1,0 +1,32 @@
+Plan hash value: 3828704173
+ 
+-------------------------------------------------------------------------------------------------
+| Id  | Operation                 | Name        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+-------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT          |             |    50 |  1900 |       |  1641   (1)| 00:00:01 |
+|*  1 |  COUNT STOPKEY            |             |       |       |       |            |          |
+|   2 |   VIEW                    |             | 23912 |   887K|       |  1641   (1)| 00:00:01 |
+|*  3 |    SORT ORDER BY STOPKEY  |             | 23912 |   630K|   952K|  1641   (1)| 00:00:01 |
+|   4 |     HASH GROUP BY         |             | 23912 |   630K|   952K|  1641   (1)| 00:00:01 |
+|   5 |      VIEW                 | VW_DAG_0    | 23912 |   630K|       |  1271   (1)| 00:00:01 |
+|   6 |       HASH GROUP BY       |             | 23912 |  1214K|  1520K|  1271   (1)| 00:00:01 |
+|*  7 |        HASH JOIN          |             | 23912 |  1214K|       |   959   (1)| 00:00:01 |
+|*  8 |         HASH JOIN         |             |  9905 |   377K|       |   445   (1)| 00:00:01 |
+|*  9 |          TABLE ACCESS FULL| ORDERS      |  9905 |   299K|       |   308   (1)| 00:00:01 |
+|  10 |          TABLE ACCESS FULL| CUSTOMERS   | 20000 |   156K|       |   136   (0)| 00:00:01 |
+|  11 |         TABLE ACCESS FULL | ORDER_ITEMS |   487K|  6190K|       |   514   (1)| 00:00:01 |
+-------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   1 - filter(ROWNUM<=50)
+   3 - filter(ROWNUM<=50)
+   7 - access("OI"."ORDER_ID"="O"."ID")
+   8 - access("C"."ID"="O"."CUSTOMER_ID")
+   9 - filter("O"."STATUS"='delivered' AND "O"."ORDERED_AT">=TIMESTAMP' 2025-01-01 
+              00:00:00.000000000' AND "O"."ORDERED_AT"<TIMESTAMP' 2025-07-01 00:00:00.000000000')
+ 
+Note
+-----
+   - this is an adaptive plan

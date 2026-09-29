@@ -1,0 +1,88 @@
+planning time: 4ms
+execution time: 3.9s
+distribution: full
+plan type: generic, re-optimized
+rows decoded from KV: 1,262,670 (118 MiB, 51 gRPC calls)
+DistSQL network usage: 8.8 KiB (67 messages)
+regions: lab
+
+• top-k
+│ sql nodes: n3
+│ regions: lab
+│ execution time: 1ms
+│ sql cpu time: 1ms
+│ actual row count: 200
+│ estimated row count: 1
+│ order: +id
+│ k: 200
+│
+└── • lookup join (semi) (streamer)
+    │ sql nodes: n3
+    │ kv nodes: n1
+    │ regions: lab
+    │ KV time: 2.1s
+    │ KV rows decoded: 121,335
+    │ execution time: 2.5s
+    │ sql cpu time: 332ms
+    │ actual row count: 6,860
+    │ estimated row count: 1
+    │ table: orders@orders_pkey
+    │ equality: (id) = (id)
+    │ equality cols are key
+    │ pred: ordered_at >= '2025-11-01 00:00:00'
+    │
+    └── • lookup join (streamer)
+        │ sql nodes: n3
+        │ kv nodes: n2
+        │ regions: lab
+        │ KV time: 633ms
+        │ KV rows decoded: 121,335
+        │ execution time: 774ms
+        │ sql cpu time: 140ms
+        │ actual row count: 121,335
+        │ estimated row count: 10
+        │ table: orders@ix_orders_customer_id
+        │ equality: (id) = (customer_id)
+        │
+        └── • hash join (right anti)
+            │ sql nodes: n3
+            │ regions: lab
+            │ execution time: 5ms
+            │ sql cpu time: 5ms
+            │ actual row count: 12,118
+            │ estimated row count: 1
+            │ equality: (customer_id) = (id)
+            │ right cols are key
+            │
+            ├── • filter
+            │   │ sql nodes: n3
+            │   │ regions: lab
+            │   │ execution time: 8ms
+            │   │ sql cpu time: 8ms
+            │   │ actual row count: 10,008
+            │   │ estimated row count: 165,752
+            │   │ filter: event_type = 'churn'
+            │   │
+            │   └── • scan
+            │         sql nodes: n3
+            │         kv nodes: n3
+            │         regions: lab
+            │         KV time: 589ms
+            │         KV rows decoded: 1,000,000
+            │         sql cpu time: 222ms
+            │         actual row count: 1,000,000
+            │         estimated row count: 1,000,000 (100% of the table; stats collected 3 minutes ago)
+            │         table: events@events_pkey
+            │         spans: FULL SCAN
+            │
+            └── • scan
+                  sql nodes: n3
+                  kv nodes: n3
+                  regions: lab
+                  KV time: 26ms
+                  KV rows decoded: 20,000
+                  sql cpu time: 10ms
+                  actual row count: 20,000
+                  estimated row count: 20,000 (100% of the table; stats collected 4 minutes ago)
+                  table: customers@ux_customers_email
+                  spans: FULL SCAN

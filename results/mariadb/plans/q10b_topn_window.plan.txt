@@ -1,0 +1,2 @@
+1 | PRIMARY | <derived2> | ALL | None | None | None | None | 998 | Using where; Using filesort
+2 | DERIVED | orders | range | ix_orders_customer_id | ix_orders_customer_id | 4 | None | 998 | Using index condition; Using temporary

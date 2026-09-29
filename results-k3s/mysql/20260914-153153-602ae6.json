@@ -1,0 +1,144 @@
+{
+  "engine": "mysql",
+  "display": "MySQL 9",
+  "category": "row-store OLTP",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "mysql:9",
+  "run_id": "20260914-153153-602ae6",
+  "started": "2026-09-14T12:31:53+00:00",
+  "scale": 0.3,
+  "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+  "phases": {
+    "logging": {
+      "sink": "slow query log file (long_query_time)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "binlog_format": "ROW",
+        "general_log": "OFF",
+        "general_log_file": "/var/log/mysql/general.log",
+        "innodb_print_all_deadlocks": "ON",
+        "log_bin": "ON",
+        "log_error": "/var/log/mysql/error.log",
+        "log_error_services": "log_filter_internal; log_sink_internal; log_sink_json",
+        "log_error_verbosity": "3",
+        "log_output": "FILE",
+        "log_queries_not_using_indexes": "OFF",
+        "log_slow_extra": "ON",
+        "log_timestamps": "SYSTEM",
+        "long_query_time": "0.100000",
+        "min_examined_row_limit": "0",
+        "performance_schema": "ON",
+        "slow_query_log": "ON",
+        "slow_query_log_file": "/var/log/mysql/slow.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "slow query log file (long_query_time)",
+        "slow_query_ms": 301.7,
+        "slow_logged": true,
+        "seen_after_s": 0.6,
+        "sample": "# Time: 2026-09-14T12:31:53.904504-00:00\n# User@Host: lab[lab] @  [10.42.0.1]  Id:   194\n# Query_time: 0.300207  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 1 Thread_id: 194 Errno: 0 Killed: 0 Bytes_received: 45 Bytes_sent: 74 Read_first: 0 Read_last: 0 Read_key: 0 Read_next: 0 Read_prev: 0 Read_rnd: 0 Read_rnd_next: 0 Sort_merge_passes: 0 Sort_range_count: 0 Sort_rows: 0 Sort_scan_count: 0 Created_tmp_disk_tables: 0 Created_tmp_tables: 0 Count_hit_tmp_table_size: 0  Start: 2026-09-14T12:31:53.604297-00:00 End: 2026-09-14T12:31:53.904504-00:00\nSET timestamp=1789389113;\nSELECT SLEEP(0.3) A",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "general log (no audit plugin in MySQL Community)",
+        "setup": "SET GLOBAL general_log = ON (temporary, for the test)",
+        "event_found": true,
+        "seen_after_s": 0.2,
+        "sample": "2026-09-14T12:31:54.736813-00:00\t  196 Query\tCREATE TABLE audit_rdlab_mk_dbde3f5dad (id INTEGER)",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 18499,
+          "p50_ms": 0.411102,
+          "p99_ms": 0.8325668799999999,
+          "errors": 0
+        },
+        "full_logging": "SET GLOBAL long_query_time = 0 (every statement written to the slow log, new connections)",
+        "full": {
+          "qps": 18579,
+          "p50_ms": 0.402059,
+          "p99_ms": 0.9453672800000004,
+          "errors": 0
+        },
+        "log_bytes_written": 47338856,
+        "bytes_per_statement": 637.0,
+        "overhead_pct": -0.4,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-my-source": {
+          "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+          "options": {},
+          "pod": "rdlab-mysql/source-6d4dc8d5b7-2vmkt"
+        },
+        "rdlab-my-replica": {
+          "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+          "options": {},
+          "pod": "rdlab-mysql/replica-787dddc977-zqxfp"
+        },
+        "rdlab-my-proxysql": {
+          "driver": "kubelet (container-log-max-size/-files via k3d.yaml)",
+          "options": {},
+          "pod": "rdlab-mysql/proxysql-8557df5b5d-8b8tw"
+        }
+      },
+      "extra": {
+        "performance_schema_top5": [
+          {
+            "calls": 180988,
+            "total_ms": 25739.0,
+            "avg_ms": 0.142,
+            "digest": "SELECT `id` , NAME , `email` FROM `customers` WHERE `id` = ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 6037.1,
+            "avg_ms": 6037.055,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE EVENTS FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 3130.8,
+            "avg_ms": 3130.846,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `order_items` FIELDS TERMINATED BY ? OPTIONALLY ENCLOS"
+          },
+          {
+            "calls": 3,
+            "total_ms": 1601.6,
+            "avg_ms": 533.877,
+            "digest": "SELECT `id` , `customer_id` , `event_type` , `occurred_at` , `payload` , `value_num` FROM "
+          },
+          {
+            "calls": 1,
+            "total_ms": 1007.9,
+            "avg_ms": 1007.874,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `orders` FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY"
+          }
+        ],
+        "error_log_last": [
+          "(datetime.datetime(2026, 9, 14, 12, 28, 24, 858879), 'Note', 'Repl', 'Start binlog_dump to source_thread_id(93) replica_server(99), pos(, 4)')",
+          "(datetime.datetime(2026, 9, 14, 12, 28, 18, 30313), 'Note', 'InnoDB', 'Clone End Master Task ID: 0 Passed, code: 0: ')",
+          "(datetime.datetime(2026, 9, 14, 12, 28, 18, 30158), 'Note', 'InnoDB', 'Clone Apply End Master Task ID: 0 Passed, code: 0: ')",
+          "(datetime.datetime(2026, 9, 14, 12, 28, 18, 29890), 'Note', 'InnoDB', 'Clone Apply State DONE')",
+          "(datetime.datetime(2026, 9, 14, 12, 28, 17, 751774), 'Note', 'InnoDB', 'Clone Apply State FLUSH REDO: ')"
+        ]
+      },
+      "collected": [
+        "results-k3s/mysql/logs/my-source__var_log_mysql_slow.log",
+        "results-k3s/mysql/logs/my-source__var_log_mysql_error.log",
+        "results-k3s/mysql/logs/my-source__var_log_mysql_error.log.00.json",
+        "results-k3s/mysql/logs/my-source__var_log_mysql_general.log"
+      ],
+      "_seconds": 21.9
+    }
+  },
+  "harness_log": "results-k3s/logs/mysql/20260914-153153-602ae6.log",
+  "server_version": "9.7.2",
+  "finished": "2026-09-14T12:32:15+00:00"
+}

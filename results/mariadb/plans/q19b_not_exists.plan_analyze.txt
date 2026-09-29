@@ -1,0 +1,71 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.053633174
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 3.943998119,
+    "r_loops": 1,
+    "r_total_time_ms": 11.54637611,
+    "nested_loop": [
+      {
+        "table": {
+          "table_name": "p",
+          "access_type": "index",
+          "key": "PRIMARY",
+          "key_length": "4",
+          "used_key_parts": ["id"],
+          "loops": 1,
+          "r_loops": 1,
+          "rows": 4874,
+          "r_rows": 5000,
+          "cost": 0.72415301,
+          "r_table_time_ms": 1.105288526,
+          "r_other_time_ms": 0.57234705,
+          "r_engine_stats": {
+            "pages_accessed": 156
+          },
+          "filtered": 100,
+          "r_total_filtered": 0,
+          "attached_condition": "!<in_optimizer>(p.`id`,<exists>(subquery#2))",
+          "r_filtered": 0
+        }
+      }
+    ],
+    "subqueries": [
+      {
+        "query_block": {
+          "select_id": 2,
+          "cost": 0.015580995,
+          "nested_loop": [
+            {
+              "table": {
+                "table_name": "oi",
+                "access_type": "index_subquery",
+                "possible_keys": ["ix_order_items_product_id"],
+                "key": "ix_order_items_product_id",
+                "key_length": "4",
+                "used_key_parts": ["product_id"],
+                "ref": ["func"],
+                "loops": 1,
+                "r_loops": 0,
+                "rows": 95,
+                "r_rows": null,
+                "cost": 0.015580995,
+                "r_table_time_ms": 9.619286192,
+                "r_other_time_ms": 0.247121869,
+                "r_engine_stats": {
+                  "pages_accessed": 10186
+                },
+                "filtered": 100,
+                "r_total_filtered": null,
+                "r_filtered": null,
+                "using_index": true
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

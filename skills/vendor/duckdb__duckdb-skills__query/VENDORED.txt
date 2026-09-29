@@ -1,0 +1,3 @@
+source: https://github.com/duckdb/duckdb-skills/tree/main/skills/query
+license: MIT
+vendored: 2026-09-13

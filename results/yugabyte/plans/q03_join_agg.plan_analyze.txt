@@ -1,0 +1,49 @@
+Limit  (cost=72057.09..72057.21 rows=50 width=51) (actual time=1477.767..1477.787 rows=50 loops=1)
+  ->  Sort  (cost=72057.09..72271.01 rows=85570 width=51) (actual time=1477.765..1477.771 rows=50 loops=1)
+        Sort Key: (sum(((oi.qty)::numeric * oi.unit_price))) DESC, c.country_code, (date_trunc('month'::text, o.ordered_at))
+        Sort Method: quicksort  Memory: 31kB
+        ->  GroupAggregate  (cost=66433.49..69214.51 rows=85570 width=51) (actual time=1396.667..1477.622 rows=78 loops=1)
+              Group Key: c.country_code, (date_trunc('month'::text, o.ordered_at))
+              ->  Sort  (cost=66433.49..66647.41 rows=85570 width=25) (actual time=1396.163..1411.807 rows=84255 loops=1)
+                    Sort Key: c.country_code, (date_trunc('month'::text, o.ordered_at))
+                    Sort Method: external merge  Disk: 3384kB
+                    ->  YB Batched Nested Loop Join  (cost=2273.23..57375.74 rows=85570 width=25) (actual time=37.741..1250.838 rows=84255 loops=1)
+                          Join Filter: (o.id = oi.order_id)
+                          ->  Hash Join  (cost=2221.04..17247.17 rows=35098 width=15) (actual time=27.875..84.772 rows=34679 loops=1)
+                                Hash Cond: (o.customer_id = c.id)
+                                ->  Seq Scan on orders o  (cost=23.10..14566.63 rows=35098 width=16) (actual time=6.611..23.933 rows=34679 loops=1)
+                                      Storage Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))
+                                      Storage Table Read Requests: 34
+                                      Storage Table Read Execution Time: 7.335 ms
+                                      Storage Table Read Ops: 34
+                                      Storage Table Rows Scanned: 200000
+                                ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7) (actual time=21.043..21.044 rows=20000 loops=1)
+                                      Buckets: 32768  Batches: 1  Memory Usage: 1038kB
+                                      ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7) (actual time=1.093..12.851 rows=20000 loops=1)
+                                            Storage Table Read Requests: 20
+                                            Storage Table Read Execution Time: 8.124 ms
+                                            Storage Table Read Ops: 20
+                                            Storage Table Rows Scanned: 20000
+                          ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=52.20..1125.53 rows=3120 width=14) (actual time=12.251..27.782 rows=2478 loops=34)
+                                Index Cond: (order_id = ANY (ARRAY[o.id, $1, $2, ..., $1023]))
+                                Storage Table Read Requests: 3
+                                Storage Table Read Execution Time: 15.389 ms
+                                Storage Table Read Ops: 3
+                                Storage Table Rows Scanned: 2478
+                                Storage Index Read Requests: 3
+                                Storage Index Read Execution Time: 4.248 ms
+                                Storage Index Read Ops: 3
+                                Storage Index Rows Scanned: 2478
+Planning Time: 1.366 ms
+Execution Time: 1479.243 ms
+Storage Read Requests: 258
+Storage Read Execution Time: 683.101 ms
+Storage Read Ops: 258
+Storage Rows Scanned: 388510
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 683.101 ms
+Peak Memory Usage: 8851 kB

@@ -1,0 +1,20 @@
+Output: shipping_country, status, count(), sum(total_amount)
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: shipping_country ASC, status ASC
+└──Aggregating
+   │  Keys: shipping_country, status
+   │  Aggregates: count(), sum(total_amount)
+   │  Skip merging: 0
+   └──ReadFromMergeTree (lab.orders)
+         Read type: Default
+         Parts: 1 | Granules: 7
+         Output: shipping_country, status, total_amount
+         Prewhere filter
+         Prewhere filter column:  ordered_at < '2025-09-01 00:00:00.000000' AND ordered_at >= '2025-06-01 00:00:00.000000'
+         Indexes:
+           PrimaryKey
+             Condition: true
+             Parts: 1/1
+             Granules: 7/7
+           Ranges: 1

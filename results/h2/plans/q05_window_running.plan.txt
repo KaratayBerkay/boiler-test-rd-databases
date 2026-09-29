@@ -1,0 +1,24 @@
+SELECT
+    "d",
+    "daily",
+    SUM("daily") OVER (ORDER BY "d" ROWS UNBOUNDED PRECEDING) AS "running",
+    LAG("daily", 1) OVER (ORDER BY "d") AS "prev_day"
+FROM (
+    SELECT
+        DATE_TRUNC(DAY, "ordered_at") AS "d",
+        SUM("total_amount") AS "daily"
+    FROM "public"."orders"
+    WHERE ("ordered_at" >= TIMESTAMP '2025-01-01 00:00:00')
+        AND ("ordered_at" < TIMESTAMP '2025-04-01 00:00:00')
+    GROUP BY DATE_TRUNC(DAY, "ordered_at")
+) "s"
+    /* SELECT
+        DATE_TRUNC(DAY, ordered_at) AS d,
+        SUM(total_amount) AS daily
+    FROM public.orders
+        /* public.orders.tableScan */
+    WHERE (ordered_at >= TIMESTAMP '2025-01-01 00:00:00')
+        AND (ordered_at < TIMESTAMP '2025-04-01 00:00:00')
+    GROUP BY DATE_TRUNC(DAY, ordered_at)
+     */
+ORDER BY 1

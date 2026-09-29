@@ -1,0 +1,36 @@
+display: IBM Db2 12.1 CE
+category: row-store OLTP
+dialect: db2
+driver: ibm_db
+image: icr.io/db2_community/db2:latest
+project: rdlab-db2
+scale: 1
+notes: >-
+  Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but
+  needs two instances with matching configuration and a takeover procedure; not automated in this stack.
+docs:
+  - https://www.ibm.com/docs/en/db2/12.1?topic=deployments-db2-community-edition-docker
+  - https://www.ibm.com/docs/en/db2/12.1?topic=tools-explain-facility
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 50000
+    user: db2inst1
+    password: labpass
+    database: lab
+    container: rdlab-db2
+backup:
+  dir: /backups
+  volume: db2-backups
+  instance: db2inst1
+  strategies: [offline_full, online_incremental, pitr]
+logging:
+  instance: db2inst1
+  diag_dir: /database/config/db2inst1/sqllib/db2dump/DIAG0000
+  audit_dir: /backups/audit
+  slow_ms: 100
+features:
+  settle_seconds: 5
+  connection_storm: true

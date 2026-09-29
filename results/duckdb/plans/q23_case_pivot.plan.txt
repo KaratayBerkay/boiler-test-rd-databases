@@ -1,0 +1,106 @@
+physical_plan | ┌───────────────────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_strin│
+│           g(#0)           │
+│             #1            │
+│             #2            │
+│             #3            │
+│             #4            │
+│                           │
+│          ~0 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│     c.country_code ASC    │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_compress_string_│
+│        uinteger(#0)       │
+│             #1            │
+│             #2            │
+│             #3            │
+│             #4            │
+│                           │
+│          ~5 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_strin│
+│           g(#0)           │
+│             #1            │
+│             #2            │
+│             #3            │
+│             #4            │
+│                           │
+│          ~5 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│         Groups: #0        │
+│                           │
+│        Aggregates:        │
+│          sum(#1)          │
+│          sum(#2)          │
+│          sum(#3)          │
+│          avg(#4)          │
+│                           │
+│          ~5 rows          │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│        country_code       │
+│   CASE  WHEN ((status =   │
+│   'delivered')) THEN (1)  │
+│         ELSE 0 END        │
+│   CASE  WHEN ((status =   │
+│   'cancelled')) THEN (1)  │
+│         ELSE 0 END        │
+│   CASE  WHEN ((status =   │
+│ 'returned')) THEN (1) ELSE│
+│            0 END          │
+│        total_amount       │
+│                           │
+│       ~186,314 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│__internal_compress_string_│
+│        uinteger(#2)       │
+│                           │
+│       ~186,314 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│      Join Type: INNER     │
+│                           │
+│        Conditions:        ├──────────────┐
+│      customer_id = id     │              │
+│                           │              │
+│       ~186,314 rows       │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│          SEQ_SCAN         ││          SEQ_SCAN         │
+│    ────────────────────   ││    ────────────────────   │
+│           Table:          ││           Table:          │
+│      lab.main.orders      ││     lab.main.customers    │
+│                           ││                           │
+│   Type: Sequential Scan   ││   Type: Sequential Scan   │
+│                           ││                           │
+│        Projections:       ││        Projections:       │
+│        customer_id        ││             id            │
+│           status          ││        country_code       │
+│        total_amount       ││                           │
+│                           ││                           │
+│       ~200,064 rows       ││        ~20,000 rows       │
+└───────────────────────────┘└───────────────────────────┘

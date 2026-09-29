@@ -1,0 +1,452 @@
+{
+  "engine": "pxc",
+  "display": "Percona XtraDB Cluster 8.4 (Galera)",
+  "category": "multi-master (Galera)",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "percona/percona-xtradb-cluster:8.4",
+  "run_id": "20260914-112741-ff3184",
+  "started": "2026-09-14T08:27:41+00:00",
+  "scale": 0.3,
+  "notes": "3-node Galera cluster (MySQL 8.4 base): synchronous replication by write-set certification, every node writable; cross-node write conflicts surface as deadlock errors at COMMIT. HAProxy round-robins connections over the nodes.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.24,
+          "rows_per_s": 24728,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 39300,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.15,
+          "rows_per_s": 10133,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 1.85,
+          "rows_per_s": 32388,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 4.17,
+          "rows_per_s": 35257,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 5.86,
+          "rows_per_s": 51162,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.08,
+          "rows_per_s": 75690,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at DATETIME(6) NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at DATETIME(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at DATETIME(6) NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at DATETIME(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n) ENGINE=InnoDB",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.23,
+      "load_seconds": 12.46,
+      "fts_setup": [
+        "CREATE FULLTEXT INDEX ft_products_description ON products (description)"
+      ],
+      "after_load": [
+        "ANALYZE TABLE customers",
+        "ANALYZE TABLE categories",
+        "ANALYZE TABLE products",
+        "ANALYZE TABLE orders",
+        "ANALYZE TABLE order_items",
+        "ANALYZE TABLE events",
+        "ANALYZE TABLE inventory"
+      ],
+      "post_seconds": 0.44,
+      "server_version": "8.4.10-10.1",
+      "_seconds": 13.2
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "mysqldump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "mysqldump --single-transaction",
+          "backup_seconds": 1.15,
+          "backup_bytes": 45365007,
+          "backup_mb": 43.3,
+          "restore_seconds": 15.54,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.77
+          },
+          "pitr": {},
+          "notes": "single-transaction consistent snapshot, plain SQL restored serially with the mysql client",
+          "error": null,
+          "steps": [
+            {
+              "name": "mysqldump",
+              "cmd": "mysqldump -uroot -prootpass --single-transaction --routines --triggers --events  lab > /backups/lab.sql",
+              "rc": 0,
+              "seconds": 1.15,
+              "out": "\nmysqldump: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.35,
+              "out": ""
+            },
+            {
+              "name": "restore",
+              "cmd": "mysql -uroot -prootpass lab_restore < /backups/lab.sql",
+              "rc": 0,
+              "seconds": 15.54,
+              "out": "\nmysql: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.07,
+              "out": ""
+            }
+          ],
+          "seconds": 19.0,
+          "description": "logical dump restored into a second schema"
+        },
+        "xtrabackup": {
+          "status": "error",
+          "kind": "physical",
+          "tool": "xtrabackup 8.4 full + incremental",
+          "backup_seconds": 0.1,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "RuntimeError: chown for scratch failed rc=1: chown: cannot access '/backups/full': No such file or directory",
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/inc1",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "xtrabackup --backup (full)",
+              "cmd": "/usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --backup --user=root --password=rootpass --socket=/var/lib/mysql/mysql.sock --target-dir=/backups/full 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": "2026-09-14T08:28:15.479029-00:00 0 [Note] [MY-011825] [Xtrabackup] Connecting to MySQL server host: localhost, user: root, password: set, port: not set, socket: /var/lib/mysql/mysql.sock\n2026-09-14T08:28:15.479110-00:00 0 [ERROR] [MY-011825] [Xtrabackup] Failed to connect to MySQL server: Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)\n"
+            },
+            {
+              "name": "xtrabackup --backup (incremental)",
+              "cmd": "/usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --backup --user=root --password=rootpass --socket=/var/lib/mysql/mysql.sock --target-dir=/backups/inc1 --incremental-basedir=/backups/full 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": "2026-09-14T08:28:15.764899-00:00 0 [ERROR] [MY-011825] [Xtrabackup] cannot open /backups/full//xtrabackup_checkpoints\n2026-09-14T08:28:15.764906-00:00 0 [ERROR] [MY-011825] [Xtrabackup] failed to read metadata from /backups/full//xtrabackup_checkpoints\n"
+            },
+            {
+              "name": "xtrabackup --prepare --apply-log-only",
+              "cmd": "/usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --prepare --apply-log-only --target-dir=/backups/full 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": "xtrabackup: Can't change dir to '/backups/full/' (OS errno 2 - No such file or directory)\n2026-09-14T08:28:16.017061-00:00 0 [ERROR] [MY-011825] [Xtrabackup] cannot my_setwd /backups/full/\n"
+            },
+            {
+              "name": "xtrabackup --prepare (incremental)",
+              "cmd": "/usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --prepare --target-dir=/backups/full --incremental-dir=/backups/inc1 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": "2026-09-14T08:28:16.118898-00:00 0 [ERROR] [MY-011825] [Xtrabackup] cannot open /backups/inc1//xtrabackup_checkpoints\n2026-09-14T08:28:16.118909-00:00 0 [ERROR] [MY-011825] [Xtrabackup] failed to read metadata from /backups/inc1//xtrabackup_checkpoints\n"
+            },
+            {
+              "name": "chown for scratch",
+              "cmd": "chown -R 1001:1001 /backups/full",
+              "rc": 1,
+              "seconds": 0.08,
+              "out": "\nchown: cannot access '/backups/full': No such file or directory\n"
+            }
+          ],
+          "incremental": {
+            "seconds": 0.1,
+            "bytes": null
+          },
+          "seconds": 0.9,
+          "description": "physical hot backup chain restored standalone in a scratch container"
+        }
+      },
+      "order": [
+        "mysqldump",
+        "xtrabackup"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "35ac83bf2b2e114610721f09"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "79f947ee8911ba569f94fe46"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "ef5de25f9b0dfcdcf2d391d6"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 1.5,
+      "summary": {
+        "strategies": 2,
+        "ok": 1,
+        "verified": [
+          "mysqldump"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 21.4
+    },
+    "logging": {
+      "sink": "slow query log file (long_query_time)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "audit_log_file": "/var/log/mysql/audit.json",
+        "audit_log_format": "JSON",
+        "audit_log_include_commands": "create_table,drop_table,alter_table,create_db,drop_db,truncate,grant,revoke,create_user,drop_user,alter_user",
+        "audit_log_policy": "QUERIES",
+        "binlog_format": "ROW",
+        "general_log": "OFF",
+        "general_log_file": "/var/log/mysql/general.log",
+        "innodb_print_all_deadlocks": "ON",
+        "log_bin": "ON",
+        "log_error": "/var/log/mysql/error.log",
+        "log_error_services": "log_filter_internal; log_sink_internal",
+        "log_error_verbosity": "3",
+        "log_output": "FILE",
+        "log_queries_not_using_indexes": "OFF",
+        "log_slow_extra": "ON",
+        "log_slow_verbosity": "microtime,query_plan,innodb",
+        "log_timestamps": "SYSTEM",
+        "long_query_time": "0.100000",
+        "min_examined_row_limit": "0",
+        "performance_schema": "ON",
+        "slow_query_log": "ON",
+        "slow_query_log_file": "/var/log/mysql/slow.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "slow query log file (long_query_time)",
+        "slow_query_ms": 301.6,
+        "slow_logged": true,
+        "seen_after_s": 0.18,
+        "sample": "_sent: 1  Rows_examined: 1 Thread_id: 61 Errno: 0 Killed: 0 Bytes_received: 45 Bytes_sent: 74 Read_first: 0 Read_last: 0 Read_key: 0 Read_next: 0 Read_prev: 0 Read_rnd: 0 Read_rnd_next: 0 Sort_merge_passes: 0 Sort_range_count: 0 Sort_rows: 0 Sort_scan_count: 0 Created_tmp_disk_tables: 0 Created_tmp_tables: 0 Start: 2026-09-14T08:28:16.230413-00:00 End: 2026-09-14T08:28:16.530580-00:00 Schema: lab Rows_affected: 0\n# Tmp_tables: 0  Tmp_disk_tables: 0  Tmp_table_sizes: 0\n# Full_scan: No  Full_join: No  Tmp_table: No  Tmp_table_on_disk: No\n# Filesort: No  Filesort_on_disk: No  Merge_passes: 0\n# No",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "Percona audit_log plugin, JSON, DDL commands only -> audit.json",
+        "setup": "configured at startup (compose command / lab.cnf)",
+        "event_found": true,
+        "seen_after_s": 1.24,
+        "sample": "{\"audit_record\": {\"name\": \"Query\", \"record\": \"6736_2026-09-14T08:26:22\", \"timestamp\": \"2026-09-14T08:28:16Z\", \"command_class\": \"create_table\", \"connection_id\": \"63\", \"status\": 0, \"sqltext\": \"CREATE TABLE audit_rdlab_mk_1ee106896a (id INTEGER)\", \"user\": \"lab[lab] @  [172.26.0.1]\", \"host\": \"\", \"os_user\": \"\", \"ip\": \"172.26.0.1\", \"db\": \"lab\"}}",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 12171,
+          "p50_ms": 0.51727,
+          "p99_ms": 2.5571397200000003,
+          "errors": 0
+        },
+        "full_logging": "SET GLOBAL long_query_time = 0 (every statement written to the slow log, new connections)",
+        "full": {
+          "qps": 10931,
+          "p50_ms": 0.61679,
+          "p99_ms": 2.3873878800000026,
+          "errors": 0
+        },
+        "log_bytes_written": 43776453,
+        "bytes_per_statement": 1001.2,
+        "overhead_pct": 10.2,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-pxc-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 10224,
+          "docker_logs_lines": 251
+        },
+        "rdlab-pxc-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2948,
+          "docker_logs_lines": 96
+        },
+        "rdlab-pxc-3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2968,
+          "docker_logs_lines": 96
+        },
+        "rdlab-pxc-haproxy": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 79,
+          "docker_logs_lines": 2
+        }
+      },
+      "extra": {
+        "performance_schema_top5": [
+          {
+            "calls": 91838,
+            "total_ms": 21265.5,
+            "avg_ms": 0.232,
+            "digest": "SELECT `id` , NAME , `email` FROM `customers` WHERE `id` = ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 5783.6,
+            "avg_ms": 5783.586,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE EVENTS FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 4132.6,
+            "avg_ms": 4132.581,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `order_items` FIELDS TERMINATED BY ? OPTIONALLY ENCLOS"
+          },
+          {
+            "calls": 1,
+            "total_ms": 1843.1,
+            "avg_ms": 1843.071,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `orders` FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY"
+          },
+          {
+            "calls": 1,
+            "total_ms": 381.9,
+            "avg_ms": 381.879,
+            "digest": "SELECT SQL_NO_CACHE * FROM `events`"
+          }
+        ],
+        "error_log_last": [
+          "(datetime.datetime(2026, 9, 14, 8, 28, 12, 710196), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")",
+          "(datetime.datetime(2026, 9, 14, 8, 28, 10, 984652), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")",
+          "(datetime.datetime(2026, 9, 14, 8, 28, 6, 702592), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")",
+          "(datetime.datetime(2026, 9, 14, 8, 28, 6, 581849), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")",
+          "(datetime.datetime(2026, 9, 14, 8, 27, 58, 446501), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")"
+        ]
+      },
+      "collected": [
+        "results/pxc/logs/pxc-1__var_log_mysql_slow.log",
+        "results/pxc/logs/pxc-1__var_log_mysql_error.log",
+        "results/pxc/logs/pxc-1__var_log_mysql_audit.json"
+      ],
+      "_seconds": 17.2
+    }
+  },
+  "harness_log": "results/logs/pxc/20260914-112741-ff3184.log",
+  "server_version": "8.4.10-10.1",
+  "finished": "2026-09-14T08:28:33+00:00"
+}

@@ -1,0 +1,273 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260914-151932-0daec5",
+  "started": "2026-09-14T12:19:32+00:00",
+  "scale": 0.3,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "pg_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "pg_dump -Fd -j4 --compress=zstd | pg_restore -j4",
+          "backup_seconds": 0.67,
+          "backup_bytes": 9659463,
+          "backup_mb": 9.2,
+          "restore_seconds": 1.51,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.97
+          },
+          "pitr": {},
+          "notes": "directory format, 4 parallel jobs, zstd; globals dumped separately with pg_dumpall",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'rm -rf /backups/dump /backups/globals.sql'; else exec su -s /bin/sh postgres -c 'rm -rf /backups/dump /backups/globals.sql'; fi",
+              "rc": 0,
+              "seconds": 0.42,
+              "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            },
+            {
+              "name": "pg_dump -Fd",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_dump -U lab -d lab -Fd -j 4 --compress=zstd -f /backups/dump'; else exec su -s /bin/sh postgres -c 'pg_dump -U lab -d lab -Fd -j 4 --compress=zstd -f /backups/dump'; fi",
+              "rc": 0,
+              "seconds": 0.67,
+              "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            },
+            {
+              "name": "pg_dumpall --globals-only",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_dumpall -U lab --globals-only -f /backups/globals.sql'; else exec su -s /bin/sh postgres -c 'pg_dumpall -U lab --globals-only -f /backups/globals.sql'; fi",
+              "rc": 0,
+              "seconds": 0.28,
+              "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "pg_restore -j",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_restore -U lab -d lab_restore -j 4 --no-owner /backups/dump'; else exec su -s /bin/sh postgres -c 'pg_restore -U lab -d lab_restore -j 4 --no-owner /backups/dump'; fi",
+              "rc": 0,
+              "seconds": 1.51,
+              "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.37,
+              "out": ""
+            }
+          ],
+          "restore_warnings": "",
+          "seconds": 4.6,
+          "description": "parallel directory-format dump restored into a second database"
+        },
+        "pg_basebackup": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "pg_basebackup -Fp -Xs",
+          "backup_seconds": 1.38,
+          "backup_bytes": 118886019,
+          "backup_mb": 113.4,
+          "restore_seconds": 0.24,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.8
+          },
+          "pitr": {},
+          "notes": "plain-format full copy with streamed WAL (-Xs), verified with pg_verifybackup; restored by copying into a scratch container",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'rm -rf /backups/full /backups/incr1 && mkdir -p /backups/wal'; else exec su -s /bin/sh postgres -c 'rm -rf /backups/full /backups/incr1 && mkdir -p /backups/wal'; fi",
+              "rc": 0,
+              "seconds": 0.22,
+              "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            },
+            {
+              "name": "pg_basebackup",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_basebackup -U lab -D /backups/full -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C'; else exec su -s /bin/sh postgres -c 'pg_basebackup -U lab -D /backups/full -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C'; fi",
+              "rc": 0,
+              "seconds": 1.38,
+              "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            },
+            {
+              "name": "pg_verifybackup",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_verifybackup /backups/full'; else exec su -s /bin/sh postgres -c 'pg_verifybackup /backups/full'; fi",
+              "rc": 0,
+              "seconds": 0.32,
+              "out": "backup successfully verified\n\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            }
+          ],
+          "pg_verifybackup": "backup successfully verified\n\nDefaulted container \"primary\" out of: primary, init-backup-init (init)",
+          "ready_after_s": 0.24,
+          "seconds": 7.0,
+          "description": "full physical copy restored in a scratch container"
+        },
+        "incremental": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "pg_basebackup --incremental + pg_combinebackup",
+          "backup_seconds": 2.86,
+          "backup_bytes": 21703542,
+          "backup_mb": 20.7,
+          "restore_seconds": 0.25,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.87
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "rows inserted after the full backup are present in the combined (full+incremental) restore"
+          },
+          "notes": "block-level incremental (summarize_wal=on, PG17+), restored with pg_combinebackup full incr -o PGDATA",
+          "error": null,
+          "steps": [
+            {
+              "name": "pg_basebackup --incremental",
+              "cmd": "if command -v gosu >/dev/null 2>&1; then exec gosu postgres sh -c 'pg_basebackup -U lab -D /backups/incr1 -Fp -Xs --checkpoint=fast --incremental=/backups/full/backup_manifest'; else exec su -s /bin/sh postgres -c 'pg_basebackup -U lab -D /backups/incr1 -Fp -Xs --checkpoint=fast --incremental=/backups/full/backup_manifest'; fi",
+              "rc": 0,
+              "seconds": 2.86,
+              "out": "\nDefaulted container \"primary\" out of: primary, init-backup-init (init)\n"
+            }
+          ],
+          "wal_switch": {
+            "segment": "000000010000000000000011",
+            "archived_after_s": 0.3
+          },
+          "full_backup_bytes": 118886019,
+          "incremental_pct_of_full": 18.26,
+          "seconds": 9.0,
+          "description": "PG17+ block-level incremental on top of the full backup"
+        },
+        "pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "archive_command + restore_command + recovery_target_name",
+          "backup_seconds": 0.0,
+          "backup_bytes": 318772277,
+          "backup_mb": 304.0,
+          "restore_seconds": 0.26,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.92
+          },
+          "pitr": {
+            "match": true,
+            "target": "recovery_target_name='rdlab_pitr'",
+            "probe_rows_at_restore_point": 1000,
+            "probe_rows_on_primary_after_delete": 0,
+            "probe_rows_recovered": 1000
+          },
+          "notes": "WAL archive (archive_command -> /backups/wal) replayed on top of the full backup up to the named restore point; the DELETE that followed is not replayed",
+          "error": null,
+          "steps": [],
+          "wal_switch": {
+            "segment": "000000010000000000000013",
+            "archived_after_s": 0.3
+          },
+          "archiver": {
+            "archived_count": 22,
+            "failed_count": 0,
+            "last_archived_wal": "000000010000000000000013",
+            "last_failed_wal": null
+          },
+          "scratch_log_tail": "b LOG:  disconnection: session time: 0:00:00.918 user=lab database=lab host=10.42.0.1 port=62384\n2026-09-14 12:19:59.416 UTC [54] [unknown]@[unknown] app=[unknown] LOG:  connection received: host=10.42.0.1 port=56654\n2026-09-14 12:19:59.425 UTC [54] lab@lab app=[unknown] LOG:  connection authenticated: identity=\"lab\" method=scram-sha-256 (/var/lib/postgresql/18/docker/pg_hba.conf:128)\n2026-09-14 12:19:59.425 UTC [54] lab@lab app=[unknown] LOG:  connection authorized: user=lab database=lab application_name=rdlab\n2026-09-14 12:19:59.426 UTC [54] lab@lab app=rdlab LOG:  connection ready: setup total=11.479 ms, fork=1.080 ms, authentication=8.188 ms\n2026-09-14 12:19:59.428 UTC [54] lab@lab app=rdlab LOG:  disconnection: session time: 0:00:00.012 user=lab database=lab host=10.42.0.1 port=56654\n",
+          "seconds": 7.0,
+          "description": "WAL-archive point-in-time recovery to a restore point before a destructive DELETE"
+        }
+      },
+      "order": [
+        "pg_dump",
+        "pg_basebackup",
+        "incremental",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "a187be706ac6cc57f65a464b"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "2bc3123ba4e02738250e0776"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "08c9ab7a8dd04a5ed9affae7"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 0.86,
+      "summary": {
+        "strategies": 4,
+        "ok": 4,
+        "verified": [
+          "pg_dump",
+          "pg_basebackup",
+          "incremental",
+          "pitr"
+        ],
+        "pitr_ok": [
+          "incremental",
+          "pitr"
+        ]
+      },
+      "_seconds": 28.4
+    }
+  },
+  "harness_log": "results-k3s/logs/postgres/20260914-151932-0daec5.log",
+  "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "finished": "2026-09-14T12:20:01+00:00"
+}

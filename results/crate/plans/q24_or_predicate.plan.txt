@@ -1,0 +1,2 @@
+OrderBy[id ASC] (rows=199999)
+  └ Collect[doc.orders | [id] | ((customer_id = $1) OR (id = $2))] (rows=199999)

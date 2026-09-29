@@ -1,0 +1,117 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.096822764
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 407.4963829,
+    "r_loops": 1,
+    "r_total_time_ms": 1054.661385,
+    "nested_loop": [
+      {
+        "read_sorted_file": {
+          "r_rows": 600,
+          "filesort": {
+            "sort_key": "t.category_id, t.rn",
+            "r_loops": 1,
+            "r_total_time_ms": 0.2646609,
+            "r_used_priority_queue": false,
+            "r_output_rows": 600,
+            "r_buffer_size": "136KiB",
+            "r_sort_mode": "sort_key,rowid",
+            "table": {
+              "table_name": "<derived2>",
+              "access_type": "ALL",
+              "loops": 1,
+              "r_loops": 1,
+              "rows": 463030,
+              "r_rows": 5000,
+              "cost": 93.38396224,
+              "r_table_time_ms": 0.211276741,
+              "r_other_time_ms": 1.227004794,
+              "filtered": 100,
+              "r_total_filtered": 12,
+              "attached_condition": "t.rn <= 3",
+              "r_filtered": 12,
+              "materialized": {
+                "query_block": {
+                  "select_id": 2,
+                  "cost": 466.0830439,
+                  "r_loops": 1,
+                  "r_total_time_ms": 1054.327671,
+                  "window_functions_computation": {
+                    "sorts": [
+                      {
+                        "filesort": {
+                          "sort_key": "p.category_id, sum(oi.qty * oi.unit_price) desc, oi.product_id",
+                          "r_loops": 1,
+                          "r_total_time_ms": 0.788091449,
+                          "r_used_priority_queue": false,
+                          "r_output_rows": 5000,
+                          "r_buffer_size": "220KiB",
+                          "r_sort_mode": "sort_key,rowid"
+                        }
+                      }
+                    ],
+                    "temporary_table": {
+                      "nested_loop": [
+                        {
+                          "table": {
+                            "table_name": "p",
+                            "access_type": "index",
+                            "possible_keys": ["PRIMARY"],
+                            "key": "ix_products_category_id",
+                            "key_length": "4",
+                            "used_key_parts": ["category_id"],
+                            "loops": 1,
+                            "r_loops": 1,
+                            "rows": 4874,
+                            "r_rows": 5000,
+                            "cost": 0.72415301,
+                            "r_table_time_ms": 1.875215696,
+                            "r_other_time_ms": 1.111500118,
+                            "r_engine_stats": {
+                              "pages_accessed": 6
+                            },
+                            "filtered": 100,
+                            "r_total_filtered": 100,
+                            "r_filtered": 100,
+                            "using_index": true
+                          }
+                        },
+                        {
+                          "table": {
+                            "table_name": "oi",
+                            "access_type": "ref",
+                            "possible_keys": ["ix_order_items_product_id"],
+                            "key": "ix_order_items_product_id",
+                            "key_length": "4",
+                            "used_key_parts": ["product_id"],
+                            "ref": ["lab.p.id"],
+                            "loops": 4874,
+                            "r_loops": 5000,
+                            "rows": 95,
+                            "r_rows": 97.5212,
+                            "cost": 465.3588909,
+                            "r_table_time_ms": 853.9105678,
+                            "r_other_time_ms": 194.8075927,
+                            "r_engine_stats": {
+                              "pages_accessed": 1473375
+                            },
+                            "filtered": 100,
+                            "r_total_filtered": 100,
+                            "r_filtered": 100
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

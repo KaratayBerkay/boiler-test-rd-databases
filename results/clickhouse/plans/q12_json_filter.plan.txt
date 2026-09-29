@@ -1,0 +1,25 @@
+Output: id, sku, price
+
+JoinLazyColumnsStep
+├──Limit (preliminary LIMIT)
+│  │  Limit 100
+│  │  Offset 0
+│  └──Sorting (Sorting for ORDER BY)
+│     │  Prefix sort description: id ASC
+│     │  Result sort description: id ASC
+│     │  Limit 100
+│     └──ReadFromMergeTree (lab.products)
+│           Read type: InOrder
+│           Parts: 1 | Granules: 1
+│           Output: _part_offset, _part_starting_offset, id
+│           Prewhere filter
+│           Prewhere filter column:  JSONExtractFloat(attrs, 'weight') > 10 AND JSONExtractString(attrs, 'color') = 'red'
+│           Virtual row conversions
+│           Indexes:
+│             PrimaryKey
+│               Condition: true
+│               Parts: 1/1
+│               Granules: 1/1
+│             Ranges: 1
+└──LazilyReadFromMergeTree
+      Lazily read columns: sku, price

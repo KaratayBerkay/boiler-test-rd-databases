@@ -1,0 +1,23 @@
+distribution: local
+
+• sort
+│ order: +path
+│
+└── • render
+    │
+    └── • recursive cte
+        │
+        └── • render
+            │
+            └── • filter
+                │ estimated row count: 10
+                │ filter: parent_id IS NULL
+                │
+                └── • scan
+                      estimated row count: 200 (100% of the table; stats collected 3 minutes ago)
+                      table: categories@categories_pkey
+                      spans: FULL SCAN
+
+index recommendations: 1
+1. type: index creation
+   SQL command: CREATE INDEX ON lab.public.categories (parent_id) STORING (name);

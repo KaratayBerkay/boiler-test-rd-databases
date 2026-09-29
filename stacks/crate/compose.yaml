@@ -1,0 +1,63 @@
+# CrateDB — 3-node distributed SQL cluster (shared-nothing, Lucene-backed), HTTP on 4200, PG wire on 5432.
+# Disk watermarks are raised because the lab host runs at >90% disk usage (default high watermark 90% blocks shard allocation).
+#
+# Backup strategy (`rdlab run crate --phases backup`): fs repository on the shared `crate-backups` volume (path.repo),
+#   CREATE SNAPSHOT ... ALL (segment copies, incremental by construction), RESTORE SNAPSHOT with schema rename.
+# Logging strategy: stats.enabled + sys.jobs_log (every statement, in memory) and stats.jobs_log_persistent_filter
+#   (jobs slower than 100 ms written as JSON to the server log = docker logs); Docker json-file rotation everywhere.
+name: rdlab-crate
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-crate: &crate
+  image: crate:latest
+  logging: *logging
+  environment:
+    CRATE_HEAP_SIZE: 2g
+  ulimits:
+    memlock: { soft: -1, hard: -1 }
+    nofile: { soft: 262144, hard: 262144 }
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fs http://127.0.0.1:4200/ >/dev/null"]
+    interval: 3s
+    timeout: 3s
+    retries: 60
+
+services:
+  volumes-init:
+    image: crate:latest
+    container_name: rdlab-crate-volumes-init
+    user: root
+    entrypoint: ["sh", "-c", "chmod 1777 /backups && echo volumes ready"]
+    volumes: [crate-backups:/backups]
+    logging: *logging
+    restart: "no"
+  crate1:
+    <<: *crate
+    container_name: rdlab-crate-1
+    hostname: crate1
+    command: crate -Ccluster.name=lab -Cnode.name=crate1 -Cnetwork.host=0.0.0.0 -Cdiscovery.seed_hosts=crate1,crate2,crate3 -Ccluster.initial_master_nodes=crate1,crate2,crate3 -Cgateway.expected_data_nodes=3 -Cgateway.recover_after_data_nodes=2 -Ccluster.routing.allocation.disk.watermark.low=97% -Ccluster.routing.allocation.disk.watermark.high=98% -Ccluster.routing.allocation.disk.watermark.flood_stage=99% -Chttp.cors.enabled=true -Chttp.cors.allow-origin="*" -Cpath.repo=/backups -Cstats.enabled=true -Cstats.jobs_log_size=20000 -Cstats.jobs_log_expiration=1h "-Cstats.jobs_log_persistent_filter=ended::bigint - started::bigint > 100"
+    volumes: [crate1:/data, crate-backups:/backups]
+    ports: ["14200:4200", "15439:5432"]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+  crate2:
+    <<: *crate
+    container_name: rdlab-crate-2
+    hostname: crate2
+    command: crate -Ccluster.name=lab -Cnode.name=crate2 -Cnetwork.host=0.0.0.0 -Cdiscovery.seed_hosts=crate1,crate2,crate3 -Ccluster.initial_master_nodes=crate1,crate2,crate3 -Cgateway.expected_data_nodes=3 -Cgateway.recover_after_data_nodes=2 -Ccluster.routing.allocation.disk.watermark.low=97% -Ccluster.routing.allocation.disk.watermark.high=98% -Ccluster.routing.allocation.disk.watermark.flood_stage=99% -Cpath.repo=/backups -Cstats.enabled=true -Cstats.jobs_log_size=20000 -Cstats.jobs_log_expiration=1h "-Cstats.jobs_log_persistent_filter=ended::bigint - started::bigint > 100"
+    volumes: [crate2:/data, crate-backups:/backups]
+    ports: ["14201:4200"]
+  crate3:
+    <<: *crate
+    container_name: rdlab-crate-3
+    hostname: crate3
+    command: crate -Ccluster.name=lab -Cnode.name=crate3 -Cnetwork.host=0.0.0.0 -Cdiscovery.seed_hosts=crate1,crate2,crate3 -Ccluster.initial_master_nodes=crate1,crate2,crate3 -Cgateway.expected_data_nodes=3 -Cgateway.recover_after_data_nodes=2 -Ccluster.routing.allocation.disk.watermark.low=97% -Ccluster.routing.allocation.disk.watermark.high=98% -Ccluster.routing.allocation.disk.watermark.flood_stage=99% -Cpath.repo=/backups -Cstats.enabled=true -Cstats.jobs_log_size=20000 -Cstats.jobs_log_expiration=1h "-Cstats.jobs_log_persistent_filter=ended::bigint - started::bigint > 100"
+    volumes: [crate3:/data, crate-backups:/backups]
+    ports: ["14202:4200"]
+
+volumes:
+  crate1:
+  crate2:
+  crate3:
+  crate-backups:

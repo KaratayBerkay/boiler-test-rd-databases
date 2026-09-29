@@ -1,0 +1,15 @@
+Select Expression
+    -> Sort (record length: 92, key length: 20)
+        -> Filter
+            -> Window
+                -> Window Partition
+                    -> Record Buffer (record length: 90)
+                        -> Sort (record length: 108, key length: 28)
+                            -> Window Partition
+                                -> Window Buffer
+                                    -> Record Buffer (record length: 49)
+                                        -> Filter
+                                            -> Table "ORDERS" as "T ORDERS" Access By ID
+                                                -> Bitmap
+                                                    -> Index "RDB$FOREIGN6" Range Scan (upper bound: 1/1)
+fetches=11036244 reads=7608

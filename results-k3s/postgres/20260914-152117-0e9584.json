@@ -1,0 +1,372 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260914-152117-0e9584",
+  "started": "2026-09-14T12:21:17+00:00",
+  "scale": 1.0,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "replication": {
+      "kind": "physical streaming (async, slot)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "10.42.0.33/32",
+                "streaming",
+                "async",
+                0.0,
+                0.00033,
+                0.000762,
+                0.000775
+              ]
+            ],
+            "current_lsn": "0/150000D8",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        },
+        "replica": {
+          "role_reported": "replica",
+          "role_configured": "replica",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": true,
+            "wal_receiver": [
+              "streaming",
+              "primary",
+              "0/150000D8",
+              "0/150000D8",
+              43.925127
+            ],
+            "last_replay_lsn": "0/150000D8"
+          }
+        },
+        "pgbouncer": {
+          "role_reported": "primary",
+          "role_configured": "proxy",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "10.42.0.33/32",
+                "streaming",
+                "async",
+                0.0,
+                0.00033,
+                0.000762,
+                0.000775
+              ]
+            ],
+            "current_lsn": "0/150000D8",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        },
+        "haproxy-ro": {
+          "role_reported": "replica",
+          "role_configured": "proxy",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": true,
+            "wal_receiver": [
+              "streaming",
+              "primary",
+              "0/150000D8",
+              "0/150000D8",
+              44.075935
+            ],
+            "last_replay_lsn": "0/150000D8"
+          }
+        }
+      },
+      "visibility_lag": {
+        "replica": {
+          "replica": "replica",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 0.4663600120693445,
+            "p50": 0.9057335264515132,
+            "p90": 6.576652021612979,
+            "p95": 13.216798641951742,
+            "p99": 19.751717915642082,
+            "max": 21.626139001455158,
+            "mean": 3.0169489638259015,
+            "stdev": 4.691212187318014
+          }
+        }
+      },
+      "write_rejection": {
+        "replica": {
+          "replica": "replica",
+          "writes_rejected": true,
+          "error_code": "25006",
+          "error": "ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 2.46,
+        "rows_per_s": 8131,
+        "catchup_ms_after_last_commit": {
+          "replica": 33.6
+        },
+        "samples": [
+          {
+            "t": 342596.166,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.014527
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.190858,
+              "last_replay_lsn": "0/15029588"
+            }
+          },
+          {
+            "t": 342596.427,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.038511
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.061451,
+              "last_replay_lsn": "0/1506CEE8"
+            }
+          },
+          {
+            "t": 342596.684,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 69752.0,
+                "replay_lag_s": 0.000488
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.103632,
+              "last_replay_lsn": "0/150B0810"
+            }
+          },
+          {
+            "t": 342596.943,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 58016.0,
+                "replay_lag_s": 0.037012
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.138539,
+              "last_replay_lsn": "0/15103FE8"
+            }
+          },
+          {
+            "t": 342597.204,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 69776.0,
+                "replay_lag_s": 0.012255
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.122587,
+              "last_replay_lsn": "0/15137D40"
+            }
+          },
+          {
+            "t": 342597.462,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 69016.0,
+                "replay_lag_s": 0.027357
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.054858,
+              "last_replay_lsn": "0/1518C6F8"
+            }
+          },
+          {
+            "t": 342597.722,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.035477
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.091336,
+              "last_replay_lsn": "0/151BF288"
+            }
+          },
+          {
+            "t": 342597.978,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.029134
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.080005,
+              "last_replay_lsn": "0/15202EA8"
+            }
+          },
+          {
+            "t": 342598.234,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 73944.0,
+                "replay_lag_s": 0.044935
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.097156,
+              "last_replay_lsn": "0/152467D0"
+            }
+          },
+          {
+            "t": 342598.49,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 68992.0,
+                "replay_lag_s": 0.000471
+              }
+            ],
+            "replica": {
+              "status": "streaming",
+              "replay_delay_s": 0.099063,
+              "last_replay_lsn": "0/1529B170"
+            }
+          }
+        ]
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 204767,
+          "qps": 51192,
+          "errors": 0,
+          "latency_ms": {
+            "n": 204767,
+            "min": 0.235508,
+            "p50": 0.587758,
+            "p90": 0.8603719999999999,
+            "p95": 0.9714638,
+            "p99": 1.2784255999999996,
+            "max": 6.206904,
+            "mean": 0.623532966938032,
+            "stdev": 0.21352569145891911
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "replica"
+          ],
+          "workers": 32,
+          "queries": 207321,
+          "qps": 51830,
+          "errors": 0,
+          "latency_ms": {
+            "n": 207321,
+            "min": 0.230154,
+            "p50": 0.574056,
+            "p90": 0.869812,
+            "p95": 0.986771,
+            "p99": 1.3027533999999994,
+            "max": 6.077068,
+            "mean": 0.6157415100013988,
+            "stdev": 0.22115055628675803
+          }
+        },
+        "gain": 1.01
+      },
+      "failover": {
+        "kind": "physical streaming (async, slot)",
+        "killed": "primary",
+        "probe_table": "repl_probe",
+        "stopped_at": 0.0,
+        "write_error_after_kill": "ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction",
+        "promote_error": "EngineError: promote failed rc=1: Defaulted container \"replica\" out of: replica, wait-primary (init) pg_ctl: cannot be run as root Please log in (using, e.g., \"su\") as the (unprivileged) user that will own the server process. command terminated with exit code 1",
+        "write_attempts_until_success": 549,
+        "last_error_before_success": "ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction",
+        "downtime_ms": null,
+        "new_primary": "replica",
+        "verified_via": "replica",
+        "new_primary_role": "replica",
+        "new_primary_status": {
+          "in_recovery": true,
+          "wal_receiver": null,
+          "last_replay_lsn": "0/160000A0"
+        },
+        "old_primary_restart_error": "RuntimeError: no pod with rdlab.io/container=rdlab-pg-primary (is the stack deployed? kubectl get pod -A -l rdlab.io/container=rdlab-pg-primary)"
+      },
+      "_seconds": 170.4
+    }
+  },
+  "harness_log": "results-k3s/logs/postgres/20260914-152117-0e9584.log",
+  "finished": "2026-09-14T12:24:08+00:00"
+}

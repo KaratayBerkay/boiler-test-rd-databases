@@ -1,0 +1,4 @@
+Fetch[id, customer_id, ordered_at] (rows=50)
+  └ Limit[50::bigint;100000::bigint] (rows=50)
+    └ OrderBy[ordered_at ASC id ASC] (rows=200000)
+      └ Collect[doc.orders | [_fetchid, id, ordered_at] | true] (rows=200000)

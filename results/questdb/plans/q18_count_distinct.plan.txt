@@ -1,0 +1,8 @@
+Count
+    Async JIT Group By workers: 27
+      keys: [customer_id]
+      filter: customer_id!=null
+        PageFrame
+            Row forward scan
+            Interval forward scan on: events
+              intervals: [("2025-01-01T00:00:00.000000Z","MAX")]

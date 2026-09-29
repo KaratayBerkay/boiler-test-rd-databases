@@ -1,0 +1,9 @@
+Sort  (cost=15.17..15.20 rows=11 width=4)
+  Sort Key: id
+  ->  Bitmap Heap Scan on orders  (cost=2.87..14.98 rows=11 width=4)
+        Recheck Cond: ((customer_id = '3706'::smallint) OR (id = 56738))
+        ->  BitmapOr  (cost=2.87..2.87 rows=11 width=0)
+              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..1.47 rows=10 width=0)
+                    Index Cond: (customer_id = '3706'::smallint)
+              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..1.40 rows=1 width=0)
+                    Index Cond: (id = 56738)

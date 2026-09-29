@@ -1,0 +1,190 @@
+# PostgreSQL 18 — primary + hot-standby streaming replica (physical, async) + PgBouncer (transaction pooling)
+# + HAProxy round-robin read endpoint. Image is the official postgres:18 build plus the pgvector extension.
+#
+# Backup strategy (exercised by `rdlab run postgres --phases backup`):
+#   - WAL archiving into the shared `pg-backups` volume (archive_mode=on, archive_command -> /backups/wal/%f)
+#   - summarize_wal=on so pg_basebackup --incremental (PG17+) works; pg_dump/pg_basebackup/pg_combinebackup write to /backups
+#   - restore drills run in a throw-away container that mounts the same volume (see harness/rdlab/backup/pg.py)
+# Logging strategy (init/02-logging.sh appends it to postgresql.conf so ALTER SYSTEM can tune it at runtime):
+#   - logging_collector=on with log_destination=stderr,jsonlog -> /var/lib/postgresql/log/postgresql-<date>.{log,json}
+#     (structured JSON for log shippers; rotated daily / 100 MB), slow statements >= 100 ms, lock waits, temp files,
+#     checkpoints, connection lifecycle (PG18 log_connections list form), auto_explain JSON plans for statements >= 500 ms
+#   - every container's stdout/stderr goes to the Docker json-file driver with rotation (x-logging)
+name: rdlab-postgres
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+
+services:
+  backup-init:
+    # one-shot: make the shared backup volume writable by the postgres user (uid 999) of every container
+    image: pgvector/pgvector:pg18
+    container_name: rdlab-pg-backup-init
+    entrypoint: ["sh", "-c", "mkdir -p /backups/wal && chmod 1777 /backups /backups/wal && echo backups ready"]
+    volumes: [pg-backups:/backups]
+    logging: *logging
+    restart: "no"
+
+  primary:
+    image: pgvector/pgvector:pg18
+    container_name: rdlab-pg-primary
+    logging: *logging
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: labpass
+      POSTGRES_DB: lab
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      REPL_PASSWORD: replpass
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - hot_standby=on
+      - -c
+      - synchronous_commit=on
+      - -c
+      - shared_buffers=2GB
+      - -c
+      - work_mem=64MB
+      - -c
+      - maintenance_work_mem=512MB
+      - -c
+      - effective_cache_size=8GB
+      - -c
+      - max_connections=300
+      - -c
+      - track_io_timing=on
+      - -c
+      - max_wal_size=4GB
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - jit=off
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=test ! -f /backups/wal/%f && cp %p /backups/wal/%f
+      - -c
+      - archive_timeout=60
+      - -c
+      - summarize_wal=on
+      - -c
+      - wal_summary_keep_time=1d
+      - -c
+      - shared_preload_libraries=pg_stat_statements,auto_explain
+      - -c
+      - pg_stat_statements.track=all
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d:ro
+      - pg-primary:/var/lib/postgresql
+      - pg-backups:/backups
+    ports:
+      - "15432:5432"
+    depends_on:
+      backup-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d lab"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    shm_size: 1g
+
+  replica:
+    image: pgvector/pgvector:pg18
+    container_name: rdlab-pg-replica
+    logging: *logging
+    environment:
+      PGDATA: /var/lib/postgresql/18/docker
+      PGPASSWORD: replpass
+    # Take a base backup from the primary on first start (creates a replication slot + standby.signal),
+    # then run as a hot standby. Runs as root only to fix ownership, then drops to postgres via gosu.
+    command:
+      - bash
+      - -ec
+      - |
+        mkdir -p "$$PGDATA" && chown postgres:postgres "$$PGDATA" && chmod 700 "$$PGDATA"
+        if [ ! -s "$$PGDATA/PG_VERSION" ]; then
+          until gosu postgres pg_basebackup -h primary -p 5432 -U replicator -D "$$PGDATA" -Fp -Xs -R -C -S replica1 -v; do
+            echo "waiting for primary..."; rm -rf "$$PGDATA"/*; sleep 2; done
+        fi
+        exec gosu postgres postgres -c hot_standby=on -c hot_standby_feedback=on -c shared_buffers=2GB -c work_mem=64MB \
+             -c max_connections=300 -c shared_preload_libraries=pg_stat_statements,auto_explain -c track_io_timing=on -c random_page_cost=1.1 -c jit=off
+        # (logging settings come with postgresql.conf cloned from the primary: init/02-logging.sh)
+    volumes:
+      - pg-replica:/var/lib/postgresql
+      - pg-backups:/backups
+    ports:
+      - "15433:5432"
+    depends_on:
+      primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d lab && psql -U lab -d lab -tAc 'select pg_is_in_recovery()' | grep -q t"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    shm_size: 1g
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: rdlab-pg-pgbouncer
+    logging: *logging
+    environment:
+      DB_HOST: primary
+      DB_PORT: "5432"
+      DB_USER: lab
+      DB_PASSWORD: labpass
+      DB_NAME: lab
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "5000"
+      DEFAULT_POOL_SIZE: "20"
+      MIN_POOL_SIZE: "5"
+      RESERVE_POOL_SIZE: "5"
+      MAX_PREPARED_STATEMENTS: "200"
+      SERVER_RESET_QUERY: DISCARD ALL
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,options
+      ADMIN_USERS: lab
+      STATS_USERS: lab
+    ports:
+      - "16432:5432"
+    depends_on:
+      primary:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 5432 -U lab"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  haproxy:
+    image: haproxy:lts
+    container_name: rdlab-pg-haproxy
+    logging: *logging
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "15000:5000"   # write endpoint -> primary
+      - "15001:5001"   # read endpoint  -> round-robin primary+replica
+      - "18404:8404"   # stats
+    depends_on:
+      primary:
+        condition: service_healthy
+      replica:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pg-primary:
+  pg-replica:
+  pg-backups:

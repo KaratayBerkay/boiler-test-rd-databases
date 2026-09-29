@@ -1,0 +1,4 @@
+-> Limit: 50 row(s)  (cost=1.1 rows=1) (actual time=5.5..5.56 rows=50 loops=1)
+    -> Sort row IDs: products.id, limit input to 50 row(s) per chunk  (cost=1.1 rows=1) (actual time=5.5..5.55 rows=50 loops=1)
+        -> Filter: (match products.`description` against ('bluetooth waterproof'))  (cost=1.1 rows=1) (actual time=0.479..5.23 rows=2020 loops=1)
+            -> Full-text index search on products using ft_products_description (description = 'bluetooth waterproof')  (cost=1.1 rows=1) (actual time=0.478..5.04 rows=2020 loops=1)

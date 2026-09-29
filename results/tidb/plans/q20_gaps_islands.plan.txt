@@ -1,0 +1,11 @@
+Sort_14 | 1586.85 | root |  | lab.events.customer_id
+└─Projection_16 | 1586.85 | root |  | lab.events.customer_id, Column#13
+  └─HashAgg_17 | 1586.85 | root |  | group by:lab.events.customer_id, funcs:count(1)->Column#13, funcs:firstrow(lab.events.customer_id)->lab.events.customer_id
+    └─Selection_19 | 79925.96 | root |  | eq(case(or(isnull(Column#8), gt(timestampdiff("SECOND", Column#8, lab.events.occurred_at), 1800)), 1, 0), 1)
+      └─Shuffle_28 | 99907.45 | root |  | execution info: concurrency:5, data sources:[TableReader_23]
+        └─Window_20 | 99907.45 | root |  | lag(lab.events.occurred_at)->Column#8 over(partition by lab.events.customer_id order by lab.events.occurred_at, lab.events.id)
+          └─Sort_27 | 99907.45 | root |  | lab.events.customer_id, lab.events.occurred_at, lab.events.id
+            └─ShuffleReceiver_33 | 99907.45 | root |  | 
+              └─TableReader_23 | 99907.45 | root |  | data:Selection_22
+                └─Selection_22 | 99907.45 | cop[tikv] |  | le(lab.events.customer_id, 2000)
+                  └─TableFullScan_21 | 1000000.00 | cop[tikv] | table:events | keep order:false, stats:partial[id:unInitialized]

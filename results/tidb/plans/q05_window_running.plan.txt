@@ -1,0 +1,10 @@
+Projection_31 | 24527.11 | root |  | Column#8, Column#7, Column#12, Column#11
+└─Window_32 | 24527.11 | root |  | sum(Column#7)->Column#12 over(order by Column#8 rows between unbounded preceding and current row)
+  └─Window_16 | 24527.11 | root |  | lag(Column#7, 1)->Column#11 over(order by Column#8)
+    └─Sort_29 | 24527.11 | root |  | Column#8
+      └─Projection_18 | 24527.11 | root |  | date(lab.orders.ordered_at)->Column#8, Column#7
+        └─HashAgg_24 | 24527.11 | root |  | group by:Column#14, funcs:sum(Column#15)->Column#7, funcs:firstrow(Column#16)->lab.orders.ordered_at
+          └─TableReader_25 | 24527.11 | root |  | data:HashAgg_19
+            └─HashAgg_19 | 24527.11 | cop[tikv] |  | group by:date(lab.orders.ordered_at), funcs:sum(lab.orders.total_amount)->Column#15, funcs:firstrow(lab.orders.ordered_at)->Column#16
+              └─Selection_23 | 24861.24 | cop[tikv] |  | ge(lab.orders.ordered_at, 2025-01-01 00:00:00), lt(lab.orders.ordered_at, 2025-04-01 00:00:00)
+                └─TableFullScan_22 | 200000.00 | cop[tikv] | table:orders | keep order:false

@@ -1,0 +1,13 @@
+distribution: local
+
+• group (scalar)
+│ estimated row count: 1
+│
+└── • filter
+    │ estimated row count: 22,222
+    │ filter: (extract('year', ordered_at) = 2025.0) AND (extract('month', ordered_at) = 5.0)
+    │
+    └── • scan
+          estimated row count: 200,000 (100% of the table; stats collected 5 minutes ago)
+          table: orders@orders_pkey
+          spans: FULL SCAN

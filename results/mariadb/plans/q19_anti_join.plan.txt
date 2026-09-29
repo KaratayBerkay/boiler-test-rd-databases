@@ -1,0 +1,2 @@
+1 | SIMPLE | p | index | None | PRIMARY | 4 | None | 4874 | 
+1 | SIMPLE | oi | ref | ix_order_items_product_id | ix_order_items_product_id | 4 | lab.p.id | 95 | Using where; Using index; Not exists

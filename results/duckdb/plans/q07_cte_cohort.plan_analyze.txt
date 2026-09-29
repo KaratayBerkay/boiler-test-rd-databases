@@ -1,0 +1,153 @@
+analyzed_plan | ┌─────────────────────────────────────┐
+│┌───────────────────────────────────┐│
+││    Query Profiling Information    ││
+│└───────────────────────────────────┘│
+└─────────────────────────────────────┘
+EXPLAIN ANALYZE WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_TRUNC('month', first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_TRUNC('month', o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, DATE_TRUNC('month', o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort
+┌────────────────────────────────────────────────┐
+│┌──────────────────────────────────────────────┐│
+││              Total Time: 0.0759s             ││
+│└──────────────────────────────────────────────┘│
+└────────────────────────────────────────────────┘
+┌───────────────────────────┐
+│           QUERY           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│      EXPLAIN_ANALYZE      │
+│    ────────────────────   │
+│                           │
+│           0 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│        c.cohort ASC       │
+│                           │
+│                           │
+│                           │
+│          22 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│         Groups: #0        │
+│                           │
+│        Aggregates:        │
+│     count(DISTINCT #1)    │
+│     count(DISTINCT #2)    │
+│                           │
+│                           │
+│                           │
+│          22 rows          │
+│           0.06s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│           cohort          │
+│        customer_id        │
+│        customer_id        │
+│                           │
+│                           │
+│                           │
+│        143,628 rows       │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│      Join Type: LEFT      │
+│                           │
+│        Conditions:        │
+│ customer_id = customer_id │
+│         cohort < m        ├──────────────┐
+│                           │              │
+│                           │              │
+│                           │              │
+│        143,628 rows       │              │
+│           0.03s           │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│         PROJECTION        ││         PROJECTION        │
+│    ────────────────────   ││    ────────────────────   │
+│        customer_id        ││__internal_decompress_integ│
+│           cohort          ││     ral_integer(#0, 1)    │
+│                           ││             #1            │
+│                           ││                           │
+│                           ││                           │
+│                           ││                           │
+│           0.00s           ││        163,618 rows       │
+│          (0.00s)          ││           0.00s           │
+└─────────────┬─────────────┘└─────────────┬─────────────┘
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│         PROJECTION        ││       HASH_GROUP_BY       │
+│    ────────────────────   ││    ────────────────────   │
+│__internal_decompress_integ││          Groups:          │
+│     ral_integer(#0, 1)    ││             #0            │
+│             #1            ││             #1            │
+│                           ││                           │
+│                           ││                           │
+│                           ││                           │
+│        20,000 rows        ││        163,618 rows       │
+│           0.00s           ││           0.07s           │
+└─────────────┬─────────────┘└─────────────┬─────────────┘
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       ││         PROJECTION        │
+│    ────────────────────   ││    ────────────────────   │
+│         Groups: #0        ││        customer_id        │
+│    Aggregates: min(#1)    ││    date_trunc('month',    │
+│                           ││         ordered_at)       │
+│                           ││                           │
+│                           ││                           │
+│                           ││                           │
+│           0.04s           ││        200,000 rows       │
+│          (0.04s)          ││           0.04s           │
+└─────────────┬─────────────┘└─────────────┬─────────────┘
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│         PROJECTION        ││         PROJECTION        │
+│    ────────────────────   ││    ────────────────────   │
+│        customer_id        ││__internal_compress_integra│
+│         ordered_at        ││     l_usmallint(#0, 1)    │
+│                           ││             #1            │
+│                           ││                           │
+│                           ││                           │
+│                           ││                           │
+│           0.00s           ││        200,000 rows       │
+│          (0.00s)          ││           0.00s           │
+└─────────────┬─────────────┘└─────────────┬─────────────┘
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│         PROJECTION        ││         TABLE_SCAN        │
+│    ────────────────────   ││    ────────────────────   │
+│__internal_compress_integra││           Table:          │
+│     l_usmallint(#0, 1)    ││      lab.main.orders      │
+│             #1            ││                           │
+│                           ││   Type: Sequential Scan   │
+│                           ││                           │
+│                           ││        Projections:       │
+│                           ││        customer_id        │
+│           0.00s           ││         ordered_at        │
+│                           ││                           │
+│                           ││                           │
+│                           ││                           │
+│        200,000 rows       ││        200,000 rows       │
+│          (0.00s)          ││           0.00s           │
+└─────────────┬─────────────┘└───────────────────────────┘
+┌─────────────┴─────────────┐
+│         TABLE_SCAN        │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.orders      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│        customer_id        │
+│         ordered_at        │
+│                           │
+│                           │
+│                           │
+│        200,000 rows       │
+│           0.00s           │
+└───────────────────────────┘

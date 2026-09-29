@@ -1,0 +1,118 @@
+{
+  "engine": "mysql",
+  "display": "MySQL 9",
+  "category": "row-store OLTP",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "mysql:9",
+  "run_id": "20260914-152723-a55587",
+  "started": "2026-09-14T12:27:23+00:00",
+  "scale": 0.3,
+  "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.18,
+          "rows_per_s": 33259,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 34254,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.11,
+          "rows_per_s": 14259,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 1.02,
+          "rows_per_s": 59035,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 3.15,
+          "rows_per_s": 46675,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 6.09,
+          "rows_per_s": 49281,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.05,
+          "rows_per_s": 114231,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at DATETIME(6) NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at DATETIME(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at DATETIME(6) NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at DATETIME(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n) ENGINE=InnoDB",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.14,
+      "load_seconds": 10.68,
+      "fts_setup": [
+        "CREATE FULLTEXT INDEX ft_products_description ON products (description)"
+      ],
+      "after_load": [
+        "ANALYZE TABLE customers",
+        "ANALYZE TABLE categories",
+        "ANALYZE TABLE products",
+        "ANALYZE TABLE orders",
+        "ANALYZE TABLE order_items",
+        "ANALYZE TABLE events",
+        "ANALYZE TABLE inventory"
+      ],
+      "post_seconds": 0.42,
+      "server_version": "9.7.2",
+      "_seconds": 11.3
+    }
+  },
+  "harness_log": "results-k3s/logs/mysql/20260914-152723-a55587.log",
+  "server_version": "9.7.2",
+  "finished": "2026-09-14T12:27:34+00:00"
+}

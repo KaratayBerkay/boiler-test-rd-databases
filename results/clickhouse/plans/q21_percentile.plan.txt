@@ -1,0 +1,18 @@
+Output: shipping_country, quantileExact(0.5)(total_amount)
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: shipping_country ASC
+└──Aggregating
+   │  Keys: shipping_country
+   │  Aggregates: quantileExact(0.5)(total_amount)
+   │  Skip merging: 0
+   └──ReadFromMergeTree (lab.orders)
+         Read type: Default
+         Parts: 1 | Granules: 7
+         Output: shipping_country, total_amount
+         Indexes:
+           PrimaryKey
+             Condition: true
+             Parts: 1/1
+             Granules: 7/7
+           Ranges: 1

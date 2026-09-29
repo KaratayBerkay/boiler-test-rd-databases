@@ -1,0 +1,1584 @@
+{
+  "engine": "oracle",
+  "display": "Oracle 23ai Free",
+  "category": "row-store OLTP",
+  "dialect": "oracle",
+  "driver": "oracledb",
+  "image": "gvenzl/oracle-free:23-slim-faststart",
+  "run_id": "20260913-004905-d56567",
+  "started": "2026-09-12T21:49:05+00:00",
+  "scale": 1.0,
+  "notes": "Oracle Database 23ai Free in the FREEPDB1 pluggable database (user lab). Free edition caps: 2 CPU threads, 2 GB SGA/PGA, 12 GB data. Data Guard (physical standby) is not available in Free, so no replica in this stack.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 1.56,
+          "rows_per_s": 12802,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 29206,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.45,
+          "rows_per_s": 11021,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 8.57,
+          "rows_per_s": 23330,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 11.08,
+          "rows_per_s": 44016,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 67.71,
+          "rows_per_s": 14769,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.29,
+          "rows_per_s": 69130,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id NUMBER(10) NOT NULL,\n  name VARCHAR2(100) NOT NULL,\n  email VARCHAR2(150) NOT NULL,\n  country_code VARCHAR2(2) NOT NULL,\n  tier VARCHAR2(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id NUMBER(10) NOT NULL,\n  parent_id NUMBER(10),\n  name VARCHAR2(100) NOT NULL,\n  depth NUMBER(10) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id NUMBER(10) NOT NULL,\n  category_id NUMBER(10) NOT NULL,\n  sku VARCHAR2(20) NOT NULL,\n  name VARCHAR2(150) NOT NULL,\n  description VARCHAR2(4000) NOT NULL,\n  price NUMBER(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id NUMBER(10) NOT NULL,\n  customer_id NUMBER(10) NOT NULL,\n  status VARCHAR2(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount NUMBER(14,2) NOT NULL,\n  shipping_country VARCHAR2(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id NUMBER(10) NOT NULL,\n  order_id NUMBER(10) NOT NULL,\n  product_id NUMBER(10) NOT NULL,\n  qty NUMBER(10) NOT NULL,\n  unit_price NUMBER(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id NUMBER(19) NOT NULL,\n  customer_id NUMBER(10) NOT NULL,\n  event_type VARCHAR2(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload JSON,\n  value_num NUMBER(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id NUMBER(10) NOT NULL,\n  warehouse_id NUMBER(10) NOT NULL,\n  qty NUMBER(10) NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.28,
+      "load_seconds": 89.84,
+      "fts_setup": [
+        "FAILED CREATE INDEX ix_products_ctx ON products (description) INDEXTYPE IS CTXSYS.CONTEXT: ORA-29833: The indextype does not exist.\nHelp: https://docs.oracle.com/error-help/db/ora-29833/"
+      ],
+      "after_load": [
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'CUSTOMERS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'CATEGORIES'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'PRODUCTS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDER_ITEMS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'EVENTS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'INVENTORY'); END;"
+      ],
+      "post_seconds": 3.52,
+      "server_version": "Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free\nVersion 23.26.3.0.0",
+      "_seconds": 93.7
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(13,)]",
+        "ms": 914.2
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "",
+        "ms": 193.4
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "virtual column",
+        "sample": "[(42,)]",
+        "ms": 86.0
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 108.7
+      },
+      "returning": {
+        "status": "error",
+        "note": "RETURNING INTO bind variable (adapter handles)",
+        "error": "DatabaseError: ORA-00911: ?: invalid character after INTO Help: https://docs.oracle.com/error-help/db/ora-00911/",
+        "error_code": "ORA-00911",
+        "ms": 83.8
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 57.1
+      },
+      "arrays": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: ORA-00923: FROM keyword not found where expected Help: https://docs.oracle.com/error-help/db/ora-00923/",
+        "error_code": "ORA-00923",
+        "ms": 42.7
+      },
+      "vector_type": {
+        "status": "supported",
+        "note": "Oracle 23ai AI Vector Search",
+        "sample": "[(0.2142857142857143,)]",
+        "ms": 104.8
+      },
+      "statement_timeout": {
+        "status": "unsupported",
+        "note": "no session-level statement timeout (needs resource manager)",
+        "detail": "no error raised",
+        "ms": 2055.1
+      },
+      "filter_clause": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(140061,)]",
+        "ms": 78.1
+      },
+      "distinct_on": {
+        "status": "unsupported",
+        "note": "",
+        "error": "DatabaseError: ORA-00936: missing expression Help: https://docs.oracle.com/error-help/db/ora-00936/",
+        "error_code": "ORA-00936",
+        "ms": 43.8
+      },
+      "qualify": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,), (2,)]",
+        "ms": 49.0
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "ORA-02290",
+        "detail": "IntegrityError: ORA-02290: check constraint (LAB.SYS_C008768) violated Help: https://docs.oracle.com/error-help/db/ora-02290/",
+        "ms": 85.3
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "ORA-02291",
+        "detail": "IntegrityError: ORA-02291: integrity constraint (LAB.SYS_C008752) violated - parent key not found Help: https://docs.oracle.com/error-help/db/ora-02291/",
+        "ms": 40.8
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 80.8
+      },
+      "temporal_query": {
+        "status": "supported",
+        "note": "Flashback Query",
+        "sample": "[(200000,)]",
+        "ms": 57.3
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[('[{\"id\":1,\"name\":\"Category 1\"},{\"id\":2,\"name\":\"Category 2\"},{\"id\":3,\"name\":\"Category 3\"}]',)]",
+        "ms": 42.9
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 45.3
+      },
+      "isolation_repeatable_read": {
+        "status": "error",
+        "note": "",
+        "error": "DatabaseError: ORA-02179: valid options: ISOLATION LEVEL { SERIALIZABLE | READ COMMITTED } Help: https://docs.oracle.com/error-help/db/ora-02179/",
+        "error_code": "ORA-02179",
+        "ms": 42.4
+      },
+      "isolation_read_uncommitted": {
+        "status": "error",
+        "note": "",
+        "error": "DatabaseError: ORA-02179: valid options: ISOLATION LEVEL { SERIALIZABLE | READ COMMITTED } Help: https://docs.oracle.com/error-help/db/ora-02179/",
+        "error_code": "ORA-02179",
+        "ms": 41.5
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 56.5
+      },
+      "boolean_type": {
+        "status": "supported",
+        "note": "23ai",
+        "sample": "[(1,)]",
+        "ms": 80.8
+      },
+      "_seconds": 4.4
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 FROM DUAL",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.378,
+          "p50": 0.398,
+          "p90": 0.432,
+          "p95": 0.441,
+          "p99": 0.447,
+          "max": 0.448,
+          "mean": 0.402,
+          "stdev": 0.02,
+          "first_ms": 1.148
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 1388734953\n \n-----------------------------------------------------------------\n| Id  | Operation        | Name | Rows  | Cost (%CPU)| Time     |\n-----------------------------------------------------------------\n|   0 | SELECT STATEMENT |      |     1 |     2   (0)| 00:00:01 |\n|   1 |  FAST DUAL       |      |     1 |     2   (0)| 00:00:01 |\n-----------------------------------------------------------------",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.417,
+          "p50": 0.454,
+          "p90": 0.488,
+          "p95": 0.53,
+          "p99": 0.569,
+          "max": 0.571,
+          "mean": 0.459,
+          "stdev": 0.035,
+          "first_ms": 3.611
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 1606865760\n \n-------------------------------------------------------------------------------------------\n| Id  | Operation                   | Name        | Rows  | Bytes | Cost (%CPU)| Time     |\n-------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT            |             |     1 |    47 |     2   (0)| 00:00:01 |\n|   1 |  TABLE ACCESS BY INDEX ROWID| CUSTOMERS   |     1 |    47 |     2   (0)| 00:00:01 |\n|*  2 |   INDEX UNIQUE SCAN         | SYS_C008723 |     1 |       |     1   (0)| 00:00:01 |\n-------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - access(\"ID\"=:1)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id FETCH FIRST 500 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.85,
+          "p50": 11.802,
+          "p90": 13.019,
+          "p95": 13.448,
+          "p99": 13.792,
+          "max": 13.878,
+          "mean": 12.014,
+          "stdev": 0.9,
+          "first_ms": 54.244
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 399652421\n \n----------------------------------------------------------------------------------\n| Id  | Operation               | Name   | Rows  | Bytes | Cost (%CPU)| Time     |\n----------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT        |        |   383 |  9575 |   309   (1)| 00:00:01 |\n|*  1 |  COUNT STOPKEY          |        |       |       |            |          |\n|   2 |   VIEW                  |        |   383 |  9575 |   309   (1)| 00:00:01 |\n|*  3 |    SORT ORDER BY STOPKEY|        |   383 | 13788 |   309   (1)| 00:00:01 |\n|*  4 |     TABLE ACCESS FULL   | ORDERS |   383 | 13788 |   308   (1)| 00:00:01 |\n----------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   1 - filter(ROWNUM<=500)\n   3 - filter(ROWNUM<=500)\n   4 - filter(\"STATUS\"='delivered' AND \"ORDERED_AT\">=TIMESTAMP' \n              2025-03-01 00:00:00.000000000' AND \"ORDERED_AT\"<TIMESTAMP' 2025-03-08 \n              00:00:00.000000000')",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, TRUNC(o.ordered_at, 'MM') AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, TRUNC(o.ordered_at, 'MM') ORDER BY revenue DESC, c.country_code, month_start FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 96.443,
+          "p50": 98.603,
+          "p90": 102.822,
+          "p95": 102.901,
+          "p99": 102.964,
+          "max": 102.98,
+          "mean": 99.073,
+          "stdev": 2.246,
+          "first_ms": 119.369
+        },
+        "rows": 50,
+        "checksum": "4b01a7659958ecf823e8a1bc",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 3828704173\n \n-------------------------------------------------------------------------------------------------\n| Id  | Operation                 | Name        | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n-------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT          |             |    50 |  1900 |       |  1641   (1)| 00:00:01 |\n|*  1 |  COUNT STOPKEY            |             |       |       |       |            |          |\n|   2 |   VIEW                    |             | 23912 |   887K|       |  1641   (1)| 00:00:01 |\n|*  3 |    SORT ORDER BY STOPKEY  |             | 23912 |   630K|   952K|  1641   (1)| 00:00:01 |\n|   4 |     HASH GROUP BY         |             | 23912 |   630K|   952K|  1641   (1)| 00:00:01 |\n|   5 |      VIEW                 | VW_DAG_0    | 23912 |   630K|       |  1271   (1)| 00:00:01 |\n|   6 |       HASH GROUP BY       |             | 23912 |  1214K|  1520K|  1271   (1)| 00:00:01 |\n|*  7 |        HASH JOIN          |             | 23912 |  1214K|       |   959   (1)| 00:00:01 |\n|*  8 |         HASH JOIN         |             |  9905 |   377K|       |   445   (1)| 00:00:01 |\n|*  9 |          TABLE ACCESS FULL| ORDERS      |  9905 |   299K|       |   308   (1)| 00:00:01 |\n|  10 |          TABLE ACCESS FULL| CUSTOMERS   | 20000 |   156K|       |   136   (0)| 00:00:01 |\n|  11 |         TABLE ACCESS FULL | ORDER_ITEMS |   487K|  6190K|       |   514   (1)| 00:00:01 |\n-------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   1 - filter(ROWNUM<=50)\n   3 - filter(ROWNUM<=50)\n   7 - access(\"OI\".\"ORDER_ID\"=\"O\".\"ID\")\n   8 - access(\"C\".\"ID\"=\"O\".\"CUSTOMER_ID\")\n   9 - filter(\"O\".\"STATUS\"='delivered' AND \"O\".\"ORDERED_AT\">=TIMESTAMP' 2025-01-01 \n              00:00:00.000000000' AND \"O\".\"ORDERED_AT\"<TIMESTAMP' 2025-07-01 00:00:00.000000000')\n \nNote\n-----\n   - this is an adaptive plan",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 103.435,
+          "p50": 108.576,
+          "p90": 113.34,
+          "p95": 115.317,
+          "p99": 116.899,
+          "max": 117.295,
+          "mean": 108.943,
+          "stdev": 3.844,
+          "first_ms": 128.986
+        },
+        "rows": 600,
+        "checksum": "986ed69cebeb672412400330",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 381646615\n \n---------------------------------------------------------------------------------------------------------------\n| Id  | Operation                   | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n---------------------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT            |                         |   600 | 20400 |       |  9415   (1)| 00:00:01 |\n|   1 |  SORT ORDER BY              |                         |   600 | 20400 |       |  9415   (1)| 00:00:01 |\n|*  2 |   VIEW                      |                         |   600 | 20400 |       |  9414   (1)| 00:00:01 |\n|*  3 |    WINDOW SORT PUSHED RANK  |                         |   487K|  9523K|    14M|  9414   (1)| 00:00:01 |\n|   4 |     HASH GROUP BY           |                         |   487K|  9523K|    14M|  9414   (1)| 00:00:01 |\n|*  5 |      HASH JOIN              |                         |   487K|  9523K|       |   542   (1)| 00:00:01 |\n|   6 |       VIEW                  | index$_join$_003        |  5000 | 40000 |       |    27   (0)| 00:00:01 |\n|*  7 |        HASH JOIN            |                         |       |       |       |            |          |\n|   8 |         INDEX FAST FULL SCAN| SYS_C008735             |  5000 | 40000 |       |    13   (0)| 00:00:01 |\n|   9 |         INDEX FAST FULL SCAN| IX_PRODUCTS_CATEGORY_ID |  5000 | 40000 |       |    21   (0)| 00:00:01 |\n|  10 |       TABLE ACCESS FULL     | ORDER_ITEMS             |   487K|  5714K|       |   514   (1)| 00:00:01 |\n---------------------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - filter(\"RN\"<=3)\n   3 - filter(ROW_NUMBER() OVER ( PARTITION BY \"P\".\"CATEGORY_ID\" ORDER BY \n              SUM(\"OI\".\"QTY\"*\"OI\".\"UNIT_PRICE\") DESC ,\"OI\".\"PRODUCT_ID\")<=3)\n   5 - access(\"P\".\"ID\"=\"OI\".\"PRODUCT_ID\")\n   7 - access(ROWID=ROWID)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT TRUNC(ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY TRUNC(ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 16.692,
+          "p50": 17.696,
+          "p90": 20.964,
+          "p95": 23.04,
+          "p99": 24.702,
+          "max": 25.117,
+          "mean": 18.722,
+          "stdev": 2.453,
+          "first_ms": 21.379
+        },
+        "rows": 90,
+        "checksum": "c8ae02ac345d69866918ac71",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 537536444\n \n--------------------------------------------------------------------------------------\n| Id  | Operation           | Name   | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n--------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT    |        | 24454 |   382K|       |   442   (1)| 00:00:01 |\n|   1 |  WINDOW SORT        |        | 24454 |   382K|   592K|   442   (1)| 00:00:01 |\n|   2 |   HASH GROUP BY     |        | 24454 |   382K|   592K|   442   (1)| 00:00:01 |\n|*  3 |    TABLE ACCESS FULL| ORDERS | 24625 |   384K|       |   308   (1)| 00:00:01 |\n--------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   3 - filter(\"ORDERED_AT\">=TIMESTAMP' 2025-01-01 00:00:00.000000000' AND \n              \"ORDERED_AT\"<TIMESTAMP' 2025-04-01 00:00:00.000000000')",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS VARCHAR2(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(t.path || ' > ' || c.name AS VARCHAR2(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.056,
+          "p50": 2.706,
+          "p90": 3.043,
+          "p95": 3.085,
+          "p99": 3.119,
+          "max": 3.127,
+          "mean": 2.677,
+          "stdev": 0.327,
+          "first_ms": 6.177
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 27387631\n \n-----------------------------------------------------------------------------------------------------------------\n| Id  | Operation                                  | Name       | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n-----------------------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT                           |            |  3857 |   858K|       |   220   (1)| 00:00:01 |\n|   1 |  SORT ORDER BY                             |            |  3857 |   858K|   920K|   220   (1)| 00:00:01 |\n|   2 |   VIEW                                     |            |  3857 |   858K|       |    27   (0)| 00:00:01 |\n|   3 |    UNION ALL (RECURSIVE WITH) BREADTH FIRST|            |       |       |       |            |          |\n|*  4 |     TABLE ACCESS FULL                      | CATEGORIES |    10 |   210 |       |     3   (0)| 00:00:01 |\n|*  5 |     HASH JOIN                              |            |  3847 |   935K|       |    24   (0)| 00:00:01 |\n|   6 |      BUFFER SORT (REUSE)                   |            |       |       |       |            |          |\n|   7 |       TABLE ACCESS FULL                    | CATEGORIES |   200 |  4200 |       |     3   (0)| 00:00:01 |\n|   8 |      RECURSIVE WITH PUMP                   |            |       |       |       |            |          |\n-----------------------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   4 - filter(\"PARENT_ID\" IS NULL)\n   5 - access(\"C\".\"PARENT_ID\"=\"T\".\"ID\")",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, TRUNC(first_at, 'MM') AS cohort FROM first_orders), activity AS (SELECT o.customer_id, TRUNC(o.ordered_at, 'MM') AS m FROM orders o GROUP BY o.customer_id, TRUNC(o.ordered_at, 'MM')) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 190.376,
+          "p50": 194.476,
+          "p90": 211.299,
+          "p95": 213.973,
+          "p99": 216.111,
+          "max": 216.646,
+          "mean": 198.573,
+          "stdev": 8.249,
+          "first_ms": 206.054
+        },
+        "rows": 22,
+        "checksum": "8560c89b626435e14906c6cd",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 3250912580\n \n-----------------------------------------------------------------------------------------\n| Id  | Operation              | Name   | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n-----------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT       |        | 20128 |   432K|       |  2401   (1)| 00:00:01 |\n|   1 |  SORT ORDER BY         |        | 20128 |   432K|   640K|  2401   (1)| 00:00:01 |\n|   2 |   HASH GROUP BY        |        | 20128 |   432K|   640K|  2401   (1)| 00:00:01 |\n|*  3 |    HASH JOIN OUTER     |        | 20128 |   432K|       |  2129   (1)| 00:00:01 |\n|   4 |     VIEW               |        | 20128 |   216K|       |   756   (1)| 00:00:01 |\n|   5 |      HASH GROUP BY     |        | 20128 |   314K|  4720K|   756   (1)| 00:00:01 |\n|   6 |       TABLE ACCESS FULL| ORDERS |   200K|  3125K|       |   308   (1)| 00:00:01 |\n|   7 |     VIEW               |        |   200K|  2148K|       |  1373   (1)| 00:00:01 |\n|   8 |      HASH GROUP BY     |        |   200K|  3125K|  4720K|  1373   (1)| 00:00:01 |\n|   9 |       TABLE ACCESS FULL| ORDERS |   200K|  3125K|       |   308   (1)| 00:00:01 |\n-----------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   3 - access(\"A\".\"CUSTOMER_ID\"(+)=\"C\".\"CUSTOMER_ID\")\n       filter(INTERNAL_FUNCTION(\"A\".\"M\"(+))>INTERNAL_FUNCTION(\"C\".\"COHORT\"))",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id FETCH FIRST 200 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 30.653,
+          "p50": 34.014,
+          "p90": 37.116,
+          "p95": 39.775,
+          "p99": 41.901,
+          "max": 42.433,
+          "mean": 34.378,
+          "stdev": 3.317,
+          "first_ms": 97.757
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 3944136729\n \n------------------------------------------------------------------------------------------------------------------\n| Id  | Operation                                | Name                  | Rows  | Bytes | Cost (%CPU)| Time     |\n------------------------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT                         |                       |   200 |  5400 |  1975   (0)| 00:00:01 |\n|*  1 |  COUNT STOPKEY                           |                       |       |       |            |          |\n|   2 |   VIEW                                   |                       |   201 |  5427 |  1975   (0)| 00:00:01 |\n|   3 |    NESTED LOOPS SEMI                     |                       |   201 |  8643 |   190   (0)| 00:00:01 |\n|   4 |     TABLE ACCESS BY INDEX ROWID          | CUSTOMERS             | 20000 |   527K|     3   (0)| 00:00:01 |\n|*  5 |      INDEX FULL SCAN                     | SYS_C008723           |    17 |       |     2   (0)| 00:00:01 |\n|*  6 |       TABLE ACCESS BY INDEX ROWID BATCHED| EVENTS                |     2 |    30 |    17   (0)| 00:00:01 |\n|*  7 |        INDEX RANGE SCAN                  | IX_EVENTS_CUSTOMER_ID |    50 |       |     3   (0)| 00:00:01 |\n|*  8 |     TABLE ACCESS BY INDEX ROWID          | ORDERS                |     1 |    16 |    11   (0)| 00:00:01 |\n|*  9 |      INDEX RANGE SCAN                    | IX_ORDERS_CUSTOMER_ID |    10 |       |     1   (0)| 00:00:01 |\n------------------------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   1 - filter(ROWNUM<=200)\n   5 - filter( NOT EXISTS (SELECT 0 FROM \"EVENTS\" \"E\" WHERE \"E\".\"CUSTOMER_ID\"=:B1 AND \n              \"E\".\"EVENT_TYPE\"='churn'))\n   6 - filter(\"E\".\"EVENT_TYPE\"='churn')\n   7 - access(\"E\".\"CUSTOMER_ID\"=:B1)\n   8 - filter(\"O\".\"ORDERED_AT\">=TIMESTAMP' 2025-11-01 00:00:00.000000000')\n   9 - access(\"O\".\"CUSTOMER_ID\"=\"C\".\"ID\")",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.447,
+          "p50": 10.883,
+          "p90": 11.468,
+          "p95": 12.063,
+          "p99": 12.54,
+          "max": 12.659,
+          "mean": 11.011,
+          "stdev": 0.6,
+          "first_ms": 16.567
+        },
+        "rows": 500,
+        "checksum": "6bc68625c58e84ac582dbee2",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 3835691522\n \n----------------------------------------------------------------------------------------------------------------\n| Id  | Operation                            | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |\n----------------------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT                     |                         |   500 | 11000 |  6015   (1)| 00:00:01 |\n|   1 |  SORT AGGREGATE                      |                         |     1 |     9 |            |          |\n|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| PRODUCTS                |    25 |   225 |    26   (0)| 00:00:01 |\n|*  3 |    INDEX RANGE SCAN                  | IX_PRODUCTS_CATEGORY_ID |    25 |       |     1   (0)| 00:00:01 |\n|*  4 |  COUNT STOPKEY                       |                         |       |       |            |          |\n|   5 |   VIEW                               |                         |   500 | 11000 |  6015   (1)| 00:00:01 |\n|*  6 |    TABLE ACCESS BY INDEX ROWID       | PRODUCTS                |  2500 | 35000 |    73   (0)| 00:00:01 |\n|   7 |     INDEX FULL SCAN                  | SYS_C008735             |  1000 |       |     3   (0)| 00:00:01 |\n----------------------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   3 - access(\"P2\".\"CATEGORY_ID\"=:B1)\n   4 - filter(ROWNUM<=500)\n   6 - filter(\"P\".\"ACTIVE\"=TRUE)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id AS customer_id, o.id AS order_id, o.ordered_at, o.total_amount FROM customers c CROSS JOIN LATERAL (SELECT o2.id, o2.ordered_at, o2.total_amount FROM orders o2 WHERE o2.customer_id = c.id ORDER BY o2.ordered_at DESC, o2.id DESC FETCH FIRST 3 ROWS ONLY) o WHERE c.id <= 100 ORDER BY c.id, o.ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.982,
+          "p50": 4.288,
+          "p90": 4.474,
+          "p95": 4.635,
+          "p99": 4.764,
+          "max": 4.796,
+          "mean": 4.316,
+          "stdev": 0.212,
+          "first_ms": 8.187
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 4190391281\n \n-------------------------------------------------------------------------------------------------------------------\n| Id  | Operation                                 | Name                  | Rows  | Bytes | Cost (%CPU)| Time     |\n-------------------------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT                          |                       |   300 |  7800 |  1203   (9)| 00:00:01 |\n|   1 |  SORT ORDER BY                            |                       |   300 |  7800 |  1203   (9)| 00:00:01 |\n|   2 |   NESTED LOOPS                            |                       |   300 |  7800 |  1202   (9)| 00:00:01 |\n|*  3 |    INDEX RANGE SCAN                       | SYS_C008723           |   100 |   500 |     2   (0)| 00:00:01 |\n|   4 |    VIEW                                   | VW_LAT_2D0B8FC8       |     3 |    63 |    12   (9)| 00:00:01 |\n|*  5 |     COUNT STOPKEY                         |                       |       |       |            |          |\n|   6 |      VIEW                                 |                       |    10 |   210 |    12   (9)| 00:00:01 |\n|*  7 |       SORT ORDER BY STOPKEY               |                       |    10 |   260 |    12   (9)| 00:00:01 |\n|   8 |        TABLE ACCESS BY INDEX ROWID BATCHED| ORDERS                |    10 |   260 |    11   (0)| 00:00:01 |\n|*  9 |         INDEX RANGE SCAN                  | IX_ORDERS_CUSTOMER_ID |    10 |       |     1   (0)| 00:00:01 |\n-------------------------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   3 - access(\"C\".\"ID\"<=100)\n   5 - filter(ROWNUM<=3)\n   7 - filter(ROWNUM<=3)\n   9 - access(\"O2\".\"CUSTOMER_ID\"=\"C\".\"ID\")",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 7.489,
+          "p50": 8.072,
+          "p90": 8.414,
+          "p95": 8.903,
+          "p99": 9.294,
+          "max": 9.392,
+          "mean": 8.112,
+          "stdev": 0.492,
+          "first_ms": 11.686
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 2475404981\n \n-----------------------------------------------------------------------------------\n| Id  | Operation                | Name   | Rows  | Bytes | Cost (%CPU)| Time     |\n-----------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT         |        |  1000 | 39000 |   309   (1)| 00:00:01 |\n|*  1 |  VIEW                    |        |  1000 | 39000 |   309   (1)| 00:00:01 |\n|*  2 |   WINDOW SORT PUSHED RANK|        |  1000 | 26000 |   309   (1)| 00:00:01 |\n|*  3 |    TABLE ACCESS FULL     | ORDERS |  1000 | 26000 |   308   (1)| 00:00:01 |\n-----------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   1 - filter(\"RN\"<=3)\n   2 - filter(ROW_NUMBER() OVER ( PARTITION BY \"CUSTOMER_ID\" ORDER BY \n              \"ORDERED_AT\" DESC ,\"ID\" DESC )<=3)\n   3 - filter(\"CUSTOMER_ID\"<=100)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 14.198,
+          "p50": 15.687,
+          "p90": 17.886,
+          "p95": 18.686,
+          "p99": 19.326,
+          "max": 19.486,
+          "mean": 16.118,
+          "stdev": 1.52,
+          "first_ms": 19.347
+        },
+        "rows": 79,
+        "checksum": "36792a55606ee54971e90f0e",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 4037585056\n \n-------------------------------------------------------------------------------\n| Id  | Operation            | Name   | Rows  | Bytes | Cost (%CPU)| Time     |\n-------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT     |        |    46 |  1334 |   310   (1)| 00:00:01 |\n|   1 |  SORT GROUP BY ROLLUP|        |    46 |  1334 |   310   (1)| 00:00:01 |\n|*  2 |   TABLE ACCESS FULL  | ORDERS | 25172 |   712K|   308   (1)| 00:00:01 |\n-------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - filter(\"ORDERED_AT\">=TIMESTAMP' 2025-06-01 00:00:00.000000000' \n              AND \"ORDERED_AT\"<TIMESTAMP' 2025-09-01 00:00:00.000000000')",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE JSON_VALUE(attrs, '$.color') = 'red' AND JSON_VALUE(attrs, '$.weight' RETURNING NUMBER) > 10 ORDER BY id FETCH FIRST 100 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.826,
+          "p50": 4.032,
+          "p90": 5.34,
+          "p95": 5.56,
+          "p99": 5.736,
+          "max": 5.78,
+          "mean": 4.417,
+          "stdev": 0.699,
+          "first_ms": 9.534
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 101034194\n \n------------------------------------------------------------------------------------\n| Id  | Operation               | Name     | Rows  | Bytes | Cost (%CPU)| Time     |\n------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT        |          |     3 |    63 |   137   (2)| 00:00:01 |\n|*  1 |  COUNT STOPKEY          |          |       |       |            |          |\n|   2 |   VIEW                  |          |     3 |    63 |   137   (2)| 00:00:01 |\n|*  3 |    SORT ORDER BY STOPKEY|          |     3 |   468 |   137   (2)| 00:00:01 |\n|*  4 |     TABLE ACCESS FULL   | PRODUCTS |     3 |   468 |   136   (1)| 00:00:01 |\n------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   1 - filter(ROWNUM<=100)\n   3 - filter(ROWNUM<=100)\n   4 - filter(JSON_VALUE(\"ATTRS\" /*+ LOB_BY_VALUE */  FORMAT OSON , \n              '$.color' RETURNING VARCHAR2(4000) NULL ON ERROR TYPE(LAX) )='red' AND \n              JSON_VALUE(\"ATTRS\" /*+ LOB_BY_VALUE */  FORMAT OSON , '$.weight' RETURNING \n              NUMBER NULL ON ERROR TYPE(LAX) )>10)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE CONTAINS(description, 'bluetooth AND waterproof') > 0 ORDER BY id FETCH FIRST 50 ROWS ONLY",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "DatabaseError: ORA-00904: \"CONTAINS\": invalid identifier Help: https://docs.oracle.com/error-help/db/ora-00904/",
+        "error_code": null
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT ? AS product_id, ? AS warehouse_id, ? AS qty FROM DUAL) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = SYSTIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, SYSTIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.824,
+          "p50": 1.034,
+          "p90": 1.113,
+          "p95": 1.121,
+          "p99": 1.141,
+          "max": 1.147,
+          "mean": 1.02,
+          "stdev": 0.085,
+          "first_ms": 5.537
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS NUMBER(10)) AS product_id, CAST(? AS NUMBER(10)) AS warehouse_id, CAST(? AS NUMBER(10)) AS qty FROM DUAL) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = SYSTIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, SYSTIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.955,
+          "p50": 1.143,
+          "p90": 1.341,
+          "p95": 1.371,
+          "p99": 1.403,
+          "max": 1.416,
+          "mean": 1.157,
+          "stdev": 0.13,
+          "first_ms": 4.313
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 100000 ROWS FETCH NEXT 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 225.463,
+          "p50": 232.4,
+          "p90": 244.082,
+          "p95": 245.039,
+          "p99": 245.805,
+          "max": 245.997,
+          "mean": 234.35,
+          "stdev": 6.603,
+          "first_ms": 250.246
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 2475404981\n \n-------------------------------------------------------------------------------------------\n| Id  | Operation                | Name   | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n-------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT         |        |   100K|  4885K|       |  1598   (1)| 00:00:01 |\n|*  1 |  VIEW                    |        |   100K|  4885K|       |  1598   (1)| 00:00:01 |\n|*  2 |   WINDOW SORT PUSHED RANK|        |   200K|  4101K|  6288K|  1598   (1)| 00:00:01 |\n|   3 |    TABLE ACCESS FULL     | ORDERS |   200K|  4101K|       |   308   (1)| 00:00:01 |\n-------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   1 - filter(\"from$_subquery$_002\".\"rowlimit_$$_rownumber\"<=100050 AND \n              \"from$_subquery$_002\".\"rowlimit_$$_rownumber\">100000)\n   2 - filter(ROW_NUMBER() OVER ( ORDER BY \"ORDERED_AT\",\"ID\")<=100050)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 19.432,
+          "p50": 20.169,
+          "p90": 23.453,
+          "p95": 23.456,
+          "p99": 23.459,
+          "max": 23.459,
+          "mean": 20.762,
+          "stdev": 1.432,
+          "first_ms": 22.969
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 399652421\n \n------------------------------------------------------------------------------------------\n| Id  | Operation               | Name   | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT        |        |    50 |  1050 |       |   953   (1)| 00:00:01 |\n|*  1 |  COUNT STOPKEY          |        |       |       |       |            |          |\n|   2 |   VIEW                  |        | 99864 |  2047K|       |   953   (1)| 00:00:01 |\n|*  3 |    SORT ORDER BY STOPKEY|        | 99864 |  2047K|  3144K|   953   (1)| 00:00:01 |\n|*  4 |     TABLE ACCESS FULL   | ORDERS | 99864 |  2047K|       |   308   (1)| 00:00:01 |\n------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   1 - filter(ROWNUM<=50)\n   3 - filter(ROWNUM<=50)\n   4 - filter(\"ORDERED_AT\">TIMESTAMP' 2025-01-01 00:00:00.000000000' OR \n              \"ORDERED_AT\"=TIMESTAMP' 2025-01-01 00:00:00.000000000' AND \"ID\">0)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 97.169,
+          "p50": 104.215,
+          "p90": 107.992,
+          "p95": 110.094,
+          "p99": 111.775,
+          "max": 112.195,
+          "mean": 104.229,
+          "stdev": 4.262,
+          "first_ms": 120.869
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 575903838\n \n------------------------------------------------------------------------------------------\n| Id  | Operation            | Name      | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT     |           |     1 |     5 |       |  5685   (1)| 00:00:01 |\n|   1 |  SORT AGGREGATE      |           |     1 |     5 |       |            |          |\n|   2 |   VIEW               | VM_NWVW_1 | 20128 |    98K|       |  5685   (1)| 00:00:01 |\n|   3 |    HASH GROUP BY     |           | 20128 |   314K|    11M|  5685   (1)| 00:00:01 |\n|*  4 |     TABLE ACCESS FULL| EVENTS    |   499K|  7801K|       |  4678   (1)| 00:00:01 |\n------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   4 - filter(\"OCCURRED_AT\">=TIMESTAMP' 2025-01-01 00:00:00.000000000')",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 32.881,
+          "p50": 34.693,
+          "p90": 35.935,
+          "p95": 36.651,
+          "p99": 37.224,
+          "max": 37.367,
+          "mean": 34.773,
+          "stdev": 1.214,
+          "first_ms": 40.116
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 4050364554\n \n---------------------------------------------------------------------------------------\n| Id  | Operation               | Name        | Rows  | Bytes | Cost (%CPU)| Time     |\n---------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT        |             |    50 |   650 |   520   (1)| 00:00:01 |\n|   1 |  SORT ORDER BY          |             |    50 |   650 |   520   (1)| 00:00:01 |\n|*  2 |   FILTER                |             |       |       |            |          |\n|*  3 |    HASH JOIN OUTER      |             |    50 |   650 |   519   (1)| 00:00:01 |\n|   4 |     INDEX FAST FULL SCAN| SYS_C008735 |  5000 | 20000 |     5   (0)| 00:00:01 |\n|   5 |     TABLE ACCESS FULL   | ORDER_ITEMS |   487K|  4285K|   513   (1)| 00:00:01 |\n---------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - filter(\"OI\".\"ID\" IS NULL)\n   3 - access(\"OI\".\"PRODUCT_ID\"(+)=\"P\".\"ID\")",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 11.122,
+          "p50": 11.472,
+          "p90": 12.268,
+          "p95": 13.285,
+          "p99": 14.1,
+          "max": 14.303,
+          "mean": 11.746,
+          "stdev": 0.898,
+          "first_ms": 18.953
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 4144441012\n \n----------------------------------------------------------------------------------------------------\n| Id  | Operation              | Name                      | Rows  | Bytes | Cost (%CPU)| Time     |\n----------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT       |                           |  4999 | 19996 | 12206   (1)| 00:00:01 |\n|   1 |  SORT ORDER BY         |                           |  4999 | 19996 | 12206   (1)| 00:00:01 |\n|*  2 |   FILTER               |                           |       |       |            |          |\n|   3 |    INDEX FAST FULL SCAN| SYS_C008735               |  5000 | 20000 |     5   (0)| 00:00:01 |\n|*  4 |    INDEX RANGE SCAN    | IX_ORDER_ITEMS_PRODUCT_ID |     2 |     8 |     3   (0)| 00:00:01 |\n----------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - filter( NOT EXISTS (SELECT 0 FROM \"ORDER_ITEMS\" \"OI\" WHERE \"OI\".\"PRODUCT_ID\"=:B1))\n   4 - access(\"OI\".\"PRODUCT_ID\"=:B1)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR ((CAST(occurred_at AS DATE) - CAST(prev_at AS DATE)) * 86400) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 213.588,
+          "p50": 222.577,
+          "p90": 236.204,
+          "p95": 239.783,
+          "p99": 242.647,
+          "max": 243.363,
+          "mean": 223.621,
+          "stdev": 8.839,
+          "first_ms": 237.587
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 2353310399\n \n---------------------------------------------------------------------------------------\n| Id  | Operation            | Name   | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |\n---------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT     |        |  2013 | 58377 |       |  5325   (1)| 00:00:01 |\n|   1 |  SORT GROUP BY NOSORT|        |  2013 | 58377 |       |  5325   (1)| 00:00:01 |\n|*  2 |   VIEW               |        |   100K|  2832K|       |  5325   (1)| 00:00:01 |\n|   3 |    WINDOW SORT       |        |   100K|  2050K|  3152K|  5325   (1)| 00:00:01 |\n|*  4 |     TABLE ACCESS FULL| EVENTS |   100K|  2050K|       |  4677   (1)| 00:00:01 |\n---------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - filter(CASE  WHEN (\"PREV_AT\" IS NULL OR \n              (CAST(INTERNAL_FUNCTION(\"OCCURRED_AT\") AS \n              DATE)-CAST(INTERNAL_FUNCTION(\"PREV_AT\") AS DATE))*86400>1800) THEN 1 ELSE 0 \n              END =1)\n   4 - filter(\"CUSTOMER_ID\"<=2000)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_amount) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 311.305,
+          "p50": 319.586,
+          "p90": 340.854,
+          "p95": 346.634,
+          "p99": 351.258,
+          "max": 352.414,
+          "mean": 324.81,
+          "stdev": 12.915,
+          "first_ms": 342.302
+        },
+        "rows": 13,
+        "checksum": "aed577b8503f2718cc990366",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 3085080796\n \n-----------------------------------------------------------------------------\n| Id  | Operation          | Name   | Rows  | Bytes | Cost (%CPU)| Time     |\n-----------------------------------------------------------------------------\n|   0 | SELECT STATEMENT   |        |    13 |   104 |   312   (2)| 00:00:01 |\n|   1 |  SORT GROUP BY     |        |    13 |   104 |   312   (2)| 00:00:01 |\n|   2 |   TABLE ACCESS FULL| ORDERS |   200K|  1562K|   308   (1)| 00:00:01 |\n-----------------------------------------------------------------------------",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, LISTAGG(p.sku, ',') WITHIN GROUP (ORDER BY p.sku) AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.837,
+          "p50": 5.065,
+          "p90": 6.188,
+          "p95": 6.476,
+          "p99": 6.706,
+          "max": 6.763,
+          "mean": 5.325,
+          "stdev": 0.614,
+          "first_ms": 8.844
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 556003933\n \n-----------------------------------------------------------------------------------------------------------------\n| Id  | Operation                             | Name                    | Rows  | Bytes | Cost (%CPU)| Time     |\n-----------------------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT                      |                         |   505 | 12625 |   113   (1)| 00:00:01 |\n|   1 |  SORT GROUP BY                        |                         |   505 | 12625 |   113   (1)| 00:00:01 |\n|*  2 |   HASH JOIN                           |                         |  1219 | 30475 |   112   (0)| 00:00:01 |\n|   3 |    TABLE ACCESS BY INDEX ROWID BATCHED| ORDER_ITEMS             |  1219 | 10971 |    10   (0)| 00:00:01 |\n|*  4 |     INDEX RANGE SCAN                  | IX_ORDER_ITEMS_ORDER_ID |  1219 |       |     5   (0)| 00:00:01 |\n|   5 |    TABLE ACCESS FULL                  | PRODUCTS                |  5000 | 80000 |   102   (0)| 00:00:01 |\n-----------------------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - access(\"P\".\"ID\"=\"OI\".\"PRODUCT_ID\")\n   4 - access(\"OI\".\"ORDER_ID\"<=500)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 61.541,
+          "p50": 64.64,
+          "p90": 67.218,
+          "p95": 70.148,
+          "p99": 72.493,
+          "max": 73.079,
+          "mean": 65.164,
+          "stdev": 3.119,
+          "first_ms": 69.864
+        },
+        "rows": 13,
+        "checksum": "aead62a734254ac91c59d5af",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 2752872734\n \n---------------------------------------------------------------------------------\n| Id  | Operation           | Name      | Rows  | Bytes | Cost (%CPU)| Time     |\n---------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT    |           |    13 |   364 |   449   (2)| 00:00:01 |\n|   1 |  SORT GROUP BY      |           |    13 |   364 |   449   (2)| 00:00:01 |\n|*  2 |   HASH JOIN         |           |   198K|  5433K|   445   (1)| 00:00:01 |\n|   3 |    TABLE ACCESS FULL| CUSTOMERS | 20000 |   156K|   136   (0)| 00:00:01 |\n|   4 |    TABLE ACCESS FULL| ORDERS    |   200K|  3906K|   308   (1)| 00:00:01 |\n---------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - access(\"C\".\"ID\"=\"O\".\"CUSTOMER_ID\")",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 0.636,
+          "p50": 0.732,
+          "p90": 0.794,
+          "p95": 0.818,
+          "p99": 0.828,
+          "max": 0.83,
+          "mean": 0.729,
+          "stdev": 0.061,
+          "first_ms": 3.213
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 3623723058\n \n--------------------------------------------------------------------------------------------------------------\n| Id  | Operation                            | Name                  | Rows  | Bytes | Cost (%CPU)| Time     |\n--------------------------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT                     |                       |    11 |   110 |     5  (20)| 00:00:01 |\n|   1 |  SORT ORDER BY                       |                       |    11 |   110 |     5  (20)| 00:00:01 |\n|   2 |   TABLE ACCESS BY INDEX ROWID BATCHED| ORDERS                |    11 |   110 |     4   (0)| 00:00:01 |\n|   3 |    BITMAP CONVERSION TO ROWIDS       |                       |       |       |            |          |\n|   4 |     BITMAP OR                        |                       |       |       |            |          |\n|   5 |      BITMAP CONVERSION FROM ROWIDS   |                       |       |       |            |          |\n|*  6 |       INDEX RANGE SCAN               | IX_ORDERS_CUSTOMER_ID |       |       |     1   (0)| 00:00:01 |\n|   7 |      BITMAP CONVERSION FROM ROWIDS   |                       |       |       |            |          |\n|*  8 |       INDEX RANGE SCAN               | SYS_C008743           |       |       |     1   (0)| 00:00:01 |\n--------------------------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   6 - access(\"CUSTOMER_ID\"=:1)\n   8 - access(\"ID\"=:2)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.618,
+          "p50": 3.996,
+          "p90": 4.151,
+          "p95": 4.2,
+          "p99": 4.238,
+          "max": 4.248,
+          "mean": 3.987,
+          "stdev": 0.174,
+          "first_ms": 14.05
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 2546562765\n \n--------------------------------------------------------------------------------------------\n| Id  | Operation                    | Name        | Rows  | Bytes | Cost (%CPU)| Time     |\n--------------------------------------------------------------------------------------------\n|   0 | SELECT STATEMENT             |             |   500 |  5000 |   273   (0)| 00:00:01 |\n|   1 |  INLIST ITERATOR             |             |       |       |            |          |\n|   2 |   TABLE ACCESS BY INDEX ROWID| ORDERS      |   500 |  5000 |   273   (0)| 00:00:01 |\n|*  3 |    INDEX UNIQUE SCAN         | SYS_C008743 |   500 |       |   270   (0)| 00:00:01 |\n--------------------------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   3 - access(\"ID\"=47 OR \"ID\"=281 OR \"ID\"=457 OR \"ID\"=869 OR \"ID\"=942 OR \"ID\"=950 \n              OR \"ID\"=1298 OR \"ID\"=3027 OR \"ID\"=3073 OR \"ID\"=3269 OR \"ID\"=3737 OR \"ID\"=4023 OR \n              \"ID\"=4216 OR \"ID\"=4413 OR \"ID\"=4589 OR \"ID\"=4762 OR \"ID\"=4833 OR \"ID\"=4939 OR \n              \"ID\"=5265 OR \"ID\"=5718 OR \"ID\"=5897 OR \"ID\"=6511 OR \"ID\"=7606 OR \"ID\"=8169 OR \n              \"ID\"=8453 OR \"ID\"=9031 OR \"ID\"=9687 OR \"ID\"=10378 OR \"ID\"=10923 OR \"ID\"=10974 OR \n              \"ID\"=11327 OR \"ID\"=11479 OR \"ID\"=11859 OR \"ID\"=12255 OR \"ID\"=12654 OR \"ID\"=12840 OR \n              \"ID\"=12970 OR \"ID\"=13207 OR \"ID\"=13312 OR \"ID\"=13532 OR \"ID\"=14258 OR \"ID\"=14524 OR \n              \"ID\"=15081 OR \"ID\"=15902 OR \"ID\"=16269 OR \"ID\"=16854 OR \"ID\"=17034 OR \"ID\"=17315 OR \n              \"ID\"=17465 OR \"ID\"=18380 OR \"ID\"=18540 OR \"ID\"=18983 OR \"ID\"=19173 OR \"ID\"=19517 OR \n              \"ID\"=19560 OR \"ID\"=19706 OR \"ID\"=20028 OR \"ID\"=20045 OR \"ID\"=20117 OR \"ID\"=20309 OR \n              \"ID\"=21123 OR \"ID\"=21953 OR \"ID\"=21992 OR \"ID\"=22037 OR \"ID\"=22147 OR \"ID\"=22148 OR \n              \"ID\"=22307 OR \"ID\"=22507 OR \"ID\"=23218 OR \"ID\"=23452 OR \"ID\"=23529 OR \"ID\"=23673 OR \n              \"ID\"=23781 OR \"ID\"=23817 OR \"ID\"=23880 OR \"ID\"=24103 OR \"ID\"=24275 OR \"ID\"=26089 OR \n              \"ID\"=26663 OR \"ID\"=27468 OR \"ID\"=27504 OR \"ID\"=27862 OR \"ID\"=28693 OR \"ID\"=29538 OR \n              \"ID\"=29583 OR \"ID\"=31065 OR \"ID\"=31390 OR \"ID\"=31469 OR \"ID\"=31696 OR \"ID\"=31898 OR \n              \"ID\"=32998 OR \"ID\"=33358 OR \"ID\"=33374 OR \"ID\"=33876 OR \"ID\"=33963 OR \"ID\"=34032 OR \n              \"ID\"=34762 OR \"ID\"=34890 OR \"ID\"=34981 OR \"ID\"=36326 OR \"ID\"=36519 OR \"ID\"=36595 OR \n              \"ID\"=36627 OR \"ID\"=36886 OR \"ID\"=37157 OR \"ID\"=37714 OR \"ID\"=37946 OR \"ID\"=38647 OR \n              \"ID\"=39038 OR \"ID\"=39156 OR \"ID\"=39181 OR \"ID\"=40699 OR \"ID\"=41297 OR \"ID\"=41699 OR \n              \"ID\"=42323 OR \"ID\"=42378 OR \"ID\"=42795 OR \"ID\"=43866 OR \"ID\"=44765 OR \"ID\"=45796 OR \n              \"ID\"=46636 OR \"ID\"=47487 OR \"ID\"=47593 OR \"ID\"=47962 OR \"ID\"=48063 OR \"ID\"=48589 OR \n              \"ID\"=49665 OR \"ID\"=49768 OR \"ID\"=50439 OR \"ID\"=51313 OR \"ID\"=51981 OR \"ID\"=52069 OR \n              \"ID\"=52233 OR \"ID\"=52686 OR \"ID\"=52893 OR \"ID\"=52991 OR \"ID\"=53330 OR \"ID\"=53797 OR \n              \"ID\"=53968 OR \"ID\"=54493 OR \"ID\"=55008 OR \"ID\"=55052 OR \"ID\"=55237 OR \"ID\"=56409 OR \n              \"ID\"=56614 OR \"ID\"=57068 OR \"ID\"=57113 OR \"ID\"=57679 OR \"ID\"=58303 OR \"ID\"=59915 OR \n              \"ID\"=60180 OR \"ID\"=60278 OR \"ID\"=60487 OR \"ID\"=60656 OR \"ID\"=61030 OR \"ID\"=61548 OR \n              \"ID\"=62505 OR \"ID\"=62565 OR \"ID\"=62686 OR \"ID\"=63495 OR \"ID\"=63986 OR \"ID\"=64081 OR \n              \"ID\"=64110 OR \"ID\"=64404 OR \"ID\"=65059 OR \"ID\"=65131 OR \"ID\"=65359 OR \"ID\"=65654 OR \n              \"ID\"=66112 OR \"ID\"=66379 OR \"ID\"=66569 OR \"ID\"=67003 OR \"ID\"=67042 OR \"ID\"=67727 OR \n              \"ID\"=67793 OR \"ID\"=68202 OR \"ID\"=68303 OR \"ID\"=68632 OR \"ID\"=68655 OR \"ID\"=69008 OR \n              \"ID\"=69152 OR \"ID\"=69251 OR \"ID\"=69325 OR \"ID\"=69615 OR \"ID\"=69617 OR \"ID\"=69660 OR \n              \"ID\"=70218 OR \"ID\"=70427 OR \"ID\"=70458 OR \"ID\"=70497 OR \"ID\"=70527 OR \"ID\"=70842 OR \n              \"ID\"=70896 OR \"ID\"=70916 OR \"ID\"=71047 OR \"ID\"=71283 OR \"ID\"=72131 OR \"ID\"=72750 OR \n              \"ID\"=73120 OR \"ID\"=73155 OR \"ID\"=73288 OR \"ID\"=73568 OR \"ID\"=73859 OR \"ID\"=73908 OR \n              \"ID\"=74496 OR \"ID\"=74854 OR \"ID\"=74875 OR \"ID\"=75028 OR \"ID\"=75319 OR \"ID\"=75914 OR \n              \"ID\"=75978 OR \"ID\"=76012 OR \"ID\"=76247 OR \"ID\"=76824 OR \"ID\"=77452 OR \"ID\"=78060 OR \n              \"ID\"=78551 OR \"ID\"=78863 OR \"ID\"=79155 OR \"ID\"=79756 OR \"ID\"=79802 OR \"ID\"=79956 OR \n              \"ID\"=80684 OR \"ID\"=81147 OR \"ID\"=81704 OR \"ID\"=81787 OR \"ID\"=81794 OR \"ID\"=82734 OR \n              \"ID\"=82858 OR \"ID\"=83700 OR \"ID\"=84813 OR \"ID\"=85079 OR \"ID\"=85495 OR \"ID\"=85734 OR \n              \"ID\"=86227 OR \"ID\"=86855 OR \"ID\"=86973 OR \"ID\"=87251 OR \"ID\"=87906 OR \"ID\"=88658 OR \n              \"ID\"=88677 OR \"ID\"=88907 OR \"ID\"=89642 OR \"ID\"=89838 OR \"ID\"=90090 OR \"ID\"=90168 OR \n              \"ID\"=90965 OR \"ID\"=91109 OR \"ID\"=93477 OR \"ID\"=94255 OR \"ID\"=94410 OR \"ID\"=94558 OR \n              \"ID\"=95458 OR \"ID\"=95732 OR \"ID\"=96550 OR \"ID\"=97576 OR \"ID\"=97872 OR \"ID\"=98594 OR \n              \"ID\"=98729 OR \"ID\"=98794 OR \"ID\"=99846 OR \"ID\"=100042 OR \"ID\"=100286 OR \"ID\"=100359 \n              OR \"ID\"=100811 OR \"ID\"=101410 OR \"ID\"=102110 OR \"ID\"=102279 OR \"ID\"=102635 OR \n              \"ID\"=102997 OR \"ID\"=103046 OR \"ID\"=103280 OR \"ID\"=103306 OR \"ID\"=103382 OR \n              \"ID\"=104402 OR \"ID\"=104730 OR \"ID\"=104794 OR \"ID\"=104869 OR \"ID\"=106090 OR \n              \"ID\"=106279 OR \"ID\"=106417 OR \"ID\"=106486 OR \"ID\"=107712 OR \"ID\"=108209 OR \n              \"ID\"=108498 OR \"ID\"=108755 OR \"ID\")",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 36.607,
+          "p50": 38.928,
+          "p90": 39.909,
+          "p95": 40.298,
+          "p99": 40.609,
+          "max": 40.687,
+          "mean": 38.787,
+          "stdev": 1.129,
+          "first_ms": 43.57
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan": "Plan hash value: 630573765\n \n-----------------------------------------------------------------------------\n| Id  | Operation          | Name   | Rows  | Bytes | Cost (%CPU)| Time     |\n-----------------------------------------------------------------------------\n|   0 | SELECT STATEMENT   |        |     1 |    11 |   311   (2)| 00:00:01 |\n|   1 |  SORT AGGREGATE    |        |     1 |    11 |            |          |\n|*  2 |   TABLE ACCESS FULL| ORDERS |    20 |   220 |   311   (2)| 00:00:01 |\n-----------------------------------------------------------------------------\n \nPredicate Information (identified by operation id):\n---------------------------------------------------\n \n   2 - filter(EXTRACT(YEAR FROM INTERNAL_FUNCTION(\"ORDERED_AT\"))=2025 \n              AND EXTRACT(MONTH FROM INTERNAL_FUNCTION(\"ORDERED_AT\"))=5)",
+        "plan_analyze": "User has no SELECT privilege on V$SESSION"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.747,
+          "p50": 0.981,
+          "p90": 1.08,
+          "p95": 1.11,
+          "p99": 1.156,
+          "max": 1.169,
+          "mean": 0.982,
+          "stdev": 0.084,
+          "first_ms": 3.101
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', SYSTIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.105,
+          "p50": 1.282,
+          "p90": 1.406,
+          "p95": 1.44,
+          "p99": 1.451,
+          "max": 1.455,
+          "mean": 1.288,
+          "stdev": 0.08,
+          "first_ms": 2.895
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', SYSTIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = SYSTIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.171,
+          "p50": 3.531,
+          "p90": 4.036,
+          "p95": 4.106,
+          "p99": 4.297,
+          "max": 4.364,
+          "mean": 3.427,
+          "stdev": 0.598,
+          "first_ms": 62.882
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 22.9
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 50.585,
+            "p95_ms": 53.232,
+            "rows": 1,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'EVENTS'); END;"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 7.141,
+            "p95_ms": 7.79,
+            "rows": 1,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'EVENTS'); END;"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.857,
+            "p95_ms": 4.013,
+            "rows": 1,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 13.12
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 7.255,
+            "p95_ms": 7.809,
+            "rows": 2430,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "oracle: INCLUDE columns not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 39.578,
+            "p95_ms": 41.844,
+            "rows": 1,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 6.817,
+            "p95_ms": 7.067,
+            "rows": 1,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.897,
+            "p95_ms": 0.975,
+            "rows": 1,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 40.243,
+            "p95_ms": 40.657,
+            "rows": 1,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          }
+        ],
+        "best_variant": "sargable_with_index",
+        "speedup_vs_first": 44.12
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 100000 ROWS FETCH NEXT 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 226.807,
+            "p95_ms": 240.168,
+            "rows": 50,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 20.099,
+            "p95_ms": 20.883,
+            "rows": 50,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 100000 ROWS FETCH NEXT 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 224.645,
+            "p95_ms": 240.416,
+            "rows": 50,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 9.259,
+            "p95_ms": 9.664,
+            "rows": 50,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;"
+            ],
+            "ok": false,
+            "status": "n/a",
+            "error": "oracle: no syntax for keyset_pred"
+          }
+        ],
+        "best_variant": "keyset_with_index",
+        "speedup_vs_first": 24.5
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 10.512,
+            "p95_ms": 10.804,
+            "rows": 500,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 7.216,
+            "p95_ms": 7.673,
+            "rows": 500,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 1.46
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 37.625,
+            "p95_ms": 38.062,
+            "rows": 0,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.621,
+            "p95_ms": 11.993,
+            "rows": 0,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 26.918,
+            "p95_ms": 27.758,
+            "rows": 0,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          }
+        ],
+        "best_variant": "not_exists",
+        "speedup_vs_first": 3.24
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.645,
+            "p95_ms": 0.676,
+            "rows": 13,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.681,
+            "p95_ms": 0.714,
+            "rows": 13,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          }
+        ],
+        "best_variant": "or_predicate",
+        "speedup_vs_first": 1.0
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 7.774,
+            "p95_ms": 9.181,
+            "rows": 644,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 7.806,
+            "p95_ms": 8.009,
+            "rows": 644,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "oracle: partial indexes not supported"
+          }
+        ],
+        "best_variant": "no_partial_index",
+        "speedup_vs_first": 1.0
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 57.474,
+            "p95_ms": 58.527,
+            "rows": 13,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'EVENTS'); END;"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 58.044,
+            "p95_ms": 59.848,
+            "rows": 13,
+            "plan_analyze": "User has no SELECT privilege on V$SESSION"
+          }
+        ],
+        "best_variant": "after_bulk_insert_no_analyze",
+        "speedup_vs_first": 1.0
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 4.347,
+            "rows_per_s": 690,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 0.336,
+            "rows_per_s": 8938,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.0,
+            "rows_per_s": null,
+            "error": "oracle: multi-row VALUES not supported"
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver oracledb: no server-side prepare toggle exposed"
+      },
+      "_seconds": 39.7
+    }
+  }
+}

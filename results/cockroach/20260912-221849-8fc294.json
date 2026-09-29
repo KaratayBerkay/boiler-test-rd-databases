@@ -1,0 +1,1162 @@
+{
+  "engine": "cockroach",
+  "display": "CockroachDB",
+  "category": "distributed SQL",
+  "dialect": "cockroach",
+  "driver": "psycopg",
+  "image": "cockroachdb/cockroach:latest",
+  "run_id": "20260912-221849-8fc294",
+  "started": "2026-09-12T19:18:49+00:00",
+  "scale": 1.0,
+  "notes": "3-node insecure cluster; every range replicated 3x via Raft, any node serves reads and writes (no promotion needed). HAProxy round-robins connections across nodes (the recommended production pattern). Insecure mode: no passwords.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 3.2,
+          "rows_per_s": 6244,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.22,
+          "rows_per_s": 928,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 1.0,
+          "rows_per_s": 5012,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 32.4,
+          "rows_per_s": 6173,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 95.51,
+          "rows_per_s": 5105,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 76.84,
+          "rows_per_s": 13013,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.84,
+          "rows_per_s": 23789,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs JSONB,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSONB,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload JSONB,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 4.12,
+      "load_seconds": 212.06,
+      "fts_setup": [
+        "CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description))"
+      ],
+      "after_load": [
+        "ANALYZE customers",
+        "ANALYZE categories",
+        "ANALYZE products",
+        "ANALYZE orders",
+        "ANALYZE order_items",
+        "ANALYZE events",
+        "ANALYZE inventory"
+      ],
+      "post_seconds": 7.4,
+      "server_version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+      "_seconds": 223.6
+    },
+    "capabilities": {
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 289.5
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 327.0
+      },
+      "returning": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 7)]",
+        "ms": 314.6
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 283.3
+      },
+      "arrays": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([1, 2, 3, 4],)]",
+        "ms": 3.7
+      },
+      "statement_timeout": {
+        "status": "supported",
+        "note": "expects SQLSTATE 57014",
+        "error_code": "57014",
+        "detail": "QueryCanceled: query execution canceled due to statement timeout",
+        "ms": 206.3
+      },
+      "filter_clause": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(140061,)]",
+        "ms": 189.3
+      },
+      "distinct_on": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 157974), (2, 70522)]",
+        "ms": 7.7
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "SyntaxError: at or near \"row_number\": syntax error DETAIL: source SQL: SELECT id FROM orders QUALIFY ROW_NUMBER() OVER (ORDER BY id) <= 5 ^",
+        "error_code": "42601",
+        "ms": 2.5
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23514",
+        "detail": "CheckViolation: failed to satisfy CHECK constraint (v > 0:::INT8)",
+        "ms": 280.5
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23503",
+        "detail": "ForeignKeyViolation: insert on table \"order_items\" violates foreign key constraint \"order_items_product_id_fkey\" DETAIL: Key (product_id)=(999999999) is not present in table \"products\".",
+        "ms": 9.0
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "expects 1",
+        "sample": "[(1,)]",
+        "ms": 269.0
+      },
+      "temporal_query": {
+        "status": "supported",
+        "note": "time-travel",
+        "sample": "[(200000,)]",
+        "ms": 105.0
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([{'id': 1, 'name': 'Category 1'}, {'id': 2, 'name': 'Category 2'}, {'id': 3, 'name': 'Category 3'}],)]",
+        "ms": 4.3
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 4.1
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 3.4
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 3.4
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 20.3
+      },
+      "cte_dml": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(0,)]",
+        "ms": 5.6
+      },
+      "materialized_view": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(13,)]",
+        "ms": 812.3
+      },
+      "partitioning": {
+        "status": "unsupported",
+        "note": "enterprise feature (trial license)",
+        "error": "InternalError: relation \"part_lab\" (122): partitions p2025 and pother overlap",
+        "error_code": "XXUUU",
+        "ms": 13.8
+      },
+      "vector_type": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(2.449489742783178,)]",
+        "ms": 306.6
+      },
+      "follower_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(200000,)]",
+        "ms": 128.7
+      },
+      "_seconds": 3.6
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 ",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.314,
+          "p50": 0.448,
+          "p90": 0.685,
+          "p95": 0.694,
+          "p99": 0.728,
+          "max": 0.739,
+          "mean": 0.488,
+          "stdev": 0.121,
+          "first_ms": 0.678
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 values\n  size: 1 column, 1 row",
+        "plan_analyze": "planning time: 58\u00b5s\nexecution time: 166\u00b5s\ndistribution: local\nplan type: generic, reused\nregions: lab\n\n\u2022 values\n  sql nodes: n1\n  regions: lab\n  execution time: 26\u00b5s\n  sql cpu time: 26\u00b5s\n  actual row count: 1\n  size: 1 column, 1 row"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.369,
+          "p50": 1.685,
+          "p90": 1.872,
+          "p95": 1.887,
+          "p99": 2.679,
+          "max": 2.999,
+          "mean": 1.729,
+          "stdev": 0.263,
+          "first_ms": 3.0
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 scan\n  estimated row count: 1 (<0.01% of the table; stats collected 9 seconds ago)\n  table: customers@customers_pkey\n  spans: [/4403 - /4403]",
+        "plan_analyze_error": "InternalError: EXPLAIN does not support placeholders"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 130.213,
+          "p50": 158.875,
+          "p90": 173.6,
+          "p95": 180.406,
+          "p99": 185.852,
+          "max": 187.213,
+          "mean": 158.067,
+          "stdev": 16.994,
+          "first_ms": 187.282
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 top-k\n\u2502 estimated row count: 500\n\u2502 order: +ordered_at,+id\n\u2502 k: 500\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 529\n    \u2502 filter: ((ordered_at >= '2025-03-01 00:00:00') AND (ordered_at < '2025-03-08 00:00:00')) AND (status = 'delivered')\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 200,000 (100% of the table; stats collected 9 seconds ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (status, ordered_at) STORING (customer_id, total_amount);",
+        "plan_analyze": "planning time: 437\u00b5s\nexecution time: 188ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 top-k\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 1ms\n\u2502 sql cpu time: 1ms\n\u2502 actual row count: 500\n\u2502 estimated row count: 500\n\u2502 order: +ordered_at,+id\n\u2502 k: 500\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 4ms\n    \u2502 sql cpu time: 4ms\n    \u2502 actual row count: 1,372\n    \u2502 estimated row count: 529\n    \u2502 filter: ((ordered_at >= '2025-03-01 00:00:00') AND (ordered_at < '2025-03-08 00:00:00')) AND (status = 'delivered')\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 182ms\n          KV rows decoded: 200,000\n          sql cpu time: 80ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 10 seconds ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, DATE_TRUNC('month', o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_TRUNC('month', o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1435.331,
+          "p50": 1517.085,
+          "p90": 1612.763,
+          "p95": 1665.5,
+          "p99": 1707.69,
+          "max": 1718.237,
+          "mean": 1530.778,
+          "stdev": 80.144,
+          "first_ms": 1952.716
+        },
+        "rows": 50,
+        "checksum": "4b01a7659958ecf823e8a1bc",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 top-k\n\u2502 estimated row count: 50\n\u2502 order: -sum,+country_code,+column34\n\u2502 k: 50\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 estimated row count: 12,466\n    \u2502 group by: country_code, column34\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502\n        \u2514\u2500\u2500 \u2022 lookup join\n            \u2502 estimated row count: 33,054\n            \u2502 table: order_items@order_items_pkey\n            \u2502 equality: (id) = (id)\n            \u2502 equality cols are key\n            \u2502\n            \u2514\u2500\u2500 \u2022 lookup join\n                \u2502 estimated row count: 33,054\n                \u2502 table: order_items@ix_order_items_order_id\n                \u2502 equality: (id) = (order_id)\n                \u2502\n                \u2514\u2500\u2500 \u2022 hash join\n                    \u2502 estimated row count: 13,690\n                    \u2502 equality: (id) = (customer_id)\n                    \u2502 left cols are key\n                    \u2502\n                    \u251c\u2500\u2500 \u2022 scan\n                    \u2502     estimated row count: 20,000 (100% of the table; stats collected 30 seconds ago)\n                    \u2502     table: customers@customers_pkey\n                    \u2502     spans: FULL SCAN\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 filter\n                        \u2502 estimated row count: 13,690\n                        \u2502 filter: ((ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-07-01 00:00:00')) AND (status = 'delivered')\n                        \u2502\n                        \u2514\u2500\u2500 \u2022 scan\n                              estimated row count: 200,000 (100% of the table; stats collected 28 seconds ago)\n                              table: orders@orders_pkey\n                              spans: FULL SCAN\n\nindex recommendations: 2\n1. type: index replacement\n   SQL commands: CREATE INDEX ON lab.public.order_items (order_id) STORING (qty, unit_price) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.order_items@ix_order_items_order_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.order_items@ix_order_items_order_id` */;\n2. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (status, ordered_at) STORING (customer_id);",
+        "plan_analyze": "planning time: 3ms\nexecution time: 1.6s\ndistribution: full\nplan type: custom\nrows decoded from KV: 388,510 (20 MiB, 33 gRPC calls)\nDistSQL network usage: 4.7 MiB (373 messages)\nregions: lab\n\n\u2022 top-k\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 294\u00b5s\n\u2502 sql cpu time: 291\u00b5s\n\u2502 actual row count: 50\n\u2502 estimated row count: 50\n\u2502 order: -sum,+country_code,+column34\n\u2502 k: 50\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 67ms\n    \u2502 sql cpu time: 67ms\n    \u2502 actual row count: 78\n    \u2502 estimated row count: 12,466\n    \u2502 group by: country_code, column34\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502 execution time: 79ms\n        \u2502 sql cpu time: 79ms\n        \u2502 actual row count: 84,255\n        \u2502\n        \u2514\u2500\u2500 \u2022 lookup join (streamer)\n            \u2502 sql nodes: n1, n3\n            \u2502 kv nodes: n1\n            \u2502 regions: lab\n            \u2502 KV time: 1s\n            \u2502 KV rows decoded: 84,255\n            \u2502 execution time: 1.2s\n            \u2502 sql cpu time: 227ms\n            \u2502 actual row count: 84,255\n            \u2502 estimated row count: 33,054\n            \u2502 table: order_items@order_items_pkey\n            \u2502 equality: (id) = (id)\n            \u2502 equality cols are key\n            \u2502\n            \u2514\u2500\u2500 \u2022 lookup join (streamer)\n                \u2502 sql nodes: n1, n3\n                \u2502 kv nodes: n3\n                \u2502 regions: lab\n                \u2502 KV time: 742ms\n                \u2502 KV rows decoded: 84,255\n                \u2502 execution time: 870ms\n                \u2502 sql cpu time: 128ms\n                \u2502 actual row count: 84,255\n                \u2502 estimated row count: 33,054\n                \u2502 table: order_items@ix_order_items_order_id\n                \u2502 equality: (id) = (order_id)\n                \u2502\n                \u2514\u2500\u2500 \u2022 hash join\n                    \u2502 sql nodes: n1, n3\n                    \u2502 regions: lab\n                    \u2502 execution time: 16ms\n                    \u2502 sql cpu time: 30ms\n                    \u2502 actual row count: 34,679\n                    \u2502 estimated row count: 13,690\n                    \u2502 equality: (id) = (customer_id)\n                    \u2502 left cols are key\n                    \u2502\n                    \u251c\u2500\u2500 \u2022 scan\n                    \u2502     sql nodes: n3\n                    \u2502     kv nodes: n3\n                    \u2502     regions: lab\n                    \u2502     KV time: 30ms\n                    \u2502     KV rows decoded: 20,000\n                    \u2502     sql cpu time: 13ms\n                    \u2502     actual row count: 20,000\n                    \u2502     estimated row count: 20,000 (100% of the table; stats collected 31 seconds ago)\n                    \u2502     table: customers@customers_pkey\n                    \u2502     spans: FULL SCAN\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 filter\n                        \u2502 sql nodes: n1\n                        \u2502 regions: lab\n                        \u2502 execution time: 5ms\n                        \u2502 sql cpu time: 5ms\n                        \u2502 actual row count: 34,679\n                        \u2502 estimated row count: 13,690\n                        \u2502 filter: ((ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-07-01 00:00:00')) AND (status = 'delivered')\n                        \u2502\n                        \u2514\u2500\u2500 \u2022 scan\n                              sql nodes: n1\n                              kv nodes: n1\n                              regions: lab\n                              KV time: 161ms\n                              KV rows decoded: 200,000\n                              sql cpu time: 58ms\n                              actual row count: 200,000\n                              estimated row count: 200,000 (100% of the table; stats collected 30 seconds ago)\n                              table: orders@orders_pkey\n                              spans: FULL SCAN"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 348.976,
+          "p50": 429.544,
+          "p90": 477.839,
+          "p95": 479.506,
+          "p99": 480.839,
+          "max": 481.172,
+          "mean": 428.169,
+          "stdev": 43.036,
+          "first_ms": 529.285
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 sort\n\u2502 estimated row count: 1,666\n\u2502 order: +category_id,+row_number\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 1,666\n    \u2502 filter: row_number <= 3\n    \u2502\n    \u2514\u2500\u2500 \u2022 window\n        \u2502 estimated row count: 4,999\n        \u2502\n        \u2514\u2500\u2500 \u2022 group (hash)\n            \u2502 estimated row count: 4,999\n            \u2502 group by: product_id\n            \u2502\n            \u2514\u2500\u2500 \u2022 render\n                \u2502\n                \u2514\u2500\u2500 \u2022 hash join\n                    \u2502 estimated row count: 487,606\n                    \u2502 equality: (product_id) = (id)\n                    \u2502 right cols are key\n                    \u2502\n                    \u251c\u2500\u2500 \u2022 scan\n                    \u2502     estimated row count: 487,606 (100% of the table; stats collected 34 seconds ago)\n                    \u2502     table: order_items@order_items_pkey\n                    \u2502     spans: FULL SCAN\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          estimated row count: 5,000 (100% of the table; stats collected 36 seconds ago)\n                          table: products@ix_products_category_id\n                          spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index replacement\n   SQL commands: CREATE INDEX ON lab.public.order_items (product_id) STORING (qty, unit_price) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.order_items@ix_order_items_product_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.order_items@ix_order_items_product_id` */;",
+        "plan_analyze": "planning time: 2ms\nexecution time: 587ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 492,606 (24 MiB, 4 gRPC calls)\nDistSQL network usage: 6.1 MiB (506 messages)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 261\u00b5s\n\u2502 sql cpu time: 261\u00b5s\n\u2502 actual row count: 600\n\u2502 estimated row count: 1,666\n\u2502 order: +category_id,+row_number\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 69\u00b5s\n    \u2502 sql cpu time: 68\u00b5s\n    \u2502 actual row count: 600\n    \u2502 estimated row count: 1,666\n    \u2502 filter: row_number <= 3\n    \u2502\n    \u2514\u2500\u2500 \u2022 window\n        \u2502 sql nodes: n1, n3\n        \u2502 regions: lab\n        \u2502 execution time: 4ms\n        \u2502 sql cpu time: 4ms\n        \u2502 actual row count: 5,000\n        \u2502 estimated row count: 4,999\n        \u2502\n        \u2514\u2500\u2500 \u2022 group (hash)\n            \u2502 sql nodes: n1, n3\n            \u2502 regions: lab\n            \u2502 execution time: 244ms\n            \u2502 sql cpu time: 244ms\n            \u2502 actual row count: 5,000\n            \u2502 estimated row count: 4,999\n            \u2502 group by: product_id\n            \u2502\n            \u2514\u2500\u2500 \u2022 render\n                \u2502 execution time: 106ms\n                \u2502 sql cpu time: 105ms\n                \u2502 actual row count: 487,606\n                \u2502\n                \u2514\u2500\u2500 \u2022 hash join\n                    \u2502 sql nodes: n1, n3\n                    \u2502 regions: lab\n                    \u2502 execution time: 71ms\n                    \u2502 sql cpu time: 233ms\n                    \u2502 actual row count: 487,606\n                    \u2502 estimated row count: 487,606\n                    \u2502 equality: (product_id) = (id)\n                    \u2502 right cols are key\n                    \u2502\n                    \u251c\u2500\u2500 \u2022 scan\n                    \u2502     sql nodes: n1\n                    \u2502     kv nodes: n1\n                    \u2502     regions: lab\n                    \u2502     KV time: 536ms\n                    \u2502     KV rows decoded: 487,606\n                    \u2502     sql cpu time: 297ms\n                    \u2502     actual row count: 487,606\n                    \u2502     estimated row count: 487,606 (100% of the table; stats collected 34 seconds ago)\n                    \u2502     table: order_items@order_items_pkey\n                    \u2502     spans: FULL SCAN\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          sql nodes: n3\n                          kv nodes: n3\n                          regions: lab\n                          KV time: 6ms\n                          KV rows decoded: 5,000\n                          sql cpu time: 2ms\n                          actual row count: 5,000\n                          estimated row count: 5,000 (100% of the table; stats collected 37 seconds ago)\n                          table: products@ix_products_category_id\n                          spans: FULL SCAN"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE_TRUNC('day', ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE_TRUNC('day', ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 131.644,
+          "p50": 173.656,
+          "p90": 196.517,
+          "p95": 203.248,
+          "p99": 208.633,
+          "max": 209.979,
+          "mean": 167.642,
+          "stdev": 26.195,
+          "first_ms": 190.869
+        },
+        "rows": 90,
+        "checksum": "d18d7920a3c2ac35a4a4429e",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 sort\n\u2502 estimated row count: 24,508\n\u2502 order: +column12\n\u2502\n\u2514\u2500\u2500 \u2022 window\n    \u2502 estimated row count: 24,508\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502\n        \u2514\u2500\u2500 \u2022 group (hash)\n            \u2502 estimated row count: 24,508\n            \u2502 group by: column12\n            \u2502\n            \u2514\u2500\u2500 \u2022 render\n                \u2502\n                \u2514\u2500\u2500 \u2022 filter\n                    \u2502 estimated row count: 24,623\n                    \u2502 filter: (ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-04-01 00:00:00')\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          estimated row count: 200,000 (100% of the table; stats collected 38 seconds ago)\n                          table: orders@orders_pkey\n                          spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (ordered_at) STORING (total_amount);",
+        "plan_analyze": "planning time: 1ms\nexecution time: 191ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 27\u00b5s\n\u2502 sql cpu time: 27\u00b5s\n\u2502 actual row count: 90\n\u2502 estimated row count: 24,508\n\u2502 order: +column12\n\u2502\n\u2514\u2500\u2500 \u2022 window\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 132\u00b5s\n    \u2502 sql cpu time: 132\u00b5s\n    \u2502 actual row count: 90\n    \u2502 estimated row count: 24,508\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502 execution time: 23\u00b5s\n        \u2502 sql cpu time: 23\u00b5s\n        \u2502 actual row count: 90\n        \u2502\n        \u2514\u2500\u2500 \u2022 group (hash)\n            \u2502 sql nodes: n1\n            \u2502 regions: lab\n            \u2502 execution time: 5ms\n            \u2502 sql cpu time: 5ms\n            \u2502 actual row count: 90\n            \u2502 estimated row count: 24,508\n            \u2502 group by: column12\n            \u2502\n            \u2514\u2500\u2500 \u2022 render\n                \u2502 execution time: 12ms\n                \u2502 sql cpu time: 12ms\n                \u2502 actual row count: 24,934\n                \u2502\n                \u2514\u2500\u2500 \u2022 filter\n                    \u2502 sql nodes: n1\n                    \u2502 regions: lab\n                    \u2502 execution time: 5ms\n                    \u2502 sql cpu time: 5ms\n                    \u2502 actual row count: 24,934\n                    \u2502 estimated row count: 24,623\n                    \u2502 filter: (ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-04-01 00:00:00')\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          sql nodes: n1\n                          kv nodes: n1\n                          regions: lab\n                          KV time: 169ms\n                          KV rows decoded: 200,000\n                          sql cpu time: 72ms\n                          actual row count: 200,000\n                          estimated row count: 200,000 (100% of the table; stats collected 38 seconds ago)\n                          table: orders@orders_pkey\n                          spans: FULL SCAN"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS VARCHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(t.path || ' > ' || c.name AS VARCHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 5.987,
+          "p50": 9.572,
+          "p90": 11.073,
+          "p95": 12.66,
+          "p99": 13.93,
+          "max": 14.247,
+          "mean": 9.393,
+          "stdev": 2.065,
+          "first_ms": 12.072
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 sort\n\u2502 order: +path\n\u2502\n\u2514\u2500\u2500 \u2022 render\n    \u2502\n    \u2514\u2500\u2500 \u2022 recursive cte\n        \u2502\n        \u2514\u2500\u2500 \u2022 render\n            \u2502\n            \u2514\u2500\u2500 \u2022 filter\n                \u2502 estimated row count: 10\n                \u2502 filter: parent_id IS NULL\n                \u2502\n                \u2514\u2500\u2500 \u2022 scan\n                      estimated row count: 200 (100% of the table; stats collected 40 seconds ago)\n                      table: categories@categories_pkey\n                      spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.categories (parent_id) STORING (name);",
+        "plan_analyze": "planning time: 1ms\nexecution time: 9ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200 (8.8 KiB, 1 gRPC calls)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 215\u00b5s\n\u2502 sql cpu time: 215\u00b5s\n\u2502 actual row count: 200\n\u2502 order: +path\n\u2502\n\u2514\u2500\u2500 \u2022 render\n    \u2502\n    \u2514\u2500\u2500 \u2022 recursive cte\n        \u2502 sql nodes: n1\n        \u2502 regions: lab\n        \u2502 execution time: 8ms\n        \u2502 sql cpu time: 4ms\n        \u2502 actual row count: 200\n        \u2502\n        \u2514\u2500\u2500 \u2022 render\n            \u2502 execution time: 17\u00b5s\n            \u2502 sql cpu time: 17\u00b5s\n            \u2502 actual row count: 10\n            \u2502\n            \u2514\u2500\u2500 \u2022 filter\n                \u2502 sql nodes: n1\n                \u2502 regions: lab\n                \u2502 execution time: 4\u00b5s\n                \u2502 sql cpu time: 4\u00b5s\n                \u2502 actual row count: 10\n                \u2502 estimated row count: 10\n                \u2502 filter: parent_id IS NULL\n                \u2502\n                \u2514\u2500\u2500 \u2022 scan\n                      sql nodes: n1\n                      kv nodes: n3\n                      regions: lab\n                      KV time: 1ms\n                      KV rows decoded: 200\n                      sql cpu time: 137\u00b5s\n                      actual row count: 200\n                      estimated row count: 200 (100% of the table; stats collected 40 seconds ago)\n                      table: categories@categories_pkey\n                      spans: FULL SCAN"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_TRUNC('month', first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_TRUNC('month', o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, DATE_TRUNC('month', o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 539.364,
+          "p50": 570.682,
+          "p90": 587.761,
+          "p95": 596.312,
+          "p99": 603.153,
+          "max": 604.863,
+          "mean": 567.947,
+          "stdev": 19.047,
+          "first_ms": 654.298
+        },
+        "rows": 22,
+        "checksum": "8560c89b626435e14906c6cd",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 sort\n\u2502 estimated row count: 20,035\n\u2502 order: +cohort\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 estimated row count: 20,035\n    \u2502 group by: cohort\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join (right outer)\n            \u2502 estimated row count: 66,667\n            \u2502 equality: (customer_id) = (customer_id)\n            \u2502 right cols are key\n            \u2502 pred: column25 > cohort\n            \u2502\n            \u251c\u2500\u2500 \u2022 distinct\n            \u2502   \u2502 estimated row count: 200,000\n            \u2502   \u2502 distinct on: column25, customer_id\n            \u2502   \u2502\n            \u2502   \u2514\u2500\u2500 \u2022 render\n            \u2502       \u2502\n            \u2502       \u2514\u2500\u2500 \u2022 scan\n            \u2502             estimated row count: 200,000 (100% of the table; stats collected 45 seconds ago)\n            \u2502             table: orders@orders_pkey\n            \u2502             spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 render\n                \u2502\n                \u2514\u2500\u2500 \u2022 group (hash)\n                    \u2502 estimated row count: 20,035\n                    \u2502 group by: customer_id\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          estimated row count: 200,000 (100% of the table; stats collected 45 seconds ago)\n                          table: orders@orders_pkey\n                          spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index replacement\n   SQL commands: CREATE INDEX ON lab.public.orders (customer_id) STORING (ordered_at) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.orders@ix_orders_customer_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.orders@ix_orders_customer_id` */;",
+        "plan_analyze": "planning time: 2ms\nexecution time: 759ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 400,000 (25 MiB, 4 gRPC calls)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 43\u00b5s\n\u2502 sql cpu time: 43\u00b5s\n\u2502 actual row count: 22\n\u2502 estimated row count: 20,035\n\u2502 order: +cohort\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 56ms\n    \u2502 sql cpu time: 56ms\n    \u2502 actual row count: 22\n    \u2502 estimated row count: 20,035\n    \u2502 group by: cohort\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join (right outer)\n            \u2502 sql nodes: n1\n            \u2502 regions: lab\n            \u2502 execution time: 170ms\n            \u2502 sql cpu time: 170ms\n            \u2502 actual row count: 143,628\n            \u2502 estimated row count: 66,667\n            \u2502 equality: (customer_id) = (customer_id)\n            \u2502 right cols are key\n            \u2502 pred: column25 > cohort\n            \u2502\n            \u251c\u2500\u2500 \u2022 distinct\n            \u2502   \u2502 sql nodes: n1\n            \u2502   \u2502 regions: lab\n            \u2502   \u2502 execution time: 41ms\n            \u2502   \u2502 sql cpu time: 41ms\n            \u2502   \u2502 actual row count: 163,618\n            \u2502   \u2502 estimated row count: 200,000\n            \u2502   \u2502 distinct on: column25, customer_id\n            \u2502   \u2502\n            \u2502   \u2514\u2500\u2500 \u2022 render\n            \u2502       \u2502 execution time: 96ms\n            \u2502       \u2502 sql cpu time: 96ms\n            \u2502       \u2502 actual row count: 200,000\n            \u2502       \u2502\n            \u2502       \u2514\u2500\u2500 \u2022 scan\n            \u2502             sql nodes: n1\n            \u2502             kv nodes: n1\n            \u2502             regions: lab\n            \u2502             KV time: 131ms\n            \u2502             KV rows decoded: 200,000\n            \u2502             sql cpu time: 54ms\n            \u2502             actual row count: 200,000\n            \u2502             estimated row count: 200,000 (100% of the table; stats collected 46 seconds ago)\n            \u2502             table: orders@orders_pkey\n            \u2502             spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 render\n                \u2502 execution time: 20ms\n                \u2502 sql cpu time: 20ms\n                \u2502 actual row count: 20,000\n                \u2502\n                \u2514\u2500\u2500 \u2022 group (hash)\n                    \u2502 sql nodes: n1\n                    \u2502 regions: lab\n                    \u2502 execution time: 59ms\n                    \u2502 sql cpu time: 59ms\n                    \u2502 actual row count: 20,000\n                    \u2502 estimated row count: 20,035\n                    \u2502 group by: customer_id\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          sql nodes: n1\n                          kv nodes: n1\n                          regions: lab\n                          KV time: 186ms\n                          KV rows decoded: 200,000\n                          sql cpu time: 67ms\n                          actual row count: 200,000\n                          estimated row count: 200,000 (100% of the table; stats collected 46 seconds ago)\n                          table: orders@orders_pkey\n                          spans: FULL SCAN"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 7,
+          "min": 2996.191,
+          "p50": 3162.041,
+          "p90": 3245.06,
+          "p95": 3245.867,
+          "p99": 3246.513,
+          "max": 3246.675,
+          "mean": 3140.083,
+          "stdev": 87.635,
+          "first_ms": 3579.517
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 top-k\n\u2502 estimated row count: 1\n\u2502 order: +id\n\u2502 k: 200\n\u2502\n\u2514\u2500\u2500 \u2022 lookup join (semi)\n    \u2502 estimated row count: 1\n    \u2502 table: orders@orders_pkey\n    \u2502 equality: (id) = (id)\n    \u2502 equality cols are key\n    \u2502 pred: ordered_at >= '2025-11-01 00:00:00'\n    \u2502\n    \u2514\u2500\u2500 \u2022 lookup join\n        \u2502 estimated row count: 10\n        \u2502 table: orders@ix_orders_customer_id\n        \u2502 equality: (id) = (customer_id)\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join (right anti)\n            \u2502 estimated row count: 1\n            \u2502 equality: (customer_id) = (id)\n            \u2502 right cols are key\n            \u2502\n            \u251c\u2500\u2500 \u2022 filter\n            \u2502   \u2502 estimated row count: 165,752\n            \u2502   \u2502 filter: event_type = 'churn'\n            \u2502   \u2502\n            \u2502   \u2514\u2500\u2500 \u2022 scan\n            \u2502         estimated row count: 1,000,000 (100% of the table; stats collected 23 seconds ago)\n            \u2502         table: events@events_pkey\n            \u2502         spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 scan\n                  estimated row count: 20,000 (100% of the table; stats collected 1 minute ago)\n                  table: customers@ux_customers_email\n                  spans: FULL SCAN\n\nindex recommendations: 2\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.events (event_type) STORING (customer_id);\n2. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (customer_id, ordered_at);",
+        "plan_analyze": "planning time: 4ms\nexecution time: 3.5s\ndistribution: full\nplan type: custom\nrows decoded from KV: 1,262,670 (118 MiB, 51 gRPC calls)\nDistSQL network usage: 8.8 KiB (67 messages)\nregions: lab\n\n\u2022 top-k\n\u2502 sql nodes: n3\n\u2502 regions: lab\n\u2502 execution time: 996\u00b5s\n\u2502 sql cpu time: 995\u00b5s\n\u2502 actual row count: 200\n\u2502 estimated row count: 1\n\u2502 order: +id\n\u2502 k: 200\n\u2502\n\u2514\u2500\u2500 \u2022 lookup join (semi) (streamer)\n    \u2502 sql nodes: n3\n    \u2502 kv nodes: n1\n    \u2502 regions: lab\n    \u2502 KV time: 2s\n    \u2502 KV rows decoded: 121,335\n    \u2502 execution time: 2.3s\n    \u2502 sql cpu time: 281ms\n    \u2502 actual row count: 6,860\n    \u2502 estimated row count: 1\n    \u2502 table: orders@orders_pkey\n    \u2502 equality: (id) = (id)\n    \u2502 equality cols are key\n    \u2502 pred: ordered_at >= '2025-11-01 00:00:00'\n    \u2502\n    \u2514\u2500\u2500 \u2022 lookup join (streamer)\n        \u2502 sql nodes: n3\n        \u2502 kv nodes: n3\n        \u2502 regions: lab\n        \u2502 KV time: 366ms\n        \u2502 KV rows decoded: 121,335\n        \u2502 execution time: 476ms\n        \u2502 sql cpu time: 110ms\n        \u2502 actual row count: 121,335\n        \u2502 estimated row count: 10\n        \u2502 table: orders@ix_orders_customer_id\n        \u2502 equality: (id) = (customer_id)\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join (right anti)\n            \u2502 sql nodes: n3\n            \u2502 regions: lab\n            \u2502 execution time: 5ms\n            \u2502 sql cpu time: 5ms\n            \u2502 actual row count: 12,118\n            \u2502 estimated row count: 1\n            \u2502 equality: (customer_id) = (id)\n            \u2502 right cols are key\n            \u2502\n            \u251c\u2500\u2500 \u2022 filter\n            \u2502   \u2502 sql nodes: n3\n            \u2502   \u2502 regions: lab\n            \u2502   \u2502 execution time: 9ms\n            \u2502   \u2502 sql cpu time: 9ms\n            \u2502   \u2502 actual row count: 10,008\n            \u2502   \u2502 estimated row count: 165,752\n            \u2502   \u2502 filter: event_type = 'churn'\n            \u2502   \u2502\n            \u2502   \u2514\u2500\u2500 \u2022 scan\n            \u2502         sql nodes: n3\n            \u2502         kv nodes: n3\n            \u2502         regions: lab\n            \u2502         KV time: 647ms\n            \u2502         KV rows decoded: 1,000,000\n            \u2502         sql cpu time: 239ms\n            \u2502         actual row count: 1,000,000\n            \u2502         estimated row count: 1,000,000 (100% of the table; stats collected 27 seconds ago)\n            \u2502         table: events@events_pkey\n            \u2502         spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 scan\n                  sql nodes: n3\n                  kv nodes: n3\n                  regions: lab\n                  KV time: 27ms\n                  KV rows decoded: 20,000\n                  sql cpu time: 11ms\n                  actual row count: 20,000\n                  estimated row count: 20,000 (100% of the table; stats collected 1 minute ago)\n                  table: customers@ux_customers_email\n                  spans: FULL SCAN"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 51.723,
+          "p50": 69.55,
+          "p90": 79.876,
+          "p95": 80.733,
+          "p99": 81.419,
+          "max": 81.59,
+          "mean": 68.343,
+          "stdev": 10.403,
+          "first_ms": 79.331
+        },
+        "rows": 500,
+        "checksum": "6bc68625c58e84ac582dbee2",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 render\n\u2502\n\u2514\u2500\u2500 \u2022 top-k\n    \u2502 estimated row count: 500\n    \u2502 order: +id\n    \u2502 k: 500\n    \u2502\n    \u2514\u2500\u2500 \u2022 group (hash)\n        \u2502 estimated row count: 4,231\n        \u2502 group by: id\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join\n            \u2502 estimated row count: 105,800\n            \u2502 equality: (category_id) = (category_id)\n            \u2502\n            \u251c\u2500\u2500 \u2022 scan\n            \u2502     estimated row count: 5,000 (100% of the table; stats collected 26 seconds ago)\n            \u2502     table: products@products_pkey\n            \u2502     spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 filter\n                \u2502 estimated row count: 4,232\n                \u2502 filter: active\n                \u2502\n                \u2514\u2500\u2500 \u2022 scan\n                      estimated row count: 5,000 (100% of the table; stats collected 26 seconds ago)\n                      table: products@products_pkey\n                      spans: FULL SCAN",
+        "plan_analyze": "planning time: 3ms\nexecution time: 75ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 10,000 (4.5 MiB, 2 gRPC calls)\nDistSQL network usage: 21 KiB (3 messages)\nregions: lab\n\n\u2022 render\n\u2502\n\u2514\u2500\u2500 \u2022 top-k\n    \u2502 sql nodes: n3\n    \u2502 regions: lab\n    \u2502 execution time: 853\u00b5s\n    \u2502 sql cpu time: 853\u00b5s\n    \u2502 actual row count: 500\n    \u2502 estimated row count: 500\n    \u2502 order: +id\n    \u2502 k: 500\n    \u2502\n    \u2514\u2500\u2500 \u2022 group (hash)\n        \u2502 sql nodes: n3\n        \u2502 regions: lab\n        \u2502 execution time: 42ms\n        \u2502 sql cpu time: 42ms\n        \u2502 actual row count: 4,232\n        \u2502 estimated row count: 4,231\n        \u2502 group by: id\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join\n            \u2502 sql nodes: n3\n            \u2502 regions: lab\n            \u2502 execution time: 9ms\n            \u2502 sql cpu time: 9ms\n            \u2502 actual row count: 109,803\n            \u2502 estimated row count: 105,800\n            \u2502 equality: (category_id) = (category_id)\n            \u2502\n            \u251c\u2500\u2500 \u2022 scan\n            \u2502     sql nodes: n3\n            \u2502     kv nodes: n3\n            \u2502     regions: lab\n            \u2502     KV time: 9ms\n            \u2502     KV rows decoded: 5,000\n            \u2502     sql cpu time: 3ms\n            \u2502     actual row count: 5,000\n            \u2502     estimated row count: 5,000 (100% of the table; stats collected 26 seconds ago)\n            \u2502     table: products@products_pkey\n            \u2502     spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 filter\n                \u2502 sql nodes: n3\n                \u2502 regions: lab\n                \u2502 execution time: 17\u00b5s\n                \u2502 sql cpu time: 16\u00b5s\n                \u2502 actual row count: 4,232\n                \u2502 estimated row count: 4,232\n                \u2502 filter: active\n                \u2502\n                \u2514\u2500\u2500 \u2022 scan\n                      sql nodes: n3\n                      kv nodes: n3\n                      regions: lab\n                      KV time: 10ms\n                      KV rows decoded: 5,000\n                      sql cpu time: 4ms\n                      actual row count: 5,000\n                      estimated row count: 5,000 (100% of the table; stats collected 26 seconds ago)\n                      table: products@products_pkey\n                      spans: FULL SCAN"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id AS customer_id, o.id AS order_id, o.ordered_at, o.total_amount FROM customers c CROSS JOIN LATERAL (SELECT o2.id, o2.ordered_at, o2.total_amount FROM orders o2 WHERE o2.customer_id = c.id ORDER BY o2.ordered_at DESC, o2.id DESC LIMIT 3) o WHERE c.id <= 100 ORDER BY c.id, o.ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 13.529,
+          "p50": 27.529,
+          "p90": 29.452,
+          "p95": 30.54,
+          "p99": 31.409,
+          "max": 31.627,
+          "mean": 24.008,
+          "stdev": 6.272,
+          "first_ms": 18.27
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 sort\n\u2502 estimated row count: 316\n\u2502 order: +id,-ordered_at\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 316\n    \u2502 filter: row_num <= 3\n    \u2502\n    \u2514\u2500\u2500 \u2022 window\n        \u2502 estimated row count: 947\n        \u2502\n        \u2514\u2500\u2500 \u2022 lookup join\n            \u2502 estimated row count: 947\n            \u2502 table: orders@orders_pkey\n            \u2502 equality: (id) = (id)\n            \u2502 equality cols are key\n            \u2502\n            \u2514\u2500\u2500 \u2022 merge join\n                \u2502 estimated row count: 947\n                \u2502 equality: (customer_id) = (id)\n                \u2502 right cols are key\n                \u2502\n                \u251c\u2500\u2500 \u2022 scan\n                \u2502     estimated row count: 1,080 (0.54% of the table; stats collected 1 minute ago)\n                \u2502     table: orders@ix_orders_customer_id\n                \u2502     spans: [ - /100]\n                \u2502\n                \u2514\u2500\u2500 \u2022 scan\n                      estimated row count: 102 (0.51% of the table; stats collected 1 minute ago)\n                      table: customers@customers_pkey\n                      spans: [ - /100]\n\nindex recommendations: 1\n1. type: index replacement\n   SQL commands: CREATE INDEX ON lab.public.orders (customer_id) STORING (ordered_at, total_amount) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.orders@ix_orders_customer_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.orders@ix_orders_customer_id` */;",
+        "plan_analyze": "planning time: 3ms\nexecution time: 30ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 2,096 (87 KiB, 3 gRPC calls)\nregions: lab\n\n\u2022 sort\n\u2502 estimated row count: 316\n\u2502 order: +id,-ordered_at\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 316\n    \u2502 filter: row_num <= 3\n    \u2502\n    \u2514\u2500\u2500 \u2022 window\n        \u2502 estimated row count: 947\n        \u2502\n        \u2514\u2500\u2500 \u2022 lookup join\n            \u2502 estimated row count: 947\n            \u2502 table: orders@orders_pkey\n            \u2502 equality: (id) = (id)\n            \u2502 equality cols are key\n            \u2502\n            \u2514\u2500\u2500 \u2022 merge join\n                \u2502 estimated row count: 947\n                \u2502 equality: (customer_id) = (id)\n                \u2502 right cols are key\n                \u2502\n                \u251c\u2500\u2500 \u2022 scan\n                \u2502     estimated row count: 1,080 (0.54% of the table; stats collected 1 minute ago)\n                \u2502     table: orders@ix_orders_customer_id\n                \u2502     spans: [ - /100]\n                \u2502\n                \u2514\u2500\u2500 \u2022 scan\n                      estimated row count: 102 (0.51% of the table; stats collected 1 minute ago)\n                      table: customers@customers_pkey\n                      spans: [ - /100]"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 13.187,
+          "p50": 16.37,
+          "p90": 23.838,
+          "p95": 24.501,
+          "p99": 25.032,
+          "max": 25.165,
+          "mean": 17.912,
+          "stdev": 4.265,
+          "first_ms": 15.551
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 sort\n\u2502 estimated row count: 360\n\u2502 order: +customer_id,-ordered_at\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 360\n    \u2502 filter: row_number <= 3\n    \u2502\n    \u2514\u2500\u2500 \u2022 window\n        \u2502 estimated row count: 1,080\n        \u2502\n        \u2514\u2500\u2500 \u2022 index join\n            \u2502 estimated row count: 1,080\n            \u2502 table: orders@orders_pkey\n            \u2502\n            \u2514\u2500\u2500 \u2022 scan\n                  estimated row count: 1,080 (0.54% of the table; stats collected 1 minute ago)\n                  table: orders@ix_orders_customer_id\n                  spans: [ - /100]\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (customer_id, ordered_at DESC) STORING (total_amount);",
+        "plan_analyze": "planning time: 969\u00b5s\nexecution time: 25ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 1,996 (75 KiB, 2 gRPC calls)\nregions: lab\n\n\u2022 sort\n\u2502 estimated row count: 360\n\u2502 order: +customer_id,-ordered_at\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 360\n    \u2502 filter: row_number <= 3\n    \u2502\n    \u2514\u2500\u2500 \u2022 window\n        \u2502 estimated row count: 1,080\n        \u2502\n        \u2514\u2500\u2500 \u2022 index join\n            \u2502 estimated row count: 1,080\n            \u2502 table: orders@orders_pkey\n            \u2502\n            \u2514\u2500\u2500 \u2022 scan\n                  estimated row count: 1,080 (0.54% of the table; stats collected 1 minute ago)\n                  table: orders@ix_orders_customer_id\n                  spans: [ - /100]"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "FeatureNotSupported: at or near \"(\": syntax error: unimplemented: this syntax DETAIL: source SQL: SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPIN",
+        "error_code": null
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE (attrs->>'color') = 'red' AND ((attrs->>'weight')::numeric) > 10 ORDER BY id LIMIT 100",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 36.105,
+          "p50": 38.524,
+          "p90": 41.796,
+          "p95": 42.141,
+          "p99": 42.416,
+          "max": 42.485,
+          "mean": 38.82,
+          "stdev": 2.029,
+          "first_ms": 34.045
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 limit\n\u2502 count: 100\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 556\n    \u2502 filter: ((attrs->>'color') = 'red') AND ((attrs->>'weight')::DECIMAL > 10)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 900 - 5,000 (100% of the table; stats collected 27 seconds ago)\n          table: products@products_pkey\n          spans: FULL SCAN (SOFT LIMIT)",
+        "plan_analyze": "planning time: 1ms\nexecution time: 35ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 1,924 (928 KiB, 5,000 KVs, 2 gRPC calls)\nregions: lab\n\n\u2022 limit\n\u2502 count: 100\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 3ms\n    \u2502 sql cpu time: 3ms\n    \u2502 actual row count: 100\n    \u2502 estimated row count: 556\n    \u2502 filter: ((attrs->>'color') = 'red') AND ((attrs->>'weight')::DECIMAL > 10)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n3\n          regions: lab\n          KV time: 32ms\n          KV rows decoded: 1,924\n          sql cpu time: 2ms\n          actual row count: 1,924\n          estimated row count: 900 - 5,000 (100% of the table; stats collected 27 seconds ago)\n          table: products@products_pkey\n          spans: FULL SCAN (SOFT LIMIT)"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE to_tsvector('english', description) @@ plainto_tsquery('english', 'bluetooth waterproof') ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 80.42,
+          "p50": 134.493,
+          "p90": 145.553,
+          "p95": 151.153,
+          "p99": 155.632,
+          "max": 156.752,
+          "mean": 129.47,
+          "stdev": 20.189,
+          "first_ms": 142.708
+        },
+        "rows": 50,
+        "checksum": "13c3c7dd358069b0c82817de",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 limit\n\u2502 count: 50\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 1,667\n    \u2502 filter: to_tsvector('english', description) @@ '''bluetooth'' & ''waterproof'''\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 150 - 5,000 (100% of the table; stats collected 28 seconds ago)\n          table: products@products_pkey\n          spans: FULL SCAN (SOFT LIMIT)",
+        "plan_analyze": "planning time: 2ms\nexecution time: 138ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 1,174 (579 KiB, 5,000 KVs, 2 gRPC calls)\nregions: lab\n\n\u2022 limit\n\u2502 count: 50\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 104ms\n    \u2502 sql cpu time: 104ms\n    \u2502 actual row count: 50\n    \u2502 estimated row count: 1,667\n    \u2502 filter: to_tsvector('english', description) @@ '''bluetooth'' & ''waterproof'''\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n3\n          regions: lab\n          KV time: 33ms\n          KV rows decoded: 1,174\n          sql cpu time: 2ms\n          actual row count: 1,174\n          estimated row count: 150 - 5,000 (100% of the table; stats collected 28 seconds ago)\n          table: products@products_pkey\n          spans: FULL SCAN (SOFT LIMIT)"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO inventory (product_id, warehouse_id, qty, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT (product_id, warehouse_id) DO UPDATE SET qty = inventory.qty + EXCLUDED.qty, updated_at = CURRENT_TIMESTAMP",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 3.028,
+          "p50": 3.523,
+          "p90": 4.068,
+          "p95": 4.844,
+          "p99": 5.431,
+          "max": 5.537,
+          "mean": 3.692,
+          "stdev": 0.533,
+          "first_ms": 6.6
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INTEGER) AS product_id, CAST(? AS INTEGER) AS warehouse_id, CAST(? AS INTEGER) AS qty ) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT_TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT_TIMESTAMP)",
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "SyntaxError: at or near \"merge\": syntax error DETAIL: source SQL: MERGE INTO inventory i USING (SELECT CAST($1 AS INTEGER) AS product_id, CAST($2 AS INTEGER) AS warehouse_id, CAST($3 AS INTEGER) AS qty ) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE ",
+        "error_code": null
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 283.283,
+          "p50": 297.696,
+          "p90": 371.24,
+          "p95": 384.672,
+          "p99": 395.419,
+          "max": 398.105,
+          "mean": 317.708,
+          "stdev": 37.318,
+          "first_ms": 346.763
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 limit\n\u2502 offset: 100000\n\u2502\n\u2514\u2500\u2500 \u2022 top-k\n    \u2502 estimated row count: 100,050\n    \u2502 order: +ordered_at,+id\n    \u2502 k: 100050\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 200,000 (100% of the table; stats collected 1 minute ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (ordered_at, id) STORING (customer_id);",
+        "plan_analyze": "planning time: 395\u00b5s\nexecution time: 391ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 limit\n\u2502 offset: 100000\n\u2502\n\u2514\u2500\u2500 \u2022 top-k\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 214ms\n    \u2502 sql cpu time: 214ms\n    \u2502 actual row count: 50\n    \u2502 estimated row count: 100,050\n    \u2502 order: +ordered_at,+id\n    \u2502 k: 100050\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 177ms\n          KV rows decoded: 200,000\n          sql cpu time: 69ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 1 minute ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 110.8,
+          "p50": 145.74,
+          "p90": 157.316,
+          "p95": 170.056,
+          "p99": 180.248,
+          "max": 182.796,
+          "mean": 143.387,
+          "stdev": 19.45,
+          "first_ms": 183.256
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 top-k\n\u2502 estimated row count: 50\n\u2502 order: +ordered_at,+id\n\u2502 k: 50\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 22,222\n    \u2502 filter: (ordered_at > '2025-01-01 00:00:00') OR ((ordered_at = '2025-01-01 00:00:00') AND (id > 0))\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 200,000 (100% of the table; stats collected 1 minute ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (ordered_at, id) STORING (customer_id);",
+        "plan_analyze": "planning time: 698\u00b5s\nexecution time: 198ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 top-k\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 3ms\n\u2502 sql cpu time: 3ms\n\u2502 actual row count: 50\n\u2502 estimated row count: 50\n\u2502 order: +ordered_at,+id\n\u2502 k: 50\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 7ms\n    \u2502 sql cpu time: 7ms\n    \u2502 actual row count: 99,956\n    \u2502 estimated row count: 22,222\n    \u2502 filter: (ordered_at > '2025-01-01 00:00:00') OR ((ordered_at = '2025-01-01 00:00:00') AND (id > 0))\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 187ms\n          KV rows decoded: 200,000\n          sql cpu time: 61ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 1 minute ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 138.486,
+          "p50": 165.373,
+          "p90": 201.14,
+          "p95": 206.145,
+          "p99": 210.149,
+          "max": 211.15,
+          "mean": 168.422,
+          "stdev": 23.815,
+          "first_ms": 194.765
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 top-k\n\u2502 estimated row count: 50\n\u2502 order: +ordered_at,+id\n\u2502 k: 50\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 99,859\n    \u2502 filter: (ordered_at, id) > ('2025-01-01 00:00:00', 0)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 200,000 (100% of the table; stats collected 2 minutes ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.orders (ordered_at, id) STORING (customer_id);",
+        "plan_analyze": "planning time: 596\u00b5s\nexecution time: 192ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 top-k\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 3ms\n\u2502 sql cpu time: 3ms\n\u2502 actual row count: 50\n\u2502 estimated row count: 50\n\u2502 order: +ordered_at,+id\n\u2502 k: 50\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 37ms\n    \u2502 sql cpu time: 37ms\n    \u2502 actual row count: 99,956\n    \u2502 estimated row count: 99,859\n    \u2502 filter: (ordered_at, id) > ('2025-01-01 00:00:00', 0)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 151ms\n          KV rows decoded: 200,000\n          sql cpu time: 51ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 2 minutes ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 570.008,
+          "p50": 604.196,
+          "p90": 636.816,
+          "p95": 650.731,
+          "p99": 661.863,
+          "max": 664.646,
+          "mean": 607.481,
+          "stdev": 27.087,
+          "first_ms": 675.453
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 group (scalar)\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 distinct\n    \u2502 estimated row count: 20,035\n    \u2502 distinct on: customer_id\n    \u2502\n    \u2514\u2500\u2500 \u2022 filter\n        \u2502 estimated row count: 499,312\n        \u2502 filter: occurred_at >= '2025-01-01 00:00:00'\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              estimated row count: 1,000,000 (100% of the table; stats collected 46 seconds ago)\n              table: events@events_pkey\n              spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index creation\n   SQL command: CREATE INDEX ON lab.public.events (occurred_at) STORING (customer_id);",
+        "plan_analyze": "planning time: 715\u00b5s\nexecution time: 706ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 1,000,000 (107 MiB, 11 gRPC calls)\nDistSQL network usage: 152 B (51 messages)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n3\n\u2502 regions: lab\n\u2502 execution time: 98\u00b5s\n\u2502 sql cpu time: 97\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 distinct\n    \u2502 sql nodes: n3\n    \u2502 regions: lab\n    \u2502 execution time: 30ms\n    \u2502 sql cpu time: 30ms\n    \u2502 actual row count: 20,000\n    \u2502 estimated row count: 20,035\n    \u2502 distinct on: customer_id\n    \u2502\n    \u2514\u2500\u2500 \u2022 filter\n        \u2502 sql nodes: n3\n        \u2502 regions: lab\n        \u2502 execution time: 16ms\n        \u2502 sql cpu time: 16ms\n        \u2502 actual row count: 499,245\n        \u2502 estimated row count: 499,312\n        \u2502 filter: occurred_at >= '2025-01-01 00:00:00'\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              sql nodes: n3\n              kv nodes: n3\n              regions: lab\n              KV time: 657ms\n              KV rows decoded: 1,000,000\n              sql cpu time: 251ms\n              actual row count: 1,000,000\n              estimated row count: 1,000,000 (100% of the table; stats collected 47 seconds ago)\n              table: events@events_pkey\n              spans: FULL SCAN"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 232.246,
+          "p50": 294.408,
+          "p90": 326.05,
+          "p95": 326.541,
+          "p99": 326.935,
+          "max": 327.033,
+          "mean": 292.948,
+          "stdev": 30.661,
+          "first_ms": 466.991
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 filter\n\u2502 estimated row count: 2\n\u2502 filter: id IS NULL\n\u2502\n\u2514\u2500\u2500 \u2022 merge join (right outer)\n    \u2502 estimated row count: 487,606\n    \u2502 equality: (product_id) = (id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     estimated row count: 487,606 (100% of the table; stats collected 2 minutes ago)\n    \u2502     table: order_items@ix_order_items_product_id\n    \u2502     spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 sort\n        \u2502 estimated row count: 5,000\n        \u2502 order: +id\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              estimated row count: 5,000 (100% of the table; stats collected 49 seconds ago)\n              table: products@ix_products_category_id\n              spans: FULL SCAN",
+        "plan_analyze": "planning time: 1ms\nexecution time: 282ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 492,606 (18 MiB, 3 gRPC calls)\nDistSQL network usage: 3.7 MiB (512 messages)\nregions: lab\n\n\u2022 filter\n\u2502 sql nodes: n2, n3\n\u2502 regions: lab\n\u2502 execution time: 422\u00b5s\n\u2502 sql cpu time: 393\u00b5s\n\u2502 actual row count: 0\n\u2502 estimated row count: 2\n\u2502 filter: id IS NULL\n\u2502\n\u2514\u2500\u2500 \u2022 merge join (right outer)\n    \u2502 sql nodes: n2, n3\n    \u2502 regions: lab\n    \u2502 execution time: 60ms\n    \u2502 sql cpu time: 87ms\n    \u2502 actual row count: 487,606\n    \u2502 estimated row count: 487,606\n    \u2502 equality: (product_id) = (id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     sql nodes: n2\n    \u2502     kv nodes: n2\n    \u2502     regions: lab\n    \u2502     KV time: 269ms\n    \u2502     KV rows decoded: 487,606\n    \u2502     sql cpu time: 74ms\n    \u2502     actual row count: 487,606\n    \u2502     estimated row count: 487,606 (100% of the table; stats collected 2 minutes ago)\n    \u2502     table: order_items@ix_order_items_product_id\n    \u2502     spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 sort\n        \u2502 sql nodes: n3\n        \u2502 regions: lab\n        \u2502 execution time: 1ms\n        \u2502 sql cpu time: 1ms\n        \u2502 actual row count: 5,000\n        \u2502 estimated row count: 5,000\n        \u2502 order: +id\n        \u2502\n        \u2514\u2500\u2500 \u2022 scan\n              sql nodes: n3\n              kv nodes: n3\n              regions: lab\n              KV time: 6ms\n              KV rows decoded: 5,000\n              sql cpu time: 2ms\n              actual row count: 5,000\n              estimated row count: 5,000 (100% of the table; stats collected 49 seconds ago)\n              table: products@ix_products_category_id\n              spans: FULL SCAN"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 230.561,
+          "p50": 288.398,
+          "p90": 383.975,
+          "p95": 386.986,
+          "p99": 389.394,
+          "max": 389.996,
+          "mean": 300.516,
+          "stdev": 54.667,
+          "first_ms": 364.4
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 sort\n\u2502 estimated row count: 1\n\u2502 order: +id\n\u2502\n\u2514\u2500\u2500 \u2022 hash join (right anti)\n    \u2502 estimated row count: 1\n    \u2502 equality: (product_id) = (id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     estimated row count: 487,606 (100% of the table; stats collected 2 minutes ago)\n    \u2502     table: order_items@ix_order_items_product_id\n    \u2502     spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 5,000 (100% of the table; stats collected 53 seconds ago)\n          table: products@ix_products_category_id\n          spans: FULL SCAN",
+        "plan_analyze": "planning time: 555\u00b5s\nexecution time: 374ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 492,606 (18 MiB, 3 gRPC calls)\nDistSQL network usage: 1.9 MiB (514 messages)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n2, n3\n\u2502 regions: lab\n\u2502 execution time: 82\u00b5s\n\u2502 sql cpu time: 81\u00b5s\n\u2502 actual row count: 0\n\u2502 estimated row count: 1\n\u2502 order: +id\n\u2502\n\u2514\u2500\u2500 \u2022 hash join (right anti)\n    \u2502 sql nodes: n2, n3\n    \u2502 regions: lab\n    \u2502 execution time: 31ms\n    \u2502 sql cpu time: 51ms\n    \u2502 actual row count: 0\n    \u2502 estimated row count: 1\n    \u2502 equality: (product_id) = (id)\n    \u2502 right cols are key\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     sql nodes: n2\n    \u2502     kv nodes: n2\n    \u2502     regions: lab\n    \u2502     KV time: 358ms\n    \u2502     KV rows decoded: 487,606\n    \u2502     sql cpu time: 126ms\n    \u2502     actual row count: 487,606\n    \u2502     estimated row count: 487,606 (100% of the table; stats collected 2 minutes ago)\n    \u2502     table: order_items@ix_order_items_product_id\n    \u2502     spans: FULL SCAN\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n3\n          kv nodes: n3\n          regions: lab\n          KV time: 4ms\n          KV rows decoded: 5,000\n          sql cpu time: 1ms\n          actual row count: 5,000\n          estimated row count: 5,000 (100% of the table; stats collected 53 seconds ago)\n          table: products@ix_products_category_id\n          spans: FULL SCAN"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR EXTRACT(EPOCH FROM (occurred_at - prev_at)) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 981.346,
+          "p50": 1281.036,
+          "p90": 1329.571,
+          "p95": 1337.971,
+          "p99": 1344.691,
+          "max": 1346.371,
+          "mean": 1204.058,
+          "stdev": 132.201,
+          "first_ms": 1217.314
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 group (streaming)\n\u2502 estimated row count: 1\n\u2502 group by: customer_id\n\u2502 ordered: +customer_id\n\u2502\n\u2514\u2500\u2500 \u2022 sort\n    \u2502 estimated row count: 1\n    \u2502 order: +customer_id\n    \u2502\n    \u2514\u2500\u2500 \u2022 filter\n        \u2502 estimated row count: 1\n        \u2502 filter: new_session = 1\n        \u2502\n        \u2514\u2500\u2500 \u2022 render\n            \u2502\n            \u2514\u2500\u2500 \u2022 window\n                \u2502 estimated row count: 98,054\n                \u2502\n                \u2514\u2500\u2500 \u2022 render\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 index join\n                        \u2502 estimated row count: 98,054\n                        \u2502 table: events@events_pkey\n                        \u2502\n                        \u2514\u2500\u2500 \u2022 scan\n                              estimated row count: 98,054 (9.8% of the table; stats collected 1 minute ago)\n                              table: events@ix_events_customer_id\n                              spans: [ - /2000]\n\nindex recommendations: 1\n1. type: index replacement\n   SQL commands: CREATE INDEX ON lab.public.events (customer_id) STORING (occurred_at) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.events@ix_events_customer_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.events@ix_events_customer_id` */;",
+        "plan_analyze": "planning time: 2ms\nexecution time: 1.1s\ndistribution: full\nplan type: custom\nrows decoded from KV: 199,808 (12 MiB, 4 gRPC calls)\nDistSQL network usage: 32 KiB (16 messages)\nregions: lab\n\n\u2022 group (streaming)\n\u2502 sql nodes: n3\n\u2502 regions: lab\n\u2502 execution time: 515\u00b5s\n\u2502 sql cpu time: 515\u00b5s\n\u2502 actual row count: 2,000\n\u2502 estimated row count: 1\n\u2502 group by: customer_id\n\u2502 ordered: +customer_id\n\u2502\n\u2514\u2500\u2500 \u2022 sort\n    \u2502 sql nodes: n3\n    \u2502 regions: lab\n    \u2502 execution time: 2ms\n    \u2502 sql cpu time: 2ms\n    \u2502 actual row count: 99,765\n    \u2502 estimated row count: 1\n    \u2502 order: +customer_id\n    \u2502\n    \u2514\u2500\u2500 \u2022 filter\n        \u2502 sql nodes: n3\n        \u2502 regions: lab\n        \u2502 execution time: 201\u00b5s\n        \u2502 sql cpu time: 198\u00b5s\n        \u2502 actual row count: 99,765\n        \u2502 estimated row count: 1\n        \u2502 filter: new_session = 1\n        \u2502\n        \u2514\u2500\u2500 \u2022 render\n            \u2502 execution time: 19ms\n            \u2502 sql cpu time: 19ms\n            \u2502 actual row count: 99,904\n            \u2502\n            \u2514\u2500\u2500 \u2022 window\n                \u2502 sql nodes: n3\n                \u2502 regions: lab\n                \u2502 execution time: 122ms\n                \u2502 sql cpu time: 122ms\n                \u2502 actual row count: 99,904\n                \u2502 estimated row count: 98,054\n                \u2502\n                \u2514\u2500\u2500 \u2022 render\n                    \u2502 execution time: 510\u00b5s\n                    \u2502 sql cpu time: 493\u00b5s\n                    \u2502 actual row count: 99,904\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 index join (streamer)\n                        \u2502 sql nodes: n3\n                        \u2502 kv nodes: n3\n                        \u2502 regions: lab\n                        \u2502 KV time: 919ms\n                        \u2502 KV rows decoded: 99,904\n                        \u2502 sql cpu time: 78ms\n                        \u2502 actual row count: 99,904\n                        \u2502 estimated row count: 98,054\n                        \u2502 table: events@events_pkey\n                        \u2502\n                        \u2514\u2500\u2500 \u2022 scan\n                              sql nodes: n3\n                              kv nodes: n3\n                              regions: lab\n                              KV time: 68ms\n                              KV rows decoded: 99,904\n                              sql cpu time: 15ms\n                              actual row count: 99,904\n                              estimated row count: 98,054 (9.8% of the table; stats collected 1 minute ago)\n                              table: events@ix_events_customer_id\n                              spans: [ - /2000]"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_amount) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "error",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "UndefinedFunction: unknown signature: percentile_cont_impl(decimal, decimal) HINT: No function matches the given name and argument types. You might need to add explicit type casts.",
+        "error_code": null
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, STRING_AGG(p.sku, ',' ORDER BY p.sku) AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 24.702,
+          "p50": 37.92,
+          "p90": 44.312,
+          "p95": 46.195,
+          "p99": 47.702,
+          "max": 48.078,
+          "mean": 37.357,
+          "stdev": 6.409,
+          "first_ms": 49.052
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 group (streaming)\n\u2502 estimated row count: 391\n\u2502 group by: id\n\u2502 ordered: +id\n\u2502\n\u2514\u2500\u2500 \u2022 sort\n    \u2502 estimated row count: 762\n    \u2502 order: +id,+sku\n    \u2502 already ordered: +id\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502\n        \u2514\u2500\u2500 \u2022 lookup join\n            \u2502 estimated row count: 762\n            \u2502 table: products@products_pkey\n            \u2502 equality: (product_id) = (id)\n            \u2502 equality cols are key\n            \u2502\n            \u2514\u2500\u2500 \u2022 lookup join\n                \u2502 estimated row count: 762\n                \u2502 table: order_items@order_items_pkey\n                \u2502 equality: (id) = (id)\n                \u2502 equality cols are key\n                \u2502\n                \u2514\u2500\u2500 \u2022 merge join\n                    \u2502 estimated row count: 762\n                    \u2502 equality: (order_id) = (id)\n                    \u2502 right cols are key\n                    \u2502\n                    \u251c\u2500\u2500 \u2022 scan\n                    \u2502     estimated row count: 2,098 (0.43% of the table; stats collected 2 minutes ago)\n                    \u2502     table: order_items@ix_order_items_order_id\n                    \u2502     spans: [ - /500]\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          estimated row count: 519 (0.26% of the table; stats collected 2 minutes ago)\n                          table: orders@orders_pkey\n                          spans: [ - /500]\n\nindex recommendations: 1\n1. type: index replacement\n   SQL commands: CREATE INDEX ON lab.public.order_items (order_id) STORING (product_id) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.order_items@ix_order_items_order_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.order_items@ix_order_items_order_id` */;",
+        "plan_analyze": "planning time: 3ms\nexecution time: 42ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 4,081 (622 KiB, 8 gRPC calls)\nDistSQL network usage: 30 KiB (45 messages)\nregions: lab\n\n\u2022 group (streaming)\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 1ms\n\u2502 sql cpu time: 1ms\n\u2502 actual row count: 500\n\u2502 estimated row count: 391\n\u2502 group by: id\n\u2502 ordered: +id\n\u2502\n\u2514\u2500\u2500 \u2022 sort\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 712\u00b5s\n    \u2502 sql cpu time: 712\u00b5s\n    \u2502 actual row count: 1,209\n    \u2502 estimated row count: 762\n    \u2502 order: +id,+sku\n    \u2502 already ordered: +id\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502 execution time: 151\u00b5s\n        \u2502 sql cpu time: 151\u00b5s\n        \u2502 actual row count: 1,209\n        \u2502\n        \u2514\u2500\u2500 \u2022 lookup join (streamer)\n            \u2502 sql nodes: n1, n3\n            \u2502 kv nodes: n3\n            \u2502 regions: lab\n            \u2502 KV time: 28ms\n            \u2502 KV rows decoded: 1,163\n            \u2502 execution time: 33ms\n            \u2502 sql cpu time: 5ms\n            \u2502 actual row count: 1,209\n            \u2502 estimated row count: 762\n            \u2502 table: products@products_pkey\n            \u2502 equality: (product_id) = (id)\n            \u2502 equality cols are key\n            \u2502\n            \u2514\u2500\u2500 \u2022 lookup join (streamer)\n                \u2502 sql nodes: n1, n3\n                \u2502 kv nodes: n1\n                \u2502 regions: lab\n                \u2502 KV time: 23ms\n                \u2502 KV rows decoded: 1,209\n                \u2502 execution time: 28ms\n                \u2502 sql cpu time: 4ms\n                \u2502 actual row count: 1,209\n                \u2502 estimated row count: 762\n                \u2502 table: order_items@order_items_pkey\n                \u2502 equality: (id) = (id)\n                \u2502 equality cols are key\n                \u2502\n                \u2514\u2500\u2500 \u2022 merge join\n                    \u2502 sql nodes: n1, n3\n                    \u2502 regions: lab\n                    \u2502 execution time: 654\u00b5s\n                    \u2502 sql cpu time: 939\u00b5s\n                    \u2502 actual row count: 1,209\n                    \u2502 estimated row count: 762\n                    \u2502 equality: (order_id) = (id)\n                    \u2502 right cols are key\n                    \u2502\n                    \u251c\u2500\u2500 \u2022 scan\n                    \u2502     sql nodes: n3\n                    \u2502     kv nodes: n3\n                    \u2502     regions: lab\n                    \u2502     KV time: 2ms\n                    \u2502     KV rows decoded: 1,209\n                    \u2502     sql cpu time: 456\u00b5s\n                    \u2502     actual row count: 1,209\n                    \u2502     estimated row count: 2,098 (0.43% of the table; stats collected 2 minutes ago)\n                    \u2502     table: order_items@ix_order_items_order_id\n                    \u2502     spans: [ - /500]\n                    \u2502\n                    \u2514\u2500\u2500 \u2022 scan\n                          sql nodes: n1\n                          kv nodes: n1\n                          regions: lab\n                          KV time: 1ms\n                          KV rows decoded: 500\n                          sql cpu time: 200\u00b5s\n                          actual row count: 500\n                          estimated row count: 519 (0.26% of the table; stats collected 2 minutes ago)\n                          table: orders@orders_pkey\n                          spans: [ - /500]"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 140.103,
+          "p50": 192.823,
+          "p90": 235.945,
+          "p95": 250.012,
+          "p99": 261.266,
+          "max": 264.079,
+          "mean": 193.577,
+          "stdev": 36.412,
+          "first_ms": 329.509
+        },
+        "rows": 13,
+        "checksum": "d401f3c5ea9ee1c46a856a36",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: full\n\n\u2022 sort\n\u2502 estimated row count: 13\n\u2502 order: +country_code\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 estimated row count: 13\n    \u2502 group by: country_code\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join\n            \u2502 estimated row count: 199,651\n            \u2502 equality: (customer_id) = (id)\n            \u2502 right cols are key\n            \u2502\n            \u251c\u2500\u2500 \u2022 scan\n            \u2502     estimated row count: 200,000 (100% of the table; stats collected 2 minutes ago)\n            \u2502     table: orders@orders_pkey\n            \u2502     spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 scan\n                  estimated row count: 20,000 (100% of the table; stats collected 2 minutes ago)\n                  table: customers@customers_pkey\n                  spans: FULL SCAN\n\nindex recommendations: 1\n1. type: index replacement\n   SQL commands: CREATE INDEX ON lab.public.orders (customer_id) STORING (status, total_amount) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.orders@ix_orders_customer_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.orders@ix_orders_customer_id` */;",
+        "plan_analyze": "planning time: 1ms\nexecution time: 227ms\ndistribution: full\nplan type: custom\nrows decoded from KV: 220,000 (15 MiB, 3 gRPC calls)\nDistSQL network usage: 5.6 MiB (230 messages)\nregions: lab\n\n\u2022 sort\n\u2502 sql nodes: n1, n3\n\u2502 regions: lab\n\u2502 execution time: 74\u00b5s\n\u2502 sql cpu time: 74\u00b5s\n\u2502 actual row count: 13\n\u2502 estimated row count: 13\n\u2502 order: +country_code\n\u2502\n\u2514\u2500\u2500 \u2022 group (hash)\n    \u2502 sql nodes: n1, n3\n    \u2502 regions: lab\n    \u2502 execution time: 119ms\n    \u2502 sql cpu time: 118ms\n    \u2502 actual row count: 13\n    \u2502 estimated row count: 13\n    \u2502 group by: country_code\n    \u2502\n    \u2514\u2500\u2500 \u2022 render\n        \u2502 execution time: 26ms\n        \u2502 sql cpu time: 26ms\n        \u2502 actual row count: 200,000\n        \u2502\n        \u2514\u2500\u2500 \u2022 hash join\n            \u2502 sql nodes: n1, n3\n            \u2502 regions: lab\n            \u2502 execution time: 35ms\n            \u2502 sql cpu time: 100ms\n            \u2502 actual row count: 200,000\n            \u2502 estimated row count: 199,651\n            \u2502 equality: (customer_id) = (id)\n            \u2502 right cols are key\n            \u2502\n            \u251c\u2500\u2500 \u2022 scan\n            \u2502     sql nodes: n1\n            \u2502     kv nodes: n1\n            \u2502     regions: lab\n            \u2502     KV time: 190ms\n            \u2502     KV rows decoded: 200,000\n            \u2502     sql cpu time: 79ms\n            \u2502     actual row count: 200,000\n            \u2502     estimated row count: 200,000 (100% of the table; stats collected 2 minutes ago)\n            \u2502     table: orders@orders_pkey\n            \u2502     spans: FULL SCAN\n            \u2502\n            \u2514\u2500\u2500 \u2022 scan\n                  sql nodes: n3\n                  kv nodes: n3\n                  regions: lab\n                  KV time: 28ms\n                  KV rows decoded: 20,000\n                  sql cpu time: 10ms\n                  actual row count: 20,000\n                  estimated row count: 20,000 (100% of the table; stats collected 2 minutes ago)\n                  table: customers@customers_pkey\n                  spans: FULL SCAN"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 2.766,
+          "p50": 2.98,
+          "p90": 3.944,
+          "p95": 4.288,
+          "p99": 4.681,
+          "max": 4.78,
+          "mean": 3.219,
+          "stdev": 0.537,
+          "first_ms": 4.52
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 distinct\n\u2502 estimated row count: 12\n\u2502 distinct on: id\n\u2502 order key: id\n\u2502\n\u2514\u2500\u2500 \u2022 union all\n    \u2502 estimated row count: 12\n    \u2502\n    \u251c\u2500\u2500 \u2022 scan\n    \u2502     estimated row count: 11 (<0.01% of the table; stats collected 2 minutes ago)\n    \u2502     table: orders@ix_orders_customer_id\n    \u2502     spans: [/14824 - /14824]\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 1 (<0.01% of the table; stats collected 2 minutes ago)\n          table: orders@orders_pkey\n          spans: [/146741 - /146741]",
+        "plan_analyze_error": "InternalError: EXPLAIN does not support placeholders"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 9.916,
+          "p50": 10.718,
+          "p90": 14.037,
+          "p95": 19.407,
+          "p99": 23.702,
+          "max": 24.776,
+          "mean": 12.434,
+          "stdev": 4.226,
+          "first_ms": 17.028
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 scan\n  estimated row count: 500 (0.25% of the table; stats collected 2 minutes ago)\n  table: orders@orders_pkey\n  spans: [/47 - /47] [/281 - /281] [/457 - /457] [/869 - /869] \u2026 (495 more)",
+        "plan_analyze": "planning time: 4ms\nexecution time: 9ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 500 (21 KiB, 1 gRPC calls)\nregions: lab\n\n\u2022 scan\n  sql nodes: n1\n  kv nodes: n1\n  regions: lab\n  KV time: 9ms\n  KV rows decoded: 500\n  sql cpu time: 513\u00b5s\n  actual row count: 500\n  estimated row count: 500 (0.25% of the table; stats collected 2 minutes ago)\n  table: orders@orders_pkey\n  spans: [/47 - /47] [/281 - /281] [/457 - /457] [/869 - /869] \u2026 (495 more)"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 135.049,
+          "p50": 170.984,
+          "p90": 173.166,
+          "p95": 173.448,
+          "p99": 173.674,
+          "max": 173.731,
+          "mean": 166.478,
+          "stdev": 11.181,
+          "first_ms": 200.568
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan": "distribution: local\n\n\u2022 group (scalar)\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 estimated row count: 22,222\n    \u2502 filter: (extract('year', ordered_at) = 2025.0) AND (extract('month', ordered_at) = 5.0)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          estimated row count: 200,000 (100% of the table; stats collected 2 minutes ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN",
+        "plan_analyze": "planning time: 766\u00b5s\nexecution time: 205ms\ndistribution: local\nplan type: custom\nrows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)\nregions: lab\n\n\u2022 group (scalar)\n\u2502 sql nodes: n1\n\u2502 regions: lab\n\u2502 execution time: 67\u00b5s\n\u2502 sql cpu time: 61\u00b5s\n\u2502 actual row count: 1\n\u2502 estimated row count: 1\n\u2502\n\u2514\u2500\u2500 \u2022 filter\n    \u2502 sql nodes: n1\n    \u2502 regions: lab\n    \u2502 execution time: 47ms\n    \u2502 sql cpu time: 48ms\n    \u2502 actual row count: 8,290\n    \u2502 estimated row count: 22,222\n    \u2502 filter: (extract('year', ordered_at) = 2025.0) AND (extract('month', ordered_at) = 5.0)\n    \u2502\n    \u2514\u2500\u2500 \u2022 scan\n          sql nodes: n1\n          kv nodes: n1\n          regions: lab\n          KV time: 157ms\n          KV rows decoded: 200,000\n          sql cpu time: 49ms\n          actual row count: 200,000\n          estimated row count: 200,000 (100% of the table; stats collected 2 minutes ago)\n          table: orders@orders_pkey\n          spans: FULL SCAN"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.883,
+          "p50": 3.721,
+          "p90": 4.716,
+          "p95": 5.445,
+          "p99": 8.863,
+          "max": 10.041,
+          "mean": 4.05,
+          "stdev": 1.251,
+          "first_ms": 4.075
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.022,
+          "p50": 2.813,
+          "p90": 4.031,
+          "p95": 5.381,
+          "p99": 10.801,
+          "max": 13.003,
+          "mean": 3.295,
+          "stdev": 1.941,
+          "first_ms": 4.996
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 7.631,
+          "p50": 10.227,
+          "p90": 12.793,
+          "p95": 13.45,
+          "p99": 14.266,
+          "max": 14.549,
+          "mean": 10.47,
+          "stdev": 1.481,
+          "first_ms": 18.434
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 121.4
+    }
+  },
+  "server_version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+  "finished": "2026-09-12T19:24:38+00:00"
+}

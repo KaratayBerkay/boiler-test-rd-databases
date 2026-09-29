@@ -1,0 +1,5 @@
+GroupAggregate  (cost=41633.34..43633.50 rows=13 width=11)
+  Group Key: shipping_country
+  ->  Sort  (cost=41633.34..42133.34 rows=200000 width=9)
+        Sort Key: shipping_country
+        ->  Seq Scan on orders  (cost=23.10..20604.20 rows=200000 width=9)

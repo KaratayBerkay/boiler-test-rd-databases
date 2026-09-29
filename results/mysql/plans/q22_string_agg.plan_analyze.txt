@@ -1,0 +1,7 @@
+-> Group aggregate: group_concat(p.sku order by p.sku ASC separator ',')  (cost=2116 rows=1203) (actual time=0.101..5.55 rows=500 loops=1)
+    -> Nested loop inner join  (cost=1839 rows=1203) (actual time=0.0807..5.06 rows=1209 loops=1)
+        -> Nested loop inner join  (cost=521 rows=1203) (actual time=0.0758..2.91 rows=1209 loops=1)
+            -> Filter: (o.id <= 500)  (cost=100 rows=500) (actual time=0.063..0.167 rows=500 loops=1)
+                -> Covering index range scan on o using PRIMARY over (id <= 500)  (cost=100 rows=500) (actual time=0.0621..0.123 rows=500 loops=1)
+            -> Index lookup on oi using ix_order_items_order_id (order_id = o.id)  (cost=0.602 rows=2.41) (actual time=0.00439..0.00525 rows=2.42 loops=500)
+        -> Single-row index lookup on p using PRIMARY (id = oi.product_id)  (cost=0.995 rows=1) (actual time=0.00158..0.00161 rows=1 loops=1209)

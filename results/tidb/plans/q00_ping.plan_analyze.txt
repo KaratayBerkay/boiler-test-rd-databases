@@ -1,0 +1,2 @@
+Projection_3 | 1.00 | 1 | root |  | time:8.11µs, loops:2, RU:0.00, Concurrency:OFF | 1->Column#1 | 0 Bytes | N/A
+└─TableDual_4 | 1.00 | 1 | root |  | time:2.44µs, loops:2 | rows:1 | N/A | N/A

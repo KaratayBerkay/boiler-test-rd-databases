@@ -1,0 +1,6 @@
+distribution: local
+
+• scan
+  estimated row count: 500 (0.25% of the table; stats collected 5 minutes ago)
+  table: orders@orders_pkey
+  spans: [/47 - /47] [/281 - /281] [/457 - /457] [/869 - /869] … (495 more)

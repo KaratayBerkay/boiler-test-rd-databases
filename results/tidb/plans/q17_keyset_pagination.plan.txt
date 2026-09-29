@@ -1,0 +1,5 @@
+TopN_8 | 50.00 | root |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:50
+└─TableReader_17 | 50.00 | root |  | data:TopN_16
+  └─TopN_16 | 50.00 | cop[tikv] |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:50
+    └─Selection_15 | 99723.04 | cop[tikv] |  | or(gt(lab.orders.ordered_at, 2025-01-01 00:00:00), and(eq(lab.orders.ordered_at, 2025-01-01 00:00:00), gt(lab.orders.id, 0)))
+      └─TableFullScan_14 | 200000.00 | cop[tikv] | table:orders | keep order:false

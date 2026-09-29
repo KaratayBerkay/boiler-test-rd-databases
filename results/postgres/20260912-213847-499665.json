@@ -1,0 +1,230 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260912-213847-499665",
+  "started": "2026-09-12T18:38:47+00:00",
+  "scale": 1.0,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "replication": {
+      "kind": "physical streaming (async, slot)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "172.18.0.4/32",
+                "streaming",
+                "async",
+                0.0,
+                0.000243,
+                0.000608,
+                0.00069
+              ]
+            ],
+            "current_lsn": "0/5F451758",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        },
+        "replica": {
+          "role_reported": "replica",
+          "role_configured": "replica",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": true,
+            "error": "column \"received_lsn\" does not exist\nLINE 1: SELECT status, sender_host, received_lsn, latest_end_lsn, EX...\n                                    ^\nHINT:  Perhaps you meant to reference the column \"pg_stat_wal_receiver.received_tli\"."
+          }
+        },
+        "pgbouncer": {
+          "role_reported": "primary",
+          "role_configured": "proxy",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "172.18.0.4/32",
+                "streaming",
+                "async",
+                0.0,
+                0.000243,
+                0.000608,
+                0.00069
+              ]
+            ],
+            "current_lsn": "0/5F451758",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        },
+        "haproxy-ro": {
+          "role_reported": "primary",
+          "role_configured": "proxy",
+          "version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-b",
+          "status": {
+            "in_recovery": false,
+            "pg_stat_replication": [
+              [
+                "walreceiver",
+                "172.18.0.4/32",
+                "streaming",
+                "async",
+                0.0,
+                0.000243,
+                0.000608,
+                0.00069
+              ]
+            ],
+            "current_lsn": "0/5F451758",
+            "synchronous_standby_names": "",
+            "synchronous_commit": "on"
+          }
+        }
+      },
+      "visibility_lag": {
+        "replica": {
+          "replica": "replica",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 0.5081900162622333,
+            "p50": 0.758442998630926,
+            "p90": 1.3935867755208167,
+            "p95": 2.0220815466018367,
+            "p99": 2.538484724937007,
+            "max": 2.5919789914041758,
+            "mean": 0.9072581635943303,
+            "stdev": 0.4728875626977668
+          }
+        }
+      },
+      "write_rejection": {
+        "replica": {
+          "replica": "replica",
+          "writes_rejected": true,
+          "error_code": "25006",
+          "error": "ReadOnlySqlTransaction: cannot execute INSERT in a read-only transaction"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 0.6,
+        "rows_per_s": 33540,
+        "catchup_ms_after_last_commit": {
+          "replica": 7.0
+        },
+        "samples": [
+          {
+            "t": 192445.718,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.000425
+              }
+            ],
+            "replica": {
+              "in_recovery": true,
+              "error": "column \"received_lsn\" does not exist\nLINE 1: SELECT status, sender_host, received_lsn, latest_end_lsn, EX...\n                                    ^\nHINT:  Perhaps you meant to reference the column \"pg_stat_wal_receiver.received_tli\"."
+            }
+          },
+          {
+            "t": 192446.026,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.002577
+              }
+            ],
+            "replica": {
+              "in_recovery": true,
+              "error": "column \"received_lsn\" does not exist\nLINE 1: SELECT status, sender_host, received_lsn, latest_end_lsn, EX...\n                                    ^\nHINT:  Perhaps you meant to reference the column \"pg_stat_wal_receiver.received_tli\"."
+            }
+          },
+          {
+            "t": 192446.302,
+            "primary": [
+              {
+                "app": "walreceiver",
+                "state": "streaming",
+                "sync": "async",
+                "replay_lag_bytes": 0.0,
+                "replay_lag_s": 0.002711
+              }
+            ],
+            "replica": {
+              "in_recovery": true,
+              "error": "column \"received_lsn\" does not exist\nLINE 1: SELECT status, sender_host, received_lsn, latest_end_lsn, EX...\n                                    ^\nHINT:  Perhaps you meant to reference the column \"pg_stat_wal_receiver.received_tli\"."
+            }
+          }
+        ]
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 241685,
+          "qps": 60421,
+          "errors": 0,
+          "latency_ms": {
+            "n": 241685,
+            "min": 0.212467,
+            "p50": 0.49778,
+            "p90": 0.731209,
+            "p95": 0.8177467999999996,
+            "p99": 1.0403522000000003,
+            "max": 7.781901,
+            "mean": 0.5280634924633304,
+            "stdev": 0.18002296572209026
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "replica"
+          ],
+          "workers": 32,
+          "queries": 245894,
+          "qps": 61474,
+          "errors": 0,
+          "latency_ms": {
+            "n": 245894,
+            "min": 0.206143,
+            "p50": 0.487603,
+            "p90": 0.7298207000000001,
+            "p95": 0.8167637499999999,
+            "p99": 1.0299272200000005,
+            "max": 8.268789,
+            "mean": 0.5189924212709541,
+            "stdev": 0.17849385915950458
+          }
+        },
+        "gain": 1.02
+      },
+      "_seconds": 16.4
+    }
+  },
+  "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "finished": "2026-09-12T18:39:04+00:00"
+}

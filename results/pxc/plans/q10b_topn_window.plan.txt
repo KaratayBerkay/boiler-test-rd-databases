@@ -1,0 +1,7 @@
+-> Sort: t.customer_id, t.ordered_at DESC  (cost=1309..1309 rows=998)
+    -> Filter: (t.rn <= 3)  (cost=99.9..215 rows=998)
+        -> Table scan on t  (cost=99.8..115 rows=998)
+            -> Materialize  (cost=99.8..99.8 rows=998)
+                -> Window aggregate: row_number() OVER (PARTITION BY orders.customer_id ORDER BY orders.ordered_at desc,orders.id desc )   (cost=0 rows=998)
+                    -> Sort: orders.customer_id, orders.ordered_at DESC, orders.id DESC  (cost=449 rows=998)
+                        -> Index range scan on orders using ix_orders_customer_id over (customer_id <= 100), with index condition: (orders.customer_id <= 100)  (cost=449 rows=998)

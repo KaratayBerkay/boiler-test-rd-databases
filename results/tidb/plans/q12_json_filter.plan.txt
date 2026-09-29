@@ -1,0 +1,6 @@
+Projection_7 | 100.00 | root |  | lab.products.id, lab.products.sku, lab.products.price
+└─Limit_12 | 100.00 | root |  | offset:0, count:100
+  └─TableReader_21 | 100.00 | root |  | data:Limit_20
+    └─Limit_20 | 100.00 | cop[tikv] |  | offset:0, count:100
+      └─Selection_19 | 100.00 | cop[tikv] |  | eq(json_unquote(cast(json_extract(lab.products.attrs, "$.color"), var_string(16777216))), "red"), gt(cast(json_extract(lab.products.attrs, "$.weight"), decimal(12,2) BINARY), 10)
+        └─TableFullScan_18 | 125.00 | cop[tikv] | table:products | keep order:true, stats:partial[attrs:missing]

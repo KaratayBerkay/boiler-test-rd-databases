@@ -1,0 +1,101 @@
+planning time: 3ms
+execution time: 1.6s
+distribution: full
+plan type: generic, re-optimized
+rows decoded from KV: 388,510 (20 MiB, 33 gRPC calls)
+DistSQL network usage: 4.7 MiB (373 messages)
+regions: lab
+
+• top-k
+│ sql nodes: n1, n3
+│ regions: lab
+│ execution time: 281µs
+│ sql cpu time: 278µs
+│ actual row count: 50
+│ estimated row count: 50
+│ order: -sum,+country_code,+column34
+│ k: 50
+│
+└── • group (hash)
+    │ sql nodes: n1, n3
+    │ regions: lab
+    │ execution time: 58ms
+    │ sql cpu time: 58ms
+    │ actual row count: 78
+    │ estimated row count: 12,466
+    │ group by: country_code, column34
+    │
+    └── • render
+        │ execution time: 63ms
+        │ sql cpu time: 63ms
+        │ actual row count: 84,255
+        │
+        └── • lookup join (streamer)
+            │ sql nodes: n1, n3
+            │ kv nodes: n1
+            │ regions: lab
+            │ KV time: 965ms
+            │ KV rows decoded: 84,255
+            │ execution time: 1.1s
+            │ sql cpu time: 184ms
+            │ actual row count: 84,255
+            │ estimated row count: 33,054
+            │ table: order_items@order_items_pkey
+            │ equality: (id) = (id)
+            │ equality cols are key
+            │
+            └── • lookup join (streamer)
+                │ sql nodes: n1, n3
+                │ kv nodes: n3
+                │ regions: lab
+                │ KV time: 779ms
+                │ KV rows decoded: 84,255
+                │ execution time: 890ms
+                │ sql cpu time: 112ms
+                │ actual row count: 84,255
+                │ estimated row count: 33,054
+                │ table: order_items@ix_order_items_order_id
+                │ equality: (id) = (order_id)
+                │
+                └── • hash join
+                    │ sql nodes: n1, n3
+                    │ regions: lab
+                    │ execution time: 14ms
+                    │ sql cpu time: 27ms
+                    │ actual row count: 34,679
+                    │ estimated row count: 13,690
+                    │ equality: (id) = (customer_id)
+                    │ left cols are key
+                    │
+                    ├── • scan
+                    │     sql nodes: n3
+                    │     kv nodes: n3
+                    │     regions: lab
+                    │     KV time: 31ms
+                    │     KV rows decoded: 20,000
+                    │     sql cpu time: 12ms
+                    │     actual row count: 20,000
+                    │     estimated row count: 20,000 (100% of the table; stats collected 3 minutes ago)
+                    │     table: customers@customers_pkey
+                    │     spans: FULL SCAN
+                    │
+                    └── • filter
+                        │ sql nodes: n1
+                        │ regions: lab
+                        │ execution time: 7ms
+                        │ sql cpu time: 7ms
+                        │ actual row count: 34,679
+                        │ estimated row count: 13,690
+                        │ filter: ((ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-07-01 00:00:00')) AND (status = 'delivered')
+                        │
+                        └── • scan
+                              sql nodes: n1
+                              kv nodes: n1
+                              regions: lab
+                              KV time: 186ms
+                              KV rows decoded: 200,000
+                              sql cpu time: 75ms
+                              actual row count: 200,000
+                              estimated row count: 200,000 (100% of the table; stats collected 3 minutes ago)
+                              table: orders@orders_pkey
+                              spans: FULL SCAN

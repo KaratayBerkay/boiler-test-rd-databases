@@ -1,0 +1,12 @@
+Projection_131 | 460.05 | root |  | lab.orders.id, Column#20
+└─StreamAgg_132 | 460.05 | root |  | group by:lab.orders.id, funcs:group_concat(lab.products.sku order by lab.products.sku separator ",")->Column#20, funcs:firstrow(lab.orders.id)->lab.orders.id
+  └─IndexHashJoin_114 | 1156.50 | root |  | inner join, inner:TableReader_109, outer key:lab.order_items.product_id, inner key:lab.products.id, equal cond:eq(lab.order_items.product_id, lab.products.id)
+    ├─IndexHashJoin_123(Build) | 1156.50 | root |  | inner join, inner:IndexLookUp_120, outer key:lab.orders.id, inner key:lab.order_items.order_id, equal cond:eq(lab.orders.id, lab.order_items.order_id)
+    │ ├─TableReader_84(Build) | 467.15 | root |  | data:TableRangeScan_83
+    │ │ └─TableRangeScan_83 | 467.15 | cop[tikv] | table:o | range:[-inf,500], keep order:true
+    │ └─IndexLookUp_120(Probe) | 1156.50 | root |  | 
+    │   ├─Selection_119(Build) | 1156.50 | cop[tikv] |  | le(lab.order_items.order_id, 500)
+    │   │ └─IndexRangeScan_117 | 481190.96 | cop[tikv] | table:oi, index:fk_1(order_id) | range: decided by [eq(lab.order_items.order_id, lab.orders.id)], keep order:false
+    │   └─TableRowIDScan_118(Probe) | 1156.50 | cop[tikv] | table:oi | keep order:false
+    └─TableReader_109(Probe) | 1156.50 | root |  | data:TableRangeScan_108
+      └─TableRangeScan_108 | 1156.50 | cop[tikv] | table:p | range: decided by [lab.order_items.product_id], keep order:false

@@ -1,0 +1,5 @@
+Select Expression
+    -> Filter
+        -> Table "ORDERS" Access By ID
+            -> Index "RDB$PRIMARY5" List Scan (full match)
+fetches=24001642 reads=8363

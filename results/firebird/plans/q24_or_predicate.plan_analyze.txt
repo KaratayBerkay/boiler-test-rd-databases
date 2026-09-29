@@ -1,0 +1,10 @@
+Select Expression
+    -> Filter
+        -> Table "ORDERS" Access By ID
+            -> Index "RDB$PRIMARY5" Full Scan
+                -> Bitmap Or
+                    -> Bitmap
+                        -> Index "RDB$FOREIGN6" Range Scan (full match)
+                    -> Bitmap
+                        -> Index "RDB$PRIMARY5" Unique Scan
+fetches=23983404 reads=8363

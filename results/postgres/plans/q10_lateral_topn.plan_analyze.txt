@@ -1,0 +1,24 @@
+Incremental Sort  (cost=25.67..1287.62 rows=300 width=22) (actual time=0.144..1.022 rows=300.00 loops=1)
+  Sort Key: c.id, o2.ordered_at DESC
+  Presorted Key: c.id
+  Full-sort Groups: 10  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+  Buffers: shared hit=1197
+  ->  Nested Loop  (cost=12.98..1279.49 rows=300 width=22) (actual time=0.027..0.953 rows=300.00 loops=1)
+        Buffers: shared hit=1197
+        ->  Index Only Scan using customers_pkey on customers c  (cost=0.28..6.34 rows=100 width=4) (actual time=0.010..0.035 rows=100.00 loops=1)
+              Index Cond: (id <= 100)
+              Heap Fetches: 100
+              Index Searches: 1
+              Buffers: shared hit=4
+        ->  Limit  (cost=12.69..12.70 rows=3 width=18) (actual time=0.008..0.008 rows=3.00 loops=100)
+              Buffers: shared hit=1193
+              ->  Sort  (cost=12.69..12.72 rows=10 width=18) (actual time=0.008..0.008 rows=3.00 loops=100)
+                    Sort Key: o2.ordered_at DESC, o2.id DESC
+                    Sort Method: top-N heapsort  Memory: 25kB
+                    Buffers: shared hit=1193
+                    ->  Index Scan using ix_orders_customer_id on orders o2  (cost=0.29..12.56 rows=10 width=18) (actual time=0.001..0.006 rows=10.04 loops=100)
+                          Index Cond: (customer_id = c.id)
+                          Index Searches: 100
+                          Buffers: shared hit=1193
+Planning Time: 0.088 ms
+Execution Time: 1.064 ms

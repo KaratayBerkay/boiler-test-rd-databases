@@ -1,0 +1,3 @@
+-> Aggregate: count(distinct `events`.customer_id)  (cost=177668 rows=1) (actual time=450..450 rows=1 loops=1)
+    -> Filter: (`events`.occurred_at >= TIMESTAMP'2025-01-01 00:00:00')  (cost=101248 rows=331664) (actual time=0.194..287 rows=499245 loops=1)
+        -> Table scan on events  (cost=101248 rows=995092) (actual time=0.191..211 rows=1e+6 loops=1)

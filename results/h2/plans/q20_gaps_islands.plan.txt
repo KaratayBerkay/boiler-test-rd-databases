@@ -1,0 +1,47 @@
+SELECT
+    "customer_id",
+    COUNT(*) AS "sessions"
+FROM (
+    SELECT
+        "customer_id",
+        "occurred_at",
+        "prev_at",
+        CASE WHEN ("prev_at" IS NULL)
+            OR (DATEDIFF(SECOND, "prev_at", "occurred_at") > 1800) THEN 1 ELSE 0 END AS "new_session"
+    FROM (
+        SELECT
+            "customer_id",
+            "occurred_at",
+            LAG("occurred_at") OVER (PARTITION BY "customer_id" ORDER BY "occurred_at", "id") AS "prev_at"
+        FROM "public"."events"
+        WHERE "customer_id" <= 2000
+    ) "w"
+) "s"
+    /* SELECT
+        customer_id,
+        occurred_at,
+        prev_at,
+        CASE WHEN (prev_at IS NULL)
+            OR (DATEDIFF(SECOND, prev_at, occurred_at) > 1800) THEN 1 ELSE 0 END AS new_session
+    FROM (
+        SELECT
+            "customer_id",
+            "occurred_at",
+            LAG("occurred_at") OVER (PARTITION BY "customer_id" ORDER BY "occurred_at", "id") AS "prev_at"
+        FROM "public"."events"
+        WHERE "customer_id" <= 2000
+    ) w
+        /* SELECT
+            customer_id,
+            occurred_at,
+            LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at
+        FROM public.events
+            /* public.ix_events_customer_id: customer_id <= 2000 */
+        WHERE customer_id <= 2000
+         */
+    WHERE CASE WHEN (prev_at IS NULL)
+        OR (DATEDIFF(SECOND, prev_at, occurred_at) > 1800) THEN 1 ELSE 0 END IS NOT DISTINCT FROM ?1: new_session = 1
+     */
+WHERE "new_session" = 1
+GROUP BY "customer_id"
+ORDER BY 1

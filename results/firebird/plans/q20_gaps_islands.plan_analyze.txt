@@ -1,0 +1,16 @@
+Select Expression
+    -> Aggregate
+        -> Sort (record length: 68, key length: 8)
+            -> Filter
+                -> Window
+                    -> Window Partition
+                        -> Record Buffer (record length: 74)
+                            -> Sort (record length: 84, key length: 32)
+                                -> Window Partition
+                                    -> Window Buffer
+                                        -> Record Buffer (record length: 49)
+                                            -> Filter
+                                                -> Table "EVENTS" as "S W EVENTS" Access By ID
+                                                    -> Bitmap
+                                                        -> Index "IX_EVENTS_CUSTOMER_ID" Range Scan (upper bound: 1/1)
+fetches=23008629 reads=8322

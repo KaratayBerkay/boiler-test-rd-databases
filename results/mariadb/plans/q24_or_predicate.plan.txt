@@ -1,0 +1,1 @@
+1 | SIMPLE | orders | index_merge | PRIMARY,ix_orders_customer_id | ix_orders_customer_id,PRIMARY | 4,4 | None | 13 | Using union(ix_orders_customer_id,PRIMARY); Using where; Using filesort

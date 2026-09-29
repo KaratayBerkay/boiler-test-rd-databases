@@ -1,0 +1,8 @@
+Eval[country_code, sum(CASE WHEN (status = 'delivered') THEN 1 ELSE 0 END) AS delivered, sum(CASE WHEN (status = 'cancelled') THEN 1 ELSE 0 END) AS cancelled, sum(CASE WHEN (status = 'returned') THEN 1 ELSE 0 END) AS returned, avg(total_amount) AS avg_amount] (rows=10)
+  └ OrderBy[country_code ASC] (rows=10)
+    └ GroupHashAggregate[country_code | sum(CASE WHEN (status = 'delivered') THEN 1 ELSE 0 END), sum(CASE WHEN (status = 'cancelled') THEN 1 ELSE 0 END), sum(CASE WHEN (status = 'returned') THEN 1 ELSE 0 END), avg(total_amount)] (rows=10)
+      └ HashJoin[INNER | (id = customer_id)] (rows=10)
+        ├ Rename[status, total_amount, customer_id] AS o (rows=200000)
+        │  └ Collect[doc.orders | [status, total_amount, customer_id] | true] (rows=200000)
+        └ Rename[country_code, id] AS c (rows=20000)
+          └ Collect[doc.customers | [country_code, id] | true] (rows=20000)

@@ -1,0 +1,24 @@
+SELECT
+    "o"."id",
+    LISTAGG("p"."sku", ',') WITHIN GROUP (ORDER BY "p"."sku") AS "skus"
+FROM "public"."orders" "o"
+    /* public.PRIMARY_KEY_C3: id <= 500 */
+    /* WHERE o.id <= 500
+    */
+    /* scanCount: 501 */
+INNER JOIN "public"."order_items" "oi"
+    /* public.CONSTRAINT_INDEX_7: order_id = o.id */
+    ON 1=1
+    /* WHERE oi.order_id = o.id
+    */
+    /* scanCount: 1709 */
+INNER JOIN "public"."products" "p"
+    /* public.PRIMARY_KEY_C: id = oi.product_id */
+    ON 1=1
+    /* scanCount: 2418 */
+WHERE ("o"."id" <= 500)
+    AND ("p"."id" = "oi"."product_id")
+    AND ("oi"."order_id" = "o"."id")
+GROUP BY "o"."id"
+ORDER BY 1
+/* group sorted */

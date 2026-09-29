@@ -1,0 +1,46 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.081557812
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 32.3619066,
+    "r_loops": 1,
+    "r_total_time_ms": 59.13429903,
+    "nested_loop": [
+      {
+        "read_sorted_file": {
+          "r_rows": 50,
+          "filesort": {
+            "sort_key": "orders.ordered_at, orders.`id`",
+            "r_loops": 1,
+            "r_total_time_ms": 59.0072667,
+            "r_limit": 50,
+            "r_used_priority_queue": true,
+            "r_output_rows": 51,
+            "r_sort_mode": "sort_key,rowid",
+            "table": {
+              "table_name": "orders",
+              "access_type": "ALL",
+              "possible_keys": ["PRIMARY"],
+              "loops": 1,
+              "r_loops": 1,
+              "rows": 194613,
+              "r_rows": 200000,
+              "cost": 32.3619066,
+              "r_table_time_ms": 34.40360544,
+              "r_other_time_ms": 24.71179227,
+              "r_engine_stats": {
+                "pages_accessed": 814
+              },
+              "filtered": 100,
+              "r_total_filtered": 49.978,
+              "attached_condition": "orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00' or orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00' and orders.`id` > 0",
+              "r_filtered": 49.978
+            }
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+Limit  (cost=4982.89..4984.14 rows=500 width=76)
+  ->  Sort  (cost=4982.89..5232.89 rows=100000 width=76)
+        Sort Key: remote_scan.worker_column_5, remote_scan.id
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=76)
+              Task Count: 32
+              Tasks Shown: One of 32
+              ->  Task
+                    Node: host=w1 port=5432 dbname=lab
+                    ->  Limit  (cost=167.00..167.12 rows=47 width=31)
+                          ->  Sort  (cost=167.00..167.12 rows=47 width=31)
+                                Sort Key: ordered_at, id
+                                ->  Seq Scan on orders_102042 orders  (cost=0.00..165.69 rows=47 width=31)
+                                      Filter: ((ordered_at >= '2025-03-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-03-08 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))

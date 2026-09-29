@@ -1,0 +1,5 @@
+Limit  (cost=2483.50..2483.62 rows=50 width=16)
+  ->  Sort  (cost=2483.50..2558.11 rows=29847 width=16)
+        Sort Key: ordered_at, id
+        ->  Seq Scan on orders  (cost=0.00..1492.00 rows=29847 width=16)
+              Filter: (ROW(ordered_at, id) > ROW('2025-01-01 00:00:00'::timestamp without time zone, 0))

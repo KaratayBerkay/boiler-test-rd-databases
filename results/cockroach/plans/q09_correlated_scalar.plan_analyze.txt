@@ -1,0 +1,70 @@
+planning time: 255µs
+execution time: 73ms
+distribution: full
+plan type: generic, reused
+rows decoded from KV: 10,000 (4.5 MiB, 2 gRPC calls)
+DistSQL network usage: 21 KiB (3 messages)
+regions: lab
+
+• render
+│
+└── • top-k
+    │ sql nodes: n3
+    │ regions: lab
+    │ execution time: 833µs
+    │ sql cpu time: 833µs
+    │ actual row count: 500
+    │ estimated row count: 500
+    │ order: +id
+    │ k: 500
+    │
+    └── • group (hash)
+        │ sql nodes: n3
+        │ regions: lab
+        │ execution time: 39ms
+        │ sql cpu time: 39ms
+        │ actual row count: 4,232
+        │ estimated row count: 4,231
+        │ group by: id
+        │
+        └── • hash join
+            │ sql nodes: n3
+            │ regions: lab
+            │ execution time: 8ms
+            │ sql cpu time: 8ms
+            │ actual row count: 109,803
+            │ estimated row count: 105,800
+            │ equality: (category_id) = (category_id)
+            │
+            ├── • scan
+            │     sql nodes: n3
+            │     kv nodes: n3
+            │     regions: lab
+            │     KV time: 9ms
+            │     KV rows decoded: 5,000
+            │     sql cpu time: 3ms
+            │     actual row count: 5,000
+            │     estimated row count: 5,000 (100% of the table; stats collected 3 minutes ago)
+            │     table: products@products_pkey
+            │     spans: FULL SCAN
+            │
+            └── • filter
+                │ sql nodes: n3
+                │ regions: lab
+                │ execution time: 18µs
+                │ sql cpu time: 17µs
+                │ actual row count: 4,232
+                │ estimated row count: 4,232
+                │ filter: active
+                │
+                └── • scan
+                      sql nodes: n3
+                      kv nodes: n3
+                      regions: lab
+                      KV time: 11ms
+                      KV rows decoded: 5,000
+                      sql cpu time: 5ms
+                      actual row count: 5,000
+                      estimated row count: 5,000 (100% of the table; stats collected 3 minutes ago)
+                      table: products@products_pkey
+                      spans: FULL SCAN

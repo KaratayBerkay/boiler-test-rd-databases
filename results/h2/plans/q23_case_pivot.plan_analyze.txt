@@ -1,0 +1,16 @@
+SELECT
+    "c"."country_code",
+    SUM(CASE WHEN "o"."status" = 'delivered' THEN 1 ELSE 0 END) AS "delivered",
+    SUM(CASE WHEN "o"."status" = 'cancelled' THEN 1 ELSE 0 END) AS "cancelled",
+    SUM(CASE WHEN "o"."status" = 'returned' THEN 1 ELSE 0 END) AS "returned",
+    AVG("o"."total_amount") AS "avg_amount"
+FROM "public"."customers" "c"
+    /* public.customers.tableScan */
+    /* scanCount: 20001 */
+INNER JOIN "public"."orders" "o"
+    /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */
+    ON 1=1
+    /* scanCount: 220000 */
+WHERE "c"."id" = "o"."customer_id"
+GROUP BY "c"."country_code"
+ORDER BY 1

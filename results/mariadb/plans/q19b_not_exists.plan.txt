@@ -1,0 +1,2 @@
+1 | PRIMARY | p | index | None | PRIMARY | 4 | None | 4874 | Using where
+2 | DEPENDENT SUBQUERY | oi | index_subquery | ix_order_items_product_id | ix_order_items_product_id | 4 | func | 95 | Using index

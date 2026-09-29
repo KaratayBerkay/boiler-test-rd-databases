@@ -1,0 +1,10 @@
+GroupAggregate  (cost=8304.82..9057.32 rows=200 width=20)
+  Group Key: remote_scan.shipping_country
+  ->  Sort  (cost=8304.82..8554.82 rows=100000 width=20)
+        Sort Key: remote_scan.shipping_country
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=20)
+              Task Count: 32
+              Tasks Shown: One of 32
+              ->  Task
+                    Node: host=w1 port=5432 dbname=lab
+                    ->  Seq Scan on orders_102042 orders  (cost=0.00..134.64 rows=6211 width=11)

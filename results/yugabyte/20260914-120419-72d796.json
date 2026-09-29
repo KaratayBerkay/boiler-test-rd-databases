@@ -1,0 +1,190 @@
+{
+  "engine": "yugabyte",
+  "display": "YugabyteDB",
+  "category": "distributed SQL",
+  "dialect": "yugabyte",
+  "driver": "psycopg",
+  "image": "yugabytedb/yugabyte:latest",
+  "run_id": "20260914-120419-72d796",
+  "started": "2026-09-14T09:04:19+00:00",
+  "scale": 0.3,
+  "notes": "3 nodes via yugabyted, replication factor 3 (Raft per tablet), PostgreSQL-compatible YSQL layer on every node (any node serves reads and writes; no promotion). Auth disabled for the lab.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "ysql_dump": {
+          "status": "error",
+          "kind": "logical",
+          "tool": "ysql_dump | ysqlsh",
+          "backup_seconds": 7.51,
+          "backup_bytes": 36654971,
+          "backup_mb": 35.0,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "ObjectInUse: database \"lab_restore\" is being accessed by other users DETAIL: There are 2 other sessions using the database.",
+          "steps": [
+            {
+              "name": "ysql_dump",
+              "cmd": "cd /home/yugabyte && postgres/bin/ysql_dump -h yb1 -U yugabyte -d lab -f /backups/lab.sql",
+              "rc": 0,
+              "seconds": 7.51,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 1,
+              "seconds": 5.04,
+              "out": "ObjectInUse: database \"lab_restore\" is being accessed by other users DETAIL: There are 2 other sessions using the database."
+            }
+          ],
+          "seconds": 12.6,
+          "description": "logical dump restored into a second database"
+        },
+        "snapshot": {
+          "status": "ok",
+          "kind": "snapshot",
+          "tool": "yb-admin create_database_snapshot / restore_snapshot",
+          "backup_seconds": 1.45,
+          "backup_bytes": 101453,
+          "backup_mb": 0.1,
+          "restore_seconds": 1.44,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.13
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_after_delete": 0,
+            "probe_rows_after_restore": 1000,
+            "probe_rows_expected": 1000
+          },
+          "notes": "cluster-wide consistent snapshot (hybrid-time), restored in place; off-cluster copy = export_snapshot metadata + tablet snapshot files",
+          "error": null,
+          "steps": [
+            {
+              "name": "create_database_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 create_database_snapshot ysql.lab",
+              "rc": 0,
+              "seconds": 0.16,
+              "out": "Started snapshot creation: f7ec2ccf-23fa-4afe-b310-a208ec29a63f\n"
+            },
+            {
+              "name": "export_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 export_snapshot f7ec2ccf-23fa-4afe-b310-a208ec29a63f /backups/lab.snapshot",
+              "rc": 0,
+              "seconds": 0.15,
+              "out": "Exporting snapshot f7ec2ccf-23fa-4afe-b310-a208ec29a63f (2) to file /backups/lab.snapshot\nSnapshot metadata was saved into file: /backups/lab.snapshot\n"
+            },
+            {
+              "name": "restore_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 restore_snapshot f7ec2ccf-23fa-4afe-b310-a208ec29a63f",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "Started restoring snapshot: f7ec2ccf-23fa-4afe-b310-a208ec29a63f\nRestoration id: 3e807573-405c-4071-87a2-914a11550433\n"
+            },
+            {
+              "name": "delete_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 delete_snapshot f7ec2ccf-23fa-4afe-b310-a208ec29a63f",
+              "rc": 0,
+              "seconds": 0.15,
+              "out": "Deleted snapshot: f7ec2ccf-23fa-4afe-b310-a208ec29a63f\n"
+            }
+          ],
+          "snapshot_id": "f7ec2ccf-23fa-4afe-b310-a208ec29a63f",
+          "export_snapshot": "Exporting snapshot f7ec2ccf-23fa-4afe-b310-a208ec29a63f (2) to file /backups/lab.snapshot\nSnapshot metadata was saved into file: /backups/lab.snapshot",
+          "note_size": "the snapshot itself is copy-on-write tablet files on every node; export_snapshot writes only the metadata",
+          "seconds": 7.1,
+          "description": "distributed snapshot restored in place"
+        },
+        "pitr": {
+          "status": "error",
+          "kind": "pitr",
+          "tool": "yb-admin create_snapshot_schedule / restore_snapshot_schedule",
+          "backup_seconds": null,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "RuntimeError: create_snapshot_schedule failed rc=1: Error running create_snapshot_schedule: Already present (yb/master/master_snapshot_coordinator.cc:700): Snapshot schedule 69454af5-e4ad-470e-aa86-c62ca236eb18 already exists for the namespace 00004000000030008000000000000000: OBJECT_ALREADY_PRESENT (master error 4)",
+          "steps": [
+            {
+              "name": "create_snapshot_schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 create_snapshot_schedule 1 10 ysql.lab",
+              "rc": 1,
+              "seconds": 0.14,
+              "out": "\nError running create_snapshot_schedule: Already present (yb/master/master_snapshot_coordinator.cc:700): Snapshot schedule 69454af5-e4ad-470e-aa86-c62ca236eb18 already exists for the namespace 00004000000030008000000000000000: OBJECT_ALREADY_PRESENT (master error 4)\n"
+            }
+          ],
+          "seconds": 0.1,
+          "description": "point-in-time restore from the snapshot schedule history"
+        }
+      },
+      "order": [
+        "ysql_dump",
+        "snapshot",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "a187be706ac6cc57f65a464b"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "2bc3123ba4e02738250e0776"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "08c9ab7a8dd04a5ed9affae7"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 2.32,
+      "summary": {
+        "strategies": 3,
+        "ok": 1,
+        "verified": [
+          "snapshot"
+        ],
+        "pitr_ok": [
+          "snapshot"
+        ]
+      },
+      "_seconds": 22.5
+    }
+  },
+  "harness_log": "results/logs/yugabyte/20260914-120419-72d796.log",
+  "server_version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/llvm-project.git efca861cc42178cc4c555d605b36c79d7d121cc1), 64-bit",
+  "finished": "2026-09-14T09:04:42+00:00"
+}

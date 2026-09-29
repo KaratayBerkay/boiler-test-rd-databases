@@ -1,0 +1,44 @@
+distribution: full
+
+• group (streaming)
+│ estimated row count: 391
+│ group by: id
+│ ordered: +id
+│
+└── • sort
+    │ estimated row count: 762
+    │ order: +id,+sku
+    │ already ordered: +id
+    │
+    └── • render
+        │
+        └── • lookup join
+            │ estimated row count: 762
+            │ table: products@products_pkey
+            │ equality: (product_id) = (id)
+            │ equality cols are key
+            │
+            └── • lookup join
+                │ estimated row count: 762
+                │ table: order_items@order_items_pkey
+                │ equality: (id) = (id)
+                │ equality cols are key
+                │
+                └── • merge join
+                    │ estimated row count: 762
+                    │ equality: (order_id) = (id)
+                    │ right cols are key
+                    │
+                    ├── • scan
+                    │     estimated row count: 2,098 (0.43% of the table; stats collected 5 minutes ago)
+                    │     table: order_items@ix_order_items_order_id
+                    │     spans: [ - /500]
+                    │
+                    └── • scan
+                          estimated row count: 519 (0.26% of the table; stats collected 5 minutes ago)
+                          table: orders@orders_pkey
+                          spans: [ - /500]
+
+index recommendations: 1
+1. type: index replacement
+   SQL commands: CREATE INDEX ON lab.public.order_items (order_id) STORING (product_id) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.order_items@ix_order_items_order_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.order_items@ix_order_items_order_id` */;

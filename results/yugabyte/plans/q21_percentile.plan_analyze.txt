@@ -1,0 +1,23 @@
+GroupAggregate  (cost=41633.34..43633.50 rows=13 width=11) (actual time=278.226..452.719 rows=13 loops=1)
+  Group Key: shipping_country
+  ->  Sort  (cost=41633.34..42133.34 rows=200000 width=9) (actual time=274.786..303.599 rows=200000 loops=1)
+        Sort Key: shipping_country
+        Sort Method: external merge  Disk: 3920kB
+        ->  Seq Scan on orders  (cost=23.10..20604.20 rows=200000 width=9) (actual time=1.566..179.593 rows=200000 loops=1)
+              Storage Table Read Requests: 196
+              Storage Table Read Execution Time: 36.686 ms
+              Storage Table Read Ops: 196
+              Storage Table Rows Scanned: 200000
+Planning Time: 0.062 ms
+Execution Time: 453.549 ms
+Storage Read Requests: 196
+Storage Read Execution Time: 36.686 ms
+Storage Read Ops: 196
+Storage Rows Scanned: 200000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 36.686 ms
+Peak Memory Usage: 5749 kB

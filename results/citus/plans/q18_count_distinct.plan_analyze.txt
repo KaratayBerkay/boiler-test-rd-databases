@@ -1,0 +1,25 @@
+Aggregate  (cost=8804.82..8804.83 rows=1 width=8) (actual time=398.811..398.813 rows=1.00 loops=1)
+  ->  Sort  (cost=8304.82..8554.82 rows=100000 width=4) (actual time=361.751..378.716 rows=346418.00 loops=1)
+        Sort Key: remote_scan.uniq
+        Sort Method: quicksort  Memory: 12289kB
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=4) (actual time=263.676..281.787 rows=346418.00 loops=1)
+              Task Count: 32
+              Tuple data received from nodes: 1353 kB
+              Tasks Shown: One of 32
+              ->  Task
+                    Tuple data received from node: 42 kB
+                    Node: host=w5 port=5432 dbname=lab
+                    ->  HashAggregate  (cost=887.83..1004.94 rows=11711 width=4) (actual time=83.394..84.674 rows=10858.00 loops=1)
+                          Group Key: customer_id
+                          Batches: 1  Memory Usage: 537kB
+                          Buffers: shared hit=459
+                          ->  Seq Scan on events_102093 events  (cost=0.00..848.86 rows=15588 width=4) (actual time=0.012..6.985 rows=15578.00 loops=1)
+                                Filter: (occurred_at >= '2025-01-01 00:00:00'::timestamp without time zone)
+                                Rows Removed by Filter: 15611
+                                Buffers: shared hit=459
+                        Planning Time: 0.093 ms
+                        Execution Time: 85.892 ms
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.402 ms
+Execution Time: 398.841 ms

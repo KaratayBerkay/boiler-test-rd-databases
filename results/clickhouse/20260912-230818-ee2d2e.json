@@ -1,0 +1,1059 @@
+{
+  "engine": "clickhouse",
+  "display": "ClickHouse",
+  "category": "analytical (columnar)",
+  "dialect": "clickhouse",
+  "driver": "clickhouse-connect",
+  "image": "clickhouse/clickhouse-server:latest",
+  "run_id": "20260912-230818-ee2d2e",
+  "started": "2026-09-12T20:08:18+00:00",
+  "scale": 1.0,
+  "notes": "Two replicas of one shard using ReplicatedMergeTree with ClickHouse Keeper; DDL runs ON CLUSTER. No transactions, no foreign keys; secondary \"indexes\" are data-skipping (bloom filter) indexes; UPDATE/DELETE are asynchronous mutations.",
+  "phases": {
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= toDateTime64('2025-06-01 00:00:00', 6) AND occurred_at < toDateTime64('2025-07-01 00:00:00', 6)",
+            "ok": true,
+            "error": null,
+            "p50_ms": 25.07,
+            "p95_ms": 49.789,
+            "rows": 1,
+            "plan_analyze": "query_log: duration_ms=24 read_rows=1000000 read_bytes=27620042 memory=17266239 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 18 \u2192 1\n    AggregatingTransform \u00d7 18\n      (Expression)\n      ExpressionTransform \u00d7 18\n        (Expression)\n        ExpressionTransform \u00d7 18\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 18 0 \u2192 1"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "ALTER TABLE events ADD INDEX ix_ev_ts_type (occurred_at, event_type) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE events MATERIALIZE INDEX ix_ev_ts_type"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= toDateTime64('2025-06-01 00:00:00', 6) AND occurred_at < toDateTime64('2025-07-01 00:00:00', 6)",
+            "ok": true,
+            "error": null,
+            "p50_ms": 25.839,
+            "p95_ms": 28.507,
+            "rows": 1,
+            "plan_analyze": "query_log: duration_ms=23 read_rows=1000000 read_bytes=27620042 memory=21837941 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 18 \u2192 1\n    AggregatingTransform \u00d7 18\n      (Expression)\n      ExpressionTransform \u00d7 18\n        (Expression)\n        ExpressionTransform \u00d7 18\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 18 0 \u2192 1"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "ALTER TABLE events ADD INDEX ix_ev_type_ts (event_type, occurred_at) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE events MATERIALIZE INDEX ix_ev_type_ts"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= toDateTime64('2025-06-01 00:00:00', 6) AND occurred_at < toDateTime64('2025-07-01 00:00:00', 6)",
+            "ok": true,
+            "error": null,
+            "p50_ms": 26.137,
+            "p95_ms": 27.361,
+            "rows": 1,
+            "plan_analyze": "query_log: duration_ms=23 read_rows=1000000 read_bytes=27620042 memory=21838469 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 18 \u2192 1\n    AggregatingTransform \u00d7 18\n      (Expression)\n      ExpressionTransform \u00d7 18\n        (Expression)\n        ExpressionTransform \u00d7 18\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 18 0 \u2192 1"
+          }
+        ],
+        "best_variant": "no_index",
+        "speedup_vs_first": 1.0
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 13.111,
+            "p95_ms": 14.131,
+            "rows": 2430,
+            "plan_analyze": "query_log: duration_ms=7 read_rows=8192 read_bytes=98304 memory=4381052 result_rows=2460\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 9 \u2192 1\n    MergeSortingTransform \u00d7 9\n      LimitsCheckingTransform \u00d7 9\n        PartialSortingTransform \u00d7 9\n          (Expression)\n          ExpressionTransform \u00d7 9\n            (Expression)\n            ExpressionTransform \u00d7 9\n              (ReadFromMergeTree)\n              MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 9 0 \u2192 1"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "setup": [
+              "ALTER TABLE order_items ADD INDEX ix_oi_cover (order_id) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE order_items MATERIALIZE INDEX ix_oi_cover"
+            ],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 10.353,
+            "p95_ms": 12.934,
+            "rows": 2430,
+            "plan_analyze": "query_log: duration_ms=5 read_rows=487606 read_bytes=2009928 memory=4574638 result_rows=2460\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 9 \u2192 1\n    MergeSortingTransform \u00d7 9\n      LimitsCheckingTransform \u00d7 9\n        PartialSortingTransform \u00d7 9\n          (Expression)\n          ExpressionTransform \u00d7 9\n            (Expression)\n            ExpressionTransform \u00d7 9\n              (ReadFromMergeTree)\n              MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 9 0 \u2192 1"
+          }
+        ],
+        "best_variant": "covering_include",
+        "speedup_vs_first": 1.27
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE toYear(ordered_at) = 2025 AND toMonth(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 18.776,
+            "p95_ms": 19.594,
+            "rows": 1,
+            "plan_analyze": "query_log: duration_ms=15 read_rows=200000 read_bytes=1600000 memory=4823606 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 2 \u2192 1\n    AggregatingTransform \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Filter)\n        FilterTransform \u00d7 6\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= toDateTime64('2025-05-01 00:00:00', 6) AND ordered_at < toDateTime64('2025-06-01 00:00:00', 6)",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.839,
+            "p95_ms": 13.155,
+            "rows": 1,
+            "plan_analyze": "query_log: duration_ms=9 read_rows=200000 read_bytes=1600000 memory=4815238 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 2 \u2192 1\n    AggregatingTransform \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Filter)\n        FilterTransform \u00d7 4\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "ALTER TABLE orders ADD INDEX ix_orders_ordered_at (ordered_at) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE orders MATERIALIZE INDEX ix_orders_ordered_at"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= toDateTime64('2025-05-01 00:00:00', 6) AND ordered_at < toDateTime64('2025-06-01 00:00:00', 6)",
+            "ok": true,
+            "error": null,
+            "p50_ms": 13.277,
+            "p95_ms": 19.937,
+            "rows": 1,
+            "plan_analyze": "query_log: duration_ms=11 read_rows=200000 read_bytes=1600000 memory=4815366 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 2 \u2192 1\n    AggregatingTransform \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Filter)\n        FilterTransform \u00d7 4\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "ALTER TABLE orders ADD INDEX ix_orders_ordered_at (ordered_at) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE orders MATERIALIZE INDEX ix_orders_ordered_at"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE toYear(ordered_at) = 2025 AND toMonth(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 16.084,
+            "p95_ms": 19.005,
+            "rows": 1,
+            "plan_analyze": "query_log: duration_ms=15 read_rows=200000 read_bytes=1600000 memory=4823734 result_rows=1\n(Expression)\nExpressionTransform\n  (Aggregating)\n  Resize 2 \u2192 1\n    AggregatingTransform \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Filter)\n        FilterTransform \u00d7 6\n          (ReadFromMergeTree)\n          MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+          }
+        ],
+        "best_variant": "sargable_no_index",
+        "speedup_vs_first": 1.59
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 30.876,
+            "p95_ms": 34.401,
+            "rows": 50,
+            "plan_analyze": "query_log: duration_ms=27 read_rows=391808 read_bytes=4767232 memory=12786064 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (JoinLazyColumnsStep)\n    LazyMaterializingTransform 2 \u2192 1\n      (Limit)\n      Limit\n        (Sorting)\n        MergingSortedTransform 2 \u2192 1\n          MergeSortingTransform \u00d7 2\n            LimitsCheckingTransform \u00d7 2\n              PartialSortingTransform \u00d7 2\n                (Expression)\n                ExpressionTransform \u00d7 2\n                  (ReadFromMergeTree)\n                  MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n      (LazilyReadFromMergeTree)\n      LazyReadFromMergeTreeSource 0 \u2192 1"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > toDateTime64('2025-01-01 00:00:00', 6) OR (ordered_at = toDateTime64('2025-01-01 00:00:00', 6) AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 19.645,
+            "p95_ms": 21.729,
+            "rows": 50,
+            "plan_analyze": "query_log: duration_ms=14 read_rows=375424 read_bytes=4701696 memory=4550626 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (Expression)\n    ExpressionTransform\n      (JoinLazyColumnsStep)\n      LazyMaterializingTransform 2 \u2192 1\n        (Limit)\n        Limit\n          (Sorting)\n          MergingSortedTransform 2 \u2192 1\n            MergeSortingTransform \u00d7 2\n              LimitsCheckingTransform \u00d7 2\n                PartialSortingTransform \u00d7 2\n                  (Expression)\n                  ExpressionTransform \u00d7 2\n                    (Filter)\n                    FilterTransform \u00d7 2\n                      (Expression)\n                      ExpressionTransform \u00d7 2\n                        (ReadFromMergeTree)\n                        MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n        (LazilyReadFromMergeTree)\n        LazyReadFromMergeTreeSource 0 \u2192 1"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "ALTER TABLE orders ADD INDEX ix_orders_ts_id (ordered_at, id) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE orders MATERIALIZE INDEX ix_orders_ts_id"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 37.689,
+            "p95_ms": 41.762,
+            "rows": 50,
+            "plan_analyze": "query_log: duration_ms=33 read_rows=391808 read_bytes=4767232 memory=12786064 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (JoinLazyColumnsStep)\n    LazyMaterializingTransform 2 \u2192 1\n      (Limit)\n      Limit\n        (Sorting)\n        MergingSortedTransform 2 \u2192 1\n          MergeSortingTransform \u00d7 2\n            LimitsCheckingTransform \u00d7 2\n              PartialSortingTransform \u00d7 2\n                (Expression)\n                ExpressionTransform \u00d7 2\n                  (ReadFromMergeTree)\n                  MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n      (LazilyReadFromMergeTree)\n      LazyReadFromMergeTreeSource 0 \u2192 1"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "ALTER TABLE orders ADD INDEX ix_orders_ts_id (ordered_at, id) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE orders MATERIALIZE INDEX ix_orders_ts_id"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > toDateTime64('2025-01-01 00:00:00', 6) OR (ordered_at = toDateTime64('2025-01-01 00:00:00', 6) AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 19.049,
+            "p95_ms": 22.251,
+            "rows": 50,
+            "plan_analyze": "query_log: duration_ms=16 read_rows=375424 read_bytes=4701696 memory=4550050 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (Expression)\n    ExpressionTransform\n      (JoinLazyColumnsStep)\n      LazyMaterializingTransform 2 \u2192 1\n        (Limit)\n        Limit\n          (Sorting)\n          MergingSortedTransform 2 \u2192 1\n            MergeSortingTransform \u00d7 2\n              LimitsCheckingTransform \u00d7 2\n                PartialSortingTransform \u00d7 2\n                  (Expression)\n                  ExpressionTransform \u00d7 2\n                    (Filter)\n                    FilterTransform \u00d7 2\n                      (Expression)\n                      ExpressionTransform \u00d7 2\n                        (ReadFromMergeTree)\n                        MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n        (LazilyReadFromMergeTree)\n        LazyReadFromMergeTreeSource 0 \u2192 1"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "ALTER TABLE orders ADD INDEX ix_orders_ts_id (ordered_at, id) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE orders MATERIALIZE INDEX ix_orders_ts_id"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (toDateTime64('2025-01-01 00:00:00', 6), 0) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 19.141,
+            "p95_ms": 22.836,
+            "rows": 50,
+            "plan_analyze": "query_log: duration_ms=15 read_rows=375424 read_bytes=4701696 memory=4507010 result_rows=50\n(Expression)\nExpressionTransform\n  (Expression)\n  ExpressionTransform\n    (Expression)\n    ExpressionTransform\n      (JoinLazyColumnsStep)\n      LazyMaterializingTransform 2 \u2192 1\n        (Limit)\n        Limit\n          (Sorting)\n          MergingSortedTransform 2 \u2192 1\n            MergeSortingTransform \u00d7 2\n              LimitsCheckingTransform \u00d7 2\n                PartialSortingTransform \u00d7 2\n                  (Expression)\n                  ExpressionTransform \u00d7 2\n                    (Filter)\n                    FilterTransform \u00d7 2\n                      (Expression)\n                      ExpressionTransform \u00d7 2\n                        (ReadFromMergeTree)\n                        MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1\n        (LazilyReadFromMergeTree)\n        LazyReadFromMergeTreeSource 0 \u2192 1"
+          }
+        ],
+        "best_variant": "keyset_with_index",
+        "speedup_vs_first": 1.62
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = true ORDER BY p.id LIMIT 500",
+            "ok": false,
+            "error": "DatabaseError: Received ClickHouse exception, code: 48, server response: Code: 48. DB::Exception: Current query is not supported yet, because can't find correlated column '__table3.category_id' in current header: __table3.id, __table3.price. (NOT_IMPLEMENTED) (for url http://127.0.0.1:18123)",
+            "p50_ms": null,
+            "p95_ms": null,
+            "rows": null
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = true ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 9.139,
+            "p95_ms": 43.09,
+            "rows": 500,
+            "plan_analyze": "query_log: duration_ms=5 read_rows=10000 read_bytes=145000 memory=4691538 result_rows=500\n(Expression)\nExpressionTransform\n  (Limit)\n  Limit\n    (Sorting)\n    MergeSortingTransform\n      LimitsCheckingTransform\n        PartialSortingTransform\n          (Expression)\n          ExpressionTransform\n            (Join)\n            ColumnPermuteTransform\n              FillingRightJoinSide\n                Resize 2 \u2192 1\n                  DelayedPorts 2 \u2192 2\n                    JoiningTransform 2 \u2192 1\n                      DelayedJoinedBlocksWorkerTransform\n                        SimpleSquashingTransform\n                          DelayedJoinedBlocksTransform 0 \u2192 1\n                            (Expression)\n                            ExpressionTransform\n                              (Expression)\n                              ExpressionTransform\n                                (ReadFromMergeTree)\n                                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1\n                            (Expression)\n                            ExpressionTransform\n                              (BuildRuntimeFilter)\n                              BuildRuntimeFilterTransform\n                                (Expression)\n                                ExpressionTransform\n                                  (Aggregating)\n                                  AggregatingTransform\n                                    (Expression)\n                                    ExpressionTransform\n                                      (ReadFromMergeTree)\n                                      MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+          }
+        ]
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 21.479,
+            "p95_ms": 22.619,
+            "rows": 0,
+            "plan_analyze": "query_log: duration_ms=18 read_rows=492606 read_bytes=3920848 memory=32439058 result_rows=0\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 9 \u2192 1\n    MergeSortingTransform \u00d7 9\n      LimitsCheckingTransform \u00d7 9\n        PartialSortingTransform \u00d7 9\n          (Expression)\n          ExpressionTransform \u00d7 9\n            (Filter)\n            FilterTransform \u00d7 9\n              (Join)\n              ColumnPermuteTransform \u00d7 9\n                Resize 1 \u2192 9\n                  FillingRightJoinSide\n                    Resize 18 \u2192 9\n                      DelayedPorts 18 \u2192 18\n                        JoiningTransform 2 \u2192 1\n                          DelayedJoinedBlocksWorkerTransform\n                            SimpleSquashingTransform\n                              JoiningTransform 2 \u2192 1\n                                DelayedJoinedBlocksWorkerTransform\n                                  SimpleSquashingTransform\n                                    JoiningTransform 2 \u2192 1\n                                      DelayedJoinedBlocksWorkerTransform\n                                        SimpleSquashingTransform\n                                          JoiningTransform 2 \u2192 1\n                                            DelayedJoinedBlocksWorkerTransform\n                                              SimpleSquashingTransform\n                                                JoiningTransform 2 \u2192 1\n                                                  DelayedJoinedBlocksWorkerTransform\n                                                    SimpleSquashingTransform\n                                                      JoiningTransform 2 \u2192 1\n                                                        DelayedJoinedBlocksWorkerTransform\n                                                          SimpleSquashingTransform\n                                                            JoiningTransform 2 \u2192 1\n                                                              DelayedJoinedBlocksWorkerTransform\n                                                                SimpleSquashingTransform\n                                                                  JoiningTransform 2 \u2192 1\n                                                                    DelayedJoinedBlocksWorkerTransform\n                                                                      SimpleSquashingTransform\n                                                                        JoiningTransform 2 \u2192 1\n                                                                          DelayedJoinedBlocksWorkerTransform\n                                                                            SimpleSquashingTransform\n                                                                              DelayedJoinedBlocksTransform 0 \u2192 9\n                                                                                (Expression)\n                                                                                ExpressionTransform \u00d7 9\n        "
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 14.537,
+            "p95_ms": 15.389,
+            "rows": 0,
+            "plan_analyze": "query_log: duration_ms=13 read_rows=492606 read_bytes=1970424 memory=7761556 result_rows=0\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 9 \u2192 1\n    MergeSortingTransform \u00d7 9\n      LimitsCheckingTransform \u00d7 9\n        PartialSortingTransform \u00d7 9\n          (Expression)\n          ExpressionTransform \u00d7 9\n            (Join)\n            ColumnPermuteTransform \u00d7 9\n              Resize 1 \u2192 9\n                FillingRightJoinSide\n                  Resize 18 \u2192 9\n                    DelayedPorts 18 \u2192 18\n                      JoiningTransform 2 \u2192 1\n                        DelayedJoinedBlocksWorkerTransform\n                          SimpleSquashingTransform\n                            JoiningTransform 2 \u2192 1\n                              DelayedJoinedBlocksWorkerTransform\n                                SimpleSquashingTransform\n                                  JoiningTransform 2 \u2192 1\n                                    DelayedJoinedBlocksWorkerTransform\n                                      SimpleSquashingTransform\n                                        JoiningTransform 2 \u2192 1\n                                          DelayedJoinedBlocksWorkerTransform\n                                            SimpleSquashingTransform\n                                              JoiningTransform 2 \u2192 1\n                                                DelayedJoinedBlocksWorkerTransform\n                                                  SimpleSquashingTransform\n                                                    JoiningTransform 2 \u2192 1\n                                                      DelayedJoinedBlocksWorkerTransform\n                                                        SimpleSquashingTransform\n                                                          JoiningTransform 2 \u2192 1\n                                                            DelayedJoinedBlocksWorkerTransform\n                                                              SimpleSquashingTransform\n                                                                JoiningTransform 2 \u2192 1\n                                                                  DelayedJoinedBlocksWorkerTransform\n                                                                    SimpleSquashingTransform\n                                                                      JoiningTransform 2 \u2192 1\n                                                                        DelayedJoinedBlocksWorkerTransform\n                                                                          SimpleSquashingTransform\n                                                                            DelayedJoinedBlocksTransform 0 \u2192 9\n                                                                              (Expression)\n                                                                              ExpressionTransform \u00d7 9\n                                                                                (Filter)\n                                             "
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 13.927,
+            "p95_ms": 14.565,
+            "rows": 0,
+            "plan_analyze": "query_log: duration_ms=6 read_rows=492606 read_bytes=1970424 memory=6332866 result_rows=0\n(CreatingSets)\n  (Expression)\n  ExpressionTransform\n    (Sorting)\n    RemoveVirtualRowTransform\n      (Expression)\n      ExpressionTransform\n        (Filter)\n        FilterTransform\n          (ReadFromMergeTree)\n          VirtualRowTransform\n            MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+          }
+        ],
+        "best_variant": "not_in",
+        "speedup_vs_first": 1.54
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 12.029,
+            "p95_ms": 13.408,
+            "rows": 13,
+            "plan_analyze": "query_log: duration_ms=6 read_rows=200000 read_bytes=1600000 memory=4655612 result_rows=12\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    BufferChunks \u00d7 2\n      (Expression)\n      ExpressionTransform \u00d7 2\n        (Filter)\n        FilterTransform \u00d7 2\n          (ReadFromMergeTree)\n          VirtualRowTransform\n            MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1\n              VirtualRowTransform\n                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 \u2192 1"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": false,
+            "error": "DatabaseError: Received ClickHouse exception, code: 558, server response: Code: 558. DB::Exception: Expected ALL or DISTINCT in SelectWithUnion query, because setting (union_default_mode) is empty: While processing SELECT id FROM orders WHERE customer_id = 3342 UNION SELECT id FROM orders WHERE id =",
+            "p50_ms": null,
+            "p95_ms": null,
+            "rows": null
+          }
+        ]
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= toDateTime64('2025-09-01 00:00:00', 6) AND ordered_at < toDateTime64('2025-10-01 00:00:00', 6) ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 20.887,
+            "p95_ms": 22.362,
+            "rows": 640,
+            "plan_analyze": "query_log: duration_ms=18 read_rows=200000 read_bytes=5518288 memory=4474136 result_rows=640\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    MergeSortingTransform \u00d7 2\n      LimitsCheckingTransform \u00d7 2\n        PartialSortingTransform \u00d7 2\n          (Expression)\n          ExpressionTransform \u00d7 2\n            (Expression)\n            ExpressionTransform \u00d7 2\n              (ReadFromMergeTree)\n              MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "ALTER TABLE orders ADD INDEX ix_orders_status_ts (status, ordered_at) TYPE bloom_filter GRANULARITY 4",
+              "ALTER TABLE orders MATERIALIZE INDEX ix_orders_status_ts"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= toDateTime64('2025-09-01 00:00:00', 6) AND ordered_at < toDateTime64('2025-10-01 00:00:00', 6) ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 22.424,
+            "p95_ms": 27.452,
+            "rows": 640,
+            "plan_analyze": "query_log: duration_ms=18 read_rows=200000 read_bytes=5518288 memory=4482668 result_rows=640\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 2 \u2192 1\n    MergeSortingTransform \u00d7 2\n      LimitsCheckingTransform \u00d7 2\n        PartialSortingTransform \u00d7 2\n          (Expression)\n          ExpressionTransform \u00d7 2\n            (Expression)\n            ExpressionTransform \u00d7 2\n              (ReadFromMergeTree)\n              MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 2 0 \u2192 1"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "clickhouse: setup step not supported"
+          }
+        ],
+        "best_variant": "no_partial_index",
+        "speedup_vs_first": 1.0
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 33.004,
+            "p95_ms": 34.512,
+            "rows": 13,
+            "plan_analyze": "query_log: duration_ms=29 read_rows=1040000 read_bytes=12160042 memory=6750507 result_rows=13\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 6 \u2192 1\n    MergeSortingTransform \u00d7 6\n      LimitsCheckingTransform \u00d7 6\n        PartialSortingTransform \u00d7 6\n          (Expression)\n          ExpressionTransform \u00d7 6\n            (Aggregating)\n            Resize 6 \u2192 6\n              AggregatingTransform \u00d7 6\n                (Expression)\n                ExpressionTransform \u00d7 6\n                  (Join)\n                  ColumnPermuteTransform \u00d7 6\n                    Resize 1 \u2192 6\n                      FillingRightJoinSide\n                        Resize 12 \u2192 6\n                          DelayedPorts 12 \u2192 12\n                            JoiningTransform 2 \u2192 1\n                              DelayedJoinedBlocksWorkerTransform\n                                SimpleSquashingTransform\n                                  JoiningTransform 2 \u2192 1\n                                    DelayedJoinedBlocksWorkerTransform\n                                      SimpleSquashingTransform\n                                        JoiningTransform 2 \u2192 1\n                                          DelayedJoinedBlocksWorkerTransform\n                                            SimpleSquashingTransform\n                                              JoiningTransform 2 \u2192 1\n                                                DelayedJoinedBlocksWorkerTransform\n                                                  SimpleSquashingTransform\n                                                    JoiningTransform 2 \u2192 1\n                                                      DelayedJoinedBlocksWorkerTransform\n                                                        SimpleSquashingTransform\n                                                          JoiningTransform 2 \u2192 1\n                                                            DelayedJoinedBlocksWorkerTransform\n                                                              SimpleSquashingTransform\n                                                                DelayedJoinedBlocksTransform 0 \u2192 6\n                                                                  (Expression)\n                                                                  ExpressionTransform \u00d7 6\n                                                                    (Expression)\n                                                                    ExpressionTransform \u00d7 6\n                                                                      (ReadFromMergeTree)\n                                                                      MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 6 0 \u2192 1\n                                                                  (Expression)\n                                                                  ExpressionTransform\n                                                                    (BuildRuntimeFilter)\n                                                           "
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 27.298,
+            "p95_ms": 29.419,
+            "rows": 13,
+            "plan_analyze": "query_log: duration_ms=28 read_rows=1040000 read_bytes=12160042 memory=6749723 result_rows=13\n(Expression)\nExpressionTransform\n  (Sorting)\n  MergingSortedTransform 6 \u2192 1\n    MergeSortingTransform \u00d7 6\n      LimitsCheckingTransform \u00d7 6\n        PartialSortingTransform \u00d7 6\n          (Expression)\n          ExpressionTransform \u00d7 6\n            (Aggregating)\n            Resize 6 \u2192 6\n              AggregatingTransform \u00d7 6\n                (Expression)\n                ExpressionTransform \u00d7 6\n                  (Join)\n                  ColumnPermuteTransform \u00d7 6\n                    Resize 1 \u2192 6\n                      FillingRightJoinSide\n                        Resize 12 \u2192 6\n                          DelayedPorts 12 \u2192 12\n                            JoiningTransform 2 \u2192 1\n                              DelayedJoinedBlocksWorkerTransform\n                                SimpleSquashingTransform\n                                  JoiningTransform 2 \u2192 1\n                                    DelayedJoinedBlocksWorkerTransform\n                                      SimpleSquashingTransform\n                                        JoiningTransform 2 \u2192 1\n                                          DelayedJoinedBlocksWorkerTransform\n                                            SimpleSquashingTransform\n                                              JoiningTransform 2 \u2192 1\n                                                DelayedJoinedBlocksWorkerTransform\n                                                  SimpleSquashingTransform\n                                                    JoiningTransform 2 \u2192 1\n                                                      DelayedJoinedBlocksWorkerTransform\n                                                        SimpleSquashingTransform\n                                                          JoiningTransform 2 \u2192 1\n                                                            DelayedJoinedBlocksWorkerTransform\n                                                              SimpleSquashingTransform\n                                                                DelayedJoinedBlocksTransform 0 \u2192 6\n                                                                  (Expression)\n                                                                  ExpressionTransform \u00d7 6\n                                                                    (Expression)\n                                                                    ExpressionTransform \u00d7 6\n                                                                      (ReadFromMergeTree)\n                                                                      MergeTreeSelect(pool: ReadPool, algorithm: Thread) \u00d7 6 0 \u2192 1\n                                                                  (Expression)\n                                                                  ExpressionTransform\n                                                                    (BuildRuntimeFilter)\n                                                           "
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 1.21
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 247.691,
+            "rows_per_s": 12,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 1.175,
+            "rows_per_s": 2554,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 1.078,
+            "rows_per_s": 2783,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver clickhouse-connect: no server-side prepare toggle exposed"
+      },
+      "_seconds": 289.7
+    },
+    "connections": {
+      "max_connections": 4096,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 32.360348,
+            "p50": 32.787833500000005,
+            "p90": 33.239751600000005,
+            "p95": 33.544097550000004,
+            "p99": 33.67663897,
+            "max": 33.694853,
+            "mean": 32.8445495,
+            "stdev": 0.33631733980361994
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 208.5,
+            "connect_ms": {
+              "n": 10,
+              "min": 134.851614,
+              "p50": 159.262568,
+              "p90": 166.0601918,
+              "p95": 166.5800984,
+              "p99": 166.99602368,
+              "max": 167.100005,
+              "mean": 155.7525439,
+              "stdev": 10.917097209357532
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 1001.7,
+            "connect_ms": {
+              "n": 50,
+              "min": 309.114919,
+              "p50": 871.5704559999999,
+              "p90": 923.3344454,
+              "p95": 930.90871695,
+              "p99": 940.93829268,
+              "max": 941.017069,
+              "mean": 788.1160112399999,
+              "stdev": 164.67648194073575
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 1736.6,
+            "connect_ms": {
+              "n": 100,
+              "min": 497.765372,
+              "p50": 1498.2512205,
+              "p90": 1643.3639307,
+              "p95": 1666.2029545,
+              "p99": 1676.25778082,
+              "max": 1681.942442,
+              "mean": 1395.34911477,
+              "stdev": 273.5135225586782
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 3451.1,
+            "connect_ms": {
+              "n": 200,
+              "min": 420.837802,
+              "p50": 2967.312349,
+              "p90": 3321.9822442,
+              "p95": 3365.1948027999997,
+              "p99": 3399.7635854699997,
+              "max": 3410.109001,
+              "mean": 2724.8104235250003,
+              "stdev": 662.4632552951781
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 4106,
+            "opened": 4106,
+            "failed": 0,
+            "wall_ms_to_open_all": 84089.5,
+            "connect_ms": {
+              "n": 4106,
+              "min": 57.867563,
+              "p50": 55986.7397345,
+              "p90": 58962.125082,
+              "p95": 59132.924301,
+              "p99": 59517.9004212,
+              "max": 61237.041899,
+              "mean": 41287.74719494983,
+              "stdev": 25470.544933482535
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 800,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 200,
+            "latency_ms": {
+              "n": 800,
+              "min": 3.293617,
+              "p50": 4.9710995,
+              "p90": 5.3953223999999995,
+              "p95": 5.533570299999999,
+              "p99": 7.111551289999998,
+              "max": 11.728075,
+              "mean": 4.9975183625,
+              "stdev": 0.5654715955830638
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 3145,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 786,
+            "latency_ms": {
+              "n": 3145,
+              "min": 3.32366,
+              "p50": 4.981833,
+              "p90": 6.0297958,
+              "p95": 6.544158999999996,
+              "p99": 8.478894559999999,
+              "max": 12.504735,
+              "mean": 5.0865069065182835,
+              "stdev": 0.9427394922535812
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 11394,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 2848,
+            "latency_ms": {
+              "n": 11394,
+              "min": 3.872414,
+              "p50": 5.4739865000000005,
+              "p90": 6.281581,
+              "p95": 6.6434339,
+              "p99": 9.116985839999991,
+              "max": 28.320919,
+              "mean": 5.616775375987362,
+              "stdev": 1.2877473947251055
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 12392,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 3098,
+            "latency_ms": {
+              "n": 12392,
+              "min": 4.36398,
+              "p50": 9.646817,
+              "p90": 14.502639799999999,
+              "p95": 16.593461149999996,
+              "p99": 22.26676441000001,
+              "max": 40.577589,
+              "mean": 10.339820353938025,
+              "stdev": 3.5492144893640747
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 12478,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 3120,
+            "latency_ms": {
+              "n": 12478,
+              "min": 4.178677,
+              "p50": 18.661685,
+              "p90": 33.92318360000002,
+              "p95": 39.681408049999995,
+              "p99": 55.86872127999996,
+              "max": 116.132561,
+              "mean": 20.639718884837315,
+              "stdev": 10.669978374573011
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 1778,
+        "qps": 436,
+        "checkout_wait_ms": {
+          "n": 1778,
+          "min": 0.002204,
+          "p50": 0.005853,
+          "p90": 0.009268099999999998,
+          "p95": 0.01007345,
+          "p99": 3942.33979708,
+          "max": 4032.130229,
+          "mean": 53.57470978177728,
+          "stdev": 457.96741439502705
+        },
+        "exec_ms": {
+          "n": 1778,
+          "min": 3.639622,
+          "p50": 16.880384,
+          "p90": 29.2083752,
+          "p95": 32.9139214,
+          "p99": 43.44602548,
+          "max": 59.994805,
+          "mean": 18.227626730033744,
+          "stdev": 8.00846060679867
+        }
+      },
+      "transactions": {
+        "status": "n/a",
+        "note": "engine has no transactional isolation"
+      },
+      "_seconds": 132.7
+    },
+    "replication": {
+      "kind": "ReplicatedMergeTree (multi-writer, Keeper-coordinated, eventually consistent)",
+      "topology": {
+        "primary": {
+          "role_reported": "node",
+          "role_configured": "primary",
+          "version": "ClickHouse 26.8.2.7",
+          "status": {
+            "replicas": [
+              [
+                "lab",
+                "categories",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "customers",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "events",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "inventory",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "order_items",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "orders",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "products",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ]
+            ]
+          }
+        },
+        "replica": {
+          "role_reported": "node",
+          "role_configured": "replica",
+          "version": "ClickHouse 26.8.2.7",
+          "status": {
+            "replicas": [
+              [
+                "lab",
+                "categories",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "customers",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "events",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "inventory",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "order_items",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "orders",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ],
+              [
+                "lab",
+                "products",
+                1,
+                0,
+                0,
+                0,
+                0,
+                2,
+                2
+              ]
+            ]
+          }
+        }
+      },
+      "visibility_lag": {
+        "replica": {
+          "error": "DatabaseError: Received ClickHouse exception, code: 60, server response: Code: 60. DB::Exception: Unknown table expression identifier 'repl_probe' in scope SELECT ts_ms FROM repl_probe WHERE id = 1000. (UNKNOWN_TABLE) (for url http://127.0.0.1:18124)"
+        }
+      },
+      "write_rejection": {
+        "replica": {
+          "replica": "replica",
+          "writes_rejected": true,
+          "error_code": "60",
+          "error": "DatabaseError: Received ClickHouse exception, code: 60, server response: Code: 60. DB::Exception: Table lab.repl_probe does not exist. (UNKNOWN_TABLE) (for url http://127.0.0.1:18124)"
+        }
+      },
+      "lag_under_load": {
+        "error": "DatabaseError: Received ClickHouse exception, code: 60, server response: Code: 60. DB::Exception: Unknown table expression identifier 'repl_probe' in scope SELECT COUNT(*) FROM repl_probe. (UNKNOWN_TABLE) (for url http://127.0.0.1:18124)"
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 12440,
+          "qps": 3110,
+          "errors": 0,
+          "latency_ms": {
+            "n": 12440,
+            "min": 4.620479,
+            "p50": 9.586446500000001,
+            "p90": 14.471182200000001,
+            "p95": 16.261149749999987,
+            "p99": 22.22280591000002,
+            "max": 46.40238,
+            "mean": 10.296779301607717,
+            "stdev": 3.6157425570836303
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "replica"
+          ],
+          "workers": 32,
+          "queries": 12700,
+          "qps": 3175,
+          "errors": 0,
+          "latency_ms": {
+            "n": 12700,
+            "min": 4.602762,
+            "p50": 9.522517,
+            "p90": 14.1368633,
+            "p95": 15.804519949999998,
+            "p99": 19.5885077,
+            "max": 33.270994,
+            "mean": 10.08761213464567,
+            "stdev": 3.071557740414974
+          }
+        },
+        "gain": 1.02
+      },
+      "failover": {
+        "kind": "ReplicatedMergeTree (multi-writer, Keeper-coordinated, eventually consistent)",
+        "stopped_at": 0.0,
+        "old_primary_error": "OperationalError: Error HTTPConnectionPool(host='127.0.0.1', port=18123): Max retries exceeded with url: /?query_id=145fab9f-020f-4b84-9148-4b373d90a9bc (Caused by NewConnectionError(\"HTTPConnection(host='127.0.0.1', port=18123): Failed to establish a new connection: [Errno 111] Connection refused\")",
+        "write_attempts_until_success": 514,
+        "last_error_before_success": "DatabaseError: Received ClickHouse exception, code: 60, server response: Code: 60. DB::Exception: Table lab.repl_probe does not exist. (UNKNOWN_TABLE) (for url http://127.0.0.1:18124)",
+        "downtime_ms": null,
+        "new_primary": "replica",
+        "new_primary_role": "node",
+        "new_primary_status": {
+          "replicas": [
+            [
+              "lab",
+              "categories",
+              1,
+              0,
+              0,
+              0,
+              0,
+              2,
+              1
+            ],
+            [
+              "lab",
+              "customers",
+              1,
+              0,
+              0,
+              0,
+              0,
+              2,
+              1
+            ],
+            [
+              "lab",
+              "events",
+              1,
+              0,
+              0,
+              0,
+              0,
+              2,
+              1
+            ],
+            [
+              "lab",
+              "inventory",
+              1,
+              0,
+              0,
+              0,
+              0,
+              2,
+              1
+            ],
+            [
+              "lab",
+              "order_items",
+              1,
+              0,
+              0,
+              0,
+              0,
+              2,
+              1
+            ],
+            [
+              "lab",
+              "orders",
+              1,
+              0,
+              0,
+              0,
+              0,
+              2,
+              1
+            ],
+            [
+              "lab",
+              "products",
+              1,
+              0,
+              0,
+              0,
+              0,
+              2,
+              1
+            ]
+          ]
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 198.5
+    }
+  },
+  "finished": "2026-09-12T20:18:39+00:00"
+}

@@ -1,0 +1,13 @@
+2026-09-14 15:27:23,607 DEBUG   [mysql/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152723-a55587.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152723-a55587.jsonl
+2026-09-14 15:27:23,608 INFO    [mysql/-] [mysql] run 20260914-152723-a55587 phases=['load'] scale=0.3 (log: results-k3s/logs/mysql/20260914-152723-a55587.log)
+2026-09-14 15:27:23,622 INFO    [mysql/-] [mysql] phase: load
+2026-09-14 15:27:23,785 INFO    [mysql/load]   schema created (13 statements, 0.14s)
+2026-09-14 15:27:23,968 INFO    [mysql/load]   customers        6,000 rows     0.18s     33,259 rows/s  [LOAD DATA LOCAL INFILE]
+2026-09-14 15:27:23,976 INFO    [mysql/load]   categories         200 rows     0.01s     34,254 rows/s  [LOAD DATA LOCAL INFILE]
+2026-09-14 15:27:24,083 INFO    [mysql/load]   products         1,500 rows     0.11s     14,259 rows/s  [LOAD DATA LOCAL INFILE]
+2026-09-14 15:27:25,108 INFO    [mysql/load]   orders          60,000 rows     1.02s     59,035 rows/s  [LOAD DATA LOCAL INFILE]
+2026-09-14 15:27:28,280 INFO    [mysql/load]   order_items    147,072 rows     3.15s     46,675 rows/s  [LOAD DATA LOCAL INFILE]
+2026-09-14 15:27:34,415 INFO    [mysql/load]   events         300,000 rows     6.09s     49,281 rows/s  [LOAD DATA LOCAL INFILE]
+2026-09-14 15:27:34,469 INFO    [mysql/load]   inventory        6,000 rows     0.05s    114,231 rows/s  [LOAD DATA LOCAL INFILE]
+2026-09-14 15:27:34,895 INFO    [mysql/load] [mysql] phase load done in 11.3s
+2026-09-14 15:27:34,899 INFO    [mysql/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/mysql/20260914-152723-a55587.json

@@ -1,0 +1,4 @@
+Fetch[id, customer_id, ordered_at] (rows=50)
+  └ Limit[50::bigint;0] (rows=50)
+    └ OrderBy[ordered_at ASC id ASC] (rows=199999)
+      └ Collect[doc.orders | [_fetchid, id, ordered_at] | ((ordered_at > 1735689600000::bigint) OR ((ordered_at = 1735689600000::bigint) AND (id > 0)))] (rows=199999)

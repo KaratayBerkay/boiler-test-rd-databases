@@ -1,0 +1,27 @@
+Output: customer_id, count()
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: customer_id ASC
+└──Aggregating
+   │  Keys: customer_id
+   │  Aggregates: count()
+   │  Skip merging: 0
+   └──Filter ((WHERE + (Change column names to column identifiers + (Project names + (Projection + (Change column names to column identifiers + (Project names + Projection)))))))
+      │  Filter column: if(0 OR dateDiff('second', LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC), occurred_at) > 1800, 1, 0) = 1
+      └──Window (Window step for window 'PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')
+         │  Window: (PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC)
+         │  Functions: LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC)
+         └──Sorting (Sorting for window 'PARTITION BY customer_id ORDER BY occurred_at ASC, id ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING')
+            │  Sort description: customer_id ASC, occurred_at ASC, id ASC
+            └──ReadFromMergeTree (lab.events)
+                  Read type: Default
+                  Parts: 3 | Granules: 36
+                  Output: customer_id, occurred_at, id
+                  Prewhere filter
+                  Prewhere filter column:  customer_id <= 2000
+                  Indexes:
+                    PrimaryKey
+                      Condition: true
+                      Parts: 3/3
+                      Granules: 36/36
+                    Ranges: 3

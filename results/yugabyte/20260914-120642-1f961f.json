@@ -1,0 +1,168 @@
+{
+  "engine": "yugabyte",
+  "display": "YugabyteDB",
+  "category": "distributed SQL",
+  "dialect": "yugabyte",
+  "driver": "psycopg",
+  "image": "yugabytedb/yugabyte:latest",
+  "run_id": "20260914-120642-1f961f",
+  "started": "2026-09-14T09:06:42+00:00",
+  "scale": 0.3,
+  "notes": "3 nodes via yugabyted, replication factor 3 (Raft per tablet), PostgreSQL-compatible YSQL layer on every node (any node serves reads and writes; no promotion). Auth disabled for the lab.",
+  "phases": {
+    "logging": {
+      "sink": "postgresql-*.log of the tserver (log_min_duration_statement via ysql_pg_conf_csv)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "logging_collector": "on",
+        "log_destination": "stderr",
+        "log_directory": "/home/yugabyte/yb_data/data/yb-data/tserver/logs",
+        "log_filename": "postgresql-%Y-%m-%d_%H%M%S.log",
+        "log_rotation_size": "10MB",
+        "log_rotation_age": "1d",
+        "log_min_duration_statement": "100ms",
+        "log_min_duration_sample": "-1",
+        "log_statement_sample_rate": "1",
+        "log_statement": "none",
+        "log_lock_waits": "on",
+        "log_temp_files": "0",
+        "log_checkpoints": "on",
+        "log_connections": "on",
+        "log_disconnections": "on",
+        "log_autovacuum_min_duration": "10min",
+        "log_line_prefix": "%m [%p] %u@%d app=%a ",
+        "log_error_verbosity": "default",
+        "shared_preload_libraries": "pg_stat_statements,yb_pg_metrics,pgaudit,pg_hint_plan,yb_xcluster_ddl_replication",
+        "track_io_timing": "off",
+        "archive_mode": "off",
+        "pgaudit_available": true,
+        "log_files": [
+          "postgresql-2026-09-14_085317.log"
+        ]
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "postgresql-*.log of the tserver (log_min_duration_statement via ysql_pg_conf_csv)",
+        "slow_query_ms": 325.8,
+        "slow_logged": true,
+        "seen_after_s": 0.09,
+        "sample": "2026-09-14 09:06:42.753 UTC [15549] yugabyte@lab app=rdlab LOG:  duration: 307.454 ms  statement: SELECT pg_sleep(0.3) AS rdlab_mk_5a92656913",
+        "duration_ms": 307.454,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "ysql_log_statement=ddl (+ pgaudit extension available)",
+        "setup": "log_statement=ddl at database level",
+        "event_found": true,
+        "seen_after_s": 0.09,
+        "sample": "2026-09-14 09:06:43.046 UTC [15588] yugabyte@lab app=rdlab LOG:  statement: CREATE TABLE audit_rdlab_mk_e504c364e0 (id INTEGER)",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 13959,
+          "p50_ms": 0.535849,
+          "p99_ms": 0.99733264,
+          "errors": 0
+        },
+        "full_logging": "ALTER DATABASE lab SET log_min_duration_statement = 0 (new connections log every statement)",
+        "full": {
+          "qps": 13788,
+          "p50_ms": 0.538273,
+          "p99_ms": 1.0966928399999984,
+          "errors": 0
+        },
+        "log_bytes_written": 26853965,
+        "bytes_per_statement": 486.9,
+        "overhead_pct": 1.2,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-yb-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6335,
+          "docker_logs_lines": 4
+        },
+        "rdlab-yb-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2029,
+          "docker_logs_lines": 6
+        },
+        "rdlab-yb-3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2146,
+          "docker_logs_lines": 6
+        }
+      },
+      "extra": {
+        "pg_stat_statements_top5": [
+          {
+            "calls": 138724,
+            "total_ms": 27313.2,
+            "mean_ms": 0.2,
+            "query": "SELECT id, name, email FROM customers WHERE id = $1"
+          },
+          {
+            "calls": 1,
+            "total_ms": 12827.1,
+            "mean_ms": 12827.08,
+            "query": "CREATE INDEX ix_events_customer_id ON public.events USING lsm (customer_id HASH)"
+          },
+          {
+            "calls": 1,
+            "total_ms": 10661.8,
+            "mean_ms": 10661.8,
+            "query": "CREATE INDEX ix_events_customer_id ON public.events USING lsm (customer_id HASH)"
+          },
+          {
+            "calls": 3,
+            "total_ms": 9304.1,
+            "mean_ms": 3101.37,
+            "query": "SELECT p.tableoid, p.oid, p.proname, p.prolang, p.pronargs, p.proargtypes, p.prorettype, p"
+          },
+          {
+            "calls": 293,
+            "total_ms": 8556.2,
+            "mean_ms": 29.2,
+            "query": "BACKFILL INDEX 16668 WITH $1 READ TIME 7329284387031867392 PARTITION $2"
+          }
+        ]
+      },
+      "collected": [
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_postgresql-2026-09-14_085317.log",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_postgresql-2026-09-14_090657.log",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_postgresql-2026-09-14_090658.log",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_yb-tserver.INFO",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_master_logs_yb-master.INFO"
+      ],
+      "_seconds": 19.5
+    }
+  },
+  "harness_log": "results/logs/yugabyte/20260914-120642-1f961f.log",
+  "server_version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/llvm-project.git efca861cc42178cc4c555d605b36c79d7d121cc1), 64-bit",
+  "finished": "2026-09-14T09:07:01+00:00"
+}

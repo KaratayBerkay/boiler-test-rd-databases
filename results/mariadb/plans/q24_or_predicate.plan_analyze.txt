@@ -1,0 +1,63 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.046201536
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 0.036914111,
+    "r_loops": 1,
+    "r_total_time_ms": 0.07731581,
+    "nested_loop": [
+      {
+        "read_sorted_file": {
+          "r_rows": 13,
+          "filesort": {
+            "sort_key": "orders.`id`",
+            "r_loops": 1,
+            "r_total_time_ms": 0.067245121,
+            "r_used_priority_queue": false,
+            "r_output_rows": 13,
+            "r_buffer_size": "2047KiB",
+            "r_sort_mode": "sort_key,addon_fields",
+            "table": {
+              "table_name": "orders",
+              "access_type": "index_merge",
+              "possible_keys": ["PRIMARY", "ix_orders_customer_id"],
+              "key_length": "4,4",
+              "index_merge": {
+                "union": [
+                  {
+                    "range": {
+                      "key": "ix_orders_customer_id",
+                      "used_key_parts": ["customer_id"]
+                    }
+                  },
+                  {
+                    "range": {
+                      "key": "PRIMARY",
+                      "used_key_parts": ["id"]
+                    }
+                  }
+                ]
+              },
+              "loops": 1,
+              "r_loops": 1,
+              "rows": 13,
+              "r_rows": 13,
+              "cost": 0.028622979,
+              "r_table_time_ms": 0.019524472,
+              "r_other_time_ms": 0.007696919,
+              "r_engine_stats": {
+                "pages_accessed": 32
+              },
+              "filtered": 100,
+              "r_total_filtered": 100,
+              "attached_condition": "orders.customer_id = 14824 or orders.`id` = 146741",
+              "r_filtered": 100
+            }
+          }
+        }
+      }
+    ]
+  }
+}

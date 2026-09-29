@@ -1,0 +1,96 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.212088436
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 140.0704684,
+    "r_loops": 1,
+    "r_total_time_ms": 68.88133957,
+    "filesort": {
+      "sort_key": "s.d",
+      "r_loops": 1,
+      "r_total_time_ms": 0.007802031,
+      "r_used_priority_queue": false,
+      "r_output_rows": 90,
+      "r_buffer_size": "1KiB",
+      "r_sort_mode": "sort_key,rowid",
+      "window_functions_computation": {
+        "sorts": [
+          {
+            "filesort": {
+              "sort_key": "s.d",
+              "r_loops": 1,
+              "r_total_time_ms": 0.009179743,
+              "r_used_priority_queue": false,
+              "r_output_rows": 90,
+              "r_buffer_size": "1KiB",
+              "r_sort_mode": "sort_key,rowid"
+            }
+          }
+        ],
+        "temporary_table": {
+          "nested_loop": [
+            {
+              "table": {
+                "table_name": "<derived2>",
+                "access_type": "ALL",
+                "loops": 1,
+                "r_loops": 1,
+                "rows": 194613,
+                "r_rows": 90,
+                "cost": 8.70620406,
+                "r_table_time_ms": 0.004952757,
+                "r_other_time_ms": 0.06824243,
+                "filtered": 100,
+                "r_total_filtered": 100,
+                "r_filtered": 100,
+                "materialized": {
+                  "query_block": {
+                    "select_id": 2,
+                    "cost": 163.7261709,
+                    "r_loops": 1,
+                    "r_total_time_ms": 68.71011325,
+                    "filesort": {
+                      "sort_key": "cast(orders.ordered_at as date)",
+                      "r_loops": 1,
+                      "r_total_time_ms": 0.020645662,
+                      "r_used_priority_queue": false,
+                      "r_output_rows": 90,
+                      "r_buffer_size": "1KiB",
+                      "r_sort_mode": "sort_key,rowid",
+                      "temporary_table": {
+                        "nested_loop": [
+                          {
+                            "table": {
+                              "table_name": "orders",
+                              "access_type": "ALL",
+                              "loops": 1,
+                              "r_loops": 1,
+                              "rows": 194613,
+                              "r_rows": 200000,
+                              "cost": 32.3619066,
+                              "r_table_time_ms": 38.11987224,
+                              "r_other_time_ms": 30.53779409,
+                              "r_engine_stats": {
+                                "pages_accessed": 714
+                              },
+                              "filtered": 100,
+                              "r_total_filtered": 12.467,
+                              "attached_condition": "orders.ordered_at >= TIMESTAMP'2025-01-01 00:00:00' and orders.ordered_at < TIMESTAMP'2025-04-01 00:00:00'",
+                              "r_filtered": 12.467
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

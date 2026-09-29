@@ -1,0 +1,79 @@
+# CockroachDB — 3-node insecure cluster (Raft, 3x replication, every node accepts reads and writes) + HAProxy.
+#
+# Backup strategy (`rdlab run cockroach --phases backup`): native BACKUP DATABASE ... INTO 'nodelocal://1/lab' WITH
+#   revision_history (node 1's <store>/extern directory), incremental INTO LATEST IN, RESTORE ... AS OF SYSTEM TIME.
+# Logging strategy (conf/log.yaml): JSON log channels -> file groups (slow queries in cockroach-sql-perf.log, audit in
+#   cockroach-sql-audit.log), OPS/HEALTH also on stderr; cluster settings set by the init job.
+name: rdlab-cockroach
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-crdb: &crdb
+  image: cockroachdb/cockroach:latest
+  logging: *logging
+  healthcheck:
+    test: ["CMD-SHELL", "curl -fs http://127.0.0.1:8080/health?ready=1 >/dev/null"]
+    interval: 3s
+    timeout: 3s
+    retries: 60
+
+services:
+  crdb1:
+    <<: *crdb
+    container_name: rdlab-crdb-1
+    hostname: crdb1
+    command: start --insecure --join=crdb1,crdb2,crdb3 --listen-addr=0.0.0.0:26257 --advertise-addr=crdb1:26257 --http-addr=0.0.0.0:8080 --cache=1GiB --max-sql-memory=1GiB --locality=region=lab,zone=a --log-config-file=/etc/cockroach/log.yaml
+    volumes: [crdb1:/cockroach/cockroach-data, ./conf/log.yaml:/etc/cockroach/log.yaml:ro]
+    ports: ["26257:26257", "18080:8080"]
+  crdb2:
+    <<: *crdb
+    container_name: rdlab-crdb-2
+    hostname: crdb2
+    command: start --insecure --join=crdb1,crdb2,crdb3 --listen-addr=0.0.0.0:26257 --advertise-addr=crdb2:26257 --http-addr=0.0.0.0:8080 --cache=1GiB --max-sql-memory=1GiB --locality=region=lab,zone=b --log-config-file=/etc/cockroach/log.yaml
+    volumes: [crdb2:/cockroach/cockroach-data, ./conf/log.yaml:/etc/cockroach/log.yaml:ro]
+    ports: ["26258:26257"]
+  crdb3:
+    <<: *crdb
+    container_name: rdlab-crdb-3
+    hostname: crdb3
+    command: start --insecure --join=crdb1,crdb2,crdb3 --listen-addr=0.0.0.0:26257 --advertise-addr=crdb3:26257 --http-addr=0.0.0.0:8080 --cache=1GiB --max-sql-memory=1GiB --locality=region=lab,zone=c --log-config-file=/etc/cockroach/log.yaml
+    volumes: [crdb3:/cockroach/cockroach-data, ./conf/log.yaml:/etc/cockroach/log.yaml:ro]
+    ports: ["26259:26257"]
+  init:
+    image: cockroachdb/cockroach:latest
+    container_name: rdlab-crdb-init
+    logging: *logging
+    entrypoint: ["/bin/bash", "-ec"]
+    command:
+      - |
+        for i in $(seq 1 60); do /cockroach/cockroach init --insecure --host=crdb1:26257 && break || sleep 2; done || true
+        for i in $(seq 1 60); do /cockroach/cockroach sql --insecure --host=crdb1:26257 -e "SELECT 1" >/dev/null 2>&1 && break; sleep 2; done
+        /cockroach/cockroach sql --insecure --host=crdb1:26257 -e "CREATE DATABASE IF NOT EXISTS lab; CREATE USER IF NOT EXISTS lab; GRANT ALL ON DATABASE lab TO lab; ALTER USER lab WITH CREATEDB;"
+        # logging strategy: slow query log at 100 ms, admin audit, connection/session auth log
+        for st in "sql.log.slow_query.latency_threshold = '100ms'" "sql.log.admin_audit.enabled = true" "server.auth_log.sql_connections.enabled = true" "server.auth_log.sql_sessions.enabled = true"; do
+          /cockroach/cockroach sql --insecure --host=crdb1:26257 -e "SET CLUSTER SETTING $$st"    # one per statement: cannot run in a multi-statement transaction
+        done
+        /cockroach/cockroach node status --insecure --host=crdb1:26257
+    depends_on:
+      crdb1: { condition: service_started }
+      crdb2: { condition: service_started }
+      crdb3: { condition: service_started }
+    restart: "no"
+  haproxy:
+    image: haproxy:lts
+    container_name: rdlab-crdb-haproxy
+    logging: *logging
+    volumes: ["./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro"]
+    ports: ["26260:26257"]
+    depends_on:
+      init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  crdb1:
+  crdb2:
+  crdb3:

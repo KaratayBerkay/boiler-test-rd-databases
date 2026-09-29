@@ -1,0 +1,50 @@
+planning time: 406µs
+execution time: 275ms
+distribution: local
+plan type: custom
+rows decoded from KV: 200,000 (12 MiB, 2 gRPC calls)
+regions: lab
+
+• sort
+│ sql nodes: n1
+│ regions: lab
+│ execution time: 19µs
+│ sql cpu time: 19µs
+│ actual row count: 13
+│ estimated row count: 13
+│ order: +shipping_country
+│
+└── • group (hash)
+    │ sql nodes: n1
+    │ regions: lab
+    │ execution time: 26ms
+    │ sql cpu time: 26ms
+    │ actual row count: 13
+    │ estimated row count: 13
+    │ group by: shipping_country
+    │
+    └── • sort
+        │ sql nodes: n1
+        │ regions: lab
+        │ execution time: 68ms
+        │ sql cpu time: 67ms
+        │ actual row count: 200,000
+        │ estimated row count: 200,000
+        │ order: +column12
+        │
+        └── • render
+            │ execution time: 22ms
+            │ sql cpu time: 22ms
+            │ actual row count: 200,000
+            │
+            └── • scan
+                  sql nodes: n1
+                  kv nodes: n1
+                  regions: lab
+                  KV time: 158ms
+                  KV rows decoded: 200,000
+                  sql cpu time: 78ms
+                  actual row count: 200,000
+                  estimated row count: 200,000 (100% of the table; stats collected 5 minutes ago)
+                  table: orders@orders_pkey
+                  spans: FULL SCAN

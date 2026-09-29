@@ -1,0 +1,13 @@
+{"ts": "2026-09-14T12:30:01.154+00:00", "level": "DEBUG", "stack": "cockroach", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/cockroach/20260914-153001-bb5a35.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/cockroach/20260914-153001-bb5a35.jsonl"}
+{"ts": "2026-09-14T12:30:01.154+00:00", "level": "INFO", "stack": "cockroach", "phase": "-", "msg": "[cockroach] run 20260914-153001-bb5a35 phases=['load'] scale=0.3 (log: results-k3s/logs/cockroach/20260914-153001-bb5a35.log)"}
+{"ts": "2026-09-14T12:30:01.169+00:00", "level": "INFO", "stack": "cockroach", "phase": "-", "msg": "[cockroach] phase: load"}
+{"ts": "2026-09-14T12:30:04.661+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  schema created (13 statements, 3.49s)"}
+{"ts": "2026-09-14T12:30:05.051+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  customers        6,000 rows     0.39s     15,554 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:30:05.074+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  categories         200 rows     0.02s      9,473 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:30:05.263+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  products         1,500 rows     0.19s      8,060 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:30:15.151+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  orders          60,000 rows     9.84s      6,101 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:30:37.688+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  order_items    147,072 rows    22.46s      6,549 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:31:00.906+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  events         300,000 rows    22.87s     13,115 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:31:01.124+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "  inventory        6,000 rows     0.21s     29,010 rows/s  [COPY FROM STDIN (raw csv stream)]"}
+{"ts": "2026-09-14T12:31:04.725+00:00", "level": "INFO", "stack": "cockroach", "phase": "load", "msg": "[cockroach] phase load done in 63.6s"}
+{"ts": "2026-09-14T12:31:04.733+00:00", "level": "INFO", "stack": "cockroach", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/cockroach/20260914-153001-bb5a35.json"}

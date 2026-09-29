@@ -1,0 +1,3 @@
+Eval[collection_count(collect_set(customer_id)) AS uniq] (rows=1)
+  └ HashAggregate[collect_set(customer_id)] (rows=1)
+    └ Collect[doc.events | [customer_id] | (occurred_at >= 1735689600000::bigint)] (rows=355)

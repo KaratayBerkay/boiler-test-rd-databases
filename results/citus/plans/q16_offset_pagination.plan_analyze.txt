@@ -1,0 +1,27 @@
+Limit  (cost=8554.82..8554.82 rows=1 width=16) (actual time=297.899..297.907 rows=50.00 loops=1)
+  ->  Sort  (cost=8304.82..8554.82 rows=100000 width=16) (actual time=266.397..274.834 rows=100050.00 loops=1)
+        Sort Key: remote_scan.ordered_at, remote_scan.id
+        Sort Method: quicksort  Memory: 13957kB
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=16) (actual time=224.724..234.999 rows=200000.00 loops=1)
+              Task Count: 32
+              Tuple data received from nodes: 3125 kB
+              Tasks Shown: One of 32
+              ->  Task
+                    Tuple data received from node: 98 kB
+                    Node: host=w1 port=5432 dbname=lab
+                    ->  Limit  (cost=514.55..530.18 rows=6250 width=16) (actual time=5.771..7.951 rows=6250.00 loops=1)
+                          Buffers: shared hit=64
+                          ->  Sort  (cost=514.55..530.18 rows=6250 width=16) (actual time=5.770..6.711 rows=6250.00 loops=1)
+                                Sort Key: ordered_at, id
+                                Sort Method: quicksort  Memory: 437kB
+                                Buffers: shared hit=64
+                                ->  Seq Scan on orders_102047 orders  (cost=0.00..120.50 rows=6250 width=16) (actual time=0.014..1.944 rows=6250.00 loops=1)
+                                      Buffers: shared hit=58
+                        Planning:
+                          Buffers: shared hit=146
+                        Planning Time: 0.583 ms
+                        Execution Time: 9.474 ms
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.467 ms
+Execution Time: 297.934 ms

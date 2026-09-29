@@ -1,0 +1,37 @@
+distribution: full
+
+• sort
+│ estimated row count: 316
+│ order: +id,-ordered_at
+│
+└── • filter
+    │ estimated row count: 316
+    │ filter: row_num <= 3
+    │
+    └── • window
+        │ estimated row count: 947
+        │
+        └── • lookup join
+            │ estimated row count: 947
+            │ table: orders@orders_pkey
+            │ equality: (id) = (id)
+            │ equality cols are key
+            │
+            └── • merge join
+                │ estimated row count: 947
+                │ equality: (customer_id) = (id)
+                │ right cols are key
+                │
+                ├── • scan
+                │     estimated row count: 1,080 (0.54% of the table; stats collected 4 minutes ago)
+                │     table: orders@ix_orders_customer_id
+                │     spans: [ - /100]
+                │
+                └── • scan
+                      estimated row count: 102 (0.51% of the table; stats collected 4 minutes ago)
+                      table: customers@customers_pkey
+                      spans: [ - /100]
+
+index recommendations: 1
+1. type: index replacement
+   SQL commands: CREATE INDEX ON lab.public.orders (customer_id) STORING (ordered_at, total_amount) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.orders@ix_orders_customer_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.orders@ix_orders_customer_id` */;

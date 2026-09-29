@@ -1,0 +1,9 @@
+2 | 0 | 0 | CO-ROUTINE t
+5 | 2 | 0 | CO-ROUTINE (subquery-3)
+14 | 5 | 0 | SCAN p USING COVERING INDEX ix_products_category_id
+16 | 5 | 0 | SEARCH oi USING INDEX ix_order_items_product_id (product_id=?)
+21 | 5 | 0 | USE TEMP B-TREE FOR GROUP BY
+68 | 5 | 0 | USE TEMP B-TREE FOR ORDER BY
+87 | 2 | 0 | SCAN (subquery-3)
+136 | 0 | 0 | SCAN t
+148 | 0 | 0 | USE TEMP B-TREE FOR ORDER BY

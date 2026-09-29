@@ -1,0 +1,7 @@
+Projection_42 | 390084.80 | root |  | lab.products.id
+└─Selection_43 | 390084.80 | root |  | isnull(lab.order_items.id)
+  └─IndexHashJoin_49 | 487606.00 | root |  | left outer join, inner:IndexReader_46, outer key:lab.products.id, inner key:lab.order_items.product_id, equal cond:eq(lab.products.id, lab.order_items.product_id)
+    ├─TableReader_25(Build) | 5000.00 | root |  | data:TableFullScan_24
+    │ └─TableFullScan_24 | 5000.00 | cop[tikv] | table:p | keep order:true
+    └─IndexReader_46(Probe) | 487606.00 | root |  | index:IndexRangeScan_45
+      └─IndexRangeScan_45 | 487606.00 | cop[tikv] | table:oi, index:fk_2(product_id) | range: decided by [eq(lab.order_items.product_id, lab.products.id)], keep order:false

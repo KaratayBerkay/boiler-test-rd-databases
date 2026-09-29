@@ -1,0 +1,26 @@
+planning time: 218µs
+execution time: 24ms
+distribution: local
+plan type: generic, reused
+rows decoded from KV: 1,996 (75 KiB, 2 gRPC calls)
+regions: lab
+
+• sort
+│ estimated row count: 360
+│ order: +customer_id,-ordered_at
+│
+└── • filter
+    │ estimated row count: 360
+    │ filter: row_number <= 3
+    │
+    └── • window
+        │ estimated row count: 1,080
+        │
+        └── • index join
+            │ estimated row count: 1,080
+            │ table: orders@orders_pkey
+            │
+            └── • scan
+                  estimated row count: 1,080 (0.54% of the table; stats collected 4 minutes ago)
+                  table: orders@ix_orders_customer_id
+                  spans: [ - /100]

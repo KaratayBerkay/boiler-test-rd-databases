@@ -1,0 +1,54 @@
+query_log: duration_ms=26 read_rows=148572 read_bytes=2365152 memory=9040267 result_rows=592
+(Expression)
+ExpressionTransform
+  (Sorting)
+  MergingSortedTransform 2 → 1
+    MergeSortingTransform × 2
+      LimitsCheckingTransform × 2
+        PartialSortingTransform × 2
+          (Expression)
+          ExpressionTransform × 2
+            (Filter)
+            FilterTransform × 2
+              (Window)
+              Resize 2 → 2
+                WindowTransform × 2
+                  (Sorting)
+                  MergeSortingTransform × 2
+                    LimitsCheckingTransform × 2
+                      PartialSortingTransform × 2
+                        Resize × 2 2 → 1
+                          ScatterByPartitionTransform × 2 1 → 2
+                            (Expression)
+                            ExpressionTransform × 2
+                              (Aggregating)
+                              Resize 2 → 2
+                                AggregatingTransform × 2
+                                  (Expression)
+                                  ExpressionTransform × 2
+                                    (Join)
+                                    Resize 1 → 2
+                                      FillingRightJoinSide
+                                        Resize 4 → 2
+                                          DelayedPorts 4 → 4
+                                            JoiningTransform 2 → 1
+                                              DelayedJoinedBlocksWorkerTransform
+                                                SimpleSquashingTransform
+                                                  JoiningTransform 2 → 1
+                                                    DelayedJoinedBlocksWorkerTransform
+                                                      SimpleSquashingTransform
+                                                        DelayedJoinedBlocksTransform 0 → 2
+                                                          (Expression)
+                                                          ExpressionTransform × 2
+                                                            (Expression)
+                                                            ExpressionTransform × 2
+                                                              (ReadFromMergeTree)
+                                                              MergeTreeSelect(pool: ReadPool, algorithm: Thread) × 2 0 → 1
+                                                          (Expression)
+                                                          ExpressionTransform
+                                                            (BuildRuntimeFilter)
+                                                            BuildRuntimeFilterTransform
+                                                              (Expression)
+                                                              ExpressionTransform
+                                                                (ReadFromMergeTree)
+                                                                MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1

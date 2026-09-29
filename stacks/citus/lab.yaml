@@ -1,0 +1,167 @@
+display: Citus 13 (PG 18) sharded, 5x2
+category: distributed SQL (sharded PostgreSQL)
+dialect: citus
+driver: psycopg
+image: citusdata/citus:latest
+project: rdlab-citus
+scale: 1
+notes: >-
+  Citus coordinator + 5 worker primaries + 5 streaming replicas (registered as Citus secondary nodes), every PostgreSQL
+  instance limited to 0.8 CPU / 1.5 GiB. Clients enter through HAProxy -> 3 PgBouncer instances (transaction pooling) -> coordinator.
+  Tables are hash-distributed on their primary keys (Citus needs PK/UNIQUE to contain the distribution column); products
+  and categories are reference tables. Manual worker failover = promote replica + citus_update_node().
+docs:
+  - https://docs.citusdata.com/en/stable/
+  - https://docs.citusdata.com/en/stable/admin_guide/cluster_management.html
+oneshot: [init, backup-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 15531
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-coordinator
+  - name: pgbouncers
+    role: proxy
+    host: 127.0.0.1
+    port: 15532
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-haproxy
+    splits_reads: false
+  - name: secondary-reads
+    role: reader
+    host: 127.0.0.1
+    port: 15531
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-coordinator
+    options: "-c citus.use_secondary_nodes=always"     # PGC_BACKEND: must be set at connection start
+  - name: w1
+    role: node
+    host: 127.0.0.1
+    port: 15541
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-w1
+    citus_worker: true
+  - name: w2
+    role: node
+    host: 127.0.0.1
+    port: 15542
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-w2
+    citus_worker: true
+  - name: w3
+    role: node
+    host: 127.0.0.1
+    port: 15543
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-w3
+    citus_worker: true
+  - name: w4
+    role: node
+    host: 127.0.0.1
+    port: 15544
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-w4
+    citus_worker: true
+  - name: w5
+    role: node
+    host: 127.0.0.1
+    port: 15545
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-w5
+    citus_worker: true
+  - name: r1
+    role: replica
+    host: 127.0.0.1
+    port: 15551
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-r1
+    upstream: w1
+  - name: r2
+    role: replica
+    host: 127.0.0.1
+    port: 15552
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-r2
+    upstream: w2
+  - name: r3
+    role: replica
+    host: 127.0.0.1
+    port: 15553
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-r3
+    upstream: w3
+  - name: r4
+    role: replica
+    host: 127.0.0.1
+    port: 15554
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-r4
+    upstream: w4
+  - name: r5
+    role: replica
+    host: 127.0.0.1
+    port: 15555
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-citus-r5
+    upstream: w5
+replication:
+  kind: streaming replica per worker shard (Citus secondary nodes) + hash sharding over 5 workers
+  write_target: w1
+  read_targets: [r1]
+  read_scaling_base: primary
+  read_scaling_targets: [primary, secondary-reads]
+  verify_target: primary
+  write_batch: 32
+  failover_probe_table: repl_probe_dist
+  promote:
+    method: engine
+    target: r1
+    user: postgres
+    cmd: ["pg_ctl", "promote", "-D", "/var/lib/postgresql/18/docker"]
+backup:
+  dir: /backups                 # shared `citus-backups` volume: coordinator + worker primaries + the scratch restore cluster
+  volume: citus-backups
+  restore_port: 15571           # host port of the throw-away restored coordinator (restored workers get no host port)
+  restore_network: rdlab-citus-restore   # isolated docker network for the restored cluster (node names reused as aliases)
+  jobs: 2
+  strategies: [pg_dump, cluster_pitr]
+logging:
+  dir: /var/lib/postgresql/log  # logging_collector output on the coordinator: postgresql-<date>.log + .json (jsonlog)
+  slow_ms: 100
+features:
+  settle_seconds: 3
+  citus: true
+  connection_storm: true
+  loadtest_targets: [primary, pgbouncers]
+  loadtest_workers: [4, 16, 64]
+  loadtest_seconds: 15
+  loadtest_modes: [values, copy]
+  loadtest_batch: 1000
+stats_containers: [rdlab-citus-pgbouncer1, rdlab-citus-pgbouncer2, rdlab-citus-pgbouncer3, rdlab-citus-haproxy]

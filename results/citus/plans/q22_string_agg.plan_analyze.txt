@@ -1,0 +1,17 @@
+Sort  (cost=8304.82..8554.82 rows=100000 width=36) (actual time=7846.341..7846.399 rows=500.00 loops=1)
+  Sort Key: remote_scan.id
+  Sort Method: quicksort  Memory: 49kB
+  ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=36) (actual time=7846.155..7846.208 rows=500.00 loops=1)
+        Task Count: 24
+        Tuple data received from nodes: 16 kB
+        Tasks Shown: None, not supported for re-partition queries
+        ->  MapMergeJob
+              Map Task Count: 32
+              Merge Task Count: 24
+        ->  MapMergeJob
+              Map Task Count: 32
+              Merge Task Count: 24
+Planning:
+  Buffers: shared hit=7
+Planning Time: 7.061 ms
+Execution Time: 7846.454 ms

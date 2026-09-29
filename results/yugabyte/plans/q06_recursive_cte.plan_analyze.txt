@@ -1,0 +1,35 @@
+Sort  (cost=690.45..695.22 rows=1910 width=524) (actual time=5.824..5.868 rows=200 loops=1)
+  Sort Key: tree.path
+  Sort Method: quicksort  Memory: 42kB
+  CTE tree
+    ->  Recursive Union  (cost=23.07..548.16 rows=1910 width=540) (actual time=0.676..4.968 rows=200 loops=1)
+          ->  Seq Scan on categories  (cost=23.07..34.78 rows=10 width=540) (actual time=0.671..0.680 rows=10 loops=1)
+                Storage Filter: (parent_id IS NULL)
+                Storage Table Read Requests: 1
+                Storage Table Read Execution Time: 0.555 ms
+                Storage Table Read Ops: 1
+                Storage Table Rows Scanned: 200
+          ->  Hash Join  (cost=26.32..47.52 rows=190 width=540) (actual time=0.785..0.992 rows=48 loops=4)
+                Hash Cond: (c.parent_id = t.id)
+                ->  Seq Scan on categories c  (cost=23.07..39.72 rows=200 width=20) (actual time=0.593..0.702 rows=200 loops=4)
+                      Storage Table Read Requests: 1
+                      Storage Table Read Execution Time: 0.504 ms
+                      Storage Table Read Ops: 1
+                      Storage Table Rows Scanned: 200
+                ->  Hash  (cost=2.00..2.00 rows=100 width=524) (actual time=0.088..0.088 rows=50 loops=4)
+                      Buckets: 1024  Batches: 1  Memory Usage: 14kB
+                      ->  WorkTable Scan on tree t  (cost=0.00..2.00 rows=100 width=524) (actual time=0.002..0.016 rows=50 loops=4)
+  ->  CTE Scan on tree  (cost=0.00..38.20 rows=1910 width=524) (actual time=0.680..5.287 rows=200 loops=1)
+Planning Time: 0.555 ms
+Execution Time: 6.353 ms
+Storage Read Requests: 5
+Storage Read Execution Time: 2.572 ms
+Storage Read Ops: 5
+Storage Rows Scanned: 1000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 2.572 ms
+Peak Memory Usage: 468 kB

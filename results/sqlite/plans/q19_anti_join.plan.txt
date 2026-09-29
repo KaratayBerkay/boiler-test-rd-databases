@@ -1,0 +1,2 @@
+4 | 0 | 0 | SCAN p
+6 | 0 | 0 | SEARCH oi USING COVERING INDEX ix_order_items_product_id (product_id=?) LEFT-JOIN

@@ -1,0 +1,6 @@
+distribution: local
+
+• scan
+  estimated row count: 1 (<0.01% of the table; stats collected 3 minutes ago)
+  table: customers@customers_pkey
+  spans: [/4403 - /4403]

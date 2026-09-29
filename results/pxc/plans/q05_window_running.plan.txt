@@ -1,0 +1,14 @@
+-> Sort: s.d
+    -> Table scan on <temporary>  (cost=2.5..2.5 rows=0)
+        -> Temporary table  (cost=0..0 rows=0)
+            -> Window aggregate with buffering: lag(daily,1) OVER (ORDER BY s.d )   (cost=0 rows=0)
+                -> Table scan on <temporary>  (cost=2.5..2.5 rows=0)
+                    -> Temporary table  (cost=0..0 rows=0)
+                        -> Window aggregate: sum(s.daily) OVER (ORDER BY s.d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)   (cost=0 rows=0)
+                            -> Sort: s.d  (cost=2.6..2.6 rows=0)
+                                -> Table scan on s  (cost=2.5..2.5 rows=0)
+                                    -> Materialize  (cost=0..0 rows=0)
+                                        -> Table scan on <temporary>
+                                            -> Aggregate using temporary table
+                                                -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-01-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-04-01 00:00:00'))  (cost=20148 rows=22178)
+                                                    -> Table scan on orders  (cost=20148 rows=199640)

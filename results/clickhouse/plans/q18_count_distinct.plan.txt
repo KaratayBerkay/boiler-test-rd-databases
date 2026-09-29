@@ -1,0 +1,18 @@
+Output: uniqExact(customer_id)
+
+Aggregating
+│  Keys:
+│  Aggregates: uniqExact(customer_id)
+│  Skip merging: 0
+└──ReadFromMergeTree (lab.events)
+      Read type: Default
+      Parts: 3 | Granules: 36
+      Output: customer_id
+      Prewhere filter
+      Prewhere filter column:  occurred_at >= '2025-01-01 00:00:00.000000'
+      Indexes:
+        PrimaryKey
+          Condition: true
+          Parts: 3/3
+          Granules: 36/36
+        Ranges: 3

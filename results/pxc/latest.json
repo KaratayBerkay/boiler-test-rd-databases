@@ -1,0 +1,3086 @@
+{
+  "engine": "pxc",
+  "display": "Percona XtraDB Cluster 8.4 (Galera)",
+  "category": "multi-master (Galera)",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "percona/percona-xtradb-cluster:8.4",
+  "run_id": "20260914-135737-fffc15",
+  "started": "2026-09-14T10:57:37+00:00",
+  "scale": 1.0,
+  "notes": "3-node Galera cluster (MySQL 8.4 base): synchronous replication by write-set certification, every node writable; cross-node write conflicts surface as deadlock errors at COMMIT. HAProxy round-robins connections over the nodes.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.51,
+          "rows_per_s": 39111,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 32031,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.3,
+          "rows_per_s": 16897,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 4.24,
+          "rows_per_s": 47207,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 13.76,
+          "rows_per_s": 35443,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 24.16,
+          "rows_per_s": 41383,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.52,
+          "rows_per_s": 38618,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at DATETIME(6) NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at DATETIME(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at DATETIME(6) NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at DATETIME(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n) ENGINE=InnoDB",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 2.72,
+      "load_seconds": 43.77,
+      "fts_setup": [
+        "CREATE FULLTEXT INDEX ft_products_description ON products (description)"
+      ],
+      "after_load": [
+        "ANALYZE TABLE customers",
+        "ANALYZE TABLE categories",
+        "ANALYZE TABLE products",
+        "ANALYZE TABLE orders",
+        "ANALYZE TABLE order_items",
+        "ANALYZE TABLE events",
+        "ANALYZE TABLE inventory"
+      ],
+      "post_seconds": 0.96,
+      "server_version": "8.4.10-10.1",
+      "_seconds": 47.5
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'MATERIALIZED VIEW mv_lab AS SELECT country_code, COUNT(*) AS n FROM customers GR' at line 1\")",
+        "error_code": "1064",
+        "ms": 2.5
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "",
+        "ms": 119.1
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 85.7
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 28.7
+      },
+      "returning": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'RETURNING id, v' at line 1\")",
+        "error_code": "1064",
+        "ms": 50.8
+      },
+      "sequence": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'SEQUENCE seq_lab' at line 1\")",
+        "error_code": "1064",
+        "ms": 2.5
+      },
+      "arrays": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '[1,2,3]' at line 1\")",
+        "error_code": "1064",
+        "ms": 2.1
+      },
+      "vector_type": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'VECTOR(3))' at line 1\")",
+        "error_code": "1064",
+        "ms": 18855.4
+      },
+      "statement_timeout": {
+        "status": "unsupported",
+        "note": "expects error 3024",
+        "detail": "no error raised",
+        "ms": 203.9
+      },
+      "filter_clause": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '(WHERE status = 'delivered') FROM orders' at line 1\")",
+        "error_code": "1064",
+        "ms": 1.8
+      },
+      "distinct_on": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'ON (customer_id) customer_id, id FROM orders WHERE customer_id <= 20 ORDER BY cu' at line 1\")",
+        "error_code": "1064",
+        "ms": 2.2
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: (6037, \"'QUALIFY clause' can be used only if the hypergraph optimizer is enabled.\")",
+        "error_code": "6037",
+        "ms": 2.1
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "3819",
+        "detail": "OperationalError: (3819, \"Check constraint 'ck_lab_chk_1' is violated.\")",
+        "ms": 20.7
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "1452",
+        "detail": "IntegrityError: (1452, 'Cannot add or update a child row: a foreign key constraint fails (`lab`.`order_items`, CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`))')",
+        "ms": 2.6
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 17.9
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "TiDB stale read syntax",
+        "error": "ProgrammingError: (1064, \"You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'OF TIMESTAMP NOW() - INTERVAL 5 SECOND' at line 1\")",
+        "error_code": "1064",
+        "ms": 1.4
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[('[{\"id\": 1, \"name\": \"Category 1\"}, {\"id\": 2, \"name\": \"Category 2\"}, {\"id\": 3, \"name\": \"Category 3\"}]',)]",
+        "ms": 1.3
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 1.5
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 1.3
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 1.3
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 39.3
+      },
+      "invisible_index": {
+        "status": "supported",
+        "note": "",
+        "ms": 83.2
+      },
+      "_seconds": 19.5
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 FROM DUAL",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.153,
+          "p50": 0.197,
+          "p90": 0.241,
+          "p95": 0.255,
+          "p99": 0.265,
+          "max": 0.269,
+          "mean": 0.199,
+          "stdev": 0.03,
+          "first_ms": 0.216
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Rows fetched before execution  (cost=0..0 rows=1)\n",
+        "plan_analyze": "-> Rows fetched before execution  (cost=0..0 rows=1) (actual time=0.00411..0.00415 rows=1 loops=1)\n"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.269,
+          "p50": 0.313,
+          "p90": 0.382,
+          "p95": 0.527,
+          "p99": 0.603,
+          "max": 0.626,
+          "mean": 0.336,
+          "stdev": 0.078,
+          "first_ms": 0.702
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Rows fetched before execution  (cost=0..0 rows=1)\n",
+        "plan_analyze": "-> Rows fetched before execution  (cost=0..0 rows=1) (actual time=287e-6..398e-6 rows=1 loops=1)\n"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 78.447,
+          "p50": 79.969,
+          "p90": 82.176,
+          "p95": 82.331,
+          "p99": 82.455,
+          "max": 82.486,
+          "mean": 80.175,
+          "stdev": 1.321,
+          "first_ms": 115.748
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 500 row(s)  (cost=20148 rows=500)\n    -> Sort: orders.ordered_at, orders.id, limit input to 500 row(s) per chunk  (cost=20148 rows=199640)\n        -> Filter: ((orders.`status` = 'delivered') and (orders.ordered_at >= TIMESTAMP'2025-03-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-03-08 00:00:00'))  (cost=20148 rows=199640)\n            -> Table scan on orders  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Limit: 500 row(s)  (cost=20148 rows=500) (actual time=79.6..79.6 rows=500 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 500 row(s) per chunk  (cost=20148 rows=199640) (actual time=79.6..79.6 rows=500 loops=1)\n        -> Filter: ((orders.`status` = 'delivered') and (orders.ordered_at >= TIMESTAMP'2025-03-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-03-08 00:00:00'))  (cost=20148 rows=199640) (actual time=0.0337..79.1 rows=1372 loops=1)\n            -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0259..48.3 rows=200000 loops=1)\n"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, DATE_FORMAT(o.ordered_at, '%Y-%m-01') AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_FORMAT(o.ordered_at, '%Y-%m-01') ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 443.598,
+          "p50": 449.958,
+          "p90": 462.327,
+          "p95": 468.072,
+          "p99": 472.669,
+          "max": 473.818,
+          "mean": 453.17,
+          "stdev": 8.904,
+          "first_ms": 445.487
+        },
+        "rows": 50,
+        "checksum": "15706fd152f91e4c81069483",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 50 row(s)\n    -> Sort: revenue DESC, c.country_code, month_start, limit input to 50 row(s) per chunk\n        -> Stream results\n            -> Group aggregate: count(distinct orders.id), sum(tmp_field)\n                -> Sort: c.country_code, month_start\n                    -> Stream results  (cost=22825 rows=5430)\n                        -> Nested loop inner join  (cost=22825 rows=5430)\n                            -> Nested loop inner join  (cost=20924 rows=2218)\n                                -> Filter: ((o.`status` = 'delivered') and (o.ordered_at >= TIMESTAMP'2025-01-01 00:00:00') and (o.ordered_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=20148 rows=2218)\n                                    -> Table scan on o  (cost=20148 rows=199640)\n                                -> Single-row index lookup on c using PRIMARY (id=o.customer_id)  (cost=0.25 rows=1)\n                            -> Index lookup on oi using ix_order_items_order_id (order_id=o.id)  (cost=0.612 rows=2.45)\n",
+        "plan_analyze": "-> Limit: 50 row(s)  (actual time=496..496 rows=50 loops=1)\n    -> Sort: revenue DESC, c.country_code, month_start, limit input to 50 row(s) per chunk  (actual time=496..496 rows=50 loops=1)\n        -> Stream results  (actual time=458..496 rows=78 loops=1)\n            -> Group aggregate: count(distinct orders.id), sum(tmp_field)  (actual time=458..496 rows=78 loops=1)\n                -> Sort: c.country_code, month_start  (actual time=457..463 rows=84255 loops=1)\n                    -> Stream results  (cost=22825 rows=5430) (actual time=0.0769..407 rows=84255 loops=1)\n                        -> Nested loop inner join  (cost=22825 rows=5430) (actual time=0.0578..357 rows=84255 loops=1)\n                            -> Nested loop inner join  (cost=20924 rows=2218) (actual time=0.0369..154 rows=34679 loops=1)\n                                -> Filter: ((o.`status` = 'delivered') and (o.ordered_at >= TIMESTAMP'2025-01-01 00:00:00') and (o.ordered_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=20148 rows=2218) (actual time=0.0285..90.1 rows=34679 loops=1)\n                                    -> Table scan on o  (cost=20148 rows=199640) (actual time=0.0252..51.8 rows=200000 loops=1)\n                                -> Single-row index lookup on c using PRIMARY (id=o.customer_id)  (cost=0.25 rows=1) (actual time=0.00168..0.0017 rows=1 loops=34679)\n                            -> Index lookup on oi using ix_order_items_order_id (order_id=o.id)  (cost=0.612 rows=2.45) (actual time=0.00476..0.00556 rows=2.43 loops=34679)\n"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1132.53,
+          "p50": 1145.471,
+          "p90": 1163.263,
+          "p95": 1166.611,
+          "p99": 1169.29,
+          "max": 1169.959,
+          "mean": 1147.958,
+          "stdev": 10.834,
+          "first_ms": 1166.243
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: t.category_id, t.rn  (cost=2.6..2.6 rows=0)\n    -> Filter: (t.rn <= 3)  (cost=2.5..2.5 rows=0)\n        -> Table scan on t  (cost=2.5..2.5 rows=0)\n            -> Materialize  (cost=0..0 rows=0)\n                -> Window aggregate: row_number() OVER (PARTITION BY p.category_id ORDER BY sum((oi.qty * oi.unit_price)) desc,oi.product_id ) \n                    -> Sort: p.category_id, revenue DESC, oi.product_id\n                        -> Table scan on <temporary>\n                            -> Aggregate using temporary table\n                                -> Nested loop inner join  (cost=582147 rows=486750)\n                                    -> Table scan on oi  (cost=49004 rows=486750)\n                                    -> Single-row index lookup on p using PRIMARY (id=oi.product_id)  (cost=0.995 rows=1)\n",
+        "plan_analyze": "-> Sort: t.category_id, t.rn  (cost=2.6..2.6 rows=0) (actual time=1266..1266 rows=600 loops=1)\n    -> Filter: (t.rn <= 3)  (cost=2.5..2.5 rows=0) (actual time=1265..1266 rows=600 loops=1)\n        -> Table scan on t  (cost=2.5..2.5 rows=0) (actual time=1265..1266 rows=5000 loops=1)\n            -> Materialize  (cost=0..0 rows=0) (actual time=1265..1265 rows=5000 loops=1)\n                -> Window aggregate: row_number() OVER (PARTITION BY p.category_id ORDER BY revenue desc,oi.product_id )   (actual time=1264..1265 rows=5000 loops=1)\n                    -> Sort: p.category_id, revenue DESC, oi.product_id  (actual time=1264..1264 rows=5000 loops=1)\n                        -> Table scan on <temporary>  (actual time=1260..1261 rows=5000 loops=1)\n                            -> Aggregate using temporary table  (actual time=1260..1260 rows=5000 loops=1)\n                                -> Nested loop inner join  (cost=582147 rows=486750) (actual time=0.0287..922 rows=487606 loops=1)\n                                    -> Table scan on oi  (cost=49004 rows=486750) (actual time=0.022..115 rows=487606 loops=1)\n                                    -> Single-row index lookup on p using PRIMARY (id=oi.product_id)  (cost=0.995 rows=1) (actual time=0.00148..0.00151 rows=1 loops=487606)\n"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE(ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE(ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 59.279,
+          "p50": 60.899,
+          "p90": 62.068,
+          "p95": 62.99,
+          "p99": 63.727,
+          "max": 63.912,
+          "mean": 60.905,
+          "stdev": 1.349,
+          "first_ms": 63.788
+        },
+        "rows": 90,
+        "checksum": "39f1b6619fae5745061db2c7",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: s.d\n    -> Table scan on <temporary>  (cost=2.5..2.5 rows=0)\n        -> Temporary table  (cost=0..0 rows=0)\n            -> Window aggregate with buffering: lag(daily,1) OVER (ORDER BY s.d )   (cost=0 rows=0)\n                -> Table scan on <temporary>  (cost=2.5..2.5 rows=0)\n                    -> Temporary table  (cost=0..0 rows=0)\n                        -> Window aggregate: sum(s.daily) OVER (ORDER BY s.d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)   (cost=0 rows=0)\n                            -> Sort: s.d  (cost=2.6..2.6 rows=0)\n                                -> Table scan on s  (cost=2.5..2.5 rows=0)\n                                    -> Materialize  (cost=0..0 rows=0)\n                                        -> Table scan on <temporary>\n                                            -> Aggregate using temporary table\n                                                -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-01-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-04-01 00:00:00'))  (cost=20148 rows=22178)\n                                                    -> Table scan on orders  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Sort: s.d  (actual time=69.9..69.9 rows=90 loops=1)\n    -> Table scan on <temporary>  (cost=2.5..2.5 rows=0) (actual time=69.9..69.9 rows=90 loops=1)\n        -> Temporary table  (cost=0..0 rows=0) (actual time=69.9..69.9 rows=90 loops=1)\n            -> Window aggregate with buffering: lag(daily,1) OVER (ORDER BY s.d )   (cost=0 rows=0) (actual time=69.7..69.9 rows=90 loops=1)\n                -> Table scan on <temporary>  (cost=2.5..2.5 rows=0) (actual time=69.6..69.6 rows=90 loops=1)\n                    -> Temporary table  (cost=0..0 rows=0) (actual time=69.6..69.6 rows=90 loops=1)\n                        -> Window aggregate: sum(s.daily) OVER (ORDER BY s.d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)   (cost=0 rows=0) (actual time=69.5..69.6 rows=90 loops=1)\n                            -> Sort: s.d  (cost=2.6..2.6 rows=0) (actual time=69.5..69.5 rows=90 loops=1)\n                                -> Table scan on s  (cost=2.5..2.5 rows=0) (actual time=69.5..69.5 rows=90 loops=1)\n                                    -> Materialize  (cost=0..0 rows=0) (actual time=69.5..69.5 rows=90 loops=1)\n                                        -> Table scan on <temporary>  (actual time=69.5..69.5 rows=90 loops=1)\n                                            -> Aggregate using temporary table  (actual time=69.5..69.5 rows=90 loops=1)\n                                                -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-01-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-04-01 00:00:00'))  (cost=20148 rows=22178) (actual time=0.0259..59.2 rows=24934 loops=1)\n                                                    -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0202..40.6 rows=200000 loops=1)\n"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS CHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(CONCAT(t.path, ' > ', c.name) AS CHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.038,
+          "p50": 4.317,
+          "p90": 4.478,
+          "p95": 4.493,
+          "p99": 4.506,
+          "max": 4.509,
+          "mean": 4.293,
+          "stdev": 0.163,
+          "first_ms": 4.329
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: tree.`path`  (cost=883..883 rows=420)\n    -> Table scan on tree  (cost=467..475 rows=420)\n        -> Materialize recursive CTE tree  (cost=467..467 rows=420)\n            -> Filter: (categories.parent_id is null)  (cost=20.2 rows=20)\n                -> Table scan on categories  (cost=20.2 rows=200)\n            -> Repeat until convergence\n                -> Inner hash join (c.parent_id = t.id)  (cost=405 rows=400)\n                    -> Table scan on c  (cost=0.114 rows=200)\n                    -> Hash\n                        -> Scan new records on t  (cost=4.75 rows=20)\n",
+        "plan_analyze": "-> Sort: tree.`path`  (cost=883..883 rows=420) (actual time=0.785..0.801 rows=200 loops=1)\n    -> Table scan on tree  (cost=467..475 rows=420) (actual time=0.644..0.679 rows=200 loops=1)\n        -> Materialize recursive CTE tree  (cost=467..467 rows=420) (actual time=0.643..0.643 rows=200 loops=1)\n            -> Filter: (categories.parent_id is null)  (cost=20.2 rows=20) (actual time=0.0118..0.076 rows=10 loops=1)\n                -> Table scan on categories  (cost=20.2 rows=200) (actual time=0.0112..0.0657 rows=200 loops=1)\n            -> Repeat until convergence\n                -> Inner hash join (c.parent_id = t.id)  (cost=405 rows=400) (actual time=0.0448..0.109 rows=47.5 loops=4)\n                    -> Table scan on c  (cost=0.114 rows=200) (actual time=0.00497..0.0614 rows=200 loops=4)\n                    -> Hash\n                        -> Scan new records on t  (cost=4.75 rows=20) (actual time=761e-6..0.00588 rows=50 loops=4)\n"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_FORMAT(first_at, '%Y-%m-01') AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_FORMAT(o.ordered_at, '%Y-%m-01') AS m FROM orders o GROUP BY o.customer_id, DATE_FORMAT(o.ordered_at, '%Y-%m-01')) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1495.935,
+          "p50": 1532.754,
+          "p90": 1574.695,
+          "p95": 1586.575,
+          "p99": 1596.08,
+          "max": 1598.456,
+          "mean": 1536.637,
+          "stdev": 28.988,
+          "first_ms": 1534.461
+        },
+        "rows": 22,
+        "checksum": "1cc7de9f356629a89218cf95",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Group aggregate: count(distinct first_orders.customer_id), count(distinct a.customer_id)  (cost=1.11e+6 rows=622)\n    -> Nested loop left join  (cost=1.07e+6 rows=387057)\n        -> Sort: cohort  (cost=73321..73321 rows=20213)\n            -> Table scan on first_orders  (cost=42134..42389 rows=20213)\n                -> Materialize CTE first_orders  (cost=42134..42134 rows=20213)\n                    -> Group aggregate: min(orders.ordered_at)  (cost=40112 rows=20213)\n                        -> Index scan on orders using ix_orders_customer_id  (cost=20148 rows=199640)\n        -> Filter: (a.m > date_format(first_orders.first_at,'%Y-%m-01'))  (cost=59307..4.79 rows=19.1)\n            -> Index lookup on a using <auto_key1> (customer_id=first_orders.customer_id)  (cost=62575..62579 rows=19.1)\n                -> Materialize CTE activity  (cost=62574..62574 rows=199640)\n                    -> Table scan on <temporary>  (cost=40112..42610 rows=199640)\n                        -> Temporary table with deduplication  (cost=40112..40112 rows=199640)\n                            -> Table scan on o  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Group aggregate: count(distinct first_orders.customer_id), count(distinct a.customer_id)  (cost=1.11e+6 rows=622) (actual time=1363..1588 rows=22 loops=1)\n    -> Nested loop left join  (cost=1.07e+6 rows=387057) (actual time=1229..1504 rows=143628 loops=1)\n        -> Sort: cohort  (cost=73321..73321 rows=20213) (actual time=348..349 rows=20000 loops=1)\n            -> Table scan on first_orders  (cost=42134..42389 rows=20213) (actual time=338..340 rows=20000 loops=1)\n                -> Materialize CTE first_orders  (cost=42134..42134 rows=20213) (actual time=338..338 rows=20000 loops=1)\n                    -> Group aggregate: min(orders.ordered_at)  (cost=40112 rows=20213) (actual time=0.271..330 rows=20000 loops=1)\n                        -> Index scan on orders using ix_orders_customer_id  (cost=20148 rows=199640) (actual time=0.265..310 rows=200000 loops=1)\n        -> Filter: (a.m > date_format(first_orders.first_at,'%Y-%m-01'))  (cost=59307..4.79 rows=19.1) (actual time=0.0483..0.0572 rows=7.18 loops=20000)\n            -> Index lookup on a using <auto_key1> (customer_id=first_orders.customer_id)  (cost=62575..62579 rows=19.1) (actual time=0.0465..0.0548 rows=8.18 loops=20000)\n                -> Materialize CTE activity  (cost=62574..62574 rows=199640) (actual time=881..881 rows=163618 loops=1)\n                    -> Table scan on <temporary>  (cost=40112..42610 rows=199640) (actual time=492..534 rows=163618 loops=1)\n                        -> Temporary table with deduplication  (cost=40112..40112 rows=199640) (actual time=492..492 rows=163618 loops=1)\n                            -> Table scan on o  (cost=20148 rows=199640) (actual time=0.0196..43 rows=200000 loops=1)\n"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 280.604,
+          "p50": 290.319,
+          "p90": 295.829,
+          "p95": 296.344,
+          "p99": 296.756,
+          "max": 296.859,
+          "mean": 289.788,
+          "stdev": 5.042,
+          "first_ms": 290.848
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 200 row(s)  (cost=1.32e+12 rows=200)\n    -> Nested loop antijoin  (cost=1.32e+12 rows=13.2e+12)\n        -> Nested loop inner join  (cost=1.33e+6 rows=13.3e+6)\n            -> Index scan on c using PRIMARY  (cost=0.62 rows=200)\n            -> Single-row index lookup on <subquery2> using <auto_distinct_key> (customer_id=c.id)  (cost=26802..26802 rows=1)\n                -> Materialize with deduplication  (cost=26802..26802 rows=66540)\n                    -> Filter: (o.ordered_at >= TIMESTAMP'2025-11-01 00:00:00')  (cost=20148 rows=66540)\n                        -> Table scan on o  (cost=20148 rows=199640)\n        -> Single-row index lookup on <subquery3> using <auto_distinct_key> (customer_id=c.id)  (cost=200205..200205 rows=1)\n            -> Materialize with deduplication  (cost=200205..200205 rows=992334)\n                -> Filter: (e.customer_id is not null)  (cost=100972 rows=992334)\n                    -> Filter: (e.event_type = 'churn')  (cost=100972 rows=992334)\n                        -> Table scan on e  (cost=100972 rows=992334)\n",
+        "plan_analyze": "-> Limit: 200 row(s)  (cost=1.32e+12 rows=200) (actual time=356..357 rows=200 loops=1)\n    -> Nested loop antijoin  (cost=1.32e+12 rows=13.2e+12) (actual time=356..357 rows=200 loops=1)\n        -> Nested loop inner join  (cost=1.33e+6 rows=13.3e+6) (actual time=60.4..61 rows=304 loops=1)\n            -> Index scan on c using PRIMARY  (cost=0.62 rows=200) (actual time=0.0134..0.163 rows=549 loops=1)\n            -> Single-row index lookup on <subquery2> using <auto_distinct_key> (customer_id=c.id)  (cost=26802..26802 rows=1) (actual time=0.111..0.111 rows=0.554 loops=549)\n                -> Materialize with deduplication  (cost=26802..26802 rows=66540) (actual time=60.4..60.4 rows=11206 loops=1)\n                    -> Filter: (o.ordered_at >= TIMESTAMP'2025-11-01 00:00:00')  (cost=20148 rows=66540) (actual time=0.0207..55.7 rows=16603 loops=1)\n                        -> Table scan on o  (cost=20148 rows=199640) (actual time=0.0178..43 rows=200000 loops=1)\n        -> Single-row index lookup on <subquery3> using <auto_distinct_key> (customer_id=c.id)  (cost=200205..200205 rows=1) (actual time=0.974..0.974 rows=0.342 loops=304)\n            -> Materialize with deduplication  (cost=200205..200205 rows=992334) (actual time=296..296 rows=7882 loops=1)\n                -> Filter: (e.customer_id is not null)  (cost=100972 rows=992334) (actual time=0.0347..293 rows=10008 loops=1)\n                    -> Filter: (e.event_type = 'churn')  (cost=100972 rows=992334) (actual time=0.0338..292 rows=10008 loops=1)\n                        -> Table scan on e  (cost=100972 rows=992334) (actual time=0.0248..222 rows=1e+6 loops=1)\n"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 28.047,
+          "p50": 29.668,
+          "p90": 30.546,
+          "p95": 30.701,
+          "p99": 30.825,
+          "max": 30.856,
+          "mean": 29.442,
+          "stdev": 0.871,
+          "first_ms": 27.946
+        },
+        "rows": 500,
+        "checksum": "6bc68625c58e84ac582dbee2",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 500 row(s)  (cost=69.4 rows=50)\n    -> Filter: (p.`active` = true)  (cost=69.4 rows=50)\n        -> Index scan on p using PRIMARY  (cost=69.4 rows=500)\n-> Select #2 (subquery in projection; dependent)\n    -> Aggregate: avg(p2.price)  (cost=28 rows=1)\n        -> Index lookup on p2 using ix_products_category_id (category_id=p.category_id)  (cost=25.7 rows=23.4)\n",
+        "plan_analyze": "-> Limit: 500 row(s)  (cost=69.4 rows=50) (actual time=0.0273..0.374 rows=500 loops=1)\n    -> Filter: (p.`active` = true)  (cost=69.4 rows=50) (actual time=0.0267..0.343 rows=500 loops=1)\n        -> Index scan on p using PRIMARY  (cost=69.4 rows=500) (actual time=0.0248..0.26 rows=593 loops=1)\n-> Select #2 (subquery in projection; dependent)\n    -> Aggregate: avg(p2.price)  (cost=28 rows=1) (actual time=0.0408..0.0408 rows=1 loops=500)\n        -> Index lookup on p2 using ix_products_category_id (category_id=p.category_id)  (cost=25.7 rows=23.4) (actual time=0.0104..0.0379 rows=26.2 loops=500)\n"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id AS customer_id, o.id AS order_id, o.ordered_at, o.total_amount FROM customers c CROSS JOIN LATERAL (SELECT o2.id, o2.ordered_at, o2.total_amount FROM orders o2 WHERE o2.customer_id = c.id ORDER BY o2.ordered_at DESC, o2.id DESC LIMIT 3) o WHERE c.id <= 100 ORDER BY c.id, o.ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.4,
+          "p50": 11.349,
+          "p90": 12.705,
+          "p95": 12.721,
+          "p99": 12.734,
+          "max": 12.737,
+          "mean": 11.458,
+          "stdev": 0.805,
+          "first_ms": 11.387
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: c.id, o.ordered_at DESC\n    -> Stream results  (cost=308 rows=300)\n        -> Nested loop inner join  (cost=308 rows=300)\n            -> Invalidate materialized tables (row from c)  (cost=20.3 rows=100)\n                -> Filter: (c.id <= 100)  (cost=20.3 rows=100)\n                    -> Covering index range scan on c using PRIMARY over (id <= 100)  (cost=20.3 rows=100)\n            -> Table scan on o  (cost=4.6..6.29 rows=3)\n                -> Materialize (invalidate on row from c)  (cost=3.76..3.76 rows=3)\n                    -> Limit: 3 row(s)  (cost=3.46 rows=3)\n                        -> Sort: o2.ordered_at DESC, o2.id DESC, limit input to 3 row(s) per chunk  (cost=3.46 rows=9.88)\n                            -> Index lookup on o2 using ix_orders_customer_id (customer_id=c.id)  (cost=3.46 rows=9.88)\n",
+        "plan_analyze": "-> Sort: c.id, o.ordered_at DESC  (actual time=5.43..5.47 rows=300 loops=1)\n    -> Stream results  (cost=308 rows=300) (actual time=0.121..5.28 rows=300 loops=1)\n        -> Nested loop inner join  (cost=308 rows=300) (actual time=0.118..5.11 rows=300 loops=1)\n            -> Invalidate materialized tables (row from c)  (cost=20.3 rows=100) (actual time=0.041..0.113 rows=100 loops=1)\n                -> Filter: (c.id <= 100)  (cost=20.3 rows=100) (actual time=0.0404..0.098 rows=100 loops=1)\n                    -> Covering index range scan on c using PRIMARY over (id <= 100)  (cost=20.3 rows=100) (actual time=0.0388..0.0752 rows=100 loops=1)\n            -> Table scan on o  (cost=4.6..6.29 rows=3) (actual time=0.0485..0.0492 rows=3 loops=100)\n                -> Materialize (invalidate on row from c)  (cost=3.76..3.76 rows=3) (actual time=0.048..0.048 rows=3 loops=100)\n                    -> Limit: 3 row(s)  (cost=3.46 rows=3) (actual time=0.0453..0.0458 rows=3 loops=100)\n                        -> Sort: o2.ordered_at DESC, o2.id DESC, limit input to 3 row(s) per chunk  (cost=3.46 rows=9.88) (actual time=0.045..0.0453 rows=3 loops=100)\n                            -> Index lookup on o2 using ix_orders_customer_id (customer_id=c.id)  (cost=3.46 rows=9.88) (actual time=0.0331..0.0393 rows=9.98 loops=100)\n"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 14.335,
+          "p50": 14.495,
+          "p90": 14.675,
+          "p95": 15.215,
+          "p99": 15.647,
+          "max": 15.755,
+          "mean": 14.591,
+          "stdev": 0.394,
+          "first_ms": 13.918
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: t.customer_id, t.ordered_at DESC  (cost=1309..1309 rows=998)\n    -> Filter: (t.rn <= 3)  (cost=99.9..215 rows=998)\n        -> Table scan on t  (cost=99.8..115 rows=998)\n            -> Materialize  (cost=99.8..99.8 rows=998)\n                -> Window aggregate: row_number() OVER (PARTITION BY orders.customer_id ORDER BY orders.ordered_at desc,orders.id desc )   (cost=0 rows=998)\n                    -> Sort: orders.customer_id, orders.ordered_at DESC, orders.id DESC  (cost=449 rows=998)\n                        -> Index range scan on orders using ix_orders_customer_id over (customer_id <= 100), with index condition: (orders.customer_id <= 100)  (cost=449 rows=998)\n",
+        "plan_analyze": "-> Sort: t.customer_id, t.ordered_at DESC  (cost=1309..1309 rows=998) (actual time=6.34..6.39 rows=300 loops=1)\n    -> Filter: (t.rn <= 3)  (cost=99.9..215 rows=998) (actual time=5.87..6.21 rows=300 loops=1)\n        -> Table scan on t  (cost=99.8..115 rows=998) (actual time=5.87..6.08 rows=998 loops=1)\n            -> Materialize  (cost=99.8..99.8 rows=998) (actual time=5.86..5.86 rows=998 loops=1)\n                -> Window aggregate: row_number() OVER (PARTITION BY orders.customer_id ORDER BY orders.ordered_at desc,orders.id desc )   (cost=0 rows=998) (actual time=4.53..5.34 rows=998 loops=1)\n                    -> Sort: orders.customer_id, orders.ordered_at DESC, orders.id DESC  (cost=449 rows=998) (actual time=4.52..4.67 rows=998 loops=1)\n                        -> Index range scan on orders using ix_orders_customer_id over (customer_id <= 100), with index condition: (orders.customer_id <= 100)  (cost=449 rows=998) (actual time=0.397..3.97 rows=998 loops=1)\n"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY shipping_country, status WITH ROLLUP",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 77.598,
+          "p50": 79.879,
+          "p90": 81.772,
+          "p95": 82.169,
+          "p99": 82.488,
+          "max": 82.567,
+          "mean": 79.72,
+          "stdev": 1.546,
+          "first_ms": 109.164
+        },
+        "rows": 79,
+        "checksum": "36792a55606ee54971e90f0e",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Group aggregate with rollup: count(0), sum(orders.total_amount)  (cost=40112 rows=27098)\n    -> Sort: shipping_country, status  (cost=20148 rows=199640)\n        -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-06-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-09-01 00:00:00'))  (cost=20148 rows=199640)\n            -> Table scan on orders  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Group aggregate with rollup: count(0), sum(orders.total_amount)  (cost=40112 rows=27098) (actual time=79.3..90.6 rows=79 loops=1)\n    -> Sort: shipping_country, status  (cost=20148 rows=199640) (actual time=79.3..81.1 rows=25268 loops=1)\n        -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-06-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-09-01 00:00:00'))  (cost=20148 rows=199640) (actual time=0.0273..66.8 rows=25268 loops=1)\n            -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0249..50.4 rows=200000 loops=1)\n"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE JSON_UNQUOTE(JSON_EXTRACT(attrs, '$.color')) = 'red' AND CAST(JSON_EXTRACT(attrs, '$.weight') AS DECIMAL(12,2)) > 10 ORDER BY id LIMIT 100",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.035,
+          "p50": 3.118,
+          "p90": 3.337,
+          "p95": 3.403,
+          "p99": 3.456,
+          "max": 3.469,
+          "mean": 3.183,
+          "stdev": 0.132,
+          "first_ms": 3.325
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 100 row(s)  (cost=4.99 rows=100)\n    -> Filter: ((json_unquote(json_extract(products.attrs,'$.color')) = 'red') and (cast(json_extract(products.attrs,'$.weight') as decimal(12,2)) > 10))  (cost=4.99 rows=100)\n        -> Index scan on products using PRIMARY  (cost=4.99 rows=100)\n",
+        "plan_analyze": "-> Limit: 100 row(s)  (cost=4.99 rows=100) (actual time=0.0243..0.954 rows=100 loops=1)\n    -> Filter: ((json_unquote(json_extract(products.attrs,'$.color')) = 'red') and (cast(json_extract(products.attrs,'$.weight') as decimal(12,2)) > 10))  (cost=4.99 rows=100) (actual time=0.0238..0.948 rows=100 loops=1)\n        -> Index scan on products using PRIMARY  (cost=4.99 rows=100) (actual time=0.00774..0.628 rows=928 loops=1)\n"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE MATCH(description) AGAINST('bluetooth waterproof' IN NATURAL LANGUAGE MODE) ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 7.966,
+          "p50": 8.831,
+          "p90": 9.152,
+          "p95": 9.179,
+          "p99": 9.201,
+          "max": 9.206,
+          "mean": 8.796,
+          "stdev": 0.344,
+          "first_ms": 11.215
+        },
+        "rows": 50,
+        "checksum": "fac90c1b3c4c577a1a28c703",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 50 row(s)  (cost=1.1 rows=1)\n    -> Sort row IDs: products.id, limit input to 50 row(s) per chunk  (cost=1.1 rows=1)\n        -> Filter: (match products.`description` against ('bluetooth waterproof'))  (cost=1.1 rows=1)\n            -> Full-text index search on products using ft_products_description (description='bluetooth waterproof')  (cost=1.1 rows=1)\n",
+        "plan_analyze": "-> Limit: 50 row(s)  (cost=1.1 rows=1) (actual time=4.78..4.83 rows=50 loops=1)\n    -> Sort row IDs: products.id, limit input to 50 row(s) per chunk  (cost=1.1 rows=1) (actual time=4.78..4.83 rows=50 loops=1)\n        -> Filter: (match products.`description` against ('bluetooth waterproof'))  (cost=1.1 rows=1) (actual time=0.396..4.57 rows=2020 loops=1)\n            -> Full-text index search on products using ft_products_description (description='bluetooth waterproof')  (cost=1.1 rows=1) (actual time=0.395..4.42 rows=2020 loops=1)\n"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO inventory (product_id, warehouse_id, qty, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) AS new ON DUPLICATE KEY UPDATE qty = inventory.qty + new.qty, updated_at = CURRENT_TIMESTAMP",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.5,
+          "p50": 1.728,
+          "p90": 1.996,
+          "p95": 2.059,
+          "p99": 2.18,
+          "max": 2.223,
+          "mean": 1.768,
+          "stdev": 0.167,
+          "first_ms": 2.804
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 100.576,
+          "p50": 102.287,
+          "p90": 105.558,
+          "p95": 105.649,
+          "p99": 105.722,
+          "max": 105.74,
+          "mean": 102.8,
+          "stdev": 1.951,
+          "first_ms": 118.46
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit/Offset: 50/100000 row(s)  (cost=20148 rows=50)\n    -> Sort: orders.ordered_at, orders.id, limit input to 100050 row(s) per chunk  (cost=20148 rows=199640)\n        -> Table scan on orders  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Limit/Offset: 50/100000 row(s)  (cost=20148 rows=50) (actual time=116..116 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 100050 row(s) per chunk  (cost=20148 rows=199640) (actual time=108..113 rows=100050 loops=1)\n        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0261..41.5 rows=200000 loops=1)\n"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 59.358,
+          "p50": 60.88,
+          "p90": 63.621,
+          "p95": 64.081,
+          "p99": 64.449,
+          "max": 64.541,
+          "mean": 61.488,
+          "stdev": 1.753,
+          "first_ms": 61.435
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 50 row(s)  (cost=20148 rows=50)\n    -> Sort: orders.ordered_at, orders.id, limit input to 50 row(s) per chunk  (cost=20148 rows=199640)\n        -> Filter: ((orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00') or ((orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00') and (orders.id > 0)))  (cost=20148 rows=199640)\n            -> Table scan on orders  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Limit: 50 row(s)  (cost=20148 rows=50) (actual time=78.7..78.7 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 50 row(s) per chunk  (cost=20148 rows=199640) (actual time=78.7..78.7 rows=50 loops=1)\n        -> Filter: ((orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00') or ((orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00') and (orders.id > 0)))  (cost=20148 rows=199640) (actual time=0.0246..65 rows=99956 loops=1)\n            -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0219..43.7 rows=200000 loops=1)\n"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 58.19,
+          "p50": 61.92,
+          "p90": 63.492,
+          "p95": 63.745,
+          "p99": 63.948,
+          "max": 63.999,
+          "mean": 61.433,
+          "stdev": 1.836,
+          "first_ms": 63.683
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Limit: 50 row(s)  (cost=20148 rows=50)\n    -> Sort: orders.ordered_at, orders.id, limit input to 50 row(s) per chunk  (cost=20148 rows=199640)\n        -> Filter: ((orders.ordered_at,orders.id) > (TIMESTAMP'2025-01-01 00:00:00',0))  (cost=20148 rows=199640)\n            -> Table scan on orders  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Limit: 50 row(s)  (cost=20148 rows=50) (actual time=71.7..71.7 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 50 row(s) per chunk  (cost=20148 rows=199640) (actual time=71.7..71.7 rows=50 loops=1)\n        -> Filter: ((orders.ordered_at,orders.id) > (TIMESTAMP'2025-01-01 00:00:00',0))  (cost=20148 rows=199640) (actual time=0.049..59 rows=99956 loops=1)\n            -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0463..40.7 rows=200000 loops=1)\n"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 350.028,
+          "p50": 356.147,
+          "p90": 365.191,
+          "p95": 366.553,
+          "p99": 367.644,
+          "max": 367.916,
+          "mean": 357.739,
+          "stdev": 5.16,
+          "first_ms": 356.33
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Aggregate: count(distinct `events`.customer_id)  (cost=134046 rows=1)\n    -> Filter: (`events`.occurred_at >= TIMESTAMP'2025-01-01 00:00:00')  (cost=100972 rows=330745)\n        -> Table scan on events  (cost=100972 rows=992334)\n",
+        "plan_analyze": "-> Aggregate: count(distinct `events`.customer_id)  (cost=134046 rows=1) (actual time=440..440 rows=1 loops=1)\n    -> Filter: (`events`.occurred_at >= TIMESTAMP'2025-01-01 00:00:00')  (cost=100972 rows=330745) (actual time=0.0258..283 rows=499245 loops=1)\n        -> Table scan on events  (cost=100972 rows=992334) (actual time=0.024..210 rows=1e+6 loops=1)\n"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 50.657,
+          "p50": 52.808,
+          "p90": 55.514,
+          "p95": 55.797,
+          "p99": 56.024,
+          "max": 56.08,
+          "mean": 53.128,
+          "stdev": 1.842,
+          "first_ms": 52.24
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Filter: (oi.id is null)  (cost=469194 rows=467216)\n    -> Nested loop antijoin  (cost=469194 rows=467216)\n        -> Covering index scan on p using PRIMARY  (cost=693 rows=4688)\n        -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=0.274 rows=99.7)\n",
+        "plan_analyze": "-> Filter: (oi.id is null)  (cost=469194 rows=467216) (actual time=54..54 rows=0 loops=1)\n    -> Nested loop antijoin  (cost=469194 rows=467216) (actual time=54..54 rows=0 loops=1)\n        -> Covering index scan on p using PRIMARY  (cost=693 rows=4688) (actual time=0.0295..1.76 rows=5000 loops=1)\n        -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=0.274 rows=99.7) (actual time=0.0103..0.0103 rows=1 loops=5000)\n"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 50.383,
+          "p50": 51.655,
+          "p90": 52.704,
+          "p95": 53.009,
+          "p99": 53.253,
+          "max": 53.314,
+          "mean": 51.702,
+          "stdev": 0.915,
+          "first_ms": 54.564
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Nested loop antijoin  (cost=48699 rows=467216)\n    -> Covering index scan on p using PRIMARY  (cost=693 rows=4688)\n    -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=27.5 rows=99.7)\n",
+        "plan_analyze": "-> Nested loop antijoin  (cost=48699 rows=467216) (actual time=52.4..52.4 rows=0 loops=1)\n    -> Covering index scan on p using PRIMARY  (cost=693 rows=4688) (actual time=0.0316..1.66 rows=5000 loops=1)\n    -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=27.5 rows=99.7) (actual time=0.01..0.01 rows=1 loops=5000)\n"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR TIMESTAMPDIFF(SECOND, prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 558.149,
+          "p50": 567.668,
+          "p90": 588.04,
+          "p95": 588.678,
+          "p99": 589.188,
+          "max": 589.316,
+          "mean": 570.943,
+          "stdev": 9.873,
+          "first_ms": 569.02
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: customer_id\n    -> Table scan on <temporary>\n        -> Aggregate using temporary table\n            -> Filter: ((case when ((w.prev_at is null) or (timestampdiff(SECOND,w.prev_at,w.occurred_at) > 1800)) then 1 else 0 end) = 1)  (cost=20772..23371 rows=207722)\n                -> Table scan on w  (cost=20772..23371 rows=207722)\n                    -> Materialize  (cost=20772..20772 rows=207722)\n                        -> Window aggregate with buffering: lag(`events`.occurred_at) OVER (PARTITION BY `events`.customer_id ORDER BY `events`.occurred_at,`events`.id )   (cost=0 rows=207722)\n                            -> Sort: `events`.customer_id, `events`.occurred_at, `events`.id  (cost=93475 rows=207722)\n                                -> Index range scan on events using ix_events_customer_id over (customer_id <= 2000), with index condition: (`events`.customer_id <= 2000)  (cost=93475 rows=207722)\n",
+        "plan_analyze": "-> Sort: s.customer_id  (actual time=603..603 rows=2000 loops=1)\n    -> Table scan on <temporary>  (actual time=603..603 rows=2000 loops=1)\n        -> Aggregate using temporary table  (actual time=603..603 rows=2000 loops=1)\n            -> Filter: ((case when ((w.prev_at is null) or (timestampdiff(SECOND,w.prev_at,w.occurred_at) > 1800)) then 1 else 0 end) = 1)  (cost=20772..23371 rows=207722) (actual time=544..574 rows=99765 loops=1)\n                -> Table scan on w  (cost=20772..23371 rows=207722) (actual time=544..554 rows=99904 loops=1)\n                    -> Materialize  (cost=20772..20772 rows=207722) (actual time=544..544 rows=99904 loops=1)\n                        -> Window aggregate with buffering: lag(`events`.occurred_at) OVER (PARTITION BY `events`.customer_id ORDER BY `events`.occurred_at,`events`.id )   (cost=0 rows=207722) (actual time=293..517 rows=99904 loops=1)\n                            -> Sort: `events`.customer_id, `events`.occurred_at, `events`.id  (cost=93475 rows=207722) (actual time=293..299 rows=99904 loops=1)\n                                -> Index range scan on events using ix_events_customer_id over (customer_id <= 2000), with index condition: (`events`.customer_id <= 2000)  (cost=93475 rows=207722) (actual time=0.36..261 rows=99904 loops=1)\n"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, GROUP_CONCAT(p.sku ORDER BY p.sku SEPARATOR ',') AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 8.789,
+          "p50": 11.164,
+          "p90": 11.631,
+          "p95": 11.686,
+          "p99": 11.731,
+          "max": 11.742,
+          "mean": 11.059,
+          "stdev": 0.787,
+          "first_ms": 11.38
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Group aggregate: group_concat(p.sku order by p.sku ASC separator ',')  (cost=1992 rows=1224)\n    -> Nested loop inner join  (cost=1870 rows=1224)\n        -> Nested loop inner join  (cost=529 rows=1224)\n            -> Filter: (o.id <= 500)  (cost=100 rows=500)\n                -> Covering index range scan on o using PRIMARY over (id <= 500)  (cost=100 rows=500)\n            -> Index lookup on oi using ix_order_items_order_id (order_id=o.id)  (cost=0.613 rows=2.45)\n        -> Single-row index lookup on p using PRIMARY (id=oi.product_id)  (cost=0.995 rows=1)\n",
+        "plan_analyze": "-> Group aggregate: group_concat(p.sku order by p.sku ASC separator ',')  (cost=1992 rows=1224) (actual time=0.0649..6.63 rows=500 loops=1)\n    -> Nested loop inner join  (cost=1870 rows=1224) (actual time=0.0408..6.14 rows=1209 loops=1)\n        -> Nested loop inner join  (cost=529 rows=1224) (actual time=0.0352..3.64 rows=1209 loops=1)\n            -> Filter: (o.id <= 500)  (cost=100 rows=500) (actual time=0.0203..0.233 rows=500 loops=1)\n                -> Covering index range scan on o using PRIMARY over (id <= 500)  (cost=100 rows=500) (actual time=0.0193..0.163 rows=500 loops=1)\n            -> Index lookup on oi using ix_order_items_order_id (order_id=o.id)  (cost=0.613 rows=2.45) (actual time=0.00546..0.0065 rows=2.42 loops=500)\n        -> Single-row index lookup on p using PRIMARY (id=oi.product_id)  (cost=0.995 rows=1) (actual time=0.00185..0.00189 rows=1 loops=1209)\n"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 566.352,
+          "p50": 575.942,
+          "p90": 588.532,
+          "p95": 589.114,
+          "p99": 589.58,
+          "max": 589.697,
+          "mean": 577.586,
+          "stdev": 8.755,
+          "first_ms": 583.922
+        },
+        "rows": 13,
+        "checksum": "d401f3c5ea9ee1c46a856a36",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: c.country_code\n    -> Table scan on <temporary>\n        -> Aggregate using temporary table\n            -> Nested loop inner join  (cost=69161 rows=191936)\n                -> Table scan on c  (cost=1984 rows=19433)\n                -> Index lookup on o using ix_orders_customer_id (customer_id=c.id)  (cost=2.47 rows=9.88)\n",
+        "plan_analyze": "-> Sort: c.country_code  (actual time=597..597 rows=13 loops=1)\n    -> Table scan on <temporary>  (actual time=597..597 rows=13 loops=1)\n        -> Aggregate using temporary table  (actual time=597..597 rows=13 loops=1)\n            -> Nested loop inner join  (cost=69161 rows=191936) (actual time=0.0482..377 rows=200000 loops=1)\n                -> Table scan on c  (cost=1984 rows=19433) (actual time=0.0238..5.96 rows=20000 loops=1)\n                -> Index lookup on o using ix_orders_customer_id (customer_id=c.id)  (cost=2.47 rows=9.88) (actual time=0.0149..0.0178 rows=10 loops=20000)\n"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 0.545,
+          "p50": 0.794,
+          "p90": 1.021,
+          "p95": 1.027,
+          "p99": 1.031,
+          "max": 1.032,
+          "mean": 0.805,
+          "stdev": 0.129,
+          "first_ms": 1.015
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Sort: orders.id  (cost=7.02 rows=13)\n    -> Filter: ((orders.customer_id = 14824) or (orders.id = 146741))  (cost=7.02 rows=13)\n        -> Deduplicate rows sorted by row ID  (cost=7.02 rows=13)\n            -> Covering index range scan on orders using ix_orders_customer_id over (customer_id = 14824)  (cost=1.46 rows=12)\n            -> Index range scan on orders using PRIMARY over (id = 146741)  (cost=0.36 rows=1)\n",
+        "plan_analyze": "-> Sort: orders.id  (cost=7.02 rows=13) (actual time=0.0597..0.0602 rows=13 loops=1)\n    -> Filter: ((orders.customer_id = 14824) or (orders.id = 146741))  (cost=7.02 rows=13) (actual time=0.0291..0.0538 rows=13 loops=1)\n        -> Deduplicate rows sorted by row ID  (cost=7.02 rows=13) (actual time=0.0282..0.0516 rows=13 loops=1)\n            -> Covering index range scan on orders using ix_orders_customer_id over (customer_id = 14824)  (cost=1.46 rows=12) (actual time=0.016..0.0206 rows=12 loops=1)\n            -> Index range scan on orders using PRIMARY over (id = 146741)  (cost=0.36 rows=1) (actual time=0.00723..0.00741 rows=1 loops=1)\n"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 8.26,
+          "p50": 8.783,
+          "p90": 9.492,
+          "p95": 9.575,
+          "p99": 9.641,
+          "max": 9.657,
+          "mean": 8.887,
+          "stdev": 0.471,
+          "first_ms": 8.419
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Filter: (orders.id in (47,281,457,869,942,950,1298,3027,3073,3269,3737,4023,4216,4413,4589,4762,4833,4939,5265,5718,5897,6511,7606,8169,8453,9031,9687,10378,10923,10974,11327,11479,11859,12255,12654,12840,12970,13207,13312,13532,14258,14524,15081,15902,16269,16854,17034,17315,17465,18380,18540,18983,19173,19517,19560,19706,20028,20045,20117,20309,21123,21953,21992,22037,22147,22148,22307,22507,23218,23452,23529,23673,23781,23817,23880,24103,24275,26089,26663,27468,27504,27862,28693,29538,29583,31065,31390,31469,31696,31898,32998,33358,33374,33876,33963,34032,34762,34890,34981,36326,36519,36595,36627,36886,37157,37714,37946,38647,39038,39156,39181,40699,41297,41699,42323,42378,42795,43866,44765,45796,46636,47487,47593,47962,48063,48589,49665,49768,50439,51313,51981,52069,52233,52686,52893,52991,53330,53797,53968,54493,55008,55052,55237,56409,56614,57068,57113,57679,58303,59915,60180,60278,60487,60656,61030,61548,62505,62565,62686,63495,63986,64081,64110,64404,65059,65131,65359,65654,66112,66379,66569,67003,67042,67727,67793,68202,68303,68632,68655,69008,69152,69251,69325,69615,69617,69660,70218,70427,70458,70497,70527,70842,70896,70916,71047,71283,72131,72750,73120,73155,73288,73568,73859,73908,74496,74854,74875,75028,75319,75914,75978,76012,76247,76824,77452,78060,78551,78863,79155,79756,79802,79956,80684,81147,81704,81787,81794,82734,82858,83700,84813,85079,85495,85734,86227,86855,86973,87251,87906,88658,88677,88907,89642,89838,90090,90168,90965,91109,93477,94255,94410,94558,95458,95732,96550,97576,97872,98594,98729,98794,99846,100042,100286,100359,100811,101410,102110,102279,102635,102997,103046,103280,103306,103382,104402,104730,104794,104869,106090,106279,106417,106486,107712,108209,108498,108755,109100,109514,110692,111464,111495,112047,112132,112212,112524,112917,113204,113293,114358,116835,116871,116880,117193,117821,117955,118165,118191,118329,118748,118955,119787,120317,120443,120676,121809,122133,122249,123781,123980,124065,124220,124425,124456,125570,126464,126664,127291,127350,127439,128266,128350,128405,128896,129486,129550,129660,129762,130306,130519,130586,131096,131231,131797,131851,131963,132218,132314,132525,132555,132630,132808,132825,133365,133946,134287,134475,134804,134948,135407,135643,137300,137381,137408,137886,138128,138376,138724,138734,139221,139315,140300,140667,143107,143413,143599,143938,143977,144208,144281,144455,144983,145268,145720,146099,146415,148836,149024,149322,149579,150545,152430,153109,153508,153827,153925,154450,156385,156967,157210,158169,159431,161197,161737,162191,162831,162976,163559,163958,164162,164452,164566,164803,165053,165065,165386,165589,165883,166315,166452,166718,167018,168497,168530,168613,168617,168950,169291,170376,170422,170796,171133,171966,171972,172101,172372,172575,172832,173534,174386,175342,175779,176162,176202,177133,177203,178433,178675,179017,179227,179955,180029,180288,180409,181453,181584,181637,181752,183611,183777,184376,185264,185827,185995,186001,186434,186915,187436,187694,188632,188922,189834,190627,191063,191191,191982,192173,192375,193145,193658,193733,193942,193963,194220,194830,195489,195518,195950,196154,196519,196750,196801,197162,197308,197360,198091,198123,198297,199033,199098,199664))  (cost=225 rows=500)\n    -> Index range scan on orders using PRIMARY over (id = 47) OR (id = 281) OR (498 more)  (cost=225 rows=500)\n",
+        "plan_analyze": "-> Filter: (orders.id in (47,281,457,869,942,950,1298,3027,3073,3269,3737,4023,4216,4413,4589,4762,4833,4939,5265,5718,5897,6511,7606,8169,8453,9031,9687,10378,10923,10974,11327,11479,11859,12255,12654,12840,12970,13207,13312,13532,14258,14524,15081,15902,16269,16854,17034,17315,17465,18380,18540,18983,19173,19517,19560,19706,20028,20045,20117,20309,21123,21953,21992,22037,22147,22148,22307,22507,23218,23452,23529,23673,23781,23817,23880,24103,24275,26089,26663,27468,27504,27862,28693,29538,29583,31065,31390,31469,31696,31898,32998,33358,33374,33876,33963,34032,34762,34890,34981,36326,36519,36595,36627,36886,37157,37714,37946,38647,39038,39156,39181,40699,41297,41699,42323,42378,42795,43866,44765,45796,46636,47487,47593,47962,48063,48589,49665,49768,50439,51313,51981,52069,52233,52686,52893,52991,53330,53797,53968,54493,55008,55052,55237,56409,56614,57068,57113,57679,58303,59915,60180,60278,60487,60656,61030,61548,62505,62565,62686,63495,63986,64081,64110,64404,65059,65131,65359,65654,66112,66379,66569,67003,67042,67727,67793,68202,68303,68632,68655,69008,69152,69251,69325,69615,69617,69660,70218,70427,70458,70497,70527,70842,70896,70916,71047,71283,72131,72750,73120,73155,73288,73568,73859,73908,74496,74854,74875,75028,75319,75914,75978,76012,76247,76824,77452,78060,78551,78863,79155,79756,79802,79956,80684,81147,81704,81787,81794,82734,82858,83700,84813,85079,85495,85734,86227,86855,86973,87251,87906,88658,88677,88907,89642,89838,90090,90168,90965,91109,93477,94255,94410,94558,95458,95732,96550,97576,97872,98594,98729,98794,99846,100042,100286,100359,100811,101410,102110,102279,102635,102997,103046,103280,103306,103382,104402,104730,104794,104869,106090,106279,106417,106486,107712,108209,108498,108755,109100,109514,110692,111464,111495,112047,112132,112212,112524,112917,113204,113293,114358,116835,116871,116880,117193,117821,117955,118165,118191,118329,118748,118955,119787,120317,120443,120676,121809,122133,122249,123781,123980,124065,124220,124425,124456,125570,126464,126664,127291,127350,127439,128266,128350,128405,128896,129486,129550,129660,129762,130306,130519,130586,131096,131231,131797,131851,131963,132218,132314,132525,132555,132630,132808,132825,133365,133946,134287,134475,134804,134948,135407,135643,137300,137381,137408,137886,138128,138376,138724,138734,139221,139315,140300,140667,143107,143413,143599,143938,143977,144208,144281,144455,144983,145268,145720,146099,146415,148836,149024,149322,149579,150545,152430,153109,153508,153827,153925,154450,156385,156967,157210,158169,159431,161197,161737,162191,162831,162976,163559,163958,164162,164452,164566,164803,165053,165065,165386,165589,165883,166315,166452,166718,167018,168497,168530,168613,168617,168950,169291,170376,170422,170796,171133,171966,171972,172101,172372,172575,172832,173534,174386,175342,175779,176162,176202,177133,177203,178433,178675,179017,179227,179955,180029,180288,180409,181453,181584,181637,181752,183611,183777,184376,185264,185827,185995,186001,186434,186915,187436,187694,188632,188922,189834,190627,191063,191191,191982,192173,192375,193145,193658,193733,193942,193963,194220,194830,195489,195518,195950,196154,196519,196750,196801,197162,197308,197360,198091,198123,198297,199033,199098,199664))  (cost=225 rows=500) (actual time=0.0182..1.68 rows=500 loops=1)\n    -> Index range scan on orders using PRIMARY over (id = 47) OR (id = 281) OR (498 more)  (cost=225 rows=500) (actual time=0.0165..1.55 rows=500 loops=1)\n"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.486,
+          "p50": 42.992,
+          "p90": 43.862,
+          "p95": 44.157,
+          "p99": 44.393,
+          "max": 44.452,
+          "mean": 42.656,
+          "stdev": 1.212,
+          "first_ms": 65.955
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan": "-> Aggregate: count(0)  (cost=40112 rows=1)\n    -> Filter: ((year(orders.ordered_at) = 2025) and (month(orders.ordered_at) = 5))  (cost=20148 rows=199640)\n        -> Table scan on orders  (cost=20148 rows=199640)\n",
+        "plan_analyze": "-> Aggregate: count(0)  (cost=40112 rows=1) (actual time=57.1..57.1 rows=1 loops=1)\n    -> Filter: ((year(orders.ordered_at) = 2025) and (month(orders.ordered_at) = 5))  (cost=20148 rows=199640) (actual time=0.0273..56.7 rows=8290 loops=1)\n        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0183..36 rows=200000 loops=1)\n"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.25,
+          "p50": 1.577,
+          "p90": 1.794,
+          "p95": 1.809,
+          "p99": 1.877,
+          "max": 1.903,
+          "mean": 1.231,
+          "stdev": 0.618,
+          "first_ms": 2.346
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.362,
+          "p50": 1.926,
+          "p90": 2.085,
+          "p95": 2.145,
+          "p99": 2.184,
+          "max": 2.199,
+          "mean": 1.898,
+          "stdev": 0.181,
+          "first_ms": 2.104
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 4.032,
+          "p50": 5.421,
+          "p90": 6.228,
+          "p95": 6.334,
+          "p99": 434.006,
+          "max": 608.661,
+          "mean": 25.517,
+          "stdev": 108.289,
+          "first_ms": 5.844
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 74.9
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 263.513,
+            "p95_ms": 272.7,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0), sum(`events`.value_num)  (cost=104096 rows=1) (actual time=313..313 rows=1 loops=1)\n    -> Filter: ((`events`.event_type = 'checkout') and (`events`.occurred_at >= TIMESTAMP'2025-06-01 00:00:00') and (`events`.occurred_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=102972 rows=11246) (actual time=0.0822..313 rows=3145 loops=1)\n        -> Table scan on events  (cost=102972 rows=1.01e+6) (actual time=0.0248..230 rows=1.02e+6 loops=1)\n"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 14.123,
+            "p95_ms": 17.451,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0), sum(`events`.value_num)  (cost=42343 rows=1) (actual time=13.6..13.6 rows=1 loops=1)\n    -> Index range scan on events using ix_ev_ts_type over ('2025-06-01 00:00:00.000000' <= occurred_at <= '2025-07-01 00:00:00.000000' AND 'checkout' <= event_type), with index condition: ((`events`.event_type = 'checkout') and (`events`.occurred_at >= TIMESTAMP'2025-06-01 00:00:00') and (`events`.occurred_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=34644 rows=76986) (actual time=0.471..13.2 rows=3145 loops=1)\n"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.154,
+            "p95_ms": 16.0,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0), sum(`events`.value_num)  (cost=1730 rows=1) (actual time=8.79..8.79 rows=1 loops=1)\n    -> Index range scan on events using ix_ev_type_ts over (event_type = 'checkout' AND '2025-06-01 00:00:00.000000' <= occurred_at < '2025-07-01 00:00:00.000000'), with index condition: ((`events`.event_type = 'checkout') and (`events`.occurred_at >= TIMESTAMP'2025-06-01 00:00:00') and (`events`.occurred_at < TIMESTAMP'2025-07-01 00:00:00'))  (cost=1416 rows=3145) (actual time=0.326..8.46 rows=3145 loops=1)\n"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 23.62
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 26.615,
+            "p95_ms": 28.925,
+            "rows": 2430,
+            "plan_analyze": "-> Sort: order_items.order_id, order_items.product_id  (cost=1107 rows=2460) (actual time=6.46..6.6 rows=2460 loops=1)\n    -> Index range scan on order_items using ix_order_items_order_id over (163290 <= order_id < 164290), with index condition: ((order_items.order_id >= 163290) and (order_items.order_id < 164290))  (cost=1107 rows=2460) (actual time=0.254..5.94 rows=2460 loops=1)\n"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "mysql: INCLUDE columns not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 42.925,
+            "p95_ms": 44.472,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=40112 rows=1) (actual time=55.7..55.7 rows=1 loops=1)\n    -> Filter: ((year(orders.ordered_at) = 2025) and (month(orders.ordered_at) = 5))  (cost=20148 rows=199640) (actual time=0.0278..55.3 rows=8290 loops=1)\n        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0186..34.3 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 38.18,
+            "p95_ms": 39.634,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=22366 rows=1) (actual time=49.5..49.5 rows=1 loops=1)\n    -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-05-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-06-01 00:00:00'))  (cost=20148 rows=22178) (actual time=0.0218..49.1 rows=8290 loops=1)\n        -> Table scan on orders  (cost=20148 rows=199640) (actual time=0.0144..32.9 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 5.502,
+            "p95_ms": 6.152,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=2500 rows=1) (actual time=5.71..5.71 rows=1 loops=1)\n    -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-05-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-06-01 00:00:00'))  (cost=1671 rows=8290) (actual time=0.0318..5.04 rows=8290 loops=1)\n        -> Covering index range scan on orders using ix_orders_ordered_at over ('2025-05-01 00:00:00.000000' <= ordered_at < '2025-06-01 00:00:00.000000')  (cost=1671 rows=8290) (actual time=0.03..3.12 rows=8290 loops=1)\n"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 36.148,
+            "p95_ms": 38.508,
+            "rows": 1,
+            "plan_analyze": "-> Aggregate: count(0)  (cost=40105 rows=1) (actual time=47.4..47.4 rows=1 loops=1)\n    -> Filter: ((year(orders.ordered_at) = 2025) and (month(orders.ordered_at) = 5))  (cost=20145 rows=199604) (actual time=29.6..47.1 rows=8290 loops=1)\n        -> Covering index scan on orders using ix_orders_ordered_at  (cost=20145 rows=199604) (actual time=0.0134..29.3 rows=200000 loops=1)\n"
+          }
+        ],
+        "best_variant": "sargable_with_index",
+        "speedup_vs_first": 7.8
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 102.917,
+            "p95_ms": 107.602,
+            "rows": 50,
+            "plan_analyze": "-> Limit/Offset: 50/100000 row(s)  (cost=20145 rows=50) (actual time=119..119 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 100050 row(s) per chunk  (cost=20145 rows=199604) (actual time=112..117 rows=100050 loops=1)\n        -> Table scan on orders  (cost=20145 rows=199604) (actual time=0.0457..44.2 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 61.87,
+            "p95_ms": 66.387,
+            "rows": 50,
+            "plan_analyze": "-> Limit: 50 row(s)  (cost=20145 rows=50) (actual time=72.1..72.1 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 50 row(s) per chunk  (cost=20145 rows=199604) (actual time=72.1..72.1 rows=50 loops=1)\n        -> Filter: ((orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00') or ((orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00') and (orders.id > 0)))  (cost=20145 rows=199604) (actual time=0.0327..59.5 rows=99956 loops=1)\n            -> Table scan on orders  (cost=20145 rows=199604) (actual time=0.0301..40.3 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 104.173,
+            "p95_ms": 107.844,
+            "rows": 50,
+            "plan_analyze": "-> Limit/Offset: 50/100000 row(s)  (cost=19339 rows=50) (actual time=119..119 rows=50 loops=1)\n    -> Sort: orders.ordered_at, orders.id, limit input to 100050 row(s) per chunk  (cost=19339 rows=191547) (actual time=111..116 rows=100050 loops=1)\n        -> Table scan on orders  (cost=19339 rows=191547) (actual time=0.0556..42.6 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.568,
+            "p95_ms": 2.655,
+            "rows": 50,
+            "plan_analyze": "-> Limit: 50 row(s)  (cost=20152 rows=50) (actual time=0.407..0.427 rows=50 loops=1)\n    -> Index range scan on orders using ix_orders_ts_id over (ordered_at = '2025-01-01 00:00:00.000000' AND 0 < id) OR ('2025-01-01 00:00:00.000000' < ordered_at), with index condition: ((orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00') or ((orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00') and (orders.id > 0)))  (cost=20152 rows=99838) (actual time=0.406..0.42 rows=50 loops=1)\n"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 158.982,
+            "p95_ms": 161.471,
+            "rows": 50,
+            "plan_analyze": "-> Limit: 50 row(s)  (cost=0.0474 rows=50) (actual time=161..161 rows=50 loops=1)\n    -> Filter: ((orders.ordered_at,orders.id) > (TIMESTAMP'2025-01-01 00:00:00',0))  (cost=0.0474 rows=50) (actual time=161..161 rows=50 loops=1)\n        -> Index scan on orders using ix_orders_ts_id  (cost=0.0474 rows=50) (actual time=0.0848..153 rows=100094 loops=1)\n"
+          }
+        ],
+        "best_variant": "keyset_with_index",
+        "speedup_vs_first": 40.08
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 25.166,
+            "p95_ms": 26.034,
+            "rows": 500,
+            "plan_analyze": "-> Limit: 500 row(s)  (cost=69.4 rows=50) (actual time=0.0215..0.365 rows=500 loops=1)\n    -> Filter: (p.`active` = true)  (cost=69.4 rows=50) (actual time=0.021..0.335 rows=500 loops=1)\n        -> Index scan on p using PRIMARY  (cost=69.4 rows=500) (actual time=0.0192..0.256 rows=593 loops=1)\n-> Select #2 (subquery in projection; dependent)\n    -> Aggregate: avg(p2.price)  (cost=28 rows=1) (actual time=0.042..0.042 rows=1 loops=500)\n        -> Index lookup on p2 using ix_products_category_id (category_id=p.category_id)  (cost=25.7 rows=23.4) (actual time=0.0105..0.0388 rows=26.2 loops=500)\n"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.718,
+            "p95_ms": 12.143,
+            "rows": 500,
+            "plan_analyze": "-> Limit: 500 row(s)  (cost=1279 rows=500) (actual time=7.79..8.59 rows=500 loops=1)\n    -> Nested loop inner join  (cost=1279 rows=980) (actual time=7.79..8.57 rows=500 loops=1)\n        -> Filter: (p.`active` = true)  (cost=6.76 rows=4.9) (actual time=0.0102..0.315 rows=500 loops=1)\n            -> Index scan on p using PRIMARY  (cost=6.76 rows=49) (actual time=0.00836..0.27 rows=593 loops=1)\n        -> Index lookup on a using <auto_key0> (category_id=p.category_id)  (cost=1182..1184 rows=10) (actual time=0.0162..0.0163 rows=1 loops=500)\n            -> Materialize  (cost=1182..1182 rows=200) (actual time=7.78..7.78 rows=200 loops=1)\n                -> Group aggregate: avg(products.price)  (cost=1162 rows=200) (actual time=0.153..7.62 rows=200 loops=1)\n                    -> Index scan on products using ix_products_category_id  (cost=693 rows=4688) (actual time=0.145..7.05 rows=5000 loops=1)\n"
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 2.15
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 52.554,
+            "p95_ms": 55.204,
+            "rows": 0,
+            "plan_analyze": "-> Filter: (oi.id is null)  (cost=469194 rows=467216) (actual time=54.6..54.6 rows=0 loops=1)\n    -> Nested loop antijoin  (cost=469194 rows=467216) (actual time=54.6..54.6 rows=0 loops=1)\n        -> Covering index scan on p using PRIMARY  (cost=693 rows=4688) (actual time=0.0301..1.83 rows=5000 loops=1)\n        -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=0.274 rows=99.7) (actual time=0.0104..0.0104 rows=1 loops=5000)\n"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 52.008,
+            "p95_ms": 55.245,
+            "rows": 0,
+            "plan_analyze": "-> Nested loop antijoin  (cost=48699 rows=467216) (actual time=53..53 rows=0 loops=1)\n    -> Covering index scan on p using PRIMARY  (cost=693 rows=4688) (actual time=0.0293..1.72 rows=5000 loops=1)\n    -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=27.5 rows=99.7) (actual time=0.0102..0.0102 rows=1 loops=5000)\n"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 52.467,
+            "p95_ms": 55.169,
+            "rows": 0,
+            "plan_analyze": "-> Nested loop antijoin  (cost=48699 rows=467216) (actual time=52.7..52.7 rows=0 loops=1)\n    -> Covering index scan on p using PRIMARY  (cost=693 rows=4688) (actual time=0.0303..1.65 rows=5000 loops=1)\n    -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=27.5 rows=99.7) (actual time=0.0101..0.0101 rows=1 loops=5000)\n"
+          }
+        ],
+        "best_variant": "not_exists",
+        "speedup_vs_first": 1.01
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.403,
+            "p95_ms": 0.426,
+            "rows": 13,
+            "plan_analyze": "-> Sort: orders.id  (cost=6.52 rows=12) (actual time=0.0524..0.0528 rows=12 loops=1)\n    -> Filter: ((orders.customer_id = 3342) or (orders.id = 150456))  (cost=6.52 rows=12) (actual time=0.0265..0.0473 rows=12 loops=1)\n        -> Deduplicate rows sorted by row ID  (cost=6.52 rows=12) (actual time=0.0256..0.0453 rows=12 loops=1)\n            -> Covering index range scan on orders using ix_orders_customer_id over (customer_id = 3342)  (cost=1.36 rows=11) (actual time=0.0144..0.0185 rows=11 loops=1)\n            -> Index range scan on orders using PRIMARY over (id = 150456)  (cost=0.36 rows=1) (actual time=0.00665..0.00681 rows=1 loops=1)\n"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.405,
+            "p95_ms": 0.439,
+            "rows": 13,
+            "plan_analyze": "-> Sort: u.id  (cost=10.7..10.7 rows=12) (actual time=0.023..0.0234 rows=12 loops=1)\n    -> Table scan on u  (cost=2.77..5.2 rows=12) (actual time=0.0168..0.018 rows=12 loops=1)\n        -> Union materialize with deduplication  (cost=2.55..2.55 rows=12) (actual time=0.0159..0.0159 rows=12 loops=1)\n            -> Covering index lookup on orders using ix_orders_customer_id (customer_id=3342)  (cost=1.35 rows=11) (actual time=0.00583..0.00809 rows=11 loops=1)\n            -> Rows fetched before execution  (cost=0..0 rows=1) (actual time=83e-6..123e-6 rows=1 loops=1)\n"
+          }
+        ],
+        "best_variant": "or_predicate",
+        "speedup_vs_first": 1.0
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 55.636,
+            "p95_ms": 58.209,
+            "rows": 644,
+            "plan_analyze": "-> Sort: orders.ordered_at, orders.id  (cost=20155 rows=199711) (actual time=63.1..63.2 rows=644 loops=1)\n    -> Filter: ((orders.`status` = 'pending') and (orders.ordered_at >= TIMESTAMP'2025-09-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-10-01 00:00:00'))  (cost=20155 rows=199711) (actual time=0.128..62.9 rows=644 loops=1)\n        -> Table scan on orders  (cost=20155 rows=199711) (actual time=0.0213..46.4 rows=200000 loops=1)\n"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 12.106,
+            "p95_ms": 12.739,
+            "rows": 644,
+            "plan_analyze": "-> Index range scan on orders using ix_orders_status_ts over (status = 'pending' AND '2025-09-01 00:00:00.000000' <= ordered_at < '2025-10-01 00:00:00.000000'), with index condition: ((orders.`status` = 'pending') and (orders.ordered_at >= TIMESTAMP'2025-09-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-10-01 00:00:00'))  (cost=290 rows=644) (actual time=0.373..3.21 rows=644 loops=1)\n"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "mysql: partial indexes not supported"
+          }
+        ],
+        "best_variant": "full_index_(status,ordered_at)",
+        "speedup_vs_first": 4.6
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 302.733,
+            "p95_ms": 308.604,
+            "rows": 13,
+            "plan_analyze": "-> Sort: c.country_code  (actual time=361..361 rows=13 loops=1)\n    -> Table scan on <temporary>  (actual time=361..361 rows=13 loops=1)\n        -> Aggregate using temporary table  (actual time=361..361 rows=13 loops=1)\n            -> Nested loop inner join  (cost=138184 rows=101059) (actual time=310..353 rows=20000 loops=1)\n                -> Filter: (e.event_type = 'bench_stats')  (cost=102814 rows=101059) (actual time=310..319 rows=20000 loops=1)\n                    -> Table scan on e  (cost=102814 rows=1.01e+6) (actual time=0.0258..247 rows=1.02e+6 loops=1)\n                -> Single-row index lookup on c using PRIMARY (id=e.customer_id)  (cost=0.25 rows=1) (actual time=0.00149..0.00152 rows=1 loops=20000)\n"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 300.071,
+            "p95_ms": 305.895,
+            "rows": 13,
+            "plan_analyze": "-> Sort: c.country_code  (actual time=366..366 rows=13 loops=1)\n    -> Table scan on <temporary>  (actual time=366..366 rows=13 loops=1)\n        -> Aggregate using temporary table  (actual time=366..366 rows=13 loops=1)\n            -> Nested loop inner join  (cost=136067 rows=99490) (actual time=318..359 rows=20000 loops=1)\n                -> Filter: (e.event_type = 'bench_stats')  (cost=101245 rows=99490) (actual time=318..327 rows=20000 loops=1)\n                    -> Table scan on e  (cost=101245 rows=994904) (actual time=0.0413..253 rows=1.02e+6 loops=1)\n                -> Single-row index lookup on c using PRIMARY (id=e.customer_id)  (cost=0.25 rows=1) (actual time=0.00141..0.00144 rows=1 loops=20000)\n"
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 1.01
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 7.178,
+            "rows_per_s": 418,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 1.183,
+            "rows_per_s": 2535,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.1,
+            "rows_per_s": 29923,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver pymysql: no server-side prepare toggle exposed"
+      },
+      "_seconds": 63.9
+    },
+    "connections": {
+      "max_connections": 1000,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 1.216233,
+            "p50": 1.6281395,
+            "p90": 1.9007683,
+            "p95": 1.94958975,
+            "p99": 1.97876647,
+            "max": 1.982147,
+            "mean": 1.6137572,
+            "stdev": 0.23034017906861148
+          },
+          "errors": [],
+          "error_count": 0
+        },
+        "haproxy": {
+          "target": "haproxy",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 1.684291,
+            "p50": 2.2729255,
+            "p90": 2.7227036,
+            "p95": 10.035594699999963,
+            "p99": 15.94454156,
+            "max": 15.950526,
+            "mean": 3.131503,
+            "stdev": 3.435782201436067
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 10,
+              "min": 3.647051,
+              "p50": 4.63942,
+              "p90": 5.0919146,
+              "p95": 5.2229708,
+              "p99": 5.32781576,
+              "max": 5.354027,
+              "mean": 4.5239848,
+              "stdev": 0.5445701632334993
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.3,
+            "connect_ms": {
+              "n": 50,
+              "min": 13.712469,
+              "p50": 23.825543500000002,
+              "p90": 30.4913589,
+              "p95": 32.2774747,
+              "p99": 32.60309235,
+              "max": 32.685013,
+              "mean": 24.438068480000002,
+              "stdev": 4.668503679983685
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 100.6,
+            "connect_ms": {
+              "n": 100,
+              "min": 21.632442,
+              "p50": 44.889409,
+              "p90": 51.1647744,
+              "p95": 51.9576753,
+              "p99": 53.32433863000001,
+              "max": 55.413202,
+              "mean": 43.58289871,
+              "stdev": 6.3414657310180145
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 163.7,
+            "connect_ms": {
+              "n": 200,
+              "min": 32.605477,
+              "p50": 87.4175085,
+              "p90": 101.8422397,
+              "p95": 107.53630265,
+              "p99": 113.1192748,
+              "max": 115.442348,
+              "mean": 86.27169991500001,
+              "stdev": 14.360306063367304
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 1010,
+            "opened": 999,
+            "failed": 11,
+            "wall_ms_to_open_all": 630.2,
+            "connect_ms": {
+              "n": 999,
+              "min": 81.405396,
+              "p50": 331.952302,
+              "p90": 494.2290462,
+              "p95": 522.1230324999999,
+              "p99": 566.8503755200001,
+              "max": 587.271462,
+              "mean": 339.0205272852853,
+              "stdev": 112.37377756309638
+            },
+            "error_codes": {
+              "1040": 11
+            },
+            "sample_error": "OperationalError: (1040, 'Too many connections')"
+          }
+        ],
+        "haproxy": [
+          {
+            "target": "haproxy",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 10,
+              "min": 4.579796,
+              "p50": 5.223809,
+              "p90": 6.0656563,
+              "p95": 6.20257015,
+              "p99": 6.31210123,
+              "max": 6.339484,
+              "mean": 5.2929715,
+              "stdev": 0.5669074844688946
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "haproxy",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.3,
+            "connect_ms": {
+              "n": 50,
+              "min": 26.673276,
+              "p50": 36.766206,
+              "p90": 41.2237014,
+              "p95": 41.48874625,
+              "p99": 42.80577078,
+              "max": 43.058992,
+              "mean": 36.32310836,
+              "stdev": 3.7739104141860276
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "haproxy",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 103.7,
+            "connect_ms": {
+              "n": 100,
+              "min": 31.593308,
+              "p50": 49.719944999999996,
+              "p90": 57.7445972,
+              "p95": 59.6035687,
+              "p99": 60.06167725000001,
+              "max": 61.603825,
+              "mean": 48.76072623,
+              "stdev": 6.963273618412936
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "haproxy",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 154.6,
+            "connect_ms": {
+              "n": 200,
+              "min": 45.309391,
+              "p50": 90.41667899999999,
+              "p90": 106.5150272,
+              "p95": 109.48351895,
+              "p99": 113.81141492,
+              "max": 114.715367,
+              "mean": 88.88648146999999,
+              "stdev": 14.225433760898854
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 5716,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1429,
+            "latency_ms": {
+              "n": 5716,
+              "min": 0.259871,
+              "p50": 0.7220155,
+              "p90": 0.908761,
+              "p95": 0.94435375,
+              "p99": 0.99224345,
+              "max": 1.888886,
+              "mean": 0.6968075699790063,
+              "stdev": 0.1842558011122147
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 24509,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 6127,
+            "latency_ms": {
+              "n": 24509,
+              "min": 0.207998,
+              "p50": 0.676815,
+              "p90": 0.8198732,
+              "p95": 0.8548003999999999,
+              "p99": 0.9288610799999999,
+              "max": 1.830278,
+              "mean": 0.6499669167652699,
+              "stdev": 0.15470370385147109
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 174844,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 43711,
+            "latency_ms": {
+              "n": 174844,
+              "min": 0.235079,
+              "p50": 0.353167,
+              "p90": 0.4053161,
+              "p95": 0.4398977,
+              "p99": 0.6207619600000003,
+              "max": 89.473183,
+              "mean": 0.3644666251915994,
+              "stdev": 0.5242365812231532
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 192387,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 48097,
+            "latency_ms": {
+              "n": 192387,
+              "min": 0.290236,
+              "p50": 0.629942,
+              "p90": 0.9117131999999999,
+              "p95": 1.0135562999999999,
+              "p99": 1.2558931199999999,
+              "max": 9.058987,
+              "mean": 0.6637114059265958,
+              "stdev": 0.19453701008597135
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 227905,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 56976,
+            "latency_ms": {
+              "n": 227905,
+              "min": 0.291877,
+              "p50": 1.041343,
+              "p90": 1.6634172000000003,
+              "p95": 1.9197882,
+              "p99": 2.6188272799999983,
+              "max": 10.765061,
+              "mean": 1.1219230536802616,
+              "stdev": 0.44894735169004
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ],
+        "haproxy": [
+          {
+            "workers": 1,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 4064,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1016,
+            "latency_ms": {
+              "n": 4064,
+              "min": 0.407043,
+              "p50": 1.009481,
+              "p90": 1.1832756000000002,
+              "p95": 1.2308486,
+              "p99": 1.2660616199999999,
+              "max": 2.309473,
+              "mean": 0.9811371158956692,
+              "stdev": 0.1794079997040178
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 19094,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 4774,
+            "latency_ms": {
+              "n": 19094,
+              "min": 0.280985,
+              "p50": 0.8644375,
+              "p90": 1.088289,
+              "p95": 1.1348086499999999,
+              "p99": 1.2156940999999999,
+              "max": 1.912905,
+              "mean": 0.8351183260710171,
+              "stdev": 0.21420346938977045
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 135028,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 33757,
+            "latency_ms": {
+              "n": 135028,
+              "min": 0.325569,
+              "p50": 0.4537855,
+              "p90": 0.5389364000000001,
+              "p95": 0.6109536,
+              "p99": 0.7925021500000006,
+              "max": 98.279334,
+              "mean": 0.47233955711408004,
+              "stdev": 0.466764776861336
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 154054,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 38514,
+            "latency_ms": {
+              "n": 154054,
+              "min": 0.38948,
+              "p50": 0.789899,
+              "p90": 1.1190391000000002,
+              "p95": 1.2421401,
+              "p99": 1.5347716400000002,
+              "max": 4.908315,
+              "mean": 0.8292277268944656,
+              "stdev": 0.22919259478646237
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "haproxy"
+            ],
+            "queries": 177283,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 44321,
+            "latency_ms": {
+              "n": 177283,
+              "min": 0.387681,
+              "p50": 1.370879,
+              "p90": 2.058571000000001,
+              "p95": 2.30942,
+              "p99": 2.9219178999999995,
+              "max": 14.959131,
+              "mean": 1.4426182888545434,
+              "stdev": 0.48234332968419835
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 8285,
+        "qps": 2063,
+        "checkout_wait_ms": {
+          "n": 8285,
+          "min": 0.001837,
+          "p50": 0.005773,
+          "p90": 0.006834800000000001,
+          "p95": 0.008952399999999998,
+          "p99": 0.010819,
+          "max": 4007.800877,
+          "mean": 11.569265874109837,
+          "stdev": 214.53814841115792
+        },
+        "exec_ms": {
+          "n": 8285,
+          "min": 0.431214,
+          "p50": 3.566242,
+          "p90": 6.418397800000001,
+          "p95": 7.408596,
+          "p99": 9.509190119999994,
+          "max": 14.984812,
+          "mean": 3.8625631654797825,
+          "stdev": 1.8934586806558438
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 2.8,
+          "t2": {
+            "outcome": "committed",
+            "ms": 2.8
+          },
+          "final_balance": 80
+        },
+        "write_conflict_serializable": {
+          "t2_update_blocked_by_t1_read": true,
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 3.6,
+          "t2": {
+            "outcome": "committed",
+            "ms": 3006.0
+          },
+          "final_balance": 80
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t2"
+          ],
+          "error_codes": {
+            "t2": "1213"
+          },
+          "detection_ms": 1.6,
+          "timeline_s": {
+            "t2": 0.002,
+            "t1": 0.302
+          }
+        }
+      },
+      "rw_split": {
+        "haproxy": {
+          "proxy": "haproxy",
+          "connections": 40,
+          "reads_by_backend": {
+            "1/0": 40
+          },
+          "writes_ok": 40,
+          "writes_rejected": 0,
+          "writes_rejected_on_backend": {},
+          "write_error_codes": {},
+          "interpretation": "all traffic served by one writable backend (no read scaling through this proxy)"
+        }
+      },
+      "_seconds": 79.6
+    },
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-pxc-1",
+        "rdlab-pxc-2",
+        "rdlab-pxc-3",
+        "rdlab-pxc-haproxy"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 674000,
+          "batches": 674,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 44933,
+          "batch_ms": {
+            "n": 674,
+            "min": 19.286681,
+            "p50": 38.679526499999994,
+            "p90": 189.02333970000004,
+            "p95": 315.07530615000024,
+            "p99": 706.56432878,
+            "max": 1188.977484,
+            "mean": 86.1549612462908,
+            "stdev": 133.44897382835575
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-pxc-1": {
+              "cpu_cores_avg": 1.282,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4395,
+              "mem_end_mb": 4392,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.435
+            },
+            "rdlab-pxc-2": {
+              "cpu_cores_avg": 0.715,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4117,
+              "mem_end_mb": 4114,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.8
+            },
+            "rdlab-pxc-3": {
+              "cpu_cores_avg": 0.73,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4117,
+              "mem_end_mb": 4113,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.817
+            },
+            "rdlab-pxc-haproxy": {
+              "cpu_cores_avg": 0.018,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 50,
+              "mem_end_mb": 35,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.02
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 669000,
+          "batches": 669,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 44600,
+          "batch_ms": {
+            "n": 669,
+            "min": 26.56045,
+            "p50": 232.561451,
+            "p90": 860.6924362,
+            "p95": 1544.916418600002,
+            "p99": 2632.6404092800003,
+            "max": 2856.652739,
+            "mean": 385.5298202017937,
+            "stdev": 508.80843295496845
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-pxc-1": {
+              "cpu_cores_avg": 1.573,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4503,
+              "mem_end_mb": 4501,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.951
+            },
+            "rdlab-pxc-2": {
+              "cpu_cores_avg": 0.987,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4174,
+              "mem_end_mb": 4174,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.224
+            },
+            "rdlab-pxc-3": {
+              "cpu_cores_avg": 1.024,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4178,
+              "mem_end_mb": 4177,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.27
+            },
+            "rdlab-pxc-haproxy": {
+              "cpu_cores_avg": 0.022,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 50,
+              "mem_end_mb": 36,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.027
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 923000,
+          "batches": 923,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 61533,
+          "batch_ms": {
+            "n": 923,
+            "min": 32.71064,
+            "p50": 222.611221,
+            "p90": 1301.6935854000008,
+            "p95": 3080.9503273,
+            "p99": 3393.3372982200003,
+            "max": 3488.716695,
+            "mean": 568.6077403001083,
+            "stdev": 809.7962720856796
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-pxc-1": {
+              "cpu_cores_avg": 1.946,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4626,
+              "mem_end_mb": 4624,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 2.55
+            },
+            "rdlab-pxc-2": {
+              "cpu_cores_avg": 1.265,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4253,
+              "mem_end_mb": 4253,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.658
+            },
+            "rdlab-pxc-3": {
+              "cpu_cores_avg": 1.308,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4257,
+              "mem_end_mb": 4256,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.714
+            },
+            "rdlab-pxc-haproxy": {
+              "cpu_cores_avg": 0.022,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 50,
+              "mem_end_mb": 35,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.029
+            }
+          }
+        },
+        {
+          "workers": 4,
+          "target": "haproxy",
+          "mode": "values",
+          "rows": 212000,
+          "batches": 212,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 14133,
+          "batch_ms": {
+            "n": 212,
+            "min": 21.739186,
+            "p50": 58.7982535,
+            "p90": 524.9330835,
+            "p95": 843.5745562499999,
+            "p99": 6304.448216669985,
+            "max": 8408.450866,
+            "mean": 304.22283275,
+            "stdev": 993.8177858695213
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-pxc-1": {
+              "cpu_cores_avg": 0.48,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4654,
+              "mem_end_mb": 4648,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.636
+            },
+            "rdlab-pxc-2": {
+              "cpu_cores_avg": 1.117,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4291,
+              "mem_end_mb": 4291,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.479
+            },
+            "rdlab-pxc-3": {
+              "cpu_cores_avg": 1.031,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4294,
+              "mem_end_mb": 4294,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.365
+            },
+            "rdlab-pxc-haproxy": {
+              "cpu_cores_avg": 0.027,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 50,
+              "mem_end_mb": 35,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.036
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "haproxy",
+          "mode": "values",
+          "rows": 457000,
+          "batches": 457,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 30467,
+          "batch_ms": {
+            "n": 457,
+            "min": 22.85576,
+            "p50": 101.373119,
+            "p90": 1679.9515423999999,
+            "p95": 3221.893477,
+            "p99": 6996.980849199999,
+            "max": 7380.920772,
+            "mean": 598.4953342822757,
+            "stdev": 1242.1763313481686
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-pxc-1": {
+              "cpu_cores_avg": 0.819,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4699,
+              "mem_end_mb": 4699,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.213
+            },
+            "rdlab-pxc-2": {
+              "cpu_cores_avg": 0.802,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4338,
+              "mem_end_mb": 4336,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.188
+            },
+            "rdlab-pxc-3": {
+              "cpu_cores_avg": 0.944,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4356,
+              "mem_end_mb": 4352,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.398
+            },
+            "rdlab-pxc-haproxy": {
+              "cpu_cores_avg": 0.029,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 50,
+              "mem_end_mb": 37,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.043
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "haproxy",
+          "mode": "values",
+          "rows": 490000,
+          "batches": 490,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 32667,
+          "batch_ms": {
+            "n": 490,
+            "min": 27.337366,
+            "p50": 162.60421150000002,
+            "p90": 4039.4676965999997,
+            "p95": 5831.467296099984,
+            "p99": 7082.972042400001,
+            "max": 7411.864513,
+            "mean": 1032.263511165306,
+            "stdev": 1776.8572150051823
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-pxc-1": {
+              "cpu_cores_avg": 1.155,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4744,
+              "mem_end_mb": 4741,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.515
+            },
+            "rdlab-pxc-2": {
+              "cpu_cores_avg": 0.911,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4387,
+              "mem_end_mb": 4386,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.195
+            },
+            "rdlab-pxc-3": {
+              "cpu_cores_avg": 0.864,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4406,
+              "mem_end_mb": 4406,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.133
+            },
+            "rdlab-pxc-haproxy": {
+              "cpu_cores_avg": 0.034,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 50,
+              "mem_end_mb": 38,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.045
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "mode": "values",
+        "workers": 32,
+        "rows_per_s": 61533
+      },
+      "_seconds": 186.3
+    },
+    "replication": {
+      "kind": "Galera (virtually synchronous multi-master)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "8.4.10-10.1",
+          "status": {
+            "read_only": 0,
+            "replica_status": null,
+            "gtid_executed": ""
+          }
+        },
+        "node2": {
+          "role_reported": "primary",
+          "role_configured": "node",
+          "version": "8.4.10-10.1",
+          "status": {
+            "read_only": 0,
+            "replica_status": null,
+            "gtid_executed": ""
+          }
+        },
+        "node3": {
+          "role_reported": "primary",
+          "role_configured": "node",
+          "version": "8.4.10-10.1",
+          "status": {
+            "read_only": 0,
+            "replica_status": null,
+            "gtid_executed": ""
+          }
+        },
+        "haproxy": {
+          "role_reported": "primary",
+          "role_configured": "proxy",
+          "version": "8.4.10-10.1",
+          "status": {
+            "read_only": 0,
+            "replica_status": null,
+            "gtid_executed": ""
+          }
+        }
+      },
+      "visibility_lag": {
+        "node2": {
+          "replica": "node2",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 0.40224200347438455,
+            "p50": 0.7051374996080995,
+            "p90": 2.5777976901736146,
+            "p95": 13.61555773473806,
+            "p99": 253.9543797765512,
+            "max": 349.2208550160285,
+            "mean": 13.174499267673431,
+            "stdev": 62.50864654689739
+          }
+        },
+        "node3": {
+          "replica": "node3",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 0.5753840086981654,
+            "p50": 0.9038365096785128,
+            "p90": 21.58605600998272,
+            "p95": 104.13731494481867,
+            "p99": 231.86065946996686,
+            "max": 257.5861990044359,
+            "mean": 17.94537503543931,
+            "stdev": 53.84562688479995
+          }
+        }
+      },
+      "write_rejection": {
+        "node2": {
+          "replica": "node2",
+          "writes_rejected": false,
+          "note": "replica accepted a write (multi-master / node-level writable)"
+        },
+        "node3": {
+          "replica": "node3",
+          "writes_rejected": false,
+          "note": "replica accepted a write (multi-master / node-level writable)"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 2.31,
+        "rows_per_s": 8667,
+        "catchup_ms_after_last_commit": {
+          "node2": 67.9,
+          "node3": 1.5
+        },
+        "samples": [
+          {
+            "t": 212032.163,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212032.425,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212032.683,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212032.943,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212033.201,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212033.458,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212033.721,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212033.977,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212034.241,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          },
+          {
+            "t": 212034.502,
+            "primary": {},
+            "node2": {},
+            "node3": {}
+          }
+        ]
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 180330,
+          "qps": 45082,
+          "errors": 0,
+          "latency_ms": {
+            "n": 180330,
+            "min": 0.28207,
+            "p50": 0.670689,
+            "p90": 0.9870446,
+            "p95": 1.10479315,
+            "p99": 1.3922779099999998,
+            "max": 4.835705,
+            "mean": 0.7080762028336938,
+            "stdev": 0.21948654550025645
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "node2",
+            "node3"
+          ],
+          "workers": 32,
+          "queries": 189515,
+          "qps": 47379,
+          "errors": 0,
+          "latency_ms": {
+            "n": 189515,
+            "min": 0.268501,
+            "p50": 0.630382,
+            "p90": 0.9578506,
+            "p95": 1.0775777999999994,
+            "p99": 1.3688330799999988,
+            "max": 4.885401,
+            "mean": 0.6736515667361422,
+            "stdev": 0.22073547681685804
+          }
+        },
+        "gain": 1.05
+      },
+      "failover": {
+        "kind": "Galera (virtually synchronous multi-master)",
+        "killed": "primary",
+        "probe_table": "repl_probe",
+        "stopped_at": 0.0,
+        "writes_still_succeed_after_kill": true,
+        "write_attempts_until_success": 1,
+        "last_error_before_success": null,
+        "downtime_ms": 6261.4,
+        "new_primary": "node2",
+        "verified_via": "node2",
+        "new_primary_role": "primary",
+        "new_primary_status": {
+          "read_only": 0,
+          "replica_status": null,
+          "gtid_executed": ""
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 141.1
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "mysqldump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "mysqldump --single-transaction",
+          "backup_seconds": 3.15,
+          "backup_bytes": 153058355,
+          "backup_mb": 146.0,
+          "restore_seconds": 61.05,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 2.22
+          },
+          "pitr": {},
+          "notes": "single-transaction consistent snapshot, plain SQL restored serially with the mysql client",
+          "error": null,
+          "steps": [
+            {
+              "name": "mysqldump",
+              "cmd": "mysqldump -uroot -prootpass --single-transaction --routines --triggers --events  lab > /backups/lab.sql",
+              "rc": 0,
+              "seconds": 3.15,
+              "out": "\nmysqldump: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.51,
+              "out": ""
+            },
+            {
+              "name": "restore",
+              "cmd": "mysql -uroot -prootpass lab_restore < /backups/lab.sql",
+              "rc": 0,
+              "seconds": 61.05,
+              "out": "\nmysql: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.13,
+              "out": ""
+            }
+          ],
+          "seconds": 67.1,
+          "description": "logical dump restored into a second schema"
+        },
+        "xtrabackup": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "xtrabackup 8.4 full + incremental",
+          "backup_seconds": 6.28,
+          "backup_bytes": 394513516,
+          "backup_mb": 376.2,
+          "restore_seconds": 1.65,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 3.48
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "rows inserted after the full backup come from the incremental"
+          },
+          "notes": "XtraBackup 8.4 full + incremental (--apply-log-only on the base, final prepare with --incremental-dir), started standalone (wsrep off) in a scratch container",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/inc1",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "xtrabackup --backup (full)",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --backup --user=root --password=rootpass --socket=/tmp/mysql.sock --target-dir=/backups/full ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 6.28,
+              "out": "2026-09-14T10:59:40.917934-00:00 0 [Note] [MY-011825] [Xtrabackup] Transaction log of lsn (576309511) to (588992866) was copied.\n2026-09-14T10:59:41.144070-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            },
+            {
+              "name": "xtrabackup --backup (incremental)",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --backup --user=root --password=rootpass --socket=/tmp/mysql.sock --target-dir=/backups/inc1 --incremental-basedir=/backups/full ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 4.01,
+              "out": "2026-09-14T10:59:45.033168-00:00 0 [Note] [MY-011825] [Xtrabackup] Transaction log of lsn (588992856) to (589095621) was copied.\n2026-09-14T10:59:45.259821-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            },
+            {
+              "name": "xtrabackup --prepare --apply-log-only",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --prepare --apply-log-only --target-dir=/backups/full ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 3.47,
+              "out": "2026-09-14T10:59:48.806185-00:00 0 [Note] [MY-015020] [Server] MySQL Server: Plugins Shutdown - end.\n2026-09-14T10:59:48.806835-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            },
+            {
+              "name": "xtrabackup --prepare (incremental)",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --prepare --target-dir=/backups/full --incremental-dir=/backups/inc1 ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 5.08,
+              "out": "2026-09-14T10:59:53.879671-00:00 0 [Note] [MY-015020] [Server] MySQL Server: Plugins Shutdown - end.\n2026-09-14T10:59:53.880326-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            }
+          ],
+          "incremental": {
+            "seconds": 4.01,
+            "bytes": 5037438
+          },
+          "seconds": 25.5,
+          "description": "physical hot backup chain restored standalone in a scratch container"
+        }
+      },
+      "order": [
+        "mysqldump",
+        "xtrabackup"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "8e01e2dc01699210d015fae6"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "8a02af9917541b7af197b199"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "96ea0e0968091ca4746f681b"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 2.42,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "mysqldump",
+          "xtrabackup"
+        ],
+        "pitr_ok": [
+          "xtrabackup"
+        ]
+      },
+      "_seconds": 95.1
+    },
+    "logging": {
+      "sink": "slow query log file (long_query_time)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "audit_log_file": "/var/log/mysql/audit.json",
+        "audit_log_format": "JSON",
+        "audit_log_include_commands": "create_table,drop_table,alter_table,create_db,drop_db,truncate,grant,revoke,create_user,drop_user,alter_user",
+        "audit_log_policy": "QUERIES",
+        "binlog_format": "ROW",
+        "general_log": "OFF",
+        "general_log_file": "/var/log/mysql/general.log",
+        "innodb_print_all_deadlocks": "ON",
+        "log_bin": "ON",
+        "log_error": "/var/log/mysql/error.log",
+        "log_error_services": "log_filter_internal; log_sink_internal",
+        "log_error_verbosity": "3",
+        "log_output": "FILE",
+        "log_queries_not_using_indexes": "OFF",
+        "log_slow_extra": "ON",
+        "log_slow_verbosity": "microtime,query_plan,innodb",
+        "log_timestamps": "SYSTEM",
+        "long_query_time": "0.100000",
+        "min_examined_row_limit": "0",
+        "performance_schema": "ON",
+        "slow_query_log": "ON",
+        "slow_query_log_file": "/var/log/mysql/slow.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "slow query log file (long_query_time)",
+        "slow_query_ms": 302.7,
+        "slow_logged": true,
+        "seen_after_s": 0.27,
+        "sample": "_sent: 1  Rows_examined: 1 Thread_id: 87 Errno: 0 Killed: 0 Bytes_received: 45 Bytes_sent: 74 Read_first: 0 Read_last: 0 Read_key: 0 Read_next: 0 Read_prev: 0 Read_rnd: 0 Read_rnd_next: 0 Sort_merge_passes: 0 Sort_range_count: 0 Sort_rows: 0 Sort_scan_count: 0 Created_tmp_disk_tables: 0 Created_tmp_tables: 0 Start: 2026-09-14T11:00:00.335846-00:00 End: 2026-09-14T11:00:00.636136-00:00 Schema: lab Rows_affected: 0\n# Tmp_tables: 0  Tmp_disk_tables: 0  Tmp_table_sizes: 0\n# Full_scan: No  Full_join: No  Tmp_table: No  Tmp_table_on_disk: No\n# Filesort: No  Filesort_on_disk: No  Merge_passes: 0\n# No",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "Percona audit_log plugin, JSON, DDL commands only -> audit.json",
+        "setup": "configured at startup (compose command / lab.cnf)",
+        "event_found": true,
+        "seen_after_s": 0.66,
+        "sample": "{\"audit_record\": {\"name\": \"Query\", \"record\": \"6736_2026-09-14T10:56:17\", \"timestamp\": \"2026-09-14T11:00:01Z\", \"command_class\": \"create_table\", \"connection_id\": \"88\", \"status\": 0, \"sqltext\": \"CREATE TABLE audit_rdlab_mk_5a9c686e97 (id INTEGER)\", \"user\": \"lab[lab] @  [172.19.0.1]\", \"host\": \"\", \"os_user\": \"\", \"ip\": \"172.19.0.1\", \"db\": \"lab\"}}",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 18473,
+          "p50_ms": 0.389344,
+          "p99_ms": 0.8100513000000009,
+          "errors": 0
+        },
+        "full_logging": "SET GLOBAL long_query_time = 0 (every statement written to the slow log, new connections)",
+        "full": {
+          "qps": 14539,
+          "p50_ms": 0.5486409999999999,
+          "p99_ms": 0.9317739999999999,
+          "errors": 0
+        },
+        "log_bytes_written": 58313923,
+        "bytes_per_statement": 1002.7,
+        "overhead_pct": 21.3,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-pxc-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 10224,
+          "docker_logs_lines": 251
+        },
+        "rdlab-pxc-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2948,
+          "docker_logs_lines": 96
+        },
+        "rdlab-pxc-3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2968,
+          "docker_logs_lines": 96
+        },
+        "rdlab-pxc-haproxy": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 79,
+          "docker_logs_lines": 2
+        }
+      },
+      "extra": {
+        "performance_schema_top5": [
+          {
+            "calls": 172296,
+            "total_ms": 29152.3,
+            "avg_ms": 0.169,
+            "digest": "SELECT `id` , NAME , `email` FROM `customers` WHERE `id` = ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 23985.1,
+            "avg_ms": 23985.097,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE EVENTS FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 13690.8,
+            "avg_ms": 13690.774,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `order_items` FIELDS TERMINATED BY ? OPTIONALLY ENCLOS"
+          },
+          {
+            "calls": 1,
+            "total_ms": 4203.9,
+            "avg_ms": 4203.871,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `orders` FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY"
+          },
+          {
+            "calls": 1,
+            "total_ms": 1592.3,
+            "avg_ms": 1592.289,
+            "digest": "SELECT SQL_NO_CACHE * FROM `events`"
+          }
+        ],
+        "error_log_last": [
+          "(datetime.datetime(2026, 9, 14, 10, 59, 41, 383314), 'Warning', 'Server', \"No suitable 'keyring_component_metadata_query' service implementation found to fulfill the request.\")",
+          "(datetime.datetime(2026, 9, 14, 10, 59, 35, 29571), 'Warning', 'Server', \"No suitable 'keyring_component_metadata_query' service implementation found to fulfill the request.\")",
+          "(datetime.datetime(2026, 9, 14, 10, 59, 31, 807366), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")",
+          "(datetime.datetime(2026, 9, 14, 10, 59, 25, 240936), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")",
+          "(datetime.datetime(2026, 9, 14, 10, 59, 13, 919871), 'Warning', 'WSREP', \"Percona-XtraDB-Cluster doesn't recommend use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK/FOR EXPORT with pxc_strict\")"
+        ]
+      },
+      "collected": [
+        "results/pxc/logs/pxc-1__var_log_mysql_slow.log",
+        "results/pxc/logs/pxc-1__var_log_mysql_error.log",
+        "results/pxc/logs/pxc-1__var_log_mysql_audit.json"
+      ],
+      "_seconds": 19.3
+    }
+  },
+  "finished": "2026-09-14T11:00:19+00:00",
+  "harness_log": "results/logs/pxc/20260914-135737-fffc15.log",
+  "server_version": "8.4.10-10.1"
+}

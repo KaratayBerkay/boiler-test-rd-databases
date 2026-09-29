@@ -1,0 +1,26 @@
+Plan hash value: 381646615
+ 
+---------------------------------------------------------------------------------------------------------------
+| Id  | Operation                   | Name                    | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT            |                         |   600 | 20400 |       |  9415   (1)| 00:00:01 |
+|   1 |  SORT ORDER BY              |                         |   600 | 20400 |       |  9415   (1)| 00:00:01 |
+|*  2 |   VIEW                      |                         |   600 | 20400 |       |  9414   (1)| 00:00:01 |
+|*  3 |    WINDOW SORT PUSHED RANK  |                         |   487K|  9523K|    14M|  9414   (1)| 00:00:01 |
+|   4 |     HASH GROUP BY           |                         |   487K|  9523K|    14M|  9414   (1)| 00:00:01 |
+|*  5 |      HASH JOIN              |                         |   487K|  9523K|       |   542   (1)| 00:00:01 |
+|   6 |       VIEW                  | index$_join$_003        |  5000 | 40000 |       |    27   (0)| 00:00:01 |
+|*  7 |        HASH JOIN            |                         |       |       |       |            |          |
+|   8 |         INDEX FAST FULL SCAN| SYS_C008735             |  5000 | 40000 |       |    13   (0)| 00:00:01 |
+|   9 |         INDEX FAST FULL SCAN| IX_PRODUCTS_CATEGORY_ID |  5000 | 40000 |       |    21   (0)| 00:00:01 |
+|  10 |       TABLE ACCESS FULL     | ORDER_ITEMS             |   487K|  5714K|       |   514   (1)| 00:00:01 |
+---------------------------------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter("RN"<=3)
+   3 - filter(ROW_NUMBER() OVER ( PARTITION BY "P"."CATEGORY_ID" ORDER BY 
+              SUM("OI"."QTY"*"OI"."UNIT_PRICE") DESC ,"OI"."PRODUCT_ID")<=3)
+   5 - access("P"."ID"="OI"."PRODUCT_ID")
+   7 - access(ROWID=ROWID)

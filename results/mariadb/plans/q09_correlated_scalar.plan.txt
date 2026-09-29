@@ -1,0 +1,2 @@
+1 | PRIMARY | p | index | None | PRIMARY | 4 | None | 500 | Using where
+2 | DEPENDENT SUBQUERY | p2 | ref | ix_products_category_id | ix_products_category_id | 4 | lab.p.category_id | 24 | 

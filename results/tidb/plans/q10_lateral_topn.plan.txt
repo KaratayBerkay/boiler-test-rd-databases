@@ -1,0 +1,10 @@
+Sort_12 | 3.02 | root |  | lab.customers.id, lab.orders.ordered_at:desc
+└─Projection_14 | 3.02 | root |  | lab.customers.id, lab.orders.id, lab.orders.ordered_at, lab.orders.total_amount
+  └─Apply_16 | 3.02 | root |  | CARTESIAN inner join
+    ├─TableReader_18(Build) | 100.01 | root |  | data:TableRangeScan_17
+    │ └─TableRangeScan_17 | 100.01 | cop[tikv] | table:c | range:[-inf,100], keep order:false
+    └─TopN_20(Probe) | 300.02 | root |  | lab.orders.ordered_at:desc, lab.orders.id:desc, offset:0, count:3
+      └─IndexLookUp_34 | 300.02 | root |  | 
+        ├─IndexRangeScan_29(Build) | 1007.43 | cop[tikv] | table:o2, index:fk_1(customer_id) | range: decided by [eq(lab.orders.customer_id, lab.customers.id)], keep order:false
+        └─TopN_33(Probe) | 300.02 | cop[tikv] |  | lab.orders.ordered_at:desc, lab.orders.id:desc, offset:0, count:3
+          └─TableRowIDScan_30 | 1007.43 | cop[tikv] | table:o2 | keep order:false

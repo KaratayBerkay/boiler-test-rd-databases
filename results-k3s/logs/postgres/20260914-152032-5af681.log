@@ -1,0 +1,10 @@
+2026-09-14 15:20:32,967 DEBUG   [postgres/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152032-5af681.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152032-5af681.jsonl
+2026-09-14 15:20:32,968 INFO    [postgres/-] [postgres] run 20260914-152032-5af681 phases=['logging'] scale=0.3 (log: results-k3s/logs/postgres/20260914-152032-5af681.log)
+2026-09-14 15:20:32,983 INFO    [postgres/-] [postgres] phase: logging
+2026-09-14 15:20:33,008 INFO    [postgres/logging]   settings: {'logging_collector': 'on', 'log_destination': 'stderr,jsonlog', 'log_directory': '/var/lib/postgresql/log', 'log_filename': 'postgresql-%Y-%m-%d.log', 'log_rotation_size': '100MB', 'log_rotation_age'
+2026-09-14 15:20:33,990 INFO    [postgres/logging]   slow query (314.2 ms) logged=True after 0.45s; fast query logged=False
+2026-09-14 15:20:34,259 INFO    [postgres/logging]   audit (log_statement=ddl (pgaudit not bundled in the image)): event found=True after 0.22s
+2026-09-14 15:20:51,307 INFO    [postgres/logging]   overhead of logging every statement: 23086 -> 21072 qps (8.7 %), 123,106,743 log bytes for 84,287 statements
+2026-09-14 15:20:53,300 INFO    [postgres/logging]   collected 3 log file(s) into results-k3s/postgres/logs
+2026-09-14 15:20:53,300 INFO    [postgres/logging] [postgres] phase logging done in 20.3s
+2026-09-14 15:20:53,326 INFO    [postgres/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/postgres/20260914-152032-5af681.json

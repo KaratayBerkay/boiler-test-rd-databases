@@ -1,0 +1,11 @@
+GroupAggregate  (cost=1.89..14201.59 rows=484 width=12)
+  Group Key: w.customer_id
+  ->  Subquery Scan on w  (cost=1.89..14194.23 rows=503 width=4)
+        Filter: (CASE WHEN ((w.prev_at IS NULL) OR (EXTRACT(epoch FROM (w.occurred_at - w.prev_at)) > '1800'::numeric)) THEN 1 ELSE 0 END = 1)
+        ->  WindowAgg  (cost=1.89..12182.19 rows=100602 width=28)
+              Window: w1 AS (PARTITION BY events.customer_id ORDER BY events.occurred_at, events.id)
+              ->  Incremental Sort  (cost=1.77..10170.15 rows=100602 width=20)
+                    Sort Key: events.customer_id, events.occurred_at, events.id
+                    Presorted Key: events.customer_id
+                    ->  Index Scan using ix_events_customer_id on events  (cost=0.30..6745.70 rows=100602 width=20)
+                          Index Cond: (customer_id <= 2000)

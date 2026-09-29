@@ -1,0 +1,109 @@
+# TiDB — PD (placement driver) + 3 TiKV (Raft, 3 replicas) + 2 stateless TiDB SQL nodes (MySQL protocol, port 4000).
+# tidb_ddl_enable_fast_reorg is turned off: the ingest-based index build refuses to run when the host disk is nearly full.
+#
+# Backup strategy (`rdlab run tidb --phases backup`): SQL BACKUP/RESTORE (BR embedded in tidb-server) to `local:///backups`,
+#   a volume shared by every TiKV and TiDB container (each TiKV writes its own SSTs there), incremental with LAST_BACKUP,
+#   FLASHBACK TABLE / AS OF TIMESTAMP / FLASHBACK CLUSTER TO TIMESTAMP from MVCC history (within tidb_gc_life_time).
+# Logging strategy (conf/tidb.toml): JSON server log on stdout, slow log file (INFORMATION_SCHEMA.SLOW_QUERY), statement
+#   summary tables; Docker json-file rotation on every container.
+name: rdlab-tidb
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+services:
+  volumes-init:
+    image: pingcap/tidb:v8.5.8
+    container_name: rdlab-tidb-volumes-init
+    entrypoint: ["sh", "-c", "chmod 1777 /backups /var/log/tidb && echo volumes ready"]
+    volumes: [tidb-backups:/backups, tidb-logs:/var/log/tidb]
+    logging: *logging
+    restart: "no"
+  pd:
+    image: pingcap/pd:v8.5.8
+    container_name: rdlab-tidb-pd
+    logging: *logging
+    hostname: pd
+    command: --name=pd --data-dir=/data --client-urls=http://0.0.0.0:2379 --advertise-client-urls=http://pd:2379 --peer-urls=http://0.0.0.0:2380 --advertise-peer-urls=http://pd:2380 --initial-cluster=pd=http://pd:2380
+    volumes: [pd:/data]
+    ports: ["12379:2379"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:2379/pd/api/v1/health >/dev/null 2>&1 || curl -fs http://127.0.0.1:2379/pd/api/v1/health >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  tikv1: &tikv
+    image: pingcap/tikv:v8.5.8
+    container_name: rdlab-tidb-tikv1
+    logging: *logging
+    hostname: tikv1
+    command: --addr=0.0.0.0:20160 --advertise-addr=tikv1:20160 --status-addr=0.0.0.0:20180 --data-dir=/data --pd=pd:2379 --config=/etc/tikv/tikv.toml
+    volumes: [tikv1:/data, ./conf/tikv.toml:/etc/tikv/tikv.toml:ro, tidb-backups:/backups]
+    depends_on:
+      pd: { condition: service_healthy }
+      volumes-init: { condition: service_completed_successfully }
+  tikv2:
+    <<: *tikv
+    container_name: rdlab-tidb-tikv2
+    hostname: tikv2
+    command: --addr=0.0.0.0:20160 --advertise-addr=tikv2:20160 --status-addr=0.0.0.0:20180 --data-dir=/data --pd=pd:2379 --config=/etc/tikv/tikv.toml
+    volumes: [tikv2:/data, ./conf/tikv.toml:/etc/tikv/tikv.toml:ro, tidb-backups:/backups]
+  tikv3:
+    <<: *tikv
+    container_name: rdlab-tidb-tikv3
+    hostname: tikv3
+    command: --addr=0.0.0.0:20160 --advertise-addr=tikv3:20160 --status-addr=0.0.0.0:20180 --data-dir=/data --pd=pd:2379 --config=/etc/tikv/tikv.toml
+    volumes: [tikv3:/data, ./conf/tikv.toml:/etc/tikv/tikv.toml:ro, tidb-backups:/backups]
+  tidb1: &tidb
+    image: pingcap/tidb:v8.5.8
+    container_name: rdlab-tidb-1
+    hostname: tidb1
+    logging: *logging
+    command: --store=tikv --path=pd:2379 --advertise-address=tidb1 --status=10080 -P 4000 --config=/etc/tidb/tidb.toml
+    volumes: [./conf/tidb.toml:/etc/tidb/tidb.toml:ro, tidb-backups:/backups, tidb-logs:/var/log/tidb]
+    ports: ["14000:4000", "10080:10080"]
+    restart: on-failure:10
+    depends_on:
+      tikv1: { condition: service_started }
+      tikv2: { condition: service_started }
+      tikv3: { condition: service_started }
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:10080/status >/dev/null 2>&1 || curl -fs http://127.0.0.1:10080/status >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 100
+      start_period: 60s
+  tidb2:
+    <<: *tidb
+    container_name: rdlab-tidb-2
+    hostname: tidb2
+    command: --store=tikv --path=pd:2379 --advertise-address=tidb2 --status=10080 -P 4000 --config=/etc/tidb/tidb.toml --log-slow-query=/var/log/tidb/tidb2-slow.log
+    volumes: [./conf/tidb.toml:/etc/tidb/tidb.toml:ro, tidb-backups:/backups, tidb-logs:/var/log/tidb]
+    ports: ["14001:4000"]
+    restart: on-failure:10
+  init:
+    image: mysql:9
+    container_name: rdlab-tidb-init
+    logging: *logging
+    entrypoint: ["bash", "-ec"]
+    command:
+      - |
+        for i in $(seq 1 60); do mysql -h tidb1 -P 4000 -uroot -e 'SELECT 1' >/dev/null 2>&1 && break; sleep 3; done
+        mysql -h tidb1 -P 4000 -uroot -e "CREATE DATABASE IF NOT EXISTS lab; CREATE USER IF NOT EXISTS 'lab'@'%' IDENTIFIED BY 'labpass'; GRANT ALL PRIVILEGES ON *.* TO 'lab'@'%';"
+        mysql -h tidb1 -P 4000 -uroot -e "SET GLOBAL tidb_enable_1pc = ON" || true
+        mysql -h tidb1 -P 4000 -uroot -e "SET GLOBAL tidb_enable_dist_task = OFF" || true
+        mysql -h tidb1 -P 4000 -uroot -e "SET GLOBAL tidb_ddl_enable_fast_reorg = OFF" || true
+        mysql -h tidb1 -P 4000 -uroot -e "SET GLOBAL tidb_enable_check_constraint = ON" || true
+        mysql -h tidb1 -P 4000 -uroot -e "SELECT VERSION(), @@global.tidb_enable_dist_task AS dist_task, @@global.tidb_ddl_enable_fast_reorg AS fast_reorg, @@global.tidb_enable_check_constraint AS check_constraint"
+        mysql -h tidb2 -P 4000 -uroot -e "SELECT @@global.tidb_enable_dist_task AS dist_task_node2, @@global.tidb_ddl_enable_fast_reorg AS fast_reorg_node2"
+    depends_on:
+      tidb1: { condition: service_healthy }
+      tidb2: { condition: service_healthy }
+    restart: "no"
+
+volumes:
+  pd:
+  tikv1:
+  tikv2:
+  tikv3:
+  tidb-backups:
+  tidb-logs:

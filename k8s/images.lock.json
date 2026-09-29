@@ -1,0 +1,107 @@
+{
+ "_comment": "source image -> what the cluster pulls (digest recorded after push by k8s/push-images.sh)",
+ "registry": "10.10.2.51:8443",
+ "pushed": "2026-09-14T10:20:53+00:00",
+ "images": {
+  "busybox:1.37": {
+   "harbor": "10.10.2.51:8443/rdlab/busybox:1.37",
+   "digest": "sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0"
+  },
+  "citusdata/citus:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/citusdata/citus:latest",
+   "digest": "sha256:91dd676a2a4c85d14a46435101f446c4712975dc726f066638c4fd656e19fb09"
+  },
+  "clickhouse/clickhouse-keeper:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/clickhouse/clickhouse-keeper:latest",
+   "digest": "sha256:0fbe266b275a23b53508a7a3dac2e6fe149d63cddf242897a5c5c3d7b5350568"
+  },
+  "clickhouse/clickhouse-server:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/clickhouse/clickhouse-server:latest",
+   "digest": "sha256:fa394da808cc53f76d0344429421d6c422a6ee85fe7450135c0e3cff4df9bcbb"
+  },
+  "cockroachdb/cockroach:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/cockroachdb/cockroach:latest",
+   "digest": "sha256:c0838fd4db940b7dedb590211ee3cd229b75d3b49ce466760454a282b98641ae"
+  },
+  "crate:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/crate:latest",
+   "digest": "sha256:18398dbe5c0697003e043a944427d38e935936dd32307d24f93bdc2512e5acbe"
+  },
+  "edoburu/pgbouncer:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/edoburu/pgbouncer:latest",
+   "digest": "sha256:4c1ca296ef525f108f5d3552cc337c0c09587cf8dae7f0067fd93349e47dc1cd"
+  },
+  "firebirdsql/firebird:5": {
+   "harbor": "10.10.2.51:8443/rdlab/firebirdsql/firebird:5",
+   "digest": "sha256:1529560400fc7847f015c57fc9d70729c44d9a9d8f9000df19c5ce1950b4c202"
+  },
+  "gvenzl/oracle-free:23-slim-faststart": {
+   "harbor": "10.10.2.51:8443/rdlab/gvenzl/oracle-free:23-slim-faststart",
+   "digest": "sha256:f5ff19033860d662c821cb04eb10483fa94f14f78eae252d054291ea07028093"
+  },
+  "haproxy:lts": {
+   "harbor": "10.10.2.51:8443/rdlab/haproxy:lts",
+   "digest": "sha256:0e81cf4a7fac4f689289ae2afd29e1153e9e6d69ae3fb0c1f0345f998643c258"
+  },
+  "icr.io/db2_community/db2:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/db2_community/db2:latest",
+   "digest": "sha256:2de8151713c261843868c5c3411b57be6ae79d99d70a5b3022337836776bfda6"
+  },
+  "mariadb/maxscale:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/mariadb/maxscale:latest",
+   "digest": "sha256:b163bcf7a41c3a89eea0a688465eb924cbc52db91374abb0bc54e1fba69c37bd"
+  },
+  "mariadb:11": {
+   "harbor": "10.10.2.51:8443/rdlab/mariadb:11",
+   "digest": "sha256:2d2f4095530294735a857cfe22bb101e19b0849b416911c796ec4aa81b164a62"
+  },
+  "mcr.microsoft.com/mssql/server:2025-latest": {
+   "harbor": "10.10.2.51:8443/rdlab/mssql/server:2025-latest",
+   "digest": "sha256:b036b61e953e6e660f04514fc3f703b995a9cdda569cf96d07d3f751240f615a"
+  },
+  "monetdb/monetdb:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/monetdb/monetdb:latest",
+   "digest": "sha256:a71e6e8c8402beadc51aebf944b465ee5b185c7ae4a9e6808b5d9133ee921786"
+  },
+  "mysql:9": {
+   "harbor": "10.10.2.51:8443/rdlab/mysql:9",
+   "digest": "sha256:29abb0a179982e4a8928138bfc7f918af9eda64e7eeb1b1d084c1720a20159e6"
+  },
+  "percona/percona-xtradb-cluster:8.4": {
+   "harbor": "10.10.2.51:8443/rdlab/percona/percona-xtradb-cluster:8.4",
+   "digest": "sha256:2754917617730b85c5d2d5f521bb76d2efa2dc6c94dafcb98f44dd64f1292006"
+  },
+  "pgvector/pgvector:pg18": {
+   "harbor": "10.10.2.51:8443/rdlab/pgvector/pgvector:pg18",
+   "digest": "sha256:2ba9ca5f2e7daa0f0e7723cba1ee9167bab54efd3640516a44ac1a928dd67e7a"
+  },
+  "pingcap/pd:v8.5.8": {
+   "harbor": "10.10.2.51:8443/rdlab/pingcap/pd:v8.5.8",
+   "digest": "sha256:424e896800e42e1b7eb585b604c8daa3454110d0f0df5ab41f7c5f49164d3aef"
+  },
+  "pingcap/tidb:v8.5.8": {
+   "harbor": "10.10.2.51:8443/rdlab/pingcap/tidb:v8.5.8",
+   "digest": "sha256:df168c764bf2dfdb166dc37a5c3b0e210d29d5f3ab2d33317fd0fdf7b32037f5"
+  },
+  "pingcap/tikv:v8.5.8": {
+   "harbor": "10.10.2.51:8443/rdlab/pingcap/tikv:v8.5.8",
+   "digest": "sha256:ab84580b6795868940231aa778a34b082d19e4417e6d66f755c609bebdbbfd69"
+  },
+  "proxysql/proxysql:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/proxysql/proxysql:latest",
+   "digest": "sha256:0e95d1b7cc32f1de7923ffbf6cc4ba658874a6f6a6b7c2cdfdc6444304c13caf"
+  },
+  "questdb/questdb:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/questdb/questdb:latest",
+   "digest": "sha256:67eaed863ebb2383227919ea9a5499a4a39ceca3862c20b974c84a10e11cdf89"
+  },
+  "rdlab/h2:2.3.232": {
+   "harbor": "10.10.2.51:8443/rdlab/h2:2.3.232",
+   "digest": "sha256:95a365438290726ccb3154d9933c38f4bb179199c87ba0591521b022fea759d5"
+  },
+  "yugabytedb/yugabyte:latest": {
+   "harbor": "10.10.2.51:8443/rdlab/yugabytedb/yugabyte:latest",
+   "digest": "sha256:bf2e1b9b6cca97bae418dda21010045f43da348c2722cc62f84d2961567e627c"
+  }
+ }
+}

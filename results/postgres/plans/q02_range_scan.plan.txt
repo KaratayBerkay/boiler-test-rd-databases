@@ -1,0 +1,5 @@
+Limit  (cost=1659.84..1660.87 rows=411 width=31)
+  ->  Sort  (cost=1659.84..1660.87 rows=411 width=31)
+        Sort Key: ordered_at, id
+        ->  Seq Scan on orders  (cost=0.00..1642.00 rows=411 width=31)
+              Filter: ((ordered_at >= '2025-03-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-03-08 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))

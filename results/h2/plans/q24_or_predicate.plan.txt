@@ -1,0 +1,8 @@
+SELECT
+    "id"
+FROM "public"."orders"
+    /* public.PRIMARY_KEY_C3 */
+WHERE ("customer_id" = ?1)
+    OR ("id" = ?2)
+ORDER BY 1
+/* index sorted */

@@ -1,0 +1,303 @@
+{
+  "engine": "db2",
+  "display": "IBM Db2 12.1 CE",
+  "category": "row-store OLTP",
+  "dialect": "db2",
+  "driver": "ibm_db",
+  "image": "icr.io/db2_community/db2:latest",
+  "run_id": "20260914-133415-7bae3a",
+  "started": "2026-09-14T10:34:15+00:00",
+  "scale": 0.3,
+  "notes": "Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but needs two instances with matching configuration and a takeover procedure; not automated in this stack.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "offline_full": {
+          "status": "error",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE ... COMPRESS (offline) / RESTORE ... INTO",
+          "backup_seconds": null,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "RuntimeError: BACKUP DATABASE (offline) failed rc=2: deactivate db lab SQL1495W Deactivate database is successful, however, there is still a connection to the database.",
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/*.001 /backups/logs /backups/lt && mkdir -p /backups/logs /backups/lt && chmod 777 /backups/logs /backups/lt",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE (offline)",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'force applications all'\"'\"' || exit $?\nsleep 2\ndb2 -v '\"'\"'deactivate db lab'\"'\"' || exit $?\ndb2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 2,
+              "seconds": 3.69,
+              "out": "\n\ndeactivate db lab\nSQL1495W  Deactivate database is successful, however, there is still a \nconnection to the database.\n\n"
+            }
+          ],
+          "seconds": 3.8,
+          "description": "offline full image restored into a new database"
+        },
+        "online_incremental": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "LOGARCHMETH1 + BACKUP ONLINE INCREMENTAL + RESTORE INCREMENTAL AUTOMATIC",
+          "backup_seconds": 7.34,
+          "backup_bytes": 208402162,
+          "backup_mb": 198.7,
+          "restore_seconds": 16.75,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 4.21
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "table created after the online full comes from the incremental image"
+          },
+          "notes": "archive logging (LOGARCHMETH1 DISK) enables online backups; TRACKMOD ON makes incremental images possible; the chain is resolved with INCREMENTAL AUTOMATIC",
+          "error": null,
+          "steps": [
+            {
+              "name": "LOGARCHMETH1 + TRACKMOD, offline backup",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'force applications all'\"'\"' || exit $?\nsleep 2\ndb2 -v '\"'\"'deactivate db lab'\"'\"' || exit $?\ndb2 -v '\"'\"'update db cfg for lab using LOGARCHMETH1 DISK:/backups/logs/ TRACKMOD ON'\"'\"' || exit $?\ndb2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 8.51,
+              "out": "\nbackup db lab to /backups compress without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103427\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCLUDE LOGS",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online to /backups compress include logs without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 7.34,
+              "out": "backup db lab online to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103434\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCREMENTAL",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online incremental to /backups compress include logs without prompting'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 5.95,
+              "out": "backup db lab online incremental to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103441\n\n\n"
+            },
+            {
+              "name": "logtarget dir",
+              "cmd": "rm -rf /backups/lt && mkdir -p /backups/lt && chmod 777 /backups/lt",
+              "rc": 0,
+              "seconds": 0.05,
+              "out": ""
+            },
+            {
+              "name": "RESTORE INCREMENTAL AUTOMATIC INTO labi + ROLLFORWARD",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab incremental automatic from /backups taken at 20260914103441 into labi logtarget /backups/lt replace existing without prompting'\"'\"' || exit $?\ndb2 -v '\"'\"'rollforward db labi to end of logs and complete overflow log path (/backups/lt)'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 16.75,
+              "out": " Next log file to be read               =\n Log files processed                    = S0000076.LOG - S0000076.LOG\n Last committed transaction             = 2026-09-14-10.34.44.000000 UTC\n\nDB20000I  The ROLLFORWARD command completed successfully.\n\n"
+            },
+            {
+              "name": "drop labi",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'drop db labi'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 1.24,
+              "out": "drop db labi\nDB20000I  The DROP DATABASE command completed successfully.\n\n"
+            }
+          ],
+          "archive_base_timestamp": "20260914103427",
+          "online_full_timestamp": "20260914103434",
+          "incremental": {
+            "timestamp": "20260914103441",
+            "seconds": 5.95,
+            "bytes": 75538432
+          },
+          "seconds": 47.6,
+          "description": "online full + incremental chain restored with rollforward"
+        },
+        "pitr": {
+          "status": "error",
+          "kind": "pitr",
+          "tool": "ARCHIVE LOG + ROLLFORWARD ... TO <timestamp>",
+          "backup_seconds": 1.18,
+          "backup_bytes": 356352,
+          "backup_mb": 0.3,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "RuntimeError: RESTORE chain INTO labp + ROLLFORWARD TO timestamp failed rc=4: DB20000I The RESTORE DATABASE command completed successfully. rollforward db labp to 2026-09-14-10.35.13 using local time and complete overflow log path (/backups/logs/db2inst1/LAB/NODE0000/LOGSTREAM0000/C0000000, /backups/lt) SQL0104N An unexpected token \")\" was found following \"<identifier>\". Expected tokens may include: \"ON\". SQLSTATE=42601",
+          "steps": [
+            {
+              "name": "ARCHIVE LOG",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'archive log for db lab'\"'\"' || exit $?' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 1.18,
+              "out": "archive log for db lab\nDB20000I  The ARCHIVE LOG command completed successfully.\n\n"
+            },
+            {
+              "name": "logtarget dir",
+              "cmd": "rm -rf /backups/lt && mkdir -p /backups/lt && chmod 777 /backups/lt",
+              "rc": 0,
+              "seconds": 0.05,
+              "out": ""
+            },
+            {
+              "name": "RESTORE chain INTO labp + ROLLFORWARD TO timestamp",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab incremental automatic from /backups taken at 20260914103441 into labp logtarget /backups/lt replace existing without prompting'\"'\"' || exit $?\ndb2 -v '\"'\"'rollforward db labp to 2026-09-14-10.35.13 using local time and complete overflow log path (/backups/logs/db2inst1/LAB/NODE0000/LOGSTREAM0000/C0000000, /backups/lt)'\"'\"' || exit $?' )",
+              "rc": 4,
+              "seconds": 15.89,
+              "out": "DB20000I  The RESTORE DATABASE command completed successfully.\n\nrollforward db labp to 2026-09-14-10.35.13 using local time and complete overflow log path (/backups/logs/db2inst1/LAB/NODE0000/LOGSTREAM0000/C0000000, /backups/lt)\nSQL0104N  An unexpected token \")\" was found following \"<identifier>\".  \nExpected tokens may include:  \"ON\".  SQLSTATE=42601\n\n"
+            }
+          ],
+          "archive_dir": "/backups/logs/db2inst1/LAB/NODE0000/LOGSTREAM0000/C0000000",
+          "seconds": 20.8,
+          "description": "point-in-time rollforward from archived logs"
+        }
+      },
+      "order": [
+        "offline_full",
+        "online_incremental",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 4.32,
+      "summary": {
+        "strategies": 3,
+        "ok": 1,
+        "verified": [
+          "online_incremental"
+        ],
+        "pitr_ok": [
+          "online_incremental"
+        ]
+      },
+      "_seconds": 81.4
+    },
+    "logging": {
+      "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "DIAGLEVEL": "3",
+        "DIAGPATH": "/database/config/db2inst1/sqllib/db2dump/ $m",
+        "LOGARCHMETH1": "DISK:/backups/logs/",
+        "TRACKMOD": "YES",
+        "MON_ACT_METRICS": "BASE",
+        "MON_REQ_METRICS": "BASE",
+        "MON_DEADLOCK": "WITHOUT_HIST",
+        "MON_LOCKWAIT": "NONE",
+        "NOTIFYLEVEL": "3",
+        "audit_log_path": null,
+        "event_monitor": "RDLAB_ACT (activities -> ACTIVITYSTMT_RDLAB_ACT)"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+        "slow_query_ms": 634.9,
+        "slow_logged": true,
+        "seen_after_s": 0.08,
+        "sample": "executions=1 total_act_time_ms=566 cpu_us=196964 stmt=SELECT COUNT(*) AS rdlab_mk_b0d87f694c FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer",
+        "duration_ms": 566,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "db2audit policy RDLAB_POL (EXECUTE) -> db2audit archive/extract",
+        "setup": "CREATE AUDIT POLICY RDLAB_POL CATEGORIES EXECUTE, OBJMAINT; AUDIT DATABASE USING POLICY RDLAB_POL (SECADM via CLP)",
+        "event_found": true,
+        "seen_after_s": 0.24,
+        "sample": "\"2026-09-14-10.35.40.376504\",\"OBJMAINT\",\"CREATE_OBJECT\",4,0,\"LAB\",\"db2inst1\",\"DB2INST1\",,,\"127.0.0.1.40738.260914103546\",\"python\",\"NULLID\",\"SYSSH200\",0,\"DB2INST1\",\"AUDIT_RDLAB_MK_562208ED0E\",\"TABLE\",,,,,,,\"\u0000\u0000\u0000\u0000\u0000\u0000kN\",\"\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\",,\"berkay-server-x99e\",,,,,,,,,,,,,,,,\"db2inst1\",\"45c6eafb6aee\",\"SYSTEM\"",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 2692,
+          "p50_ms": 1.004466,
+          "p99_ms": 25.891497599999983,
+          "errors": 0
+        },
+        "full_logging": "COLLECT ACTIVITY DATA ON ALL WITH DETAILS on the default workload (every statement into the RDLAB_ACT event monitor tables)",
+        "full": {
+          "qps": 769,
+          "p50_ms": 3.098872,
+          "p99_ms": 177.10126696,
+          "errors": 0
+        },
+        "log_bytes_written": 773700,
+        "bytes_per_statement": 251.4,
+        "overhead_pct": 71.4,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-db2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1774747,
+          "docker_logs_lines": 37857
+        }
+      },
+      "extra": {
+        "package_cache_top5": [],
+        "activity_rows": 17187
+      },
+      "collected": [
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2diag.log",
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2inst1.nfy"
+      ],
+      "_seconds": 31.6
+    }
+  },
+  "harness_log": "results/logs/db2/20260914-133415-7bae3a.log",
+  "server_version": "DB2 v12.1.5.0",
+  "finished": "2026-09-14T10:36:08+00:00"
+}

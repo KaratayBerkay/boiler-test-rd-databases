@@ -1,0 +1,437 @@
+{
+  "engine": "mysql",
+  "display": "MySQL 9",
+  "category": "row-store OLTP",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "mysql:9",
+  "run_id": "20260912-215423-2939cc",
+  "started": "2026-09-12T18:54:23+00:00",
+  "scale": 1.0,
+  "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+  "phases": {
+    "connections": {
+      "max_connections": 1000,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 0.99947,
+            "p50": 1.2898625,
+            "p90": 1.4819111,
+            "p95": 1.5001056499999998,
+            "p99": 1.55240105,
+            "max": 1.570397,
+            "mean": 1.3054432666666667,
+            "stdev": 0.14726187203752217
+          },
+          "errors": [],
+          "error_count": 0
+        },
+        "proxysql": {
+          "target": "proxysql",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 1.147637,
+            "p50": 1.421259,
+            "p90": 1.6529231,
+            "p95": 1.68237195,
+            "p99": 1.7195870199999999,
+            "max": 1.731437,
+            "mean": 1.4321297000000002,
+            "stdev": 0.15025164908405053
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 3.841233,
+              "p50": 5.101796,
+              "p90": 5.559081,
+              "p95": 5.7149025,
+              "p99": 5.839559700000001,
+              "max": 5.870724,
+              "mean": 4.8731975,
+              "stdev": 0.6857146918263092
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 1010,
+            "opened": 995,
+            "failed": 15,
+            "wall_ms_to_open_all": 582.4,
+            "connect_ms": {
+              "n": 995,
+              "min": 66.276412,
+              "p50": 344.257604,
+              "p90": 484.8012994,
+              "p95": 508.0569527,
+              "p99": 540.13862998,
+              "max": 553.690191,
+              "mean": 340.73594193768844,
+              "stdev": 107.9589209732477
+            },
+            "error_codes": {
+              "1040": 15
+            },
+            "sample_error": "OperationalError: (1040, 'Too many connections')"
+          }
+        ],
+        "proxysql": [
+          {
+            "target": "proxysql",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 3.443207,
+              "p50": 4.3118675,
+              "p90": 4.9704797,
+              "p95": 5.0117163499999995,
+              "p99": 5.04470567,
+              "max": 5.052953,
+              "mean": 4.256433599999999,
+              "stdev": 0.5184603826342374
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 7715,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1929,
+            "latency_ms": {
+              "n": 7715,
+              "min": 0.193109,
+              "p50": 0.492235,
+              "p90": 0.8061476000000001,
+              "p95": 0.8489399999999999,
+              "p99": 0.8863649999999998,
+              "max": 1.6388,
+              "mean": 0.5160404321451717,
+              "stdev": 0.20691848120030254
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 27643,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 6911,
+            "latency_ms": {
+              "n": 27643,
+              "min": 0.191494,
+              "p50": 0.586186,
+              "p90": 0.7656885999999999,
+              "p95": 0.8054112999999999,
+              "p99": 0.8966105399999993,
+              "max": 1.395445,
+              "mean": 0.5761343761169193,
+              "stdev": 0.15742186498775376
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 181076,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 45269,
+            "latency_ms": {
+              "n": 181076,
+              "min": 0.213166,
+              "p50": 0.3415235,
+              "p90": 0.3982505,
+              "p95": 0.4476095,
+              "p99": 0.6291175,
+              "max": 2.715843,
+              "mean": 0.35184637317479955,
+              "stdev": 0.06627275933735016
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 198576,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 49644,
+            "latency_ms": {
+              "n": 198576,
+              "min": 0.268355,
+              "p50": 0.610998,
+              "p90": 0.8835345,
+              "p95": 0.9856075,
+              "p99": 1.2162525,
+              "max": 4.660662,
+              "mean": 0.6429236001933768,
+              "stdev": 0.18845328993003727
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 236034,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 59008,
+            "latency_ms": {
+              "n": 236034,
+              "min": 0.263312,
+              "p50": 1.006907,
+              "p90": 1.6117851,
+              "p95": 1.8576530999999998,
+              "p99": 2.4904014699999943,
+              "max": 11.113142,
+              "mean": 1.083030693616174,
+              "stdev": 0.4329394574544627
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ],
+        "proxysql": [
+          {
+            "workers": 1,
+            "targets": [
+              "proxysql"
+            ],
+            "queries": 3971,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 993,
+            "latency_ms": {
+              "n": 3971,
+              "min": 0.303013,
+              "p50": 1.040452,
+              "p90": 1.208751,
+              "p95": 1.2396945000000001,
+              "p99": 1.2892079,
+              "max": 1.97246,
+              "mean": 1.0043797411231428,
+              "stdev": 0.18504285274206936
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "proxysql"
+            ],
+            "queries": 18659,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 4665,
+            "latency_ms": {
+              "n": 18659,
+              "min": 0.258323,
+              "p50": 0.907443,
+              "p90": 1.118877,
+              "p95": 1.1667904,
+              "p99": 1.2560215199999998,
+              "max": 3.936115,
+              "mean": 0.854503274934348,
+              "stdev": 0.23761829308934215
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "proxysql"
+            ],
+            "queries": 132741,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 33185,
+            "latency_ms": {
+              "n": 132741,
+              "min": 0.289978,
+              "p50": 0.463505,
+              "p90": 0.574361,
+              "p95": 0.621561,
+              "p99": 0.7859072000000016,
+              "max": 3.033495,
+              "mean": 0.48053358177202216,
+              "stdev": 0.09319026987221049
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "proxysql"
+            ],
+            "queries": 163673,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 40918,
+            "latency_ms": {
+              "n": 163673,
+              "min": 0.343041,
+              "p50": 0.74471,
+              "p90": 1.0753634,
+              "p95": 1.1859324,
+              "p99": 1.44691504,
+              "max": 4.273924,
+              "mean": 0.7803964912111344,
+              "stdev": 0.22299730524317096
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "proxysql"
+            ],
+            "queries": 172565,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 43141,
+            "latency_ms": {
+              "n": 172565,
+              "min": 0.396752,
+              "p50": 1.373917,
+              "p90": 2.2374192,
+              "p95": 2.5767911999999993,
+              "p99": 3.3509727199999904,
+              "max": 9.528779,
+              "mean": 1.4821196051111176,
+              "stdev": 0.584784185167063
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 8971,
+        "qps": 2234,
+        "checkout_wait_ms": {
+          "n": 8971,
+          "min": 0.001876,
+          "p50": 0.00549,
+          "p90": 0.00646,
+          "p95": 0.008713,
+          "p99": 0.010345899999999976,
+          "max": 4002.478744,
+          "mean": 10.675156303645078,
+          "stdev": 206.01080920061153
+        },
+        "exec_ms": {
+          "n": 8971,
+          "min": 0.413613,
+          "p50": 3.292274,
+          "p90": 5.908635,
+          "p95": 6.868779999999999,
+          "p99": 8.93591249999998,
+          "max": 14.322766,
+          "mean": 3.5661139420354475,
+          "stdev": 1.749378386895344
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 1.9,
+          "t2": {
+            "outcome": "committed",
+            "ms": 2.1
+          },
+          "final_balance": 80
+        },
+        "write_conflict_serializable": {
+          "t2_update_blocked_by_t1_read": true,
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 2.2,
+          "t2": {
+            "outcome": "committed",
+            "ms": 3003.7
+          },
+          "final_balance": 80
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t2"
+          ],
+          "error_codes": {
+            "t2": "1213"
+          },
+          "detection_ms": 1.5,
+          "timeline_s": {
+            "t1": 0.302,
+            "t2": 0.002
+          }
+        }
+      },
+      "rw_split": {
+        "proxysql": {
+          "proxy": "proxysql",
+          "connections": 40,
+          "reads_by_backend": {
+            "2/4825f961277b": 40
+          },
+          "writes_ok": 40,
+          "writes_rejected": 0,
+          "writes_rejected_on_backend": {},
+          "write_error_codes": {},
+          "interpretation": "all traffic hit one backend"
+        }
+      },
+      "_seconds": 72.5
+    }
+  },
+  "server_version": "9.7.2",
+  "finished": "2026-09-12T18:55:35+00:00"
+}

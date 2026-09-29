@@ -1,0 +1,3 @@
+Aggregate  (cost=1792.01..1792.02 rows=1 width=8)
+  ->  Seq Scan on orders  (cost=0.00..1792.00 rows=2 width=0)
+        Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))

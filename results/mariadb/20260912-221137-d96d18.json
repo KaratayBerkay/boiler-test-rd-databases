@@ -1,0 +1,405 @@
+{
+  "engine": "mariadb",
+  "display": "MariaDB 11",
+  "category": "row-store OLTP",
+  "dialect": "mariadb",
+  "driver": "pymysql",
+  "image": "mariadb:11",
+  "run_id": "20260912-221137-d96d18",
+  "started": "2026-09-12T19:11:37+00:00",
+  "scale": 1.0,
+  "notes": "MariaDB 11.8 LTS. Replica configured by the official image (MARIADB_MASTER_HOST) using GTID slave_pos; MaxScale readwritesplit routes SELECTs to the replica and performs automatic failover (mariadbmon) when the primary dies.",
+  "phases": {
+    "connections": {
+      "max_connections": 1000,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 0.933866,
+            "p50": 1.1143655,
+            "p90": 1.2061131,
+            "p95": 1.26636625,
+            "p99": 1.3061307800000002,
+            "max": 1.30689,
+            "mean": 1.1114613333333334,
+            "stdev": 0.0920861735978257
+          },
+          "errors": [],
+          "error_count": 0
+        },
+        "maxscale": {
+          "target": "maxscale",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 1.607287,
+            "p50": 1.8906225,
+            "p90": 2.1387885,
+            "p95": 2.17715615,
+            "p99": 2.20916141,
+            "max": 2.209994,
+            "mean": 1.9036332,
+            "stdev": 0.16404730627604547
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 3.828243,
+              "p50": 4.4828624999999995,
+              "p90": 5.5820601,
+              "p95": 5.72723505,
+              "p99": 5.843375010000001,
+              "max": 5.87241,
+              "mean": 4.5833654,
+              "stdev": 0.6784740875622591
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 1010,
+            "opened": 999,
+            "failed": 11,
+            "wall_ms_to_open_all": 631.1,
+            "connect_ms": {
+              "n": 999,
+              "min": 75.682209,
+              "p50": 368.014851,
+              "p90": 505.1811812,
+              "p95": 526.3389870999999,
+              "p99": 551.09663096,
+              "max": 570.857797,
+              "mean": 364.6346635745746,
+              "stdev": 106.50529433049178
+            },
+            "error_codes": {
+              "1040": 11
+            },
+            "sample_error": "OperationalError: (1040, 'Too many connections')"
+          }
+        ],
+        "maxscale": [
+          {
+            "target": "maxscale",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 10,
+              "min": 5.159303,
+              "p50": 6.151934000000001,
+              "p90": 6.463826999999999,
+              "p95": 6.4716795,
+              "p99": 6.4779615,
+              "max": 6.479532,
+              "mean": 6.0375858000000004,
+              "stdev": 0.4098709530246806
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 6860,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1715,
+            "latency_ms": {
+              "n": 6860,
+              "min": 0.218006,
+              "p50": 0.55252,
+              "p90": 0.8836419000000001,
+              "p95": 0.9202114499999998,
+              "p99": 0.9754705100000001,
+              "max": 1.797938,
+              "mean": 0.580530589212828,
+              "stdev": 0.23063014897499046
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 26833,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 6708,
+            "latency_ms": {
+              "n": 26833,
+              "min": 0.196189,
+              "p50": 0.616008,
+              "p90": 0.8026367999999999,
+              "p95": 0.8483052,
+              "p99": 0.9384669200000002,
+              "max": 1.84352,
+              "mean": 0.5936204909998882,
+              "stdev": 0.1759619015795025
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 173140,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 43285,
+            "latency_ms": {
+              "n": 173140,
+              "min": 0.232892,
+              "p50": 0.3566315,
+              "p90": 0.4188239,
+              "p95": 0.4737653999999999,
+              "p99": 0.6414726599999985,
+              "max": 8.158,
+              "mean": 0.36800331662816216,
+              "stdev": 0.07428126073450345
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 186429,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 46607,
+            "latency_ms": {
+              "n": 186429,
+              "min": 0.282461,
+              "p50": 0.650043,
+              "p90": 0.94725,
+              "p95": 1.0563684000000002,
+              "p99": 1.33210516,
+              "max": 4.703452,
+              "mean": 0.684963477114612,
+              "stdev": 0.21092084939870964
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 221080,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 55270,
+            "latency_ms": {
+              "n": 221080,
+              "min": 0.261124,
+              "p50": 1.0580660000000002,
+              "p90": 1.7545070999999999,
+              "p95": 2.0527838499999995,
+              "p99": 2.9109853499999963,
+              "max": 17.376291,
+              "mean": 1.1563675356567757,
+              "stdev": 0.5107899573717698
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ],
+        "maxscale": [
+          {
+            "workers": 1,
+            "targets": [
+              "maxscale"
+            ],
+            "queries": 4326,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1082,
+            "latency_ms": {
+              "n": 4326,
+              "min": 0.307831,
+              "p50": 0.974113,
+              "p90": 1.201876,
+              "p95": 1.2496395,
+              "p99": 1.29472075,
+              "max": 1.830337,
+              "mean": 0.9218955358298659,
+              "stdev": 0.2463350808113254
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "maxscale"
+            ],
+            "queries": 21451,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 5363,
+            "latency_ms": {
+              "n": 21451,
+              "min": 0.278754,
+              "p50": 0.751614,
+              "p90": 1.017672,
+              "p95": 1.0791305,
+              "p99": 1.2118630000000001,
+              "max": 1.887875,
+              "mean": 0.7431597960468044,
+              "stdev": 0.2160749949272314
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "maxscale"
+            ],
+            "queries": 88345,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 22086,
+            "latency_ms": {
+              "n": 88345,
+              "min": 0.379584,
+              "p50": 0.703914,
+              "p90": 0.8552390000000001,
+              "p95": 0.9202838000000003,
+              "p99": 1.1907846799999986,
+              "max": 3.133507,
+              "mean": 0.7227266251740336,
+              "stdev": 0.13314369821474
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "maxscale"
+            ],
+            "queries": 88102,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 22026,
+            "latency_ms": {
+              "n": 88102,
+              "min": 0.773715,
+              "p50": 1.4282560000000002,
+              "p90": 1.6222732,
+              "p95": 1.7094604,
+              "p99": 2.253002840000001,
+              "max": 4.414017,
+              "mean": 1.4513744516242537,
+              "stdev": 0.18270799841896912
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "maxscale"
+            ],
+            "queries": 87728,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 21932,
+            "latency_ms": {
+              "n": 87728,
+              "min": 2.168825,
+              "p50": 2.8767765,
+              "p90": 3.1934622999999998,
+              "p95": 3.3624149999999995,
+              "p99": 4.313752089999996,
+              "max": 14.06878,
+              "mean": 2.918744464800292,
+              "stdev": 0.3131356789742654
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 9066,
+        "qps": 2259,
+        "checkout_wait_ms": {
+          "n": 9066,
+          "min": 0.00182,
+          "p50": 0.00552,
+          "p90": 0.0084265,
+          "p95": 0.00918225,
+          "p99": 0.011740800000000046,
+          "max": 4003.892399,
+          "mean": 10.567110053275977,
+          "stdev": 205.0034765403143
+        },
+        "exec_ms": {
+          "n": 9066,
+          "min": 0.418928,
+          "p50": 3.199339,
+          "p90": 5.9531475,
+          "p95": 6.9698275,
+          "p99": 8.992817700000003,
+          "max": 16.017822,
+          "mean": 3.5271469636002646,
+          "stdev": 1.8095013306495906
+        }
+      },
+      "transactions": {
+        "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+      },
+      "rw_split": {
+        "maxscale": {
+          "proxy": "maxscale",
+          "connections": 40,
+          "reads_by_backend": {
+            "1/1": 40
+          },
+          "writes_ok": 40,
+          "writes_rejected": 0,
+          "writes_rejected_on_backend": {},
+          "write_error_codes": {},
+          "interpretation": "SQL-aware read/write split: 40/40 reads were served by a read-only replica while every write succeeded (routed to the primary)"
+        }
+      },
+      "_seconds": 69.0
+    }
+  },
+  "server_version": "11.8.9-MariaDB-ubu2404-log",
+  "finished": "2026-09-12T19:12:46+00:00"
+}

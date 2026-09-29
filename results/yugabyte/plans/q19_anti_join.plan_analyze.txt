@@ -1,0 +1,32 @@
+Sort  (cost=50338.56..50338.57 rows=1 width=4) (actual time=814.157..814.161 rows=0 loops=1)
+  Sort Key: p.id
+  Sort Method: quicksort  Memory: 25kB
+  ->  Hash Right Join  (cost=575.63..50338.55 rows=1 width=4) (actual time=814.098..814.101 rows=0 loops=1)
+        Hash Cond: (oi.product_id = p.id)
+        Filter: (oi.id IS NULL)
+        Rows Removed by Filter: 487606
+        ->  Seq Scan on order_items oi  (cost=23.10..43081.44 rows=487606 width=8) (actual time=1.353..419.756 rows=487606 loops=1)
+              Storage Table Read Requests: 477
+              Storage Table Read Execution Time: 237.890 ms
+              Storage Table Read Ops: 477
+              Storage Table Rows Scanned: 487606
+        ->  Hash  (cost=490.03..490.03 rows=5000 width=4) (actual time=6.973..6.975 rows=5000 loops=1)
+              Buckets: 8192  Batches: 1  Memory Usage: 240kB
+              ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4) (actual time=1.142..3.003 rows=5000 loops=1)
+                    Storage Table Read Requests: 5
+                    Storage Table Read Execution Time: 1.057 ms
+                    Storage Table Read Ops: 5
+                    Storage Table Rows Scanned: 5000
+Planning Time: 0.407 ms
+Execution Time: 814.424 ms
+Storage Read Requests: 482
+Storage Read Execution Time: 238.947 ms
+Storage Read Ops: 482
+Storage Rows Scanned: 492606
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 238.947 ms
+Peak Memory Usage: 543 kB

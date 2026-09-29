@@ -1,0 +1,30 @@
+distribution: full
+
+• render
+│
+└── • top-k
+    │ estimated row count: 500
+    │ order: +id
+    │ k: 500
+    │
+    └── • group (hash)
+        │ estimated row count: 4,231
+        │ group by: id
+        │
+        └── • hash join
+            │ estimated row count: 105,800
+            │ equality: (category_id) = (category_id)
+            │
+            ├── • scan
+            │     estimated row count: 5,000 (100% of the table; stats collected 3 minutes ago)
+            │     table: products@products_pkey
+            │     spans: FULL SCAN
+            │
+            └── • filter
+                │ estimated row count: 4,232
+                │ filter: active
+                │
+                └── • scan
+                      estimated row count: 5,000 (100% of the table; stats collected 3 minutes ago)
+                      table: products@products_pkey
+                      spans: FULL SCAN

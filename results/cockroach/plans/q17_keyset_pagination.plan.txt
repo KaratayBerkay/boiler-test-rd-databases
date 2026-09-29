@@ -1,0 +1,19 @@
+distribution: local
+
+• top-k
+│ estimated row count: 50
+│ order: +ordered_at,+id
+│ k: 50
+│
+└── • filter
+    │ estimated row count: 22,222
+    │ filter: (ordered_at > '2025-01-01 00:00:00') OR ((ordered_at = '2025-01-01 00:00:00') AND (id > 0))
+    │
+    └── • scan
+          estimated row count: 200,000 (100% of the table; stats collected 4 minutes ago)
+          table: orders@orders_pkey
+          spans: FULL SCAN
+
+index recommendations: 1
+1. type: index creation
+   SQL command: CREATE INDEX ON lab.public.orders (ordered_at, id) STORING (customer_id);

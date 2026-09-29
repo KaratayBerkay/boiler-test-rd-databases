@@ -1,0 +1,7 @@
+Projection_26 | 774.99 | root |  | lab.orders.customer_id, lab.orders.id, lab.orders.ordered_at, lab.orders.total_amount
+└─Selection_27 | 774.99 | root |  | le(Column#8, 3)
+  └─Window_28 | 968.73 | root |  | row_number()->Column#8 over(partition by lab.orders.customer_id order by lab.orders.ordered_at desc, lab.orders.id desc rows between current row and current row)
+    └─Sort_24 | 968.73 | root |  | lab.orders.customer_id, lab.orders.ordered_at:desc, lab.orders.id:desc
+      └─IndexLookUp_20 | 968.73 | root |  | 
+        ├─IndexRangeScan_18(Build) | 968.73 | cop[tikv] | table:orders, index:fk_1(customer_id) | range:[-inf,100], keep order:false
+        └─TableRowIDScan_19(Probe) | 968.73 | cop[tikv] | table:orders | keep order:false

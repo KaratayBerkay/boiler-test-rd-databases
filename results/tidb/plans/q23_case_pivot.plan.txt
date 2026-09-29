@@ -1,0 +1,10 @@
+Sort_10 | 13.00 | root |  | lab.customers.country_code
+└─Projection_12 | 13.00 | root |  | lab.customers.country_code, Column#14, Column#15, Column#16, Column#17
+  └─HashAgg_13 | 13.00 | root |  | group by:Column#29, funcs:sum(Column#25)->Column#14, funcs:sum(Column#26)->Column#15, funcs:sum(Column#27)->Column#16, funcs:avg(Column#28)->Column#17, funcs:firstrow(Column#29)->lab.customers.country_code
+    └─Projection_54 | 201470.74 | root |  | cast(case(eq(lab.orders.status, delivered), 1, 0), decimal(20,0) BINARY)->Column#25, cast(case(eq(lab.orders.status, cancelled), 1, 0), decimal(20,0) BINARY)->Column#26, cast(case(eq(lab.orders.status, returned), 1, 0), decimal(20,0) BINARY)->Column#27, lab.orders.total_amount->Column#28, lab.customers.country_code->Column#29
+      └─Projection_14 | 201470.74 | root |  | lab.orders.status, lab.orders.total_amount, lab.customers.country_code
+        └─HashJoin_16 | 201470.74 | root |  | inner join, equal:[eq(lab.customers.id, lab.orders.customer_id)]
+          ├─TableReader_50(Build) | 20000.00 | root |  | data:TableFullScan_49
+          │ └─TableFullScan_49 | 20000.00 | cop[tikv] | table:c | keep order:false
+          └─TableReader_52(Probe) | 200000.00 | root |  | data:TableFullScan_51
+            └─TableFullScan_51 | 200000.00 | cop[tikv] | table:o | keep order:false

@@ -1,0 +1,13 @@
+2026-09-14 15:25:28,429 DEBUG   [postgres/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152528-89cc5e.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-152528-89cc5e.jsonl
+2026-09-14 15:25:28,429 INFO    [postgres/-] [postgres] run 20260914-152528-89cc5e phases=['load'] scale=0.3 (log: results-k3s/logs/postgres/20260914-152528-89cc5e.log)
+2026-09-14 15:25:28,451 INFO    [postgres/-] [postgres] phase: load
+2026-09-14 15:25:28,599 INFO    [postgres/load]   schema created (13 statements, 0.13s)
+2026-09-14 15:25:28,694 INFO    [postgres/load]   customers        6,000 rows     0.09s     64,681 rows/s  [COPY FROM STDIN (raw csv stream)]
+2026-09-14 15:25:28,703 INFO    [postgres/load]   categories         200 rows     0.01s     29,125 rows/s  [COPY FROM STDIN (raw csv stream)]
+2026-09-14 15:25:28,752 INFO    [postgres/load]   products         1,500 rows     0.05s     31,617 rows/s  [COPY FROM STDIN (raw csv stream)]
+2026-09-14 15:25:29,567 INFO    [postgres/load]   orders          60,000 rows     0.81s     74,101 rows/s  [COPY FROM STDIN (raw csv stream)]
+2026-09-14 15:25:32,926 INFO    [postgres/load]   order_items    147,072 rows     3.35s     43,907 rows/s  [COPY FROM STDIN (raw csv stream)]
+2026-09-14 15:25:35,137 INFO    [postgres/load]   events         300,000 rows     2.19s    137,011 rows/s  [COPY FROM STDIN (raw csv stream)]
+2026-09-14 15:25:35,191 INFO    [postgres/load]   inventory        6,000 rows     0.05s    118,820 rows/s  [COPY FROM STDIN (raw csv stream)]
+2026-09-14 15:25:35,849 INFO    [postgres/load] [postgres] phase load done in 7.4s
+2026-09-14 15:25:35,875 INFO    [postgres/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/postgres/20260914-152528-89cc5e.json

@@ -1,0 +1,10 @@
+Sub-query
+    -> Filter
+        -> Table "ORDER_ITEMS" as "OI" Access By ID
+            -> Bitmap
+                -> Index "RDB$FOREIGN9" Range Scan (full match)
+Select Expression
+    -> Filter
+        -> Table "PRODUCTS" as "P" Access By ID
+            -> Index "RDB$PRIMARY3" Full Scan
+fetches=21627371 reads=8257

@@ -1,0 +1,25 @@
+Subquery Scan on t  (cost=12331.55..12363.73 rows=990 width=22) (actual time=118.093..122.156 rows=300 loops=1)
+  ->  WindowAgg  (cost=12331.55..12353.83 rows=990 width=30) (actual time=118.090..121.869 rows=300 loops=1)
+        Run Condition: (row_number() OVER (?) <= 3)
+        ->  Sort  (cost=12331.55..12334.03 rows=990 width=22) (actual time=118.049..118.197 rows=998 loops=1)
+              Sort Key: orders.customer_id, orders.ordered_at DESC, orders.id DESC
+              Sort Method: quicksort  Memory: 87kB
+              ->  Seq Scan on orders  (cost=23.10..12282.29 rows=990 width=22) (actual time=115.084..116.682 rows=998 loops=1)
+                    Storage Filter: (customer_id <= 100)
+                    Storage Table Read Requests: 1
+                    Storage Table Read Execution Time: 114.914 ms
+                    Storage Table Read Ops: 1
+                    Storage Table Rows Scanned: 200000
+Planning Time: 0.277 ms
+Execution Time: 122.572 ms
+Storage Read Requests: 1
+Storage Read Execution Time: 114.914 ms
+Storage Read Ops: 1
+Storage Rows Scanned: 200000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 114.914 ms
+Peak Memory Usage: 275 kB

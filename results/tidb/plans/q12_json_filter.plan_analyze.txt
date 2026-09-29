@@ -1,0 +1,6 @@
+Projection_7 | 100.00 | 100 | root |  | time:956.9µs, loops:2, RU:0.48, Concurrency:OFF | lab.products.id, lab.products.sku, lab.products.price | 23.0 KB | N/A
+└─Limit_12 | 100.00 | 100 | root |  | time:939.4µs, loops:2 | offset:0, count:100 | N/A | N/A
+  └─TableReader_21 | 100.00 | 100 | root |  | time:934.2µs, loops:1, cop_task: {num: 1, max: 836.5µs, proc_keys: 0, tot_proc: 1.88µs, tot_wait: 125.2µs, copr_cache_hit_ratio: 1.00, build_task_duration: 10.6µs, max_distsql_concurrency: 1}, rpc_info:{Cop:{num_rpc:1, total_time:809.1µs}} | data:Limit_20 | 20.2 KB | N/A
+    └─Limit_20 | 100.00 | 100 | cop[tikv] |  | tikv_task:{time:6ms, loops:5}, scan_detail: {get_snapshot_time: 23.3µs, rocksdb: {block: {}}}, time_detail: {total_process_time: 1.88µs, total_wait_time: 125.2µs, tikv_wall_time: 280µs} | offset:0, count:100 | N/A | N/A
+      └─Selection_19 | 100.00 | 105 | cop[tikv] |  | tikv_task:{time:6ms, loops:5} | eq(json_unquote(cast(json_extract(lab.products.attrs, "$.color"), var_string(16777216))), "red"), gt(cast(json_extract(lab.products.attrs, "$.weight"), decimal(12,2) BINARY), 10) | N/A | N/A
+        └─TableFullScan_18 | 125.00 | 992 | cop[tikv] | table:products | tikv_task:{time:3ms, loops:5} | keep order:true, stats:partial[attrs:missing] | N/A | N/A

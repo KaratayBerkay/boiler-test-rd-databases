@@ -1,0 +1,14 @@
+Sort  (cost=8304.82..8554.82 rows=100000 width=4)
+  Sort Key: remote_scan.id
+  ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=4)
+        Task Count: 32
+        Tasks Shown: One of 32
+        ->  Task
+              Node: host=w1 port=5432 dbname=lab
+              ->  Bitmap Heap Scan on orders_102042 orders  (cost=2.78..4.97 rows=2 width=4)
+                    Recheck Cond: ((customer_id = '14824'::smallint) OR (id = 146741))
+                    ->  BitmapOr  (cost=2.78..2.78 rows=2 width=0)
+                          ->  Bitmap Index Scan on ix_orders_customer_id_102042  (cost=0.00..1.39 rows=1 width=0)
+                                Index Cond: (customer_id = '14824'::smallint)
+                          ->  Bitmap Index Scan on orders_pkey_102042  (cost=0.00..1.39 rows=1 width=0)
+                                Index Cond: (id = 146741)

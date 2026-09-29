@@ -1,0 +1,11 @@
+-> Sort: c.id, o.ordered_at DESC
+    -> Stream results  (cost=308 rows=300)
+        -> Nested loop inner join  (cost=308 rows=300)
+            -> Invalidate materialized tables (row from c)  (cost=20.3 rows=100)
+                -> Filter: (c.id <= 100)  (cost=20.3 rows=100)
+                    -> Covering index range scan on c using PRIMARY over (id <= 100)  (cost=20.3 rows=100)
+            -> Table scan on o  (cost=4.6..6.29 rows=3)
+                -> Materialize (invalidate on row from c)  (cost=3.76..3.76 rows=3)
+                    -> Limit: 3 row(s)  (cost=3.46 rows=3)
+                        -> Sort: o2.ordered_at DESC, o2.id DESC, limit input to 3 row(s) per chunk  (cost=3.46 rows=9.88)
+                            -> Index lookup on o2 using ix_orders_customer_id (customer_id=c.id)  (cost=3.46 rows=9.88)

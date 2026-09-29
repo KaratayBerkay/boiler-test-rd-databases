@@ -1,0 +1,29 @@
+Limit  (cost=3321.93..3322.05 rows=50 width=16) (actual time=49.204..49.220 rows=50.00 loops=1)
+  ->  Sort  (cost=3321.93..3571.93 rows=100000 width=16) (actual time=49.203..49.210 rows=50.00 loops=1)
+        Sort Key: remote_scan.ordered_at, remote_scan.id
+        Sort Method: top-N heapsort  Memory: 28kB
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=16) (actual time=48.631..48.830 rows=1600.00 loops=1)
+              Task Count: 32
+              Tuple data received from nodes: 25 kB
+              Tasks Shown: One of 32
+              ->  Task
+                    Tuple data received from node: 800 bytes
+                    Node: host=w1 port=5432 dbname=lab
+                    ->  Limit  (cost=278.11..278.24 rows=50 width=16) (actual time=29.748..29.760 rows=50.00 loops=1)
+                          Buffers: shared hit=59
+                          ->  Sort  (cost=278.11..286.23 rows=3246 width=16) (actual time=29.747..29.752 rows=50.00 loops=1)
+                                Sort Key: ordered_at, id
+                                Sort Method: top-N heapsort  Memory: 28kB
+                                Buffers: shared hit=59
+                                ->  Seq Scan on orders_102067 orders  (cost=0.00..170.28 rows=3246 width=16) (actual time=0.009..28.855 rows=3247.00 loops=1)
+                                      Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))
+                                      Rows Removed by Filter: 3112
+                                      Buffers: shared hit=59
+                        Planning:
+                          Buffers: shared hit=3
+                        Planning Time: 0.091 ms
+                        Execution Time: 29.785 ms
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.506 ms
+Execution Time: 49.244 ms

@@ -1,0 +1,67 @@
+Output: country_code, toStartOfMonth(ordered_at), uniqExact(id), sum(qty * unit_price)
+
+Limit (preliminary LIMIT)
+│  Limit 50
+│  Offset 0
+└──Sorting (Sorting for ORDER BY)
+   │  Sort description: sum(qty * unit_price) DESC, country_code ASC, toStartOfMonth(ordered_at) ASC
+   │  Limit 50
+   └──Aggregating
+      │  Keys: country_code, toStartOfMonth(ordered_at)
+      │  Aggregates: uniqExact(id), sum(qty * unit_price)
+      │  Skip merging: 0
+      └──Join (JOIN FillRightFirst)
+         │  oi[147072] ⋈ (c[6000] ⋈ o[2971])
+         │  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)
+         │  Result rows: 7515
+         │  Join conditions: order_id = id
+         │  Output:
+         │    Left:  qty, unit_price
+         │    Right: id, ordered_at, country_code
+         ├──ReadFromMergeTree (lab.order_items)
+         │     Read type: Default
+         │     Parts: 2 | Granules: 18
+         │     Output: order_id, qty, unit_price
+         │     Runtime filters: RF2(order_id, id)
+         │     Indexes:
+         │       PrimaryKey
+         │         Condition: true
+         │         Parts: 2/2
+         │         Granules: 18/18
+         │       Ranges: 2
+         └──BuildRuntimeFilter (Build runtime join filter on id)
+            │  Filter id: RF2
+            └──Join (JOIN FillRightFirst)
+               │  c[6000] ⋈ o[2971]
+               │  Type: inner | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)
+               │  Result rows: 3043
+               │  Join conditions: id = customer_id
+               │  Output:
+               │    Left:  country_code
+               │    Right: ordered_at, id
+               ├──ReadFromMergeTree (lab.customers)
+               │     Read type: Default
+               │     Parts: 1 | Granules: 1
+               │     Output: id, country_code
+               │     Runtime filters: RF1(id, customer_id from lab.orders)
+               │     Indexes:
+               │       PrimaryKey
+               │         Condition: true
+               │         Parts: 1/1
+               │         Granules: 1/1
+               │       Ranges: 1
+               └──BuildRuntimeFilter (Build runtime join filter on customer_id)
+                  │  Filter id: RF1
+                  │  Source table: lab.orders
+                  └──ReadFromMergeTree (lab.orders)
+                        Read type: Default
+                        Parts: 1 | Granules: 7
+                        Output: ordered_at, id, customer_id
+                        Prewhere filter
+                        Prewhere filter column:  ordered_at < '2025-07-01 00:00:00.000000' AND ordered_at >= '2025-01-01 00:00:00.000000' AND status = 'delivered'
+                        Indexes:
+                          PrimaryKey
+                            Condition: true
+                            Parts: 1/1
+                            Granules: 7/7
+                          Ranges: 1

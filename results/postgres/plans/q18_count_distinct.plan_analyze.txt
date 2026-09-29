@@ -1,0 +1,9 @@
+Aggregate  (cost=10826.56..10826.57 rows=1 width=8) (actual time=170.176..170.177 rows=1.00 loops=1)
+  Buffers: shared hit=298610
+  ->  Index Scan using ix_events_customer_id on events  (cost=0.30..10453.25 rows=149322 width=4) (actual time=0.013..159.950 rows=149419.00 loops=1)
+        Filter: (occurred_at >= '2025-01-01 00:00:00'::timestamp without time zone)
+        Rows Removed by Filter: 150581
+        Index Searches: 1
+        Buffers: shared hit=298610
+Planning Time: 0.046 ms
+Execution Time: 170.201 ms

@@ -1,0 +1,293 @@
+{
+  "engine": "mssql",
+  "display": "SQL Server 2025",
+  "category": "row-store OLTP",
+  "dialect": "tsql",
+  "driver": "pymssql",
+  "image": "mcr.microsoft.com/mssql/server:2025-latest",
+  "run_id": "20260913-041229-2dde25",
+  "started": "2026-09-13T01:12:29+00:00",
+  "scale": 1.0,
+  "notes": "SQL Server 2025 Developer on Linux. Two replicas in a read-scale Availability Group (CLUSTER_TYPE = NONE): synchronous commit, automatic seeding, readable secondary; failover is a manual FORCE_FAILOVER_ALLOW_DATA_LOSS on the secondary.",
+  "phases": {
+    "load": {
+      "_error": "OperationalError: (18456, b\"Login failed for user 'sa'.DB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection failed (127.0.0.1)\\n\")",
+      "_seconds": 0.2
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "error",
+        "note": "indexed view",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 189.3
+      },
+      "partitioning": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 150.1
+      },
+      "generated_column": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 195.0
+      },
+      "identity": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 165.0
+      },
+      "returning": {
+        "status": "error",
+        "note": "OUTPUT clause",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 171.4
+      },
+      "sequence": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 195.7
+      },
+      "arrays": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 168.0
+      },
+      "vector_type": {
+        "status": "error",
+        "note": "SQL Server 2025",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 166.9
+      },
+      "statement_timeout": {
+        "status": "error",
+        "note": "no server-side statement timeout; client timeout only",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 170.3
+      },
+      "filter_clause": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 162.7
+      },
+      "distinct_on": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 162.2
+      },
+      "qualify": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 143.6
+      },
+      "check_constraint": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 198.2
+      },
+      "fk_enforced": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 142.0
+      },
+      "savepoint": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 200.0
+      },
+      "temporal_query": {
+        "status": "error",
+        "note": "system-versioned temporal table",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 155.2
+      },
+      "json_aggregate": {
+        "status": "error",
+        "note": "SQL Server 2025",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 153.0
+      },
+      "isolation_serializable": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 198.7
+      },
+      "isolation_repeatable_read": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 145.4
+      },
+      "isolation_read_uncommitted": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 148.1
+      },
+      "isolation_snapshot": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 197.3
+      },
+      "regex_match": {
+        "status": "error",
+        "note": "SQL Server 2025",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 156.8
+      },
+      "columnstore_index": {
+        "status": "error",
+        "note": "",
+        "error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+        "ms": 190.6
+      },
+      "_seconds": 3.9
+    },
+    "bench": {
+      "_error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+      "_seconds": 0.2
+    },
+    "optimize": {
+      "_error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+      "_seconds": 0.2
+    },
+    "connections": {
+      "_error": "OperationalError: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20002, severity 9:\\nTDS server connection f",
+      "_seconds": 0.2
+    },
+    "loadtest": {
+      "batch_rows": 300,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-mssql-1",
+        "rdlab-mssql-2"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 0,
+          "batches": 0,
+          "errors": 4,
+          "seconds": 15.0,
+          "rows_per_s": 0,
+          "batch_ms": {
+            "n": 0
+          },
+          "first_error": "connect: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check mes",
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-mssql-1": {
+              "cpu_cores_avg": 3.649,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 733,
+              "mem_end_mb": 729,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.058
+            },
+            "rdlab-mssql-2": {
+              "cpu_cores_avg": 0.014,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 727,
+              "mem_end_mb": 724,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.0
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 0,
+          "batches": 0,
+          "errors": 16,
+          "seconds": 15.0,
+          "rows_per_s": 0,
+          "batch_ms": {
+            "n": 0
+          },
+          "first_error": "connect: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check mes",
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-mssql-1": {
+              "cpu_cores_avg": 10.871,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 741,
+              "mem_end_mb": 741,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.54
+            },
+            "rdlab-mssql-2": {
+              "cpu_cores_avg": 0.355,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 727,
+              "mem_end_mb": 726,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.018
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 0,
+          "batches": 0,
+          "errors": 32,
+          "seconds": 15.0,
+          "rows_per_s": 0,
+          "batch_ms": {
+            "n": 0
+          },
+          "first_error": "connect: (18456, b'DB-Lib error message 20018, severity 11:\\nGeneral SQL Server error: Check messages from the SQL Server\\nDB-Lib error message 20018, severity 14:\\nGeneral SQL Server error: Check mes",
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-mssql-1": {
+              "cpu_cores_avg": 13.939,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 760,
+              "mem_end_mb": 759,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.017
+            },
+            "rdlab-mssql-2": {
+              "cpu_cores_avg": 0.537,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 738,
+              "mem_end_mb": 738,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.039
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "mode": "values",
+        "workers": 4,
+        "rows_per_s": 0
+      },
+      "_seconds": 2.8
+    }
+  }
+}

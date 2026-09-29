@@ -1,0 +1,28 @@
+display: SQLite 3
+category: embedded
+dialect: sqlite
+driver: sqlite3
+image: (embedded, python stdlib sqlite3)
+project: rdlab-sqlite
+scale: 1
+notes: >-
+  Embedded, single-writer database file (WAL mode, synchronous=NORMAL). No server, no network, no replication in core;
+  libSQL / rqlite / Litestream provide replication on top of SQLite (see docs).
+docs:
+  - https://sqlite.org/eqp.html
+  - https://sqlite.org/wal.html
+targets:
+  - name: embedded
+    role: primary
+    host: local
+    port: 0
+    user: ""
+    password: ""
+    database: data/sqlite/lab.db
+backup:
+  dir: data/sqlite/backups
+  strategies: [vacuum_into, backup_api]
+logging:
+  slow_ms: 100
+features:
+  connection_storm: false

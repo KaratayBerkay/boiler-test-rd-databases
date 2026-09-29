@@ -1,0 +1,23 @@
+GroupAggregate  (cost=1.89..14201.59 rows=484 width=12) (actual time=0.350..220.649 rows=2000.00 loops=1)
+  Group Key: w.customer_id
+  Buffers: shared hit=99786
+  ->  Subquery Scan on w  (cost=1.89..14194.23 rows=503 width=4) (actual time=0.145..209.856 rows=100106.00 loops=1)
+        Filter: (CASE WHEN ((w.prev_at IS NULL) OR (EXTRACT(epoch FROM (w.occurred_at - w.prev_at)) > '1800'::numeric)) THEN 1 ELSE 0 END = 1)
+        Rows Removed by Filter: 131
+        Buffers: shared hit=99786
+        ->  WindowAgg  (cost=1.89..12182.19 rows=100602 width=28) (actual time=0.143..173.802 rows=100237.00 loops=1)
+              Window: w1 AS (PARTITION BY events.customer_id ORDER BY events.occurred_at, events.id)
+              Storage: Memory  Maximum Storage: 17kB
+              Buffers: shared hit=99786
+              ->  Incremental Sort  (cost=1.77..10170.15 rows=100602 width=20) (actual time=0.135..115.685 rows=100237.00 loops=1)
+                    Sort Key: events.customer_id, events.occurred_at, events.id
+                    Presorted Key: events.customer_id
+                    Full-sort Groups: 1991  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+                    Pre-sorted Groups: 65  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+                    Buffers: shared hit=99786
+                    ->  Index Scan using ix_events_customer_id on events  (cost=0.30..6745.70 rows=100602 width=20) (actual time=0.023..75.749 rows=100237.00 loops=1)
+                          Index Cond: (customer_id <= 2000)
+                          Index Searches: 1
+                          Buffers: shared hit=99786
+Planning Time: 0.169 ms
+Execution Time: 220.898 ms

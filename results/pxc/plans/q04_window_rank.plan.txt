@@ -1,0 +1,11 @@
+-> Sort: t.category_id, t.rn  (cost=2.6..2.6 rows=0)
+    -> Filter: (t.rn <= 3)  (cost=2.5..2.5 rows=0)
+        -> Table scan on t  (cost=2.5..2.5 rows=0)
+            -> Materialize  (cost=0..0 rows=0)
+                -> Window aggregate: row_number() OVER (PARTITION BY p.category_id ORDER BY sum((oi.qty * oi.unit_price)) desc,oi.product_id ) 
+                    -> Sort: p.category_id, revenue DESC, oi.product_id
+                        -> Table scan on <temporary>
+                            -> Aggregate using temporary table
+                                -> Nested loop inner join  (cost=582147 rows=486750)
+                                    -> Table scan on oi  (cost=49004 rows=486750)
+                                    -> Single-row index lookup on p using PRIMARY (id=oi.product_id)  (cost=0.995 rows=1)

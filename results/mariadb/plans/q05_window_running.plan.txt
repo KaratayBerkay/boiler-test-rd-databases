@@ -1,0 +1,2 @@
+1 | PRIMARY | <derived2> | ALL | None | None | None | None | 194613 | Using temporary; Using filesort
+2 | DERIVED | orders | ALL | None | None | None | None | 194613 | Using where; Using temporary; Using filesort

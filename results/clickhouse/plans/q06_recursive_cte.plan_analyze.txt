@@ -1,0 +1,11 @@
+query_log: duration_ms=28 read_rows=1400 read_bytes=49884 memory=4816290 result_rows=200
+(Expression)
+ExpressionTransform
+  (Sorting)
+  MergingSortedTransform 28 → 1
+    MergeSortingTransform × 28
+      LimitsCheckingTransform × 28
+        PartialSortingTransform × 28
+          (Expression)
+          ExpressionTransform × 28
+            (ReadFromRecursiveCTEStep)

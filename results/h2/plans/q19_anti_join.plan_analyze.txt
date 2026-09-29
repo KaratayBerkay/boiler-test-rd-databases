@@ -1,0 +1,15 @@
+SELECT
+    "p"."id"
+FROM "public"."products" "p"
+    /* public.PRIMARY_KEY_C */
+    /* scanCount: 5001 */
+LEFT OUTER JOIN "public"."order_items" "oi"
+    /* public.CONSTRAINT_INDEX_75: product_id = p.id */
+    ON "oi"."product_id" = "p"."id"
+    /* scanCount: 492606 */
+WHERE "oi"."id" IS NULL
+ORDER BY 1
+/* index sorted */
+/*
+reads: 27639
+*/

@@ -1,0 +1,525 @@
+{
+  "engine": "mssql",
+  "display": "SQL Server 2025",
+  "category": "row-store OLTP",
+  "dialect": "tsql",
+  "driver": "pymssql",
+  "image": "mcr.microsoft.com/mssql/server:2025-latest",
+  "run_id": "20260914-130246-2b726d",
+  "started": "2026-09-14T10:02:46+00:00",
+  "scale": 0.3,
+  "notes": "SQL Server 2025 Developer on Linux (container image has no Full-Text Search component: q13 uses LIKE). Two replicas in a read-scale Availability Group (CLUSTER_TYPE = NONE): synchronous commit, automatic seeding, readable secondary; failover is a manual FORCE_FAILOVER_ALLOW_DATA_LOSS on the secondary.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 2.61,
+          "rows_per_s": 2301,
+          "method": "multi-row INSERT (285/stmt, commit per 50k)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.06,
+          "rows_per_s": 3578,
+          "method": "multi-row INSERT (500/stmt, commit per 50k)",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 1.32,
+          "rows_per_s": 1139,
+          "method": "multi-row INSERT (250/stmt, commit per 50k)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 24.04,
+          "rows_per_s": 2496,
+          "method": "multi-row INSERT (333/stmt, commit per 50k)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 55.07,
+          "rows_per_s": 2671,
+          "method": "multi-row INSERT (400/stmt, commit per 50k)",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 116.66,
+          "rows_per_s": 2572,
+          "method": "multi-row INSERT (333/stmt, commit per 50k)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 1.3,
+          "rows_per_s": 4633,
+          "method": "multi-row INSERT (500/stmt, commit per 50k)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INT NOT NULL,\n  name NVARCHAR(100) NOT NULL,\n  email NVARCHAR(150) NOT NULL,\n  country_code NVARCHAR(2) NOT NULL,\n  tier NVARCHAR(10) NOT NULL,\n  created_at DATETIME2(6) NOT NULL,\n  attrs NVARCHAR(MAX),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INT NOT NULL,\n  parent_id INT,\n  name NVARCHAR(100) NOT NULL,\n  depth INT NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INT NOT NULL,\n  category_id INT NOT NULL,\n  sku NVARCHAR(20) NOT NULL,\n  name NVARCHAR(150) NOT NULL,\n  description NVARCHAR(MAX) NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs NVARCHAR(MAX),\n  active BIT NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INT NOT NULL,\n  customer_id INT NOT NULL,\n  status NVARCHAR(12) NOT NULL,\n  ordered_at DATETIME2(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country NVARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INT NOT NULL,\n  order_id INT NOT NULL,\n  product_id INT NOT NULL,\n  qty INT NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INT NOT NULL,\n  event_type NVARCHAR(20) NOT NULL,\n  occurred_at DATETIME2(6) NOT NULL,\n  payload NVARCHAR(MAX),\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INT NOT NULL,\n  warehouse_id INT NOT NULL,\n  qty INT NOT NULL,\n  updated_at DATETIME2(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.12,
+      "load_seconds": 201.18,
+      "fts_setup": [
+        "CREATE FULLTEXT CATALOG lab_ft AS DEFAULT",
+        "FAILED CREATE FULLTEXT INDEX ON products (description) KEY INDEX PK: (7609, b'Full-Text Search is not installed, or a full-text component cannot be loaded.DB-Lib error message 20018, severi",
+        "-> LIKE fallback used for q13"
+      ],
+      "after_load": [
+        "UPDATE STATISTICS customers",
+        "UPDATE STATISTICS categories",
+        "UPDATE STATISTICS products",
+        "UPDATE STATISTICS orders",
+        "UPDATE STATISTICS order_items",
+        "UPDATE STATISTICS events",
+        "UPDATE STATISTICS inventory"
+      ],
+      "post_seconds": 0.62,
+      "server_version": "Microsoft SQL Server 2025 (RTM-CU8-GDR) (KB5122769) - 17.0.4085.5 (X64) Aug 26 2026 17:29:26 Copyright (C) 2025 Microsof",
+      "_seconds": 202.2
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "full": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE WITH COMPRESSION, CHECKSUM + RESTORE VERIFYONLY",
+          "backup_seconds": 6.61,
+          "backup_bytes": 220205056,
+          "backup_mb": 210.0,
+          "restore_seconds": 10.14,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.94
+          },
+          "pitr": {},
+          "notes": "compressed, checksummed full backup verified with RESTORE VERIFYONLY and restored under a new name (WITH MOVE); history in msdb.dbo.backupset",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab-*.bak /backups/lab-*.trn",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE (full)",
+              "cmd": "BACKUP DATABASE [lab] TO DISK = N'/backups/lab-full.bak' WITH INIT, COMPRESSION, CHECKSUM, STATS = 25",
+              "rc": 0,
+              "seconds": 6.61,
+              "out": ""
+            },
+            {
+              "name": "RESTORE VERIFYONLY",
+              "cmd": "RESTORE VERIFYONLY FROM DISK = N'/backups/lab-full.bak' WITH CHECKSUM",
+              "rc": 0,
+              "seconds": 1.56,
+              "out": ""
+            },
+            {
+              "name": "backup history",
+              "cmd": "SELECT TOP 1 backup_size, compressed_backup_size, DATEDIFF(ms, backup_start_date, backup_finish_date) FROM msdb.dbo.backupset WHERE database_name = N'lab' AND type = 'D' ORDER BY backup_finish_date DESC",
+              "rc": 0,
+              "seconds": 0.3,
+              "out": "[(Decimal('659824640'), Decimal('220187933'), 6000)]"
+            },
+            {
+              "name": "drop lab_restore",
+              "cmd": "IF DB_ID(N'lab_restore') IS NOT NULL BEGIN ALTER DATABASE [lab_restore] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [lab_restore]; END",
+              "rc": 0,
+              "seconds": 0.18,
+              "out": ""
+            },
+            {
+              "name": "RESTORE FILELISTONLY",
+              "cmd": "RESTORE FILELISTONLY FROM DISK = N'/backups/lab-full.bak'",
+              "rc": 0,
+              "seconds": 0.16,
+              "out": "[('lab', '/var/opt/mssql/data/lab.mdf', 'D', 'PRIMARY', 276824064, 35184372080640, 1, Decimal('0'), Decimal('0'), UUID('d99920dc-f5f4-4515-ad10-9f7ffde3d102'), Decimal('0'), Decimal('0'), 237961216, 4096, 1, None, Decimal('44000000026400001'), UUID('59ec195b-0ad9-41cb-83ec-41ac4095de0c'), False, True, None, None), ('lab_log', '/var/opt/mssql/data/lab_log.ldf', 'L', None, 478150656, 2199023255552, "
+            },
+            {
+              "name": "RESTORE DATABASE (as lab_restore)",
+              "cmd": "RESTORE DATABASE [lab_restore] FROM DISK = N'/backups/lab-full.bak' WITH MOVE N'lab' TO N'/var/opt/mssql/data/lab_restore_lab.mdf', MOVE N'lab_log' TO N'/var/opt/mssql/data/lab_restore_lab_log.ldf', RECOVERY, STATS = 25",
+              "rc": 0,
+              "seconds": 9.98,
+              "out": ""
+            },
+            {
+              "name": "drop lab_restore",
+              "cmd": "IF DB_ID(N'lab_restore') IS NOT NULL BEGIN ALTER DATABASE [lab_restore] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [lab_restore]; END",
+              "rc": 0,
+              "seconds": 0.29,
+              "out": ""
+            }
+          ],
+          "msdb_backupset": {
+            "backup_size": 659824640,
+            "compressed_backup_size": 220187933,
+            "ms": 6000
+          },
+          "seconds": 21.2,
+          "description": "compressed full backup restored under a new name"
+        },
+        "differential": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "BACKUP DATABASE WITH DIFFERENTIAL",
+          "backup_seconds": 2.83,
+          "backup_bytes": 148652032,
+          "backup_mb": 141.8,
+          "restore_seconds": 17.28,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.84
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "table created after the full backup comes from the differential"
+          },
+          "notes": "extents changed since the last full backup (differential bitmap); restore = full WITH NORECOVERY then the differential",
+          "error": null,
+          "steps": [
+            {
+              "name": "BACKUP DATABASE WITH DIFFERENTIAL",
+              "cmd": "BACKUP DATABASE [lab] TO DISK = N'/backups/lab-diff.bak' WITH DIFFERENTIAL, INIT, COMPRESSION, CHECKSUM",
+              "rc": 0,
+              "seconds": 2.83,
+              "out": ""
+            },
+            {
+              "name": "drop lab_restore2",
+              "cmd": "IF DB_ID(N'lab_restore2') IS NOT NULL BEGIN ALTER DATABASE [lab_restore2] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [lab_restore2]; END",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": ""
+            },
+            {
+              "name": "RESTORE FILELISTONLY",
+              "cmd": "RESTORE FILELISTONLY FROM DISK = N'/backups/lab-full.bak'",
+              "rc": 0,
+              "seconds": 0.2,
+              "out": "[('lab', '/var/opt/mssql/data/lab.mdf', 'D', 'PRIMARY', 276824064, 35184372080640, 1, Decimal('0'), Decimal('0'), UUID('d99920dc-f5f4-4515-ad10-9f7ffde3d102'), Decimal('0'), Decimal('0'), 237961216, 4096, 1, None, Decimal('44000000026400001'), UUID('59ec195b-0ad9-41cb-83ec-41ac4095de0c'), False, True, None, None), ('lab_log', '/var/opt/mssql/data/lab_log.ldf', 'L', None, 478150656, 2199023255552, "
+            },
+            {
+              "name": "RESTORE full NORECOVERY + differential",
+              "cmd": "RESTORE DATABASE [lab_restore2] FROM DISK = N'/backups/lab-full.bak' WITH MOVE N'lab' TO N'/var/opt/mssql/data/lab_restore2_lab.mdf', MOVE N'lab_log' TO N'/var/opt/mssql/data/lab_restore2_lab_log.ldf', NORECOVERY; RESTORE DATABASE [lab_restore2] FROM DISK = N'/backups/lab-diff.bak' WITH RECOVERY",
+              "rc": 0,
+              "seconds": 17.07,
+              "out": ""
+            },
+            {
+              "name": "drop lab_restore2",
+              "cmd": "IF DB_ID(N'lab_restore2') IS NOT NULL BEGIN ALTER DATABASE [lab_restore2] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [lab_restore2]; END",
+              "rc": 0,
+              "seconds": 0.31,
+              "out": ""
+            }
+          ],
+          "seconds": 24.0,
+          "description": "differential restored on top of the full backup"
+        },
+        "log_pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "BACKUP LOG + RESTORE LOG WITH STOPAT",
+          "backup_seconds": 2.91,
+          "backup_bytes": 148090880,
+          "backup_mb": 141.2,
+          "restore_seconds": 21.89,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.96
+          },
+          "pitr": {
+            "match": true,
+            "target": "STOPAT = '2026-09-14 10:06:56.437'",
+            "probe_rows_after_delete": 0,
+            "probe_rows_recovered": 1000,
+            "probe_rows_expected": 1000
+          },
+          "notes": "FULL recovery model: the log backup carries every transaction; RESTORE LOG ... WITH STOPAT replays up to the timestamp before the DELETE",
+          "error": null,
+          "steps": [
+            {
+              "name": "BACKUP LOG",
+              "cmd": "BACKUP LOG [lab] TO DISK = N'/backups/lab-log1.trn' WITH INIT, COMPRESSION, CHECKSUM",
+              "rc": 0,
+              "seconds": 2.91,
+              "out": ""
+            },
+            {
+              "name": "drop lab_pitr",
+              "cmd": "IF DB_ID(N'lab_pitr') IS NOT NULL BEGIN ALTER DATABASE [lab_pitr] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [lab_pitr]; END",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": ""
+            },
+            {
+              "name": "RESTORE FILELISTONLY",
+              "cmd": "RESTORE FILELISTONLY FROM DISK = N'/backups/lab-full.bak'",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": "[('lab', '/var/opt/mssql/data/lab.mdf', 'D', 'PRIMARY', 276824064, 35184372080640, 1, Decimal('0'), Decimal('0'), UUID('d99920dc-f5f4-4515-ad10-9f7ffde3d102'), Decimal('0'), Decimal('0'), 237961216, 4096, 1, None, Decimal('44000000026400001'), UUID('59ec195b-0ad9-41cb-83ec-41ac4095de0c'), False, True, None, None), ('lab_log', '/var/opt/mssql/data/lab_log.ldf', 'L', None, 478150656, 2199023255552, "
+            },
+            {
+              "name": "RESTORE full + diff + LOG WITH STOPAT",
+              "cmd": "RESTORE DATABASE [lab_pitr] FROM DISK = N'/backups/lab-full.bak' WITH MOVE N'lab' TO N'/var/opt/mssql/data/lab_pitr_lab.mdf', MOVE N'lab_log' TO N'/var/opt/mssql/data/lab_pitr_lab_log.ldf', NORECOVERY; RESTORE DATABASE [lab_pitr] FROM DISK = N'/backups/lab-diff.bak' WITH NORECOVERY; RESTORE LOG [lab_pitr] FROM DISK = N'/backups/lab-log1.trn' WITH STOPAT = N'2026-09-14 10:06:56.437', RECOVERY",
+              "rc": 0,
+              "seconds": 21.72,
+              "out": ""
+            },
+            {
+              "name": "drop lab_pitr",
+              "cmd": "IF DB_ID(N'lab_pitr') IS NOT NULL BEGIN ALTER DATABASE [lab_pitr] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [lab_pitr]; END",
+              "rc": 0,
+              "seconds": 0.31,
+              "out": ""
+            }
+          ],
+          "seconds": 30.1,
+          "description": "point-in-time restore from the transaction log"
+        }
+      },
+      "order": [
+        "full",
+        "differential",
+        "log_pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 1.6,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "full",
+          "differential",
+          "log_pitr"
+        ],
+        "pitr_ok": [
+          "differential",
+          "log_pitr"
+        ]
+      },
+      "_seconds": 77.1
+    },
+    "logging": {
+      "sink": "Extended Events session rdlab_slow (sql_statement_completed, duration >= 100 ms) -> rdlab_slow*.xel",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "errorlog": "/var/opt/mssql/log/errorlog",
+        "xe_sessions": [
+          "hkenginexesession",
+          "system_health",
+          "sp_server_diagnostics session",
+          "rdlab_slow",
+          "rdlab_audit$A",
+          "telemetry_xevents"
+        ],
+        "audits": [
+          [
+            "rdlab_audit",
+            true
+          ]
+        ],
+        "query_store": [
+          "('READ_WRITE', 'ALL', 512)"
+        ],
+        "configurations": {
+          "remote query timeout (s)": "58020000",
+          "default trace enabled": "01000000",
+          "blocked process threshold (s)": "00000000"
+        }
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "Extended Events session rdlab_slow (sql_statement_completed, duration >= 100 ms) -> rdlab_slow*.xel",
+        "slow_query_ms": 505.4,
+        "slow_logged": true,
+        "seen_after_s": 2.56,
+        "sample": "duration_us=300156 statement=<![CDATA[WAITFOR DELAY '00:00:00.300'; ]]>",
+        "duration_ms": 300.2,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "SQL Server Audit rdlab_audit (SCHEMA_OBJECT_CHANGE_GROUP, DELETE on lab, logins) -> *.sqlaudit",
+        "setup": "configured at stack init (server audit + database audit specification)",
+        "event_found": true,
+        "seen_after_s": 0.19,
+        "sample": "time=2026-09-14 10:07:29.500584 action=DR   principal=sa db=lab statement=DROP TABLE audit_rdlab_mk_4a6e7d2a65",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 11434,
+          "p50_ms": 0.683898,
+          "p99_ms": 1.11684635,
+          "errors": 0
+        },
+        "full_logging": "ALTER EVENT SESSION rdlab_all ON SERVER STATE = START (sql_statement_completed without a duration filter -> rdlab_all*.xel)",
+        "full": {
+          "qps": 10427,
+          "p50_ms": 0.753146,
+          "p99_ms": 1.24207504,
+          "errors": 0
+        },
+        "log_bytes_written": 10899968,
+        "bytes_per_statement": 261.3,
+        "overhead_pct": 8.8,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-mssql-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 52500,
+          "docker_logs_lines": 380
+        },
+        "rdlab-mssql-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 42086,
+          "docker_logs_lines": 296
+        }
+      },
+      "extra": {
+        "query_store_top5": [
+          {
+            "executions": 103524,
+            "avg_ms": 0.034,
+            "query": "(@1 smallint)SELECT [id],[name],[email] FROM [customers] WHERE [id]=@1"
+          },
+          {
+            "executions": 4726,
+            "avg_ms": 0.034,
+            "query": "(@1 tinyint)SELECT [id],[name],[email] FROM [customers] WHERE [id]=@1"
+          },
+          {
+            "executions": 1000,
+            "avg_ms": 0.046,
+            "query": "(@1 int,@2 numeric(13,0))INSERT INTO [backup_probe]([id],[ts_ms]) values(@1,@2)"
+          },
+          {
+            "executions": 4,
+            "avg_ms": 73.749,
+            "query": "SELECT TOP 1 CAST(event_data AS nvarchar(max)) FROM sys.fn_xe_file_target_read_file(N'/var"
+          },
+          {
+            "executions": 2,
+            "avg_ms": 42.456,
+            "query": "SELECT COUNT(*) FROM events"
+          }
+        ],
+        "xe_files": [
+          "/var/opt/mssql/log/rdlab_all_0_134338540588450000.xel",
+          "/var/opt/mssql/log/rdlab_slow_0_134338537582120000.xel"
+        ]
+      },
+      "collected": [
+        "results/mssql/logs/mssql-1__var_opt_mssql_log_errorlog"
+      ],
+      "_seconds": 23.1
+    }
+  },
+  "harness_log": "results/logs/mssql/20260914-130246-2b726d.log",
+  "server_version": "Microsoft SQL Server 2025 (RTM-CU8-GDR) (KB5122769) - 17.0.4085.5 (X64) Aug 26 2026 17:29:26 Copyright (C) 2025 Microsof",
+  "finished": "2026-09-14T10:07:48+00:00"
+}

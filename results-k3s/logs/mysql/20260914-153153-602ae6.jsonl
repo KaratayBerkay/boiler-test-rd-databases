@@ -1,0 +1,10 @@
+{"ts": "2026-09-14T12:31:53.574+00:00", "level": "DEBUG", "stack": "mysql", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-153153-602ae6.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-153153-602ae6.jsonl"}
+{"ts": "2026-09-14T12:31:53.575+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "[mysql] run 20260914-153153-602ae6 phases=['logging'] scale=0.3 (log: results-k3s/logs/mysql/20260914-153153-602ae6.log)"}
+{"ts": "2026-09-14T12:31:53.593+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "[mysql] phase: logging"}
+{"ts": "2026-09-14T12:31:53.600+00:00", "level": "INFO", "stack": "mysql", "phase": "logging", "msg": "  settings: {'binlog_format': 'ROW', 'general_log': 'OFF', 'general_log_file': '/var/log/mysql/general.log', 'innodb_print_all_deadlocks': 'ON', 'log_bin': 'ON', 'log_error': '/var/log/mysql/error.log', 'log_erro"}
+{"ts": "2026-09-14T12:31:54.731+00:00", "level": "INFO", "stack": "mysql", "phase": "logging", "msg": "  slow query (301.7 ms) logged=True after 0.6s; fast query logged=False"}
+{"ts": "2026-09-14T12:31:54.955+00:00", "level": "INFO", "stack": "mysql", "phase": "logging", "msg": "  audit (general log (no audit plugin in MySQL Community)): event found=True after 0.2s"}
+{"ts": "2026-09-14T12:32:11.853+00:00", "level": "INFO", "stack": "mysql", "phase": "logging", "msg": "  overhead of logging every statement: 18499 -> 18579 qps (-0.4 %), 47,338,856 log bytes for 74,315 statements"}
+{"ts": "2026-09-14T12:32:15.488+00:00", "level": "INFO", "stack": "mysql", "phase": "logging", "msg": "  collected 4 log file(s) into results-k3s/mysql/logs"}
+{"ts": "2026-09-14T12:32:15.488+00:00", "level": "INFO", "stack": "mysql", "phase": "logging", "msg": "[mysql] phase logging done in 21.9s"}
+{"ts": "2026-09-14T12:32:15.496+00:00", "level": "INFO", "stack": "mysql", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/mysql/20260914-153153-602ae6.json"}

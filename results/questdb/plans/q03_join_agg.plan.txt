@@ -1,0 +1,26 @@
+Encode sort light lo: 50
+  keys: [revenue desc, country_code, month_start]
+    VirtualRecord
+      functions: [country_code,memoize(timestamp_floor),orders,revenue]
+        GroupBy vectorized: false
+          keys: [country_code,timestamp_floor]
+          values: [count_distinct(id),sum(qty*unit_price)]
+            SelectedRecord
+                Hash Join Light
+                  condition: oi.order_id=o.id
+                    Hash Join Light
+                      condition: c.id=o.customer_id
+                        Async JIT Filter workers: 27
+                          filter: status='delivered'
+                            PageFrame
+                                Row forward scan
+                                Interval forward scan on: orders
+                                  intervals: [("2025-01-01T00:00:00.000000Z","2025-06-30T23:59:59.999999Z")]
+                        Hash
+                            PageFrame
+                                Row forward scan
+                                Frame forward scan on: customers
+                    Hash
+                        PageFrame
+                            Row forward scan
+                            Frame forward scan on: order_items

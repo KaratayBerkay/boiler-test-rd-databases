@@ -1,0 +1,76 @@
+{
+  "engine": "db2",
+  "display": "IBM Db2 12.1 CE",
+  "category": "row-store OLTP",
+  "dialect": "db2",
+  "driver": "ibm_db",
+  "image": "icr.io/db2_community/db2:latest",
+  "run_id": "20260914-132718-40b922",
+  "started": "2026-09-14T10:27:18+00:00",
+  "scale": 0.3,
+  "notes": "Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but needs two instances with matching configuration and a takeover procedure; not automated in this stack.",
+  "phases": {
+    "load": {
+      "_error": "OperationalError: ibm_db_dbi::OperationalError: [IBM][CLI Driver] SQL30081N A communication error has been detected. Communication protocol being used: \"TCP/IP\". Communication API being used: \"SOCKETS\". Location where the error was detected: \"127.0.0.1\". Communication function detecting the error: \"",
+      "_seconds": 5.1
+    },
+    "backup": {
+      "_error": "OperationalError: ibm_db_dbi::OperationalError: [IBM][CLI Driver] SQL30081N A communication error has been detected. Communication protocol being used: \"TCP/IP\". Communication API being used: \"SOCKETS\". Location where the error was detected: \"127.0.0.1\". Communication function detecting the error: \"",
+      "_seconds": 5.0
+    },
+    "logging": {
+      "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "error": "OperationalError: ibm_db_dbi::OperationalError: [IBM][CLI Driver] SQL30081N A communication error has been detected. Communication protocol being used: \"TCP/IP\". Communication API being used: \"SOCKETS\". Location where the error was detected: \"127.0.0.1\". Communication function detecting the error: \""
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "MON_GET_PKG_CACHE_STMT (package cache) + activity event monitor RDLAB_ACT (WRITE TO TABLE)",
+        "error": "OperationalError: ibm_db_dbi::OperationalError: [IBM][CLI Driver] SQL30081N A communication error has been detected. Communication protocol being used: \"TCP/IP\". Communication API being used: \"SOCKETS\". Location where the error was detected: \"127.0.0.1\". Communication function detecting the error: \""
+      },
+      "audit": {
+        "mechanism": "db2audit policy RDLAB_POL (EXECUTE) -> db2audit archive/extract",
+        "status": "error",
+        "error": "OperationalError: ibm_db_dbi::OperationalError: [IBM][CLI Driver] SQL30081N A communication error has been detected. Communication protocol being used: \"TCP/IP\". Communication API being used: \"SOCKETS\". Location where the error was detected: \"127.0.0.1\". Communication function detecting the error: \""
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 0,
+          "p50_ms": null,
+          "p99_ms": null,
+          "errors": 8
+        },
+        "status": "error",
+        "error": "OperationalError: ibm_db_dbi::OperationalError: [IBM][CLI Driver] SQL30081N A communication error has been detected. Communication protocol being used: \"TCP/IP\". Communication API being used: \"SOCKETS\". Location where the error was detected: \"127.0.0.1\". Communication function detecting the error: \""
+      },
+      "container_logging": {
+        "rdlab-db2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 4090,
+          "docker_logs_lines": 89
+        }
+      },
+      "extra": {
+        "error": "ibm_db_dbi::OperationalError: [IBM][CLI Driver] SQL30081N  A communication error has been detected. Communication protocol being used: \"TCP/IP\".  Comm"
+      },
+      "collected": [
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2diag.log",
+        "results/db2/logs/db2__database_config_db2inst1_sqllib_db2dump_DIAG0000_db2inst1.nfy"
+      ],
+      "_seconds": 46.9
+    }
+  },
+  "harness_log": "results/logs/db2/20260914-132718-40b922.log",
+  "finished": "2026-09-14T10:28:20+00:00"
+}

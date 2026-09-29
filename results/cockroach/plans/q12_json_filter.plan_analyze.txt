@@ -1,0 +1,30 @@
+planning time: 259µs
+execution time: 37ms
+distribution: local
+plan type: generic, reused
+rows decoded from KV: 1,924 (928 KiB, 5,000 KVs, 2 gRPC calls)
+regions: lab
+
+• limit
+│ count: 100
+│
+└── • filter
+    │ sql nodes: n1
+    │ regions: lab
+    │ execution time: 4ms
+    │ sql cpu time: 4ms
+    │ actual row count: 100
+    │ estimated row count: 556
+    │ filter: ((attrs->>'color') = 'red') AND ((attrs->>'weight')::DECIMAL > 10)
+    │
+    └── • scan
+          sql nodes: n1
+          kv nodes: n3
+          regions: lab
+          KV time: 33ms
+          KV rows decoded: 1,924
+          sql cpu time: 2ms
+          actual row count: 1,924
+          estimated row count: 900 - 5,000 (100% of the table; stats collected 3 minutes ago)
+          table: products@products_pkey
+          spans: FULL SCAN (SOFT LIMIT)

@@ -1,0 +1,39 @@
+Incremental Sort  (cost=166708.81..232255.39 rows=487606 width=48) (actual time=963.500..967.996 rows=600 loops=1)
+  Sort Key: p.category_id, (row_number() OVER (?))
+  Presorted Key: p.category_id
+  Full-sort Groups: 19  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+  ->  WindowAgg  (cost=166413.14..177384.28 rows=487606 width=48) (actual time=963.223..967.423 rows=600 loops=1)
+        Run Condition: (row_number() OVER (?) <= 3)
+        ->  Sort  (cost=166413.14..167632.16 rows=487606 width=40) (actual time=963.194..963.569 rows=5000 loops=1)
+              Sort Key: p.category_id, (sum(((oi.qty)::numeric * oi.unit_price))) DESC, oi.product_id
+              Sort Method: quicksort  Memory: 501kB
+              ->  HashAggregate  (cost=95201.49..107010.69 rows=487606 width=40) (actual time=957.073..959.003 rows=5000 loops=1)
+                    Group Key: p.category_id, oi.product_id
+                    Planned Partitions: 32  Batches: 1  Memory Usage: 2833kB
+                    ->  Hash Join  (cost=596.61..56497.76 rows=487606 width=18) (actual time=9.481..604.549 rows=487606 loops=1)
+                          Hash Cond: (oi.product_id = p.id)
+                          ->  Seq Scan on order_items oi  (cost=23.10..49219.67 rows=487606 width=14) (actual time=1.827..345.135 rows=487606 loops=1)
+                                Storage Table Read Requests: 477
+                                Storage Table Read Execution Time: 7.257 ms
+                                Storage Table Read Ops: 477
+                                Storage Table Rows Scanned: 487606
+                          ->  Hash  (cost=511.01..511.01 rows=5000 width=8) (actual time=7.629..7.630 rows=5000 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 260kB
+                                ->  Seq Scan on products p  (cost=23.08..511.01 rows=5000 width=8) (actual time=1.665..5.923 rows=5000 loops=1)
+                                      Storage Table Read Requests: 5
+                                      Storage Table Read Execution Time: 4.920 ms
+                                      Storage Table Read Ops: 5
+                                      Storage Table Rows Scanned: 5000
+Planning Time: 0.353 ms
+Execution Time: 968.391 ms
+Storage Read Requests: 482
+Storage Read Execution Time: 12.177 ms
+Storage Read Ops: 482
+Storage Rows Scanned: 492606
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 12.177 ms
+Peak Memory Usage: 4613 kB

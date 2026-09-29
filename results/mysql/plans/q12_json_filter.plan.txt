@@ -1,0 +1,3 @@
+-> Limit: 100 row(s)  (cost=4.81 rows=100)
+    -> Filter: ((json_unquote(json_extract(products.attrs,'$.color')) = 'red') and (cast(json_extract(products.attrs,'$.weight') as decimal(12,2)) > 10))  (cost=4.81 rows=100)
+        -> Index scan on products using PRIMARY  (cost=4.81 rows=100)

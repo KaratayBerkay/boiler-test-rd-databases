@@ -1,0 +1,177 @@
+{
+  "engine": "firebird",
+  "display": "Firebird 5",
+  "category": "row-store OLTP",
+  "dialect": "firebird",
+  "driver": "firebird-driver",
+  "image": "firebirdsql/firebird:5",
+  "run_id": "20260914-152140-ad3d6b",
+  "started": "2026-09-14T12:21:40+00:00",
+  "scale": 0.3,
+  "notes": "Firebird 5 SuperServer. MVCC with SNAPSHOT / READ COMMITTED isolation, UPDATE OR INSERT and MERGE, no LATERAL/JSON. Built-in asynchronous replication (replication.conf + nbackup copy) exists since Firebird 4 but is not automated here. Loaded at scale 0.3 because firebird-driver executemany sends one row per round trip (a few thousand rows/s).",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 6.6,
+          "rows_per_s": 909,
+          "method": "executemany",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.11,
+          "rows_per_s": 1831,
+          "method": "executemany",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 1.17,
+          "rows_per_s": 1279,
+          "method": "executemany",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 74.13,
+          "rows_per_s": 809,
+          "method": "executemany",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 185.24,
+          "rows_per_s": 794,
+          "method": "executemany",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 250.04,
+          "rows_per_s": 1200,
+          "method": "executemany",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 3.56,
+          "rows_per_s": 1685,
+          "method": "executemany",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP NOT NULL,\n  attrs VARCHAR(2000),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description VARCHAR(4000) NOT NULL,\n  price DOUBLE PRECISION NOT NULL,\n  attrs VARCHAR(2000),\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP NOT NULL,\n  total_amount DOUBLE PRECISION NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DOUBLE PRECISION NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP NOT NULL,\n  payload VARCHAR(2000),\n  value_num DOUBLE PRECISION NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.18,
+      "load_seconds": 521.04,
+      "fts_setup": [],
+      "after_load": [],
+      "post_seconds": 0.0,
+      "server_version": "Firebird LI-V6.3.4.1812 Firebird 5.0",
+      "_seconds": 521.4
+    },
+    "logging": {
+      "sink": "system audit trace (fbtrace.conf, time_threshold=100) -> /var/log/firebird/audit.log",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "firebird_conf": "AuditTraceConfigFile =/etc/firebird/fbtrace.conf\nDefaultDbCachePages = 65536\nWireCryptPlugin = ChaCha64, ChaCha, Arc4\nWireCrypt = Enabled\n# Trace configuration. Following rules are used :\n# - configuration is processed from top to bottom\n# - there is two kind of sections allowed : \"database\" and \"services\"\n# - parameters at default section are used for all databases or services\n# - only one default section for each kind is allowed\n# - after processing of default database section, search is continued\n# - if database name matches pattern, options are immediately applied and\n#   search does not c",
+        "audit_log": "/var/log/firebird/audit.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "system audit trace (fbtrace.conf, time_threshold=100) -> /var/log/firebird/audit.log",
+        "slow_query_ms": 563.0,
+        "slow_logged": true,
+        "seen_after_s": 0.09,
+        "sample": "2026-09-14T12:30:22.5440 (52:0x7a8b912fb440) EXECUTE_STATEMENT_FINISH\n\t/var/lib/firebird/data/lab.fdb (ATT_182, LAB:NONE, UTF8, TCPv4:172.19.0.1/48732)\n\t/usr/bin/python3.12:3099445\n\t\t(TRA_371, CONCURRENCY | WAIT | READ_WRITE)\n\nStatement 106:\n-------------------------------------------------------------------------------\nSELECT count(*) AS rdlab_mk_869da828b2 FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer_id WHERE e1.id < 40000 AND e2.id < 40000\n^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPLAN HASH (E1 INDEX (RDB$PRIMARY10), E2 INDEX (RDB$PRIMA",
+        "duration_ms": 459,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "audit trace: log_connections + log_statement_prepare (every statement, DDL included)",
+        "setup": "always on (AuditTraceConfigFile)",
+        "event_found": true,
+        "seen_after_s": 0.08,
+        "sample": "2026-09-14T12:30:22.9410 (52:0x7a8b912fb440) PREPARE_STATEMENT\n\t/var/lib/firebird/data/lab.fdb (ATT_188, LAB:NONE, UTF8, TCPv4:172.19.0.1/48754)\n\t/usr/bin/python3.12:3099445\n\t\t(TRA_373, CONCURRENCY | WAIT | READ_WRITE)\n\n-------------------------------------------------------------------------------\nDROP TABLE audit_rdlab_mk_7d6147c559\n      0 ms",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 1872,
+          "p50_ms": 2.6436814999999996,
+          "p99_ms": 12.585400340000024,
+          "errors": 0
+        },
+        "full_logging": "fbtracemgr -start user trace session with time_threshold=0 (every statement to full-trace.log)",
+        "full": {
+          "qps": 513,
+          "p50_ms": 5.397233,
+          "p99_ms": 232.74543397,
+          "errors": 0
+        },
+        "log_bytes_written": 1946358,
+        "bytes_per_statement": 948.5,
+        "overhead_pct": 72.6,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-firebird": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 365,
+          "docker_logs_lines": 10
+        }
+      },
+      "extra": {},
+      "collected": [
+        "results/firebird/logs/firebird__var_log_firebird_audit.log",
+        "results/firebird/logs/firebird__var_log_firebird_full-trace.log",
+        "results/firebird/logs/firebird__opt_firebird_firebird.log"
+      ],
+      "_seconds": 19.3
+    }
+  },
+  "harness_log": "results/logs/firebird/20260914-152140-ad3d6b.log",
+  "server_version": "Firebird LI-V6.3.4.1812 Firebird 5.0",
+  "finished": "2026-09-14T12:30:41+00:00"
+}

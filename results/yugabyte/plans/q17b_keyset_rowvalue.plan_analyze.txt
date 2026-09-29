@@ -1,0 +1,24 @@
+Limit  (cost=23579.33..23579.46 rows=50 width=16) (actual time=274.626..274.669 rows=50 loops=1)
+  ->  Sort  (cost=23579.33..23829.03 rows=99879 width=16) (actual time=274.623..274.631 rows=50 loops=1)
+        Sort Key: ordered_at, id
+        Sort Method: top-N heapsort  Memory: 29kB
+        ->  Seq Scan on orders  (cost=23.10..20261.42 rows=99879 width=16) (actual time=1.595..186.615 rows=99956 loops=1)
+              Filter: (ROW(ordered_at, id) > ROW('2025-01-01 00:00:00'::timestamp without time zone, 0))
+              Rows Removed by Filter: 100044
+              Storage Table Read Requests: 196
+              Storage Table Read Execution Time: 93.897 ms
+              Storage Table Read Ops: 196
+              Storage Table Rows Scanned: 200000
+Planning Time: 0.177 ms
+Execution Time: 274.902 ms
+Storage Read Requests: 196
+Storage Read Execution Time: 93.897 ms
+Storage Read Ops: 196
+Storage Rows Scanned: 200000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 93.897 ms
+Peak Memory Usage: 92 kB

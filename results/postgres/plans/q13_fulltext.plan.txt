@@ -1,0 +1,7 @@
+Limit  (cost=100.57..100.70 rows=50 width=24)
+  ->  Sort  (cost=100.57..100.79 rows=85 width=24)
+        Sort Key: id
+        ->  Bitmap Heap Scan on products  (cost=7.41..97.85 rows=85 width=24)
+              Recheck Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)
+              ->  Bitmap Index Scan on ix_products_fts  (cost=0.00..7.39 rows=85 width=0)
+                    Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)

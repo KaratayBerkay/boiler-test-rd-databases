@@ -1,0 +1,25 @@
+Output: id, name
+
+JoinLazyColumnsStep
+├──Limit (preliminary LIMIT)
+│  │  Limit 50
+│  │  Offset 0
+│  └──Sorting (Sorting for ORDER BY)
+│     │  Prefix sort description: id ASC
+│     │  Result sort description: id ASC
+│     │  Limit 50
+│     └──ReadFromMergeTree (lab.products)
+│           Read type: InOrder
+│           Parts: 1 | Granules: 1
+│           Output: _part_offset, _part_starting_offset, id
+│           Prewhere filter
+│           Prewhere filter column:  hasToken(description, 'waterproof') AND hasToken(description, 'bluetooth')
+│           Virtual row conversions
+│           Indexes:
+│             PrimaryKey
+│               Condition: true
+│               Parts: 1/1
+│               Granules: 1/1
+│             Ranges: 1
+└──LazilyReadFromMergeTree
+      Lazily read columns: name

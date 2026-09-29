@@ -1,0 +1,25 @@
+Limit  (cost=409.19..409.21 rows=8 width=22) (actual time=10.619..10.708 rows=100 loops=1)
+  ->  Sort  (cost=409.19..409.21 rows=8 width=22) (actual time=10.616..10.630 rows=100 loops=1)
+        Sort Key: id
+        Sort Method: top-N heapsort  Memory: 38kB
+        ->  Seq Scan on products  (cost=23.08..409.07 rows=8 width=22) (actual time=8.308..10.030 rows=443 loops=1)
+              Storage Filter: ((attrs ->> 'color'::text) = 'red'::text)
+              Filter: (((attrs ->> 'weight'::text))::numeric > '10'::numeric)
+              Rows Removed by Filter: 242
+              Storage Table Read Requests: 1
+              Storage Table Read Execution Time: 8.114 ms
+              Storage Table Read Ops: 1
+              Storage Table Rows Scanned: 5000
+Planning Time: 0.171 ms
+Execution Time: 10.991 ms
+Storage Read Requests: 1
+Storage Read Execution Time: 8.114 ms
+Storage Read Ops: 1
+Storage Rows Scanned: 5000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 8.114 ms
+Peak Memory Usage: 251 kB

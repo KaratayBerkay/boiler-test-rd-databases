@@ -1,0 +1,3 @@
+1 | SIMPLE | c | ALL | PRIMARY | None | None | None | 20041 | Using temporary; Using filesort
+1 | SIMPLE | o | ref | PRIMARY,ix_orders_customer_id | ix_orders_customer_id | 4 | lab.c.id | 9 | Using where
+1 | SIMPLE | oi | ref | ix_order_items_order_id | ix_order_items_order_id | 4 | lab.o.id | 2 | 

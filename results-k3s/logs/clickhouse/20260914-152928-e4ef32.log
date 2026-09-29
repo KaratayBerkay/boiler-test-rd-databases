@@ -1,0 +1,28 @@
+2026-09-14 15:29:28,401 DEBUG   [clickhouse/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/clickhouse/20260914-152928-e4ef32.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/clickhouse/20260914-152928-e4ef32.jsonl
+2026-09-14 15:29:28,402 INFO    [clickhouse/-] [clickhouse] run 20260914-152928-e4ef32 phases=['backup'] scale=0.3 (log: results-k3s/logs/clickhouse/20260914-152928-e4ef32.log)
+2026-09-14 15:29:28,415 INFO    [clickhouse/-] [clickhouse] phase: backup
+2026-09-14 15:29:29,171 INFO    [clickhouse/backup]   source fingerprint: 7 tables, 520,772 rows (0.76s)
+2026-09-14 15:29:29,172 INFO    [clickhouse/backup]   strategy backup_disk: native backup of parts + metadata, restored as a new database
+2026-09-14 15:29:29,590 INFO    [clickhouse/backup]     prepare                            rc=0    0.42s
+2026-09-14 15:29:29,648 INFO    [clickhouse/backup]     BACKUP DATABASE TO Disk            ok    0.06s
+2026-09-14 15:29:29,922 INFO    [clickhouse/backup]     drop old restore db                ok    0.02s
+2026-09-14 15:29:31,202 INFO    [clickhouse/backup]     RESTORE DATABASE AS lab_restore    ok    1.28s
+2026-09-14 15:29:31,996 INFO    [clickhouse/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:29:32,885 INFO    [clickhouse/backup]     drop restore db                    ok    0.89s
+2026-09-14 15:29:32,885 INFO    [clickhouse/backup]   backup_disk: backup 0.06s / 13.5 MB, restore 1.28s, verified=True
+2026-09-14 15:29:32,886 INFO    [clickhouse/backup]   strategy backup_cluster: cluster-coordinated backup (shards once, replicas share)
+2026-09-14 15:29:33,376 INFO    [clickhouse/backup]     BACKUP DATABASE ON CLUSTER         ok    0.49s
+2026-09-14 15:29:33,821 INFO    [clickhouse/backup]     DROP TABLE inventory ON CLUSTER    ok    0.21s
+2026-09-14 15:29:34,234 INFO    [clickhouse/backup]     RESTORE TABLE inventory ON CLUSTER ok    0.41s
+2026-09-14 15:29:34,971 INFO    [clickhouse/backup]     verify after in-place RESTORE TABLE MATCH (7 tables, 520,772 rows)
+2026-09-14 15:29:35,040 INFO    [clickhouse/backup]     verify inventory on replica        MATCH (1 tables, 6,000 rows)
+2026-09-14 15:29:35,041 INFO    [clickhouse/backup]   backup_cluster: backup 0.49s / 13.6 MB, restore 0.41s, verified=True
+2026-09-14 15:29:35,041 INFO    [clickhouse/backup]   strategy incremental: incremental on top of the full backup
+2026-09-14 15:29:35,579 INFO    [clickhouse/backup]     BACKUP ... base_backup             ok    0.08s
+2026-09-14 15:29:35,819 INFO    [clickhouse/backup]     drop old restore db                ok    0.02s
+2026-09-14 15:29:36,030 INFO    [clickhouse/backup]     RESTORE DATABASE AS lab_restore3   ok    0.21s
+2026-09-14 15:29:36,730 INFO    [clickhouse/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:29:37,023 INFO    [clickhouse/backup]     drop restore db                    ok    0.27s
+2026-09-14 15:29:37,024 INFO    [clickhouse/backup]   incremental: backup 0.08s / 0.1 MB, restore 0.21s, verified=True, pitr=True
+2026-09-14 15:29:37,326 INFO    [clickhouse/backup] [clickhouse] phase backup done in 8.9s
+2026-09-14 15:29:37,353 INFO    [clickhouse/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/clickhouse/20260914-152928-e4ef32.json

@@ -1,0 +1,63 @@
+display: CockroachDB
+category: distributed SQL
+dialect: cockroach
+driver: psycopg
+image: cockroachdb/cockroach:latest
+project: rdlab-cockroach
+scale: 1
+notes: >-
+  3-node insecure cluster; every range replicated 3x via Raft, any node serves reads and writes (no promotion needed).
+  HAProxy round-robins connections across nodes (the recommended production pattern). Insecure mode: no passwords.
+docs:
+  - https://www.cockroachlabs.com/docs/stable/orchestrate-a-local-cluster-with-docker-compose
+  - https://www.cockroachlabs.com/docs/stable/sql-feature-support
+oneshot: [init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 26257
+    user: root
+    password: ""
+    database: lab
+    container: rdlab-crdb-1
+  - name: node2
+    role: node
+    host: 127.0.0.1
+    port: 26258
+    user: root
+    password: ""
+    database: lab
+    container: rdlab-crdb-2
+  - name: node3
+    role: node
+    host: 127.0.0.1
+    port: 26259
+    user: root
+    password: ""
+    database: lab
+    container: rdlab-crdb-3
+  - name: haproxy
+    role: proxy
+    host: 127.0.0.1
+    port: 26260
+    user: root
+    password: ""
+    database: lab
+    container: rdlab-crdb-haproxy
+    splits_reads: true
+replication:
+  kind: Raft consensus, 3 replicas per range (multi-active)
+  promote:
+    method: none
+    target: node2
+backup:
+  uri: nodelocal://1/lab
+  extern_dir: /cockroach/cockroach-data/extern/lab
+  strategies: [full, incremental, pitr]
+logging:
+  dir: /cockroach/cockroach-data/logs
+  slow_ms: 100
+features:
+  settle_seconds: 5
+  bulk_load: copy

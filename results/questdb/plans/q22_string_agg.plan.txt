@@ -1,0 +1,23 @@
+Encode sort light
+  keys: [id]
+    GroupBy vectorized: false
+      keys: [id]
+      values: [string_agg(sku,,)]
+        SelectedRecord
+            Hash Join Light
+              condition: p.id=oi.product_id
+                Hash Join Light
+                  condition: oi.order_id=o.id
+                    Async JIT Filter workers: 27
+                      filter: 500>=id
+                        PageFrame
+                            Row forward scan
+                            Frame forward scan on: orders
+                    Hash
+                        PageFrame
+                            Row forward scan
+                            Frame forward scan on: order_items
+                Hash
+                    PageFrame
+                        Row forward scan
+                        Frame forward scan on: products

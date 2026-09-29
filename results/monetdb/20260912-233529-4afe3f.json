@@ -1,0 +1,1139 @@
+{
+  "engine": "monetdb",
+  "display": "MonetDB",
+  "category": "analytical (columnar)",
+  "dialect": "monetdb",
+  "driver": "pymonetdb",
+  "image": "monetdb/monetdb:latest",
+  "run_id": "20260912-233529-4afe3f",
+  "started": "2026-09-12T20:35:29+00:00",
+  "scale": 1.0,
+  "notes": "Column-store with full SQL:2003 transactions (optimistic concurrency). Bulk load via COPY INTO ... ON CLIENT. Replication: no built-in physical replication in the open-source release (monetdb replication is transaction-log based, experimental).",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.09,
+          "rows_per_s": 225672,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.03,
+          "rows_per_s": 7404,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.09,
+          "rows_per_s": 56031,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 0.37,
+          "rows_per_s": 537369,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 0.55,
+          "rows_per_s": 891740,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 2.58,
+          "rows_per_s": 387925,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.06,
+          "rows_per_s": 310453,
+          "method": "COPY INTO ... FROM ... ON CLIENT",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INT NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INT NOT NULL,\n  parent_id INT,\n  name VARCHAR(100) NOT NULL,\n  depth INT NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INT NOT NULL,\n  category_id INT NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INT NOT NULL,\n  customer_id INT NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INT NOT NULL,\n  order_id INT NOT NULL,\n  product_id INT NOT NULL,\n  qty INT NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INT NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INT NOT NULL,\n  warehouse_id INT NOT NULL,\n  qty INT NOT NULL,\n  updated_at TIMESTAMP NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.02,
+      "load_seconds": 3.78,
+      "fts_setup": [],
+      "after_load": [
+        "ANALYZE sys.customers",
+        "ANALYZE sys.categories",
+        "ANALYZE sys.products",
+        "ANALYZE sys.orders",
+        "ANALYZE sys.order_items",
+        "ANALYZE sys.events",
+        "ANALYZE sys.inventory"
+      ],
+      "post_seconds": 0.64,
+      "server_version": "MonetDB 11.55.7",
+      "_seconds": 4.4
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"create materialized\"",
+        "error_code": null,
+        "ms": 3.7
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "merge table partitions",
+        "ms": 12.6
+      },
+      "generated_column": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: 42000!syntax error, unexpected '(', expecting IDENTITY in: \"create table gen_lab (a int, b int generated always as (\"",
+        "error_code": null,
+        "ms": 3.5
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 7.6
+      },
+      "returning": {
+        "status": "supported",
+        "note": "",
+        "ms": 6.6
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 5.4
+      },
+      "arrays": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: 42000!syntax error, unexpected '[', expecting SCOLON or ':' in: \"select array[\"",
+        "error_code": null,
+        "ms": 3.4
+      },
+      "vector_type": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: 22000!Type (vector) unknown in: \"create table vec_lab (e vector(3)\" !42000!syntax error, unexpected ')' in: \")\"",
+        "error_code": null,
+        "ms": 3.5
+      },
+      "statement_timeout": {
+        "status": "unsupported",
+        "note": "",
+        "detail": "no error raised",
+        "ms": 44.1
+      },
+      "filter_clause": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: 42000!syntax error, unexpected FILTER, expecting SCOLON or ':' in: \"select count(*) filter\"",
+        "error_code": null,
+        "ms": 3.9
+      },
+      "distinct_on": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: 42000!syntax error, unexpected ON in: \"select distinct on\"",
+        "error_code": null,
+        "ms": 3.1
+      },
+      "qualify": {
+        "status": "error",
+        "note": "",
+        "error": "BrokenPipeError: Server closed connection",
+        "error_code": null,
+        "ms": 189.0
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": null,
+        "detail": "IntegrityError: 40002!INSERT INTO: violated constraint 'sys.ck_lab_v_check' CHECK(v > 0)",
+        "ms": 511.2
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": null,
+        "detail": "IntegrityError: 40002!INSERT INTO: FOREIGN KEY constraint 'order_items.order_items_product_id_fkey' violated",
+        "ms": 8.2
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 7.9
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: 42000!syntax error, unexpected OF in: \"select count(*) from orders as of\"",
+        "error_code": null,
+        "ms": 3.7
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[('[ \"Category 1\", \"Category 2\", \"Category 3\" ]',)]",
+        "ms": 5.8
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "ms": 3.6
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "ms": 3.6
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "",
+        "ms": 3.6
+      },
+      "regex_match": {
+        "status": "error",
+        "note": "pcre extension (~ operator)",
+        "error": "OperationalError: 42000!SELECT: no such operator 'mbr_contains'(varchar(150), varchar(6))",
+        "error_code": null,
+        "ms": 4.1
+      },
+      "_seconds": 0.9
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 ",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.404,
+          "p50": 0.462,
+          "p90": 0.532,
+          "p95": 0.56,
+          "p99": 0.602,
+          "max": 0.612,
+          "mean": 0.471,
+          "stdev": 0.049,
+          "first_ms": 0.768
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "1"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.288,
+          "p50": 1.447,
+          "p90": 1.528,
+          "p95": 1.549,
+          "p99": 1.602,
+          "max": 1.622,
+          "mean": 1.448,
+          "stdev": 0.066,
+          "first_ms": 2.62
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "4403 | Deniz Arslan | user4403@example.com | TR | plus"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 7.411,
+          "p50": 7.925,
+          "p90": 8.101,
+          "p95": 8.124,
+          "p99": 8.143,
+          "max": 8.147,
+          "mean": 7.841,
+          "stdev": 0.255,
+          "first_ms": 11.007
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "168046 | 8715 | delivered | 6470.65\n157365 | 19412 | delivered | 1867.07\n128225 | 1230 | delivered | 3351.56\n188836 | 12960 | delivered | 2226.45\n174144 | 12518 | delivered | 1102.35\n106345 | 16203 | delivered | 908.09\n127953 | 14427 | delivered | 1541.70\n180509 | 19676 | delivered | 882.44\n14270 | 19334 | delivered | 3121.46\n146577 | 1836 | delivered | 1610.33\n150727 | 17852 | delivered | 345.14\n30708 | 16291 | delivered | 68.83\n156833 | 17868 | delivered | 2396.58\n8290 | 11093 | delivered | 1354.67\n28492 | 5651 | delivered | 1503.63\n31700 | 28 | delivered | 910.43\n84607 | 1677 | delivered | 2614.68\n100133 | 12083 | delivered | 2160.86\n118588 | 17656 | delivered | 1136.42\n16773 | 2450 | delivered | 497.97\n69766 | 18861 | delivered | 3274.49\n85080 | 19901 | delivered | 215.26\n11525 | 8031 | delivered | 2736.26\n18353 | 13934 | delivered | 2023.95\n142966 | 718 | delivered | 3826.08\n70226 | 7549 | delivered | 3452.50\n97845 | 5857 | delivered | 2412.74\n66960 | 1789 | delivered | 6540.12\n178622 | 5729 | delivered | 4102.80\n131092 | 5025 | delivered | 1889.04\n135534 | 17698 | delivered | 648.84\n139751 | 8923 | delivered | 7813.76\n128910 | 8368 | delivered | 1493.94\n139080 | 4814 | delivered | 404.92\n148079 | 10876 | delivered | 1068.51\n164104 | 7353 | delivered | 6366.95\n105816 | 13670 | delivered | 2699.63\n176904 | 3009 | delivered | 293.38\n48237 | 4302 | delivered | 2139.50\n83187 | 6046 | delivered | 180.54\n58994 | 7370 | delivered | 4137.77\n14725 | 11223 | delivered | 288.56\n20141 | 12178 | delivered | 4771.05\n168862 | 4647 | delivered | 4381.83\n175940 | 15018 | delivered | 452.21\n185609 | 6349 | delivered | 2580.72\n101219 | 2788 | delivered | 1222.14\n153831 | 3279 | delivered | 3935.80\n172944 | 2550 | delivered | 4197.62\n93757 | 3264 | delivered | 749.44\n188377 | 17585 | delivered | 82.40\n22815 | 3409 | delivered | 1808.69\n151745 | 10538 | delivered | 1870.42\n111829 | 17697 | delivered | 3715.20\n57068 | 4719 | delivered | 459.55\n130438 | 13685 | delivered | 2666.94\n140480 | 1570 | delivered | 2591.24\n110834 | 17707 | delivered | 1089.03\n164650 | 17434 | delivered | 1623.75\n59313 | 19486 | delivered | 1100.44\n104419 | 11770 | delivered | 1261.14\n173330 | 6964 | delivered | 480.47\n16593 | 13700 | delivered | 4223.75\n35864 | 10511 | delivered | 1552.06\n104129 | 4455 | delivered | 2158.29\n53610 | 8840 | delivered | 89.40\n15944 | 11105 | delivered | 1055.87\n52599 | 4488 | delivered | 3176.67\n123732 | 19257 | delivered | 491.76\n133359 | 15065 | delivered | 1839.34\n26012 | 6185 | delivered | 13.87\n53092 | 1965 | delivered | 2253.20\n136281 | 6393 | delivered | 207.74\n26917 | 10521 | delivered | 7730.52\n179556 | 10097 | delivered | 1900.53\n164095 | 15852 | delivered | 789.05\n70942 | 4767 | delivered | 2491.55\n56218 | 2456 | delivered | 3291.14\n6312 | 16511 | delivered | 488.09\n80256 | 3703 | delivered | 7005.94\n118313 | 8371 | delivered | 9710.70\n99867 | 8639 | delivered | 580.95\n91104 | 4660 | delivered | 870.27\n153793 | 6896 | delivered | 4217.56\n79320 | 9872 | delivered | 3743.30\n152424 | 3420 | delivered | 1262.12\n18786 | 10684 | delivered | 4098.76\n157486 | 1625 | delivered | 8615.87\n121667 | 10746 | delivered | 562.68\n128729 | 6061 | delivered | 187.27\n154225 | 64 | delivered | 3081.69\n131697 | 334 | delivered | 2530.55\n139069 | 17439 | delivered | 286.44\n65608 | 18908 | delivered | 2572.75\n166292 | 10492 | delivered | 801.55\n106924 | 12206 | delivered | 4955.84\n176703 | 9356 | delivered | 8641.43\n15886 | 19616 | delivered | 5066.09\n8019 | 16255 | delivered | 1138.56\n161079 | 11819 | delivered | 372.86\n166413 | 16453 | delivered | 2659.32\n85050 | 6102 | delivered | 6513\n8503 | 14728 | delivered | 2325.15\n76134 | 5124 | delivered | 5756.75\n10402 | 19582 | delivered | 855.87\n57434 | 18198 | delivered | 48.94\n127912 | 12121 | delivered | 11806.82\n104375 | 9354 | delivered | 1637.72\n47748 | 15167 | delivered | 161.74\n162069 | 8075 | delivered | 3467.12\n81321 | 2759 | delivered | 1153.72\n184955 | 9044 | delivered | 7231.58\n177539 | 2356 | delivered | 9345.81\n170857 | 17384 | delivered | 1747.82\n162852 | 10405 | delivered | 4171.18\n133392 | 15902 | delivered | 1185.68\n111547 | 11389 | delivered | 2985.76\n98367 | 5486 | delivered | 2146.57\n7017 | 8916 | delivered | 223.55\n139919 | 11989 | delivered | 1760.23\n196343 | 19888 | delivered | 1697.24\n199354 | 605 | delivered | 1261.08\n20189 | 7785 | delivered | 645.32\n43413 | 8231 | delivered | 802.95\n81587 | 12215 | delivered | 1682.08\n99870 | 18105 | delivered | 1135.25\n82541 | 10065 | delivered | 532.18\n22030 | 138 | delivered | 279.75\n110066 | 14822 | delivered | 3487.41\n114858 | 14190 | delivered | 1592.5\n164844 | 12004 | delivered | 804.96\n165635 | 11201 | delivered | 250.2\n194728 | 19175 | delivered | 1409.65\n108554 | 7392 | delivered | 4103.82\n45771 | 17132 | delivered | 1510.6\n53925 | 11473 | delivered | 3396.23\n177794 | 8264 | delivered | 3819.51\n23478 | 6936 | delivered | 197.75\n13343 | 4121 | delivered | 955.91\n135701 | 12420 | delivered | 856.82\n68884 | 6783 | delivered | 2262.51\n114461 | 7626 | delivered | 1893.34\n132649 | 19728 | delivered | 1340.78\n61642 | 325 | delivered | 950.79\n27634 | 14003 | delivered | 2637.55\n82943 | 1355 | delivered | 4708.08\n141968 | 19470 | delivered | 2977.38\n71720 | 13332 | delivered | 651.21\n99295 | 18547 | delivered | 636.36\n113060 | 4194 | delivered | 1174.39\n100475 | 19765 | delivered | 4680\n119258 | 322 | delivered | 885.88\n179601 | 7423 | delivered | 1681.72\n177933 | 5991 | delivered | 4259.57\n75803 | 2053 | delivered | 6162.69\n106477 | 19587 | delivered | 1121.47\n159003 | 11132 | delivered | 2785.67\n39176 | 8778 | delivered | 4560.18\n1392 | 1290 | delivered | 1050.97\n28150 | 18659 | delivered | 911.33\n163214 | 5942 | delivered | 308.22\n195925 | 13498 | delivered | 6795.98\n71666 | 8935 | delivered | 1256.75\n190120 | 18773 | delivered | 4267.86\n131785 | 15481 | delivered | 945.26\n96885 | 14495 | delivered | 2715.89\n162195 | 15432 | delivered | 270.4\n90438 | 7062 | delivered | 4305.9\n197509 | 11220 | delive"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, date_trunc('month', o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, date_trunc('month', o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 20.157,
+          "p50": 24.145,
+          "p90": 26.742,
+          "p95": 27.061,
+          "p99": 27.316,
+          "max": 27.379,
+          "mean": 23.704,
+          "stdev": 2.466,
+          "first_ms": 28.688
+        },
+        "rows": 50,
+        "checksum": "4b01a7659958ecf823e8a1bc",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "US | 2025-03-01 00:00:00 | 1746 | 3747457.55\nUS | 2025-01-01 00:00:00 | 1742 | 3716865.66\nUS | 2025-05-01 00:00:00 | 1720 | 3679794.51\nUS | 2025-04-01 00:00:00 | 1726 | 3671767.96\nUS | 2025-06-01 00:00:00 | 1753 | 3664088.94\nUS | 2025-02-01 00:00:00 | 1620 | 3501300.28\nDE | 2025-01-01 00:00:00 | 757 | 1648755.10\nDE | 2025-03-01 00:00:00 | 711 | 1508327.36\nDE | 2025-06-01 00:00:00 | 700 | 1457545.33\nDE | 2025-05-01 00:00:00 | 700 | 1451463.08\nDE | 2025-02-01 00:00:00 | 691 | 1432024.80\nDE | 2025-04-01 00:00:00 | 655 | 1411185.33\nGB | 2025-03-01 00:00:00 | 656 | 1387622.58\nGB | 2025-01-01 00:00:00 | 617 | 1290585.02\nTR | 2025-06-01 00:00:00 | 569 | 1274965.94\nGB | 2025-05-01 00:00:00 | 598 | 1273398.19\nTR | 2025-03-01 00:00:00 | 608 | 1248851.93\nTR | 2025-01-01 00:00:00 | 584 | 1242692.82\nTR | 2025-05-01 00:00:00 | 584 | 1235195.21\nTR | 2025-04-01 00:00:00 | 592 | 1228914.73\nGB | 2025-02-01 00:00:00 | 562 | 1211065.59\nGB | 2025-06-01 00:00:00 | 570 | 1197990.34\nTR | 2025-02-01 00:00:00 | 521 | 1161448.01\nGB | 2025-04-01 00:00:00 | 557 | 1117312.56\nFR | 2025-04-01 00:00:00 | 492 | 1009845.51\nFR | 2025-05-01 00:00:00 | 488 | 994641.81\nFR | 2025-03-01 00:00:00 | 497 | 991684.78\nFR | 2025-02-01 00:00:00 | 471 | 958115.59\nFR | 2025-06-01 00:00:00 | 467 | 940079.98\nFR | 2025-01-01 00:00:00 | 443 | 930113.79\nNL | 2025-03-01 00:00:00 | 320 | 733528.68\nNL | 2025-01-01 00:00:00 | 289 | 643755.06\nES | 2025-04-01 00:00:00 | 286 | 634732.35\nIT | 2025-05-01 00:00:00 | 279 | 625377.55\nIT | 2025-01-01 00:00:00 | 266 | 601215.71\nIT | 2025-04-01 00:00:00 | 295 | 599883.15\nES | 2025-03-01 00:00:00 | 287 | 599790.13\nNL | 2025-06-01 00:00:00 | 288 | 589873.22\nES | 2025-01-01 00:00:00 | 279 | 583616.12\nIT | 2025-03-01 00:00:00 | 270 | 583268.33\nNL | 2025-02-01 00:00:00 | 269 | 581116.48\nES | 2025-05-01 00:00:00 | 277 | 570449.61\nES | 2025-02-01 00:00:00 | 261 | 569730.23\nIT | 2025-02-01 00:00:00 | 274 | 569645.35\nBR | 2025-02-01 00:00:00 | 249 | 561332.19\nBR | 2025-03-01 00:00:00 | 259 | 558067.05\nES | 2025-06-01 00:00:00 | 262 | 555058.18\nIT | 2025-06-01 00:00:00 | 283 | 550827.24\nBR | 2025-06-01 00:00:00 | 266 | 543655.46\nIN | 2025-06-01 00:00:00 | 257 | 541276.42"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 46.867,
+          "p50": 61.296,
+          "p90": 78.037,
+          "p95": 79.753,
+          "p99": 81.126,
+          "max": 81.47,
+          "mean": 63.028,
+          "stdev": 10.26,
+          "first_ms": 79.786
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "1 | 390 | 168436.16 | 1\n1 | 3833 | 159719.38 | 2\n1 | 1661 | 149924.25 | 3\n2 | 4725 | 195774.00 | 1\n2 | 4469 | 189514.00 | 2\n2 | 2564 | 182120.40 | 3\n3 | 4032 | 153266.58 | 1\n3 | 768 | 146998.10 | 2\n3 | 2319 | 146928.45 | 3\n4 | 1549 | 162212.11 | 1\n4 | 3752 | 158252.64 | 2\n4 | 3964 | 145840.77 | 3\n5 | 3005 | 165834.55 | 1\n5 | 1280 | 163070.80 | 2\n5 | 4439 | 162535.14 | 3\n6 | 4466 | 179667.00 | 1\n6 | 593 | 171989.68 | 2\n6 | 928 | 152951.40 | 3\n7 | 4887 | 173464.20 | 1\n7 | 2046 | 156289.60 | 2\n7 | 1784 | 152486.40 | 3\n8 | 1947 | 164532.12 | 1\n8 | 2681 | 157158.84 | 2\n8 | 2461 | 156902.19 | 3\n9 | 4194 | 187338.18 | 1\n9 | 2298 | 174670.02 | 2\n9 | 4443 | 161684.84 | 3\n10 | 3120 | 164713.47 | 1\n10 | 862 | 160053.76 | 2\n10 | 214 | 154850.50 | 3\n11 | 500 | 184828.44 | 1\n11 | 4012 | 166983.58 | 2\n11 | 3891 | 165225.21 | 3\n12 | 935 | 171754.26 | 1\n12 | 3082 | 164267.52 | 2\n12 | 576 | 162311.83 | 3\n13 | 3935 | 172479.58 | 1\n13 | 926 | 155940.40 | 2\n13 | 3671 | 151525.40 | 3\n14 | 3567 | 213733.65 | 1\n14 | 2817 | 168385.76 | 2\n14 | 936 | 166706.00 | 3\n15 | 766 | 184551.06 | 1\n15 | 1797 | 163971.52 | 2\n15 | 34 | 163303.28 | 3\n16 | 1166 | 185951.70 | 1\n16 | 4838 | 168782.00 | 2\n16 | 2528 | 110198.14 | 3\n17 | 241 | 156469.22 | 1\n17 | 4097 | 127603.19 | 2\n17 | 1146 | 119069.44 | 3\n18 | 2915 | 150721.34 | 1\n18 | 2758 | 137347.82 | 2\n18 | 3927 | 121812.66 | 3\n19 | 4086 | 191395.44 | 1\n19 | 3131 | 168971.94 | 2\n19 | 256 | 154017.24 | 3\n20 | 763 | 198311.48 | 1\n20 | 3876 | 197833.65 | 2\n20 | 1823 | 183035.60 | 3\n21 | 3730 | 185907.25 | 1\n21 | 3579 | 159512.08 | 2\n21 | 1358 | 143541.06 | 3\n22 | 1649 | 192172.08 | 1\n22 | 319 | 178080.76 | 2\n22 | 63 | 177247.20 | 3\n23 | 3450 | 179364.00 | 1\n23 | 2095 | 145017.21 | 2\n23 | 3183 | 139374.72 | 3\n24 | 956 | 187847.10 | 1\n24 | 1790 | 170597.70 | 2\n24 | 4152 | 160007.40 | 3\n25 | 3622 | 188326.09 | 1\n25 | 2733 | 182357.52 | 2\n25 | 2001 | 181259.10 | 3\n26 | 136 | 209957.54 | 1\n26 | 220 | 144096.16 | 2\n26 | 2637 | 142185.60 | 3\n27 | 1794 | 184331.04 | 1\n27 | 1450 | 169861.08 | 2\n27 | 2083 | 165835.48 | 3\n28 | 1613 | 215155.80 | 1\n28 | 3087 | 162687.98 | 2\n28 | 2327 | 151673.76 | 3\n29 | 322 | 182522.08 | 1\n29 | 418 | 144928.50 | 2\n29 | 1256 | 130657.56 | 3\n30 | 3003 | 162940.56 | 1\n30 | 1115 | 152489.12 | 2\n30 | 2440 | 151688.60 | 3\n31 | 1819 | 184025.52 | 1\n31 | 4074 | 166490.01 | 2\n31 | 4872 | 159958.56 | 3\n32 | 574 | 166751.24 | 1\n32 | 4087 | 165760.96 | 2\n32 | 1272 | 133407.44 | 3\n33 | 4077 | 170283.60 | 1\n33 | 539 | 140000.64 | 2\n33 | 4259 | 138611.55 | 3\n34 | 4005 | 167092.84 | 1\n34 | 138 | 166707.45 | 2\n34 | 3637 | 166584.86 | 3\n35 | 523 | 169290 | 1\n35 | 3694 | 156598.26 | 2\n35 | 3942 | 153181.6 | 3\n36 | 1320 | 168287 | 1\n36 | 2684 | 151318.96 | 2\n36 | 554 | 150015.07 | 3\n37 | 1384 | 178696.96 | 1\n37 | 1824 | 151381.44 | 2\n37 | 1153 | 147758.83 | 3\n38 | 3840 | 180551.04 | 1\n38 | 4465 | 159850.35 | 2\n38 | 4888 | 135378.46 | 3\n39 | 3326 | 155832.66 | 1\n39 | 489 | 144807.52 | 2\n39 | 3365 | 138152 | 3\n40 | 3430 | 175853.92 | 1\n40 | 3697 | 164953.74 | 2\n40 | 1577 | 152791.76 | 3\n41 | 3910 | 181145.02 | 1\n41 | 3474 | 168158.05 | 2\n41 | 2763 | 159886.35 | 3\n42 | 3358 | 149316.9 | 1\n42 | 167 | 149170.62 | 2\n42 | 2574 | 147677.28 | 3\n43 | 198 | 165555.78 | 1\n43 | 94 | 162970.08 | 2\n43 | 4961 | 153109.62 | 3\n44 | 3745 | 145819.96 | 1\n44 | 2136 | 135757.62 | 2\n44 | 3595 | 131130.4 | 3\n45 | 2387 | 194305.68 | 1\n45 | 2247 | 165696.32 | 2\n45 | 3138 | 164720.26 | 3\n46 | 2477 | 153515.04 | 1\n46 | 3056 | 153106.2 | 2\n46 | 3112 | 141790.08 | 3\n47 | 947 | 176096.27 | 1\n47 | 2828 | 169743.53 | 2\n47 | 1023 | 167380.96 | 3\n48 | 1744 | 140375.61 | 1\n48 | 3736 | 138292.92 | 2\n48 | 3952 | 133289.7 | 3\n49 | 2904 | 163411.17 | 1\n49 | 4564 | 155320.33 | 2\n49 | 1866 | 147304.98 | 3\n50 | 497 | 177274.8 | 1\n50 | 2576 | 153799.2 | 2\n50 | 4593 | 138079.8 | 3\n51 | 3507 | 182579.46 | 1\n51 | 1186 | 166778.92 | 2\n51 | 3436 | 151902.24 | 3\n52 | 1173 | 154917.36 | 1\n52 | 1614 | 152923.46 | 2\n52 | 274 | 150372.64 | 3\n53 | 3565 | 189800.06 | 1\n53 | 3754 | 150479.56 | 2\n53 | 1741 | 137875.2 | 3\n54 | 757 | 171443.19 | 1\n54 | 3780 | 167344.4 | 2\n54 | 4785 | 155979.6 | 3\n55 | 1509 | 195975.18 | 1\n55 | 4928 | 165266.92 | 2\n55 | 3125 | 157832 | 3\n56 | 4953 | 208439.67 | 1\n56 | 4808 | 181131.85 | 2\n56 | 4428 | 176186 | 3\n57 | 4519 | 198733.15 | 1\n57 | 2113 | 174943.74 | 2\n57 | 1204 | 159578.65 | 3\n58 | 1822 | 160514.42 | 1\n58 | 4541 | 153793.8 | 2\n58 | 3442 | 152952.45 | 3\n59 | 3788 | 177668.4 | 1\n59 | 543 | 171159.46 | 2\n59 | 1278 | 166403.02 | 3\n60 | 1298 | 160905 | 1\n60 | 2176 | 157649.58 | 2\n60 | 3578 | 155276.84 | 3\n61 | 2265 | 202581.1 | 1\n61 | 3729 | 175985.49 | 2\n61 | 3557 | 151349.68 | 3\n62 | 3714 | 211190.18 | 1\n62 | 2054 | 161927.46 | 2\n62 | 1836 | 160201.8 | 3\n63 | 303 | 173593.5 | 1\n63 | 3735 | 170469.9 | 2\n63 | 4741 | 164254.5 | 3\n64 | 596 | 192677.04 | 1\n64 | 1948 | 155945.79 | 2\n64 | 2722 | 140450.9 | 3\n65 | 3607 | 177030.54 | 1\n65 | 2056 | 166124 | 2\n65 | 3381 | 149134.23 | 3\n66 | 4550 | 163996.42 | 1\n66 | 490 | 153171 | 2\n66 | 545 | 138094.47 | 3\n67 | 3818 | 167304.09 | 1\n67 | 1442 | 164853.43 | 2"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT CAST(ordered_at AS DATE) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY CAST(ordered_at AS DATE)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.712,
+          "p50": 3.095,
+          "p90": 3.688,
+          "p95": 4.134,
+          "p99": 4.49,
+          "max": 4.58,
+          "mean": 3.213,
+          "stdev": 0.533,
+          "first_ms": 4.804
+        },
+        "rows": 90,
+        "checksum": "39f1b6619fae5745061db2c7",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "2025-01-01 | 588364.01 | 588364.01 | None\n2025-01-02 | 537807.13 | 1126171.14 | 588364.01\n2025-01-03 | 646345.13 | 1772516.27 | 537807.13\n2025-01-04 | 528980.43 | 2301496.70 | 646345.13\n2025-01-05 | 609652.31 | 2911149.01 | 528980.43\n2025-01-06 | 549261.87 | 3460410.88 | 609652.31\n2025-01-07 | 582218.31 | 4042629.19 | 549261.87\n2025-01-08 | 529378.59 | 4572007.78 | 582218.31\n2025-01-09 | 717721.61 | 5289729.39 | 529378.59\n2025-01-10 | 515112.67 | 5804842.06 | 717721.61\n2025-01-11 | 568225.13 | 6373067.19 | 515112.67\n2025-01-12 | 657422.63 | 7030489.82 | 568225.13\n2025-01-13 | 561587.61 | 7592077.43 | 657422.63\n2025-01-14 | 560581.95 | 8152659.38 | 561587.61\n2025-01-15 | 576924.21 | 8729583.59 | 560581.95\n2025-01-16 | 544958.73 | 9274542.32 | 576924.21\n2025-01-17 | 610984.57 | 9885526.89 | 544958.73\n2025-01-18 | 631547.75 | 10517074.64 | 610984.57\n2025-01-19 | 592196.77 | 11109271.41 | 631547.75\n2025-01-20 | 533530.97 | 11642802.38 | 592196.77\n2025-01-21 | 631240.87 | 12274043.25 | 533530.97\n2025-01-22 | 514545.00 | 12788588.25 | 631240.87\n2025-01-23 | 541211.66 | 13329799.91 | 514545.00\n2025-01-24 | 646555.63 | 13976355.54 | 541211.66\n2025-01-25 | 556153.16 | 14532508.70 | 646555.63\n2025-01-26 | 632353.38 | 15164862.08 | 556153.16\n2025-01-27 | 586659.10 | 15751521.18 | 632353.38\n2025-01-28 | 636828.43 | 16388349.61 | 586659.10\n2025-01-29 | 472891.40 | 16861241.01 | 636828.43\n2025-01-30 | 576220.76 | 17437461.77 | 472891.40\n2025-01-31 | 555707.81 | 17993169.58 | 576220.76\n2025-02-01 | 550154.89 | 18543324.47 | 555707.81\n2025-02-02 | 583479.38 | 19126803.85 | 550154.89\n2025-02-03 | 612606.81 | 19739410.66 | 583479.38\n2025-02-04 | 709741.53 | 20449152.19 | 612606.81\n2025-02-05 | 589093.21 | 21038245.40 | 709741.53\n2025-02-06 | 576366.38 | 21614611.78 | 589093.21\n2025-02-07 | 592828.82 | 22207440.60 | 576366.38\n2025-02-08 | 573975.20 | 22781415.80 | 592828.82\n2025-02-09 | 584279.15 | 23365694.95 | 573975.20\n2025-02-10 | 600918.94 | 23966613.89 | 584279.15\n2025-02-11 | 628827.76 | 24595441.65 | 600918.94\n2025-02-12 | 607453.34 | 25202894.99 | 628827.76\n2025-02-13 | 611699.07 | 25814594.06 | 607453.34\n2025-02-14 | 614568.99 | 26429163.05 | 611699.07\n2025-02-15 | 597054.44 | 27026217.49 | 614568.99\n2025-02-16 | 604616.20 | 27630833.69 | 597054.44\n2025-02-17 | 570445.89 | 28201279.58 | 604616.20\n2025-02-18 | 554271.48 | 28755551.06 | 570445.89\n2025-02-19 | 548148.77 | 29303699.83 | 554271.48\n2025-02-20 | 623524.99 | 29927224.82 | 548148.77\n2025-02-21 | 623820.15 | 30551044.97 | 623524.99\n2025-02-22 | 608449.58 | 31159494.55 | 623820.15\n2025-02-23 | 576072.32 | 31735566.87 | 608449.58\n2025-02-24 | 637456.18 | 32373023.05 | 576072.32\n2025-02-25 | 626999.20 | 33000022.25 | 637456.18\n2025-02-26 | 610334.68 | 33610356.93 | 626999.20\n2025-02-27 | 591438.60 | 34201795.53 | 610334.68\n2025-02-28 | 581232.69 | 34783028.22 | 591438.60\n2025-03-01 | 656517.23 | 35439545.45 | 581232.69\n2025-03-02 | 572301.04 | 36011846.49 | 656517.23\n2025-03-03 | 566845.63 | 36578692.12 | 572301.04\n2025-03-04 | 596009.61 | 37174701.73 | 566845.63\n2025-03-05 | 657285.01 | 37831986.74 | 596009.61\n2025-03-06 | 548008.17 | 38379994.91 | 657285.01\n2025-03-07 | 602033.77 | 38982028.68 | 548008.17\n2025-03-08 | 605346.59 | 39587375.27 | 602033.77\n2025-03-09 | 583415.35 | 40170790.62 | 605346.59\n2025-03-10 | 544186.81 | 40714977.43 | 583415.35\n2025-03-11 | 546814.55 | 41261791.98 | 544186.81\n2025-03-12 | 530712.43 | 41792504.41 | 546814.55\n2025-03-13 | 650600.41 | 42443104.82 | 530712.43\n2025-03-14 | 566007.88 | 43009112.70 | 650600.41\n2025-03-15 | 637498.14 | 43646610.84 | 566007.88\n2025-03-16 | 628141.09 | 44274751.93 | 637498.14\n2025-03-17 | 580500.91 | 44855252.84 | 628141.09\n2025-03-18 | 575397.91 | 45430650.75 | 580500.91\n2025-03-19 | 539975.65 | 45970626.40 | 575397.91\n2025-03-20 | 608133.18 | 46578759.58 | 539975.65\n2025-03-21 | 576374.49 | 47155134.07 | 608133.18\n2025-03-22 | 709129.09 | 47864263.16 | 576374.49\n2025-03-23 | 569500.75 | 48433763.91 | 709129.09\n2025-03-24 | 525089.37 | 48958853.28 | 569500.75\n2025-03-25 | 551010.88 | 49509864.16 | 525089.37\n2025-03-26 | 598928.82 | 50108792.98 | 551010.88\n2025-03-27 | 557585.00 | 50666377.98 | 598928.82\n2025-03-28 | 624130.86 | 51290508.84 | 557585.00\n2025-03-29 | 635425.92 | 51925934.76 | 624130.86\n2025-03-30 | 617368.28 | 52543303.04 | 635425.92\n2025-03-31 | 609102.21 | 53152405.25 | 617368.28"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS VARCHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(t.path || ' > ' || c.name AS VARCHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.806,
+          "p50": 4.595,
+          "p90": 5.875,
+          "p95": 5.89,
+          "p99": 5.903,
+          "max": 5.906,
+          "mean": 4.742,
+          "stdev": 0.901,
+          "first_ms": 3.357
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "1 | 0 | Category 1\n113 | 1 | Category 1 > Category 113\n132 | 1 | Category 1 > Category 132\n158 | 2 | Category 1 > Category 132 > Category 158\n182 | 1 | Category 1 > Category 182\n20 | 1 | Category 1 > Category 20\n37 | 2 | Category 1 > Category 20 > Category 37\n133 | 3 | Category 1 > Category 20 > Category 37 > Category 133\n99 | 3 | Category 1 > Category 20 > Category 37 > Category 99\n51 | 1 | Category 1 > Category 51\n183 | 2 | Category 1 > Category 51 > Category 183\n52 | 1 | Category 1 > Category 52\n55 | 2 | Category 1 > Category 52 > Category 55\n10 | 0 | Category 10\n126 | 1 | Category 10 > Category 126\n138 | 1 | Category 10 > Category 138\n14 | 1 | Category 10 > Category 14\n115 | 2 | Category 10 > Category 14 > Category 115\n124 | 2 | Category 10 > Category 14 > Category 124\n24 | 2 | Category 10 > Category 14 > Category 24\n46 | 3 | Category 10 > Category 14 > Category 24 > Category 46\n42 | 2 | Category 10 > Category 14 > Category 42\n194 | 3 | Category 10 > Category 14 > Category 42 > Category 194\n44 | 2 | Category 10 > Category 14 > Category 44\n143 | 3 | Category 10 > Category 14 > Category 44 > Category 143\n48 | 3 | Category 10 > Category 14 > Category 44 > Category 48\n71 | 2 | Category 10 > Category 14 > Category 71\n87 | 3 | Category 10 > Category 14 > Category 71 > Category 87\n164 | 1 | Category 10 > Category 164\n28 | 1 | Category 10 > Category 28\n57 | 2 | Category 10 > Category 28 > Category 57\n172 | 3 | Category 10 > Category 28 > Category 57 > Category 172\n73 | 3 | Category 10 > Category 28 > Category 57 > Category 73\n82 | 3 | Category 10 > Category 28 > Category 57 > Category 82\n86 | 2 | Category 10 > Category 28 > Category 86\n97 | 2 | Category 10 > Category 28 > Category 97\n119 | 3 | Category 10 > Category 28 > Category 97 > Category 119\n174 | 3 | Category 10 > Category 28 > Category 97 > Category 174\n36 | 1 | Category 10 > Category 36\n45 | 2 | Category 10 > Category 36 > Category 45\n117 | 3 | Category 10 > Category 36 > Category 45 > Category 117\n165 | 3 | Category 10 > Category 36 > Category 45 > Category 165\n186 | 3 | Category 10 > Category 36 > Category 45 > Category 186\n59 | 2 | Category 10 > Category 36 > Category 59\n39 | 1 | Category 10 > Category 39\n110 | 2 | Category 10 > Category 39 > Category 110\n173 | 3 | Category 10 > Category 39 > Category 110 > Category 173\n180 | 3 | Category 10 > Category 39 > Category 110 > Category 180\n120 | 2 | Category 10 > Category 39 > Category 120\n147 | 3 | Category 10 > Category 39 > Category 120 > Category 147\n166 | 3 | Category 10 > Category 39 > Category 120 > Category 166\n53 | 1 | Category 10 > Category 53\n171 | 2 | Category 10 > Category 53 > Category 171\n2 | 0 | Category 2\n12 | 1 | Category 2 > Category 12\n130 | 2 | Category 2 > Category 12 > Category 130\n16 | 2 | Category 2 > Category 12 > Category 16\n17 | 3 | Category 2 > Category 12 > Category 16 > Category 17\n67 | 3 | Category 2 > Category 12 > Category 16 > Category 67\n80 | 3 | Category 2 > Category 12 > Category 16 > Category 80\n27 | 2 | Category 2 > Category 12 > Category 27\n29 | 3 | Category 2 > Category 12 > Category 27 > Category 29\n60 | 3 | Category 2 > Category 12 > Category 27 > Category 60\n95 | 3 | Category 2 > Category 12 > Category 27 > Category 95\n146 | 1 | Category 2 > Category 146\n188 | 2 | Category 2 > Category 146 > Category 188\n70 | 1 | Category 2 > Category 70\n112 | 2 | Category 2 > Category 70 > Category 112\n161 | 3 | Category 2 > Category 70 > Category 112 > Category 161\n145 | 2 | Category 2 > Category 70 > Category 145\n89 | 2 | Category 2 > Category 70 > Category 89\n155 | 3 | Category 2 > Category 70 > Category 89 > Category 155\n94 | 3 | Category 2 > Category 70 > Category 89 > Category 94\n90 | 1 | Category 2 > Category 90\n160 | 2 | Category 2 > Category 90 > Category 160\n3 | 0 | Category 3\n103 | 1 | Category 3 > Category 103\n190 | 1 | Category 3 > Category 190\n23 | 1 | Category 3 > Category 23\n144 | 2 | Category 3 > Category 23 > Category 144\n181 | 2 | Category 3 > Category 23 > Category 181\n26 | 2 | Category 3 > Category 23 > Category 26\n49 | 1 | Category 3 > Category 49\n156 | 2 | Category 3 > Category 49 > Category 156\n4 | 0 | Category 4\n104 | 1 | Category 4 > Category 104\n18 | 1 | Category 4 > Category 18\n149 | 2 | Category 4 > Category 18 > Category 149\n191 | 3 | Category 4 > Category 18 > Category 149 > Category 191\n22 | 2 | Category 4 > Category 18 > Category 22\n100 | 3 | Category 4 > Category 18 > Category 22 > Category 100\n114 | 3 | Category 4 > Category 18 > Category 22 > Category 114\n32 | 3 | Category 4 > Category 18 > Category 22 > Category 32\n56 | 3 | Category 4 > Category 18 > Category 22 > Category 56\n35 | 2 | Category 4 > Category 18 > Category 35\n47 | 3 | Category 4 > Category 18 > Category 35 > Category 47\n62 | 3 | Category 4 > Category 18 > Category 35 > Category 62\n83 | 3 | Category 4 > Category 18 > Category 35 > Category 83\n40 | 2 | Category 4 > Category 18 > Category 40\n105 | 3 | Category 4 > Category 18 > Category 40 > Category 105\n54 | 2 | Category 4 > Category 18 > Category 54\n170 | 3 | Category 4 > Category 18 > Category 54 > Category 170\n185 | 1 | Category 4 > Category 185\n192 | 1 | Category 4 > Category 192\n74 | 1 | Category 4 > Category 74\n167 | 2 | Category 4 > Category 74 > Category 167\n91 | 2 | Category 4 > Category 74 > Category 91\n163 | 3 | Category 4 > Category 74 > Category 91 > Category 163\n84 | 1 | Category 4 > Category 84\n142 | 2 | Category 4 > Category 84 > Category 142\n157 | 3 | Category 4 > Category 84 > Category 142 > Category 157\n5 | 0 | Category 5\n134 | 1 | Category 5 > Category 134\n140 | 2 | Category 5 > Category 134 > Category 140\n154 | 1 | Category 5 > Category 154\n159 | 2 | Category 5 > Category 154 > Category 159\n187 | 1 | Category 5 > Category 187\n193 | 2 | Category 5 > Category 187 > Category 193\n25 | 1 | Category 5 > Category 25\n58 | 2 | Category 5 > Category 25 > Category 58\n79 | 2 | Category 5 > Category 25 > Category 79\n30 | 1 | Category 5 > Category 30\n128 | 2 | Category 5 > Category 30 > Category 128\n1"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, date_trunc('month', first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, date_trunc('month', o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, date_trunc('month', o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 71.775,
+          "p50": 91.888,
+          "p90": 104.472,
+          "p95": 107.718,
+          "p99": 110.315,
+          "max": 110.964,
+          "mean": 92.412,
+          "stdev": 10.448,
+          "first_ms": 98.937
+        },
+        "rows": 22,
+        "checksum": "8560c89b626435e14906c6cd",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "2024-01-01 00:00:00 | 6918 | 6917\n2024-02-01 00:00:00 | 4289 | 4288\n2024-03-01 00:00:00 | 3043 | 3043\n2024-04-01 00:00:00 | 1988 | 1986\n2024-05-01 00:00:00 | 1316 | 1316\n2024-06-01 00:00:00 | 836 | 835\n2024-07-01 00:00:00 | 564 | 564\n2024-08-01 00:00:00 | 366 | 365\n2024-09-01 00:00:00 | 251 | 251\n2024-10-01 00:00:00 | 151 | 151\n2024-11-01 00:00:00 | 102 | 101\n2024-12-01 00:00:00 | 57 | 57\n2025-01-01 00:00:00 | 46 | 46\n2025-02-01 00:00:00 | 22 | 22\n2025-03-01 00:00:00 | 20 | 20\n2025-04-01 00:00:00 | 10 | 10\n2025-05-01 00:00:00 | 7 | 6\n2025-06-01 00:00:00 | 6 | 6\n2025-07-01 00:00:00 | 2 | 2\n2025-08-01 00:00:00 | 1 | 1\n2025-09-01 00:00:00 | 3 | 2\n2025-11-01 00:00:00 | 2 | 1"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 8.506,
+          "p50": 8.894,
+          "p90": 9.809,
+          "p95": 9.861,
+          "p99": 9.903,
+          "max": 9.914,
+          "mean": 9.054,
+          "stdev": 0.508,
+          "first_ms": 10.072
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "6 | user6@example.com\n8 | user8@example.com\n9 | user9@example.com\n11 | user11@example.com\n13 | user13@example.com\n16 | user16@example.com\n17 | user17@example.com\n20 | user20@example.com\n24 | user24@example.com\n32 | user32@example.com\n33 | user33@example.com\n40 | user40@example.com\n42 | user42@example.com\n46 | user46@example.com\n49 | user49@example.com\n52 | user52@example.com\n54 | user54@example.com\n66 | user66@example.com\n70 | user70@example.com\n73 | user73@example.com\n75 | user75@example.com\n76 | user76@example.com\n78 | user78@example.com\n86 | user86@example.com\n87 | user87@example.com\n88 | user88@example.com\n89 | user89@example.com\n93 | user93@example.com\n95 | user95@example.com\n97 | user97@example.com\n99 | user99@example.com\n102 | user102@example.com\n111 | user111@example.com\n114 | user114@example.com\n115 | user115@example.com\n117 | user117@example.com\n118 | user118@example.com\n119 | user119@example.com\n122 | user122@example.com\n123 | user123@example.com\n124 | user124@example.com\n128 | user128@example.com\n129 | user129@example.com\n131 | user131@example.com\n141 | user141@example.com\n148 | user148@example.com\n151 | user151@example.com\n154 | user154@example.com\n157 | user157@example.com\n159 | user159@example.com\n161 | user161@example.com\n162 | user162@example.com\n163 | user163@example.com\n164 | user164@example.com\n166 | user166@example.com\n172 | user172@example.com\n173 | user173@example.com\n178 | user178@example.com\n183 | user183@example.com\n184 | user184@example.com\n186 | user186@example.com\n188 | user188@example.com\n189 | user189@example.com\n191 | user191@example.com\n196 | user196@example.com\n202 | user202@example.com\n203 | user203@example.com\n204 | user204@example.com\n205 | user205@example.com\n209 | user209@example.com\n210 | user210@example.com\n214 | user214@example.com\n216 | user216@example.com\n219 | user219@example.com\n223 | user223@example.com\n226 | user226@example.com\n229 | user229@example.com\n231 | user231@example.com\n235 | user235@example.com\n244 | user244@example.com\n246 | user246@example.com\n252 | user252@example.com\n253 | user253@example.com\n255 | user255@example.com\n260 | user260@example.com\n264 | user264@example.com\n268 | user268@example.com\n269 | user269@example.com\n271 | user271@example.com\n278 | user278@example.com\n279 | user279@example.com\n281 | user281@example.com\n282 | user282@example.com\n284 | user284@example.com\n288 | user288@example.com\n289 | user289@example.com\n290 | user290@example.com\n291 | user291@example.com\n292 | user292@example.com\n300 | user300@example.com\n301 | user301@example.com\n303 | user303@example.com\n306 | user306@example.com\n307 | user307@example.com\n309 | user309@example.com\n310 | user310@example.com\n311 | user311@example.com\n313 | user313@example.com\n314 | user314@example.com\n315 | user315@example.com\n319 | user319@example.com\n323 | user323@example.com\n324 | user324@example.com\n326 | user326@example.com\n328 | user328@example.com\n329 | user329@example.com\n330 | user330@example.com\n331 | user331@example.com\n333 | user333@example.com\n337 | user337@example.com\n338 | user338@example.com\n340 | user340@example.com\n344 | user344@example.com\n345 | user345@example.com\n347 | user347@example.com\n348 | user348@example.com\n349 | user349@example.com\n351 | user351@example.com\n352 | user352@example.com\n354 | user354@example.com\n358 | user358@example.com\n360 | user360@example.com\n362 | user362@example.com\n368 | user368@example.com\n370 | user370@example.com\n373 | user373@example.com\n376 | user376@example.com\n384 | user384@example.com\n385 | user385@example.com\n389 | user389@example.com\n390 | user390@example.com\n393 | user393@example.com\n397 | user397@example.com\n400 | user400@example.com\n402 | user402@example.com\n409 | user409@example.com\n413 | user413@example.com\n419 | user419@example.com\n422 | user422@example.com\n424 | user424@example.com\n426 | user426@example.com\n428 | user428@example.com\n432 | user432@example.com\n434 | user434@example.com\n437 | user437@example.com\n438 | user438@example.com\n439 | user439@example.com\n442 | user442@example.com\n443 | user443@example.com\n445 | user445@example.com\n448 | user448@example.com\n452 | user452@example.com\n455 | user455@example.com\n456 | user456@example.com\n457 | user457@example.com\n458 | user458@example.com\n460 | user460@example.com\n463 | user463@example.com\n468 | user468@example.com\n469 | user469@example.com\n474 | user474@example.com\n476 | user476@example.com\n480 | user480@example.com\n482 | user482@example.com\n485 | user485@example.com\n487 | user487@example.com\n488 | user488@example.com\n497 | user497@example.com\n499 | user499@example.com\n501 | user501@example.com\n502 | user502@example.com\n506 | user506@example.com\n507 | user507@example.com\n511 | user511@example.com\n513 | user513@example.com\n516 | user516@example.com\n517 | user517@example.com\n519 | user519@example.com\n522 | user522@example.com\n523 | user523@example.com\n527 | user527@example.com\n531 | user531@example.com\n534 | user534@example.com\n537 | user537@example.com\n538 | user538@example.com\n540 | user540@example.com\n541 | user541@example.com\n546 | user546@example.com\n548 | user548@example.com\n549 | user549@example.com"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 5.974,
+          "p50": 6.162,
+          "p90": 6.508,
+          "p95": 6.556,
+          "p99": 6.595,
+          "max": 6.605,
+          "mean": 6.192,
+          "stdev": 0.199,
+          "first_ms": 6.318
+        },
+        "rows": 500,
+        "checksum": "874fae473f267b90c7dfe431",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "2 | 833.28 | 584.81\n3 | 366.75 | 460.20\n4 | 285.86 | 530.03\n5 | 211.32 | 459.90\n6 | 293.12 | 599.29\n7 | 448.04 | 484.45\n9 | 30.83 | 526.24\n10 | 948.13 | 623.35\n11 | 762.52 | 350.67\n12 | 150.08 | 431.23\n14 | 348.78 | 525.62\n15 | 904.39 | 528.47\n16 | 220.10 | 560.14\n17 | 53.43 | 490.38\n19 | 413.24 | 541.38\n20 | 613.00 | 541.35\n22 | 516.41 | 567.01\n23 | 63.46 | 596.85\n24 | 246.95 | 474.46\n26 | 528.80 | 502.51\n27 | 366.56 | 459.12\n28 | 175.43 | 571.78\n30 | 116.15 | 428.94\n32 | 774.48 | 490.81\n33 | 392.86 | 510.11\n34 | 833.18 | 567.82\n35 | 625.58 | 522.01\n36 | 737.00 | 443.13\n39 | 789.96 | 414.58\n40 | 532.34 | 489.84\n42 | 946.62 | 571.10\n43 | 292.03 | 443.13\n44 | 222.67 | 516.39\n45 | 515.20 | 516.22\n46 | 837.24 | 584.23\n47 | 771.27 | 501.01\n48 | 473.35 | 491.04\n49 | 267.45 | 433.38\n50 | 473.66 | 468.95\n51 | 241.41 | 588.34\n52 | 300.22 | 501.54\n55 | 722.90 | 563.87\n56 | 344.79 | 489.84\n57 | 999.43 | 495.12\n58 | 837.06 | 524.12\n59 | 692.90 | 392.86\n60 | 448.44 | 541.35\n61 | 235.39 | 476.95\n62 | 943.38 | 543.59\n63 | 770.64 | 466.37\n64 | 605.78 | 457.31\n66 | 394.64 | 486.92\n67 | 513.55 | 450.08\n68 | 301.46 | 501.54\n69 | 811.25 | 530.45\n70 | 209.51 | 542.70\n71 | 526.12 | 571.10\n72 | 12.61 | 515.51\n73 | 757.92 | 491.06\n75 | 727.20 | 513.99\n76 | 264.69 | 499.01\n78 | 884.47 | 450.07\n79 | 331.54 | 541.38\n80 | 173.64 | 477.59\n81 | 352.30 | 522.01\n82 | 751.12 | 572.99\n83 | 201.83 | 574.94\n84 | 161.44 | 417.43\n85 | 131.36 | 486.92\n86 | 917.72 | 591.55\n87 | 248.47 | 456.48\n89 | 450.50 | 529.65\n91 | 959.10 | 591.55\n92 | 789.37 | 412.79\n93 | 296.66 | 350.67\n94 | 970.06 | 473.69\n95 | 848.98 | 571.42\n96 | 233.95 | 489.84\n97 | 148.09 | 552.83\n98 | 649.37 | 480.60\n99 | 186.92 | 516.41\n100 | 252.38 | 489.84\n101 | 917.78 | 501.62\n102 | 178.70 | 516.41\n103 | 544.96 | 375.57\n104 | 9.06 | 392.86\n105 | 763.53 | 551.76\n106 | 686.34 | 515.60\n107 | 33.67 | 571.42\n108 | 786.81 | 452.84\n109 | 178.20 | 553.60\n111 | 62.69 | 533.13\n112 | 90.55 | 542.70\n113 | 541.70 | 553.13\n115 | 159.73 | 537.65\n116 | 95.72 | 467.01\n118 | 299.52 | 536.55\n119 | 190.44 | 456.48\n120 | 282.19 | 555.08\n121 | 435.59 | 596.85\n122 | 740.76 | 515.51\n124 | 564.68 | 607.23\n125 | 39.26 | 456.48\n126 | 132.88 | 466.37\n127 | 427.49 | 579.48\n128 | 35.26 | 459.12\n129 | 67.73 | 525.89\n130 | 764.26 | 541.38\n131 | 745.2 | 617.9\n132 | 150.75 | 533.13\n133 | 795.17 | 417.43\n134 | 16.01 | 431.23\n135 | 352.96 | 417.08\n136 | 981.11 | 412.49\n137 | 807.17 | 417.08\n139 | 394.13 | 478.64\n140 | 581.59 | 432.52\n141 | 321.75 | 513.51\n142 | 442.85 | 443.69\n143 | 918.29 | 516.22\n144 | 156.58 | 360.24\n146 | 316.9 | 417.43\n147 | 622.09 | 452.78\n148 | 714.63 | 567.82\n149 | 83.09 | 433.83\n150 | 388.32 | 444.71\n152 | 594.08 | 596.85\n154 | 18.03 | 525.34\n155 | 206.08 | 468.95\n157 | 16.05 | 441.57\n158 | 141.6 | 451.33\n160 | 547.31 | 574.94\n161 | 50.07 | 470.39\n162 | 961.41 | 522.01\n165 | 449.27 | 452.01\n166 | 887.94 | 520.6\n167 | 815.14 | 489.84\n168 | 950.99 | 543.84\n169 | 226.58 | 501.62\n171 | 582.19 | 478.64\n173 | 368.8 | 526.24\n174 | 505.91 | 579.48\n175 | 504.18 | 538.37\n176 | 974.76 | 414.58\n177 | 545.29 | 447.21\n179 | 705.49 | 571.78\n180 | 934.52 | 435.18\n181 | 754.9 | 527.4\n182 | 624.69 | 477.59\n183 | 752.51 | 454.62\n184 | 288.55 | 412.79\n187 | 429.44 | 452.84\n188 | 317.31 | 451.03\n189 | 290.67 | 571.78\n190 | 976.76 | 491.04\n191 | 915.34 | 591.55\n192 | 253.41 | 525.34\n193 | 63.41 | 513.88\n194 | 423.69 | 469.11\n195 | 552.69 | 574.27\n196 | 434.77 | 476.46\n197 | 593.21 | 509.49\n199 | 836.97 | 490.33\n200 | 221.91 | 537.65\n201 | 114.82 | 472.16\n202 | 956.53 | 584.81\n203 | 685.61 | 477.59\n204 | 873.31 | 433.38\n205 | 155.55 | 502.51\n206 | 111.31 | 370.53\n210 | 51.67 | 525.34\n212 | 487.3 | 574.94\n213 | 288.87 | 529.65\n215 | 439.95 | 411.5\n216 | 945.53 | 579.48\n218 | 486.16 | 584.23\n219 | 993.34 | 511.16\n220 | 852.64 | 412.49\n221 | 766.9 | 541.38\n222 | 171.29 | 486.92\n224 | 590.72 | 457.31\n226 | 57.97 | 444.71\n227 | 882.95 | 449.95\n228 | 136.29 | 570.45\n229 | 447.96 | 498.96\n230 | 97.22 | 526.24\n232 | 664.33 | 459.12\n234 | 816.15 | 533.13\n235 | 800.66 | 508.26\n236 | 706.31 | 473.47\n237 | 955.25 | 472.16\n238 | 66.25 | 623.35\n239 | 16.43 | 387.8\n240 | 556.96 | 529.65\n242 | 627.35 | 521.9\n243 | 532.18 | 441.57\n244 | 446.93 | 510.11\n245 | 501.1 | 498.96\n246 | 317.08 | 491.06\n247 | 192.18 | 499.59"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 6.997,
+          "p50": 7.265,
+          "p90": 7.333,
+          "p95": 7.34,
+          "p99": 7.345,
+          "max": 7.346,
+          "mean": 7.209,
+          "stdev": 0.128,
+          "first_ms": 7.244
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "1 | 157974 | 2025-10-02 12:59:38 | 1144.88\n1 | 104904 | 2025-06-11 19:34:59 | 1732.44\n1 | 71280 | 2024-12-02 18:34:47 | 1973.99\n2 | 70522 | 2025-10-24 18:07:18 | 103.32\n2 | 38298 | 2025-10-16 20:16:56 | 2963.73\n2 | 113809 | 2025-06-22 19:00:15 | 2026.95\n3 | 82080 | 2025-09-15 19:43:25 | 598.60\n3 | 163077 | 2025-05-05 07:33:09 | 6178.88\n3 | 93349 | 2025-04-14 13:51:34 | 2181.60\n4 | 131041 | 2025-09-27 21:20:19 | 1175.16\n4 | 117773 | 2025-07-15 06:05:56 | 644.85\n4 | 22897 | 2025-07-03 01:15:01 | 2388.63\n5 | 123856 | 2025-12-30 18:04:18 | 4240.33\n5 | 193776 | 2025-05-08 09:05:42 | 3930.27\n5 | 167167 | 2025-02-17 18:04:58 | 454.26\n6 | 39424 | 2025-11-19 17:35:51 | 2463.70\n6 | 15327 | 2025-09-16 04:00:32 | 997.16\n6 | 158065 | 2025-07-18 08:22:43 | 2759.39\n7 | 146212 | 2025-09-13 19:29:56 | 428.54\n7 | 19398 | 2025-06-13 10:08:59 | 2803.42\n7 | 161821 | 2025-06-11 23:24:47 | 2903.91\n8 | 138738 | 2025-11-26 16:14:07 | 1046.67\n8 | 76167 | 2025-02-03 17:26:46 | 915.10\n8 | 90963 | 2024-11-16 22:28:53 | 971.67\n9 | 112482 | 2025-12-06 08:05:11 | 935.00\n9 | 67846 | 2025-09-27 09:55:05 | 842.10\n9 | 123638 | 2025-09-14 10:16:04 | 999.64\n10 | 60682 | 2025-08-26 00:39:20 | 981.82\n10 | 147975 | 2025-05-24 07:41:21 | 372.30\n10 | 40841 | 2025-05-16 07:27:05 | 927.06\n11 | 78683 | 2025-11-25 00:58:24 | 1142.13\n11 | 44238 | 2025-10-06 16:00:38 | 2051.10\n11 | 26834 | 2025-09-04 11:09:38 | 3353.76\n12 | 111791 | 2025-10-07 22:27:18 | 1633.59\n12 | 13180 | 2025-10-01 11:23:29 | 2260.18\n12 | 52737 | 2025-09-05 01:18:00 | 1489.86\n13 | 131006 | 2025-12-25 14:14:45 | 13.55\n13 | 96471 | 2025-10-17 17:33:33 | 2283.83\n13 | 185146 | 2025-09-09 15:31:48 | 3133.87\n14 | 150823 | 2025-10-07 09:00:14 | 818.25\n14 | 42481 | 2025-09-21 09:37:01 | 1526.59\n14 | 166077 | 2025-05-20 04:31:20 | 1337.31\n15 | 6711 | 2025-06-17 02:54:44 | 382.88\n15 | 80111 | 2025-05-29 01:30:57 | 1411.08\n15 | 137075 | 2025-05-12 20:17:35 | 876.14\n16 | 143268 | 2025-11-30 02:46:17 | 3556.01\n16 | 114040 | 2025-08-30 20:14:46 | 2416.88\n16 | 95739 | 2025-04-01 13:37:45 | 85.01\n17 | 125381 | 2025-12-30 23:10:46 | 1350.27\n17 | 49847 | 2025-09-19 12:10:34 | 2061.28\n17 | 153227 | 2025-07-14 23:17:19 | 755.22\n18 | 116897 | 2025-11-11 01:12:18 | 1395.67\n18 | 138893 | 2025-10-08 05:44:10 | 961.41\n18 | 190585 | 2025-09-22 07:20:01 | 556.96\n19 | 50085 | 2025-08-30 06:01:11 | 363.16\n19 | 17875 | 2025-04-21 23:59:20 | 3634.00\n19 | 152702 | 2025-04-06 00:23:59 | 354.05\n20 | 176284 | 2025-11-08 09:23:10 | 4025.93\n20 | 34450 | 2025-11-02 12:52:19 | 646.70\n20 | 19425 | 2025-08-24 13:15:47 | 59.30\n21 | 141563 | 2025-05-14 22:30:18 | 740.76\n21 | 71 | 2025-04-11 06:37:26 | 319.12\n21 | 139021 | 2025-03-25 00:42:23 | 4469.50\n22 | 1056 | 2025-09-26 22:12:29 | 919.35\n22 | 164154 | 2025-05-23 07:36:00 | 2440.58\n22 | 65291 | 2025-02-21 19:16:36 | 751.92\n23 | 134078 | 2025-07-26 08:25:41 | 2935.34\n23 | 29953 | 2025-02-10 13:52:30 | 1508.57\n23 | 116197 | 2024-06-17 04:58:35 | 596.94\n24 | 53935 | 2025-12-19 13:14:40 | 2782.26\n24 | 41954 | 2025-12-15 04:42:41 | 1157.88\n24 | 196873 | 2025-10-24 18:38:14 | 1161.70\n25 | 87429 | 2025-10-13 03:03:59 | 1083.16\n25 | 83244 | 2025-06-29 02:34:49 | 1514.72\n25 | 45751 | 2025-05-09 19:29:01 | 637.97\n26 | 126941 | 2025-05-29 06:42:17 | 915.56\n26 | 21026 | 2025-05-14 01:17:03 | 2861.21\n26 | 7673 | 2025-01-21 17:25:44 | 4926.75\n27 | 2192 | 2025-12-08 08:54:02 | 2782.79\n27 | 99373 | 2025-11-09 03:14:36 | 2351.46\n27 | 171596 | 2025-10-01 09:15:13 | 838.20\n28 | 166589 | 2025-10-20 18:25:47 | 674.15\n28 | 59354 | 2025-09-19 02:00:13 | 141.96\n28 | 89538 | 2025-07-05 21:36:56 | 1859.84\n29 | 45911 | 2025-12-28 11:02:57 | 2819.52\n29 | 68888 | 2025-12-05 16:43:43 | 3309.76\n29 | 198427 | 2025-09-05 02:50:52 | 1186.42\n30 | 166524 | 2025-08-02 03:56:53 | 36.06\n30 | 46770 | 2025-05-06 21:29:14 | 3118.47\n30 | 19065 | 2025-04-27 02:24:13 | 2980.95\n31 | 74361 | 2025-10-22 14:19:36 | 1407.18\n31 | 114361 | 2025-09-30 10:13:12 | 2221.00\n31 | 163229 | 2025-07-02 05:22:30 | 2914.08\n32 | 152883 | 2025-11-21 14:24:15 | 544.95\n32 | 115322 | 2025-10-15 10:16:41 | 4034.73\n32 | 85841 | 2025-09-15 00:17:16 | 669.03\n33 | 189992 | 2025-12-07 22:44:33 | 1521.00\n33 | 89904 | 2025-11-10 13:21:20 | 2302.18\n33 | 123247 | 2025-10-23 11:07:46 | 4187.82\n34 | 146470 | 2025-10-22 01:45:49 | 320.20\n34 | 97909 | 2025-09-16 21:26:04 | 1769\n34 | 121897 | 2025-09-07 15:24:32 | 486.87\n35 | 145362 | 2025-12-14 22:52:34 | 3068.48\n35 | 188765 | 2025-10-15 03:22:58 | 1145.17\n35 | 48107 | 2025-10-14 13:34:24 | 3306\n36 | 95789 | 2025-07-19 19:55:38 | 2254.4\n36 | 177530 | 2025-01-07 07:10:15 | 929.73\n36 | 82654 | 2024-11-18 16:56:54 | 5236.29\n37 | 141901 | 2025-08-08 21:56:21 | 1091.85\n37 | 176433 | 2025-02-26 09:43:48 | 1835.8\n37 | 60279 | 2024-11-19 04:43:51 | 1342.92\n38 | 112721 | 2025-05-15 14:41:21 | 5659.11\n38 | 11636 | 2025-05-08 03:09:46 | 1240.07\n38 | 92395 | 2025-04-12 07:11:24 | 1744.13\n39 | 48628 | 2025-11-15 23:43:40 | 3985.93\n39 | 182311 | 2025-08-06 04:59:21 | 6020.14\n39 | 160781 | 2025-07-30 06:45:17 | 2962.96\n40 | 173804 | 2025-11-05 20:53:52 | 4692.25\n40 | 47690 | 2025-10-13 21:45:19 | 4022.4\n40 | 116179 | 2025-06-28 11:52:52 | 1667.98\n41 | 123884 | 2025-08-16 23:06:51 | 4447.74\n41 | 63075 | 2025-08-14 06:15:32 | 4613.79\n41 | 66202 | 2025-07-22 22:00:40 | 2991.92\n42 | 67290 | 2025-12-23 01:51:23 | 1302\n42 | 84887 | 2025-09-16 14:55:52 | 2906.61\n42 | 147943 | 2025-08-24 01:11:36 | 1994.89\n43 | 52327 | 2025-08-17 20:40:11 | 2701.35\n43 | 122697 | 2025-08-15 14:36:11 | 1987.99\n43 | 186237 | 2025-08-10 07:30:08 | 6018.97\n44 | 80058 | 2025-10-20 07:07:54 | 1498.98\n44 | 178298 | 2025-09-11 05:21:02 | 939.08\n44 | 109148 | 2025-07-06 13:06:58 | 2110.94\n45 | 179149 | 2025-09-27 18:02:30 | 2544.06\n45 | 185833 | 2025-08-22 21:35:42 | 399.93\n45 | 37548 | 2025-08-06 04:38:07 | 2202.14\n46 | 30312 | 2025-12-29 09:54:43 | 3435.47\n46 | 44074 | 2025-06-09 13:50:14 | 946.3\n46 | 83958 | 2024-09-25 15:43:54 | 165.13\n47 | 51475 | 2025-10-03 18:16:41 | 747.82\n47 | 100719 | 2025-07-17 08:21:36 | 5240.39\n47 | 1169"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 5.801,
+          "p50": 5.917,
+          "p90": 6.113,
+          "p95": 6.218,
+          "p99": 6.302,
+          "max": 6.323,
+          "mean": 5.96,
+          "stdev": 0.155,
+          "first_ms": 6.376
+        },
+        "rows": 79,
+        "checksum": "8277928a2309da05cc9e3617",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "None | None | 25268 | 53478320.46\nAU | None | 540 | 1157935.91\nAU | cancelled | 44 | 95060.30\nAU | delivered | 381 | 788369.88\nAU | pending | 43 | 109290.92\nAU | returned | 18 | 46279.97\nAU | shipped | 54 | 118934.84\nBR | None | 1003 | 2208416.22\nBR | cancelled | 68 | 182491.04\nBR | delivered | 709 | 1536328.63\nBR | pending | 82 | 166342.24\nBR | returned | 49 | 115389.66\nBR | shipped | 95 | 207864.65\nCA | None | 523 | 1124248.40\nCA | cancelled | 40 | 90606.84\nCA | delivered | 390 | 858562.07\nCA | pending | 38 | 70603.07\nCA | returned | 19 | 27407.34\nCA | shipped | 36 | 77069.08\nDE | None | 2999 | 6349049.80\nDE | cancelled | 194 | 362929.17\nDE | delivered | 2107 | 4441180.72\nDE | pending | 249 | 548888.11\nDE | returned | 146 | 311121.36\nDE | shipped | 303 | 684930.44\nES | None | 1257 | 2686628.51\nES | cancelled | 80 | 179107.83\nES | delivered | 878 | 1832905.03\nES | pending | 93 | 210701.11\nES | returned | 64 | 156725.37\nES | shipped | 142 | 307189.17\nFR | None | 1945 | 3928260.18\nFR | cancelled | 124 | 221049.01\nFR | delivered | 1349 | 2777063.07\nFR | pending | 166 | 346180.18\nFR | returned | 108 | 195935.06\nFR | shipped | 198 | 388032.86\nGB | None | 2570 | 5537774.35\nGB | cancelled | 189 | 378622.22\nGB | delivered | 1796 | 3897228.74\nGB | pending | 193 | 389648.21\nGB | returned | 147 | 347543.80\nGB | shipped | 245 | 524731.38\nIN | None | 1035 | 2211233.30\nIN | cancelled | 73 | 167379.86\nIN | delivered | 714 | 1533062.30\nIN | pending | 86 | 175567.48\nIN | returned | 54 | 103840.90\nIN | shipped | 108 | 231382.76\nIT | None | 1260 | 2701007.58\nIT | cancelled | 100 | 208536.31\nIT | delivered | 871 | 1883523.21\nIT | pending | 112 | 227149.11\nIT | returned | 63 | 142147.08\nIT | shipped | 114 | 239651.87\nJP | None | 743 | 1585107.97\nJP | cancelled | 50 | 99594.56\nJP | delivered | 530 | 1132576.57\nJP | pending | 66 | 130080.24\nJP | returned | 31 | 51676.70\nJP | shipped | 66 | 171179.90\nNL | None | 1284 | 2681923.92\nNL | cancelled | 86 | 189558.38\nNL | delivered | 890 | 1795218.13\nNL | pending | 112 | 249357.55\nNL | returned | 70 | 157124.76\nNL | shipped | 126 | 290665.10\nTR | None | 2530 | 5393118.71\nTR | cancelled | 199 | 455308.85\nTR | delivered | 1739 | 3728949.05\nTR | pending | 197 | 375543.60\nTR | returned | 126 | 290147.77\nTR | shipped | 269 | 543169.44\nUS | None | 7579 | 15913615.61\nUS | cancelled | 554 | 1157963.21\nUS | delivered | 5252 | 10973988.09\nUS | pending | 605 | 1296432.23\nUS | returned | 419 | 900565.29\nUS | shipped | 749 | 1584666.79"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE json.text(json.filter(attrs, '$.color')) = 'red' AND json.number(json.filter(attrs, '$.weight')) > 10 ORDER BY id LIMIT 100",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 20.769,
+          "p50": 22.566,
+          "p90": 31.623,
+          "p95": 32.019,
+          "p99": 32.337,
+          "max": 32.416,
+          "mean": 25.781,
+          "stdev": 4.661,
+          "first_ms": 27.329
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "7 | SKU-0000007 | 448.04\n11 | SKU-0000011 | 762.52\n13 | SKU-0000013 | 513.58\n26 | SKU-0000026 | 528.80\n29 | SKU-0000029 | 49.48\n50 | SKU-0000050 | 473.66\n65 | SKU-0000065 | 276.02\n75 | SKU-0000075 | 727.20\n78 | SKU-0000078 | 884.47\n85 | SKU-0000085 | 131.36\n87 | SKU-0000087 | 248.47\n89 | SKU-0000089 | 450.50\n102 | SKU-0000102 | 178.70\n105 | SKU-0000105 | 763.53\n107 | SKU-0000107 | 33.67\n109 | SKU-0000109 | 178.20\n151 | SKU-0000151 | 465.50\n157 | SKU-0000157 | 16.05\n163 | SKU-0000163 | 198.07\n168 | SKU-0000168 | 950.99\n182 | SKU-0000182 | 624.69\n185 | SKU-0000185 | 72.55\n204 | SKU-0000204 | 873.31\n206 | SKU-0000206 | 111.31\n208 | SKU-0000208 | 143.30\n210 | SKU-0000210 | 51.67\n213 | SKU-0000213 | 288.87\n243 | SKU-0000243 | 532.18\n257 | SKU-0000257 | 613.70\n258 | SKU-0000258 | 311.52\n262 | SKU-0000262 | 945.84\n265 | SKU-0000265 | 220.85\n268 | SKU-0000268 | 953.39\n276 | SKU-0000276 | 975.85\n281 | SKU-0000281 | 188.86\n284 | SKU-0000284 | 321.98\n291 | SKU-0000291 | 979.81\n293 | SKU-0000293 | 488.09\n302 | SKU-0000302 | 791.69\n348 | SKU-0000348 | 801.50\n367 | SKU-0000367 | 285.04\n373 | SKU-0000373 | 138.53\n395 | SKU-0000395 | 914.75\n421 | SKU-0000421 | 738.51\n427 | SKU-0000427 | 755.32\n439 | SKU-0000439 | 329.86\n457 | SKU-0000457 | 989.73\n471 | SKU-0000471 | 493.23\n473 | SKU-0000473 | 771.46\n491 | SKU-0000491 | 855.04\n496 | SKU-0000496 | 489.06\n502 | SKU-0000502 | 800.91\n509 | SKU-0000509 | 224.55\n516 | SKU-0000516 | 649.28\n519 | SKU-0000519 | 427.62\n532 | SKU-0000532 | 704.43\n534 | SKU-0000534 | 371.18\n542 | SKU-0000542 | 187.14\n546 | SKU-0000546 | 428.85\n558 | SKU-0000558 | 214.82\n568 | SKU-0000568 | 689.11\n576 | SKU-0000576 | 906.77\n590 | SKU-0000590 | 545.81\n606 | SKU-0000606 | 315.43\n608 | SKU-0000608 | 758.40\n622 | SKU-0000622 | 402.96\n657 | SKU-0000657 | 915.56\n666 | SKU-0000666 | 117.70\n668 | SKU-0000668 | 802.57\n673 | SKU-0000673 | 918.59\n699 | SKU-0000699 | 767.06\n705 | SKU-0000705 | 206.68\n717 | SKU-0000717 | 208.11\n721 | SKU-0000721 | 304.07\n722 | SKU-0000722 | 492.54\n730 | SKU-0000730 | 568.05\n737 | SKU-0000737 | 513.40\n738 | SKU-0000738 | 562.12\n742 | SKU-0000742 | 4.53\n743 | SKU-0000743 | 272.08\n745 | SKU-0000745 | 408.26\n751 | SKU-0000751 | 34.03\n760 | SKU-0000760 | 670.36\n770 | SKU-0000770 | 417.01\n780 | SKU-0000780 | 883.79\n782 | SKU-0000782 | 820.45\n793 | SKU-0000793 | 589.96\n806 | SKU-0000806 | 79.74\n810 | SKU-0000810 | 805.50\n848 | SKU-0000848 | 81.37\n857 | SKU-0000857 | 166.84\n862 | SKU-0000862 | 776.96\n867 | SKU-0000867 | 407.29\n880 | SKU-0000880 | 142.84\n883 | SKU-0000883 | 51.13\n884 | SKU-0000884 | 486.19\n895 | SKU-0000895 | 821.97\n898 | SKU-0000898 | 224.64\n925 | SKU-0000925 | 574.10\n928 | SKU-0000928 | 849.73"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE description LIKE '%bluetooth%' AND description LIKE '%waterproof%' ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.089,
+          "p50": 2.691,
+          "p90": 3.105,
+          "p95": 3.121,
+          "p99": 3.134,
+          "max": 3.138,
+          "mean": 2.649,
+          "stdev": 0.355,
+          "first_ms": 2.411
+        },
+        "rows": 50,
+        "checksum": "13c3c7dd358069b0c82817de",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "52 | Compact Jacket Pro79\n59 | Compact Sneakers X14\n64 | Rugged Monitor Lite5\n78 | Compact Bottle Max53\n99 | Ultra Camera Max26\n102 | Smart Blender X33\n121 | Smart Blender Pro67\n148 | Ultra Charger Pro51\n149 | Classic Mouse Pro50\n202 | Smart Tripod X23\n203 | Ergonomic Camera Max97\n214 | Eco Cable Lite79\n223 | Wireless Mouse Mini57\n231 | Ultra Backpack Mini5\n249 | Premium Monitor Max88\n268 | Wireless Headphones Mini98\n288 | Portable Sneakers Lite42\n293 | Rugged Tripod Pro73\n312 | Rugged Backpack X53\n394 | Smart Bottle X65\n395 | Portable Charger Max21\n403 | Classic Headphones Lite21\n406 | Ergonomic Bottle X75\n422 | Rugged Speaker Lite26\n443 | Premium Keyboard Lite3\n450 | Portable Router Lite39\n461 | Eco Charger Lite55\n462 | Wireless Mouse Lite4\n475 | Classic Sneakers Mini65\n496 | Portable Notebook Max20\n499 | Eco Router Lite23\n501 | Rugged Jacket Mini32\n514 | Wireless Blender Pro14\n554 | Portable Headphones Max47\n562 | Ultra Sneakers Pro69\n563 | Premium Notebook Pro60\n567 | Rugged Blender Pro84\n572 | Rugged Drone Mini81\n604 | Ergonomic Charger Mini43\n631 | Ergonomic Keyboard Mini27\n641 | Compact Mouse Max32\n647 | Eco Bottle Mini85\n670 | Classic Cable X89\n683 | Eco Blender Mini70\n723 | Smart Notebook Max76\n738 | Wireless Jacket X86\n747 | Eco Sneakers X80\n759 | Smart Tripod X89\n803 | Ultra Speaker X50\n808 | Ergonomic Camera Max54"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INT) AS product_id, CAST(? AS INT) AS warehouse_id, CAST(? AS INT) AS qty) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT_TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT_TIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 4.241,
+          "p50": 4.76,
+          "p90": 5.1,
+          "p95": 5.178,
+          "p99": 5.198,
+          "max": 5.201,
+          "mean": 4.786,
+          "stdev": 0.242,
+          "first_ms": 6.858
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INTEGER) AS product_id, CAST(? AS INTEGER) AS warehouse_id, CAST(? AS INTEGER) AS qty ) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT_TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT_TIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 4.226,
+          "p50": 4.732,
+          "p90": 4.965,
+          "p95": 5.09,
+          "p99": 5.255,
+          "max": 5.295,
+          "mean": 4.715,
+          "stdev": 0.229,
+          "first_ms": 5.032
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 162.311,
+          "p50": 213.717,
+          "p90": 216.901,
+          "p95": 217.783,
+          "p99": 218.488,
+          "max": 218.664,
+          "mean": 201.781,
+          "stdev": 21.2,
+          "first_ms": 207.719
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "33741 | 3519 | 2024-12-31 19:58:04\n7239 | 6215 | 2024-12-31 19:58:53\n53457 | 11320 | 2024-12-31 20:01:45\n164290 | 17745 | 2024-12-31 20:22:43\n36966 | 8434 | 2024-12-31 20:26:53\n10862 | 1175 | 2024-12-31 20:40:04\n93612 | 7022 | 2024-12-31 20:42:19\n48659 | 11891 | 2024-12-31 20:45:32\n29039 | 10741 | 2024-12-31 20:47:05\n91740 | 7749 | 2024-12-31 20:52:49\n125120 | 9148 | 2024-12-31 20:53:36\n80907 | 1322 | 2024-12-31 20:57:55\n183059 | 6097 | 2024-12-31 21:03:38\n22011 | 13062 | 2024-12-31 21:09:21\n107443 | 2217 | 2024-12-31 21:12:05\n79846 | 6728 | 2024-12-31 21:15:02\n90731 | 11184 | 2024-12-31 21:17:43\n96875 | 10074 | 2024-12-31 21:18:26\n37381 | 2986 | 2024-12-31 21:21:21\n39568 | 13623 | 2024-12-31 21:26:04\n136220 | 11612 | 2024-12-31 21:30:50\n98769 | 8790 | 2024-12-31 21:36:16\n181844 | 7547 | 2024-12-31 21:57:53\n152971 | 6180 | 2024-12-31 22:04:05\n71270 | 10384 | 2024-12-31 22:07:07\n183666 | 2361 | 2024-12-31 22:15:06\n112530 | 12267 | 2024-12-31 22:25:02\n67557 | 15790 | 2024-12-31 22:25:49\n25030 | 3124 | 2024-12-31 22:26:45\n37846 | 7793 | 2024-12-31 22:28:01\n104191 | 6316 | 2024-12-31 22:50:31\n165943 | 4619 | 2024-12-31 22:52:02\n93699 | 5343 | 2024-12-31 22:52:15\n50598 | 8861 | 2024-12-31 22:54:22\n56378 | 11415 | 2024-12-31 22:55:59\n56271 | 3460 | 2024-12-31 23:05:35\n61567 | 2120 | 2024-12-31 23:05:36\n109321 | 7147 | 2024-12-31 23:13:59\n33529 | 19531 | 2024-12-31 23:15:55\n109442 | 17440 | 2024-12-31 23:21:19\n77214 | 10416 | 2024-12-31 23:26:55\n51065 | 17572 | 2024-12-31 23:33:36\n18793 | 10609 | 2024-12-31 23:51:39\n129237 | 8555 | 2024-12-31 23:59:51\n66293 | 19521 | 2025-01-01 00:14:55\n194364 | 13970 | 2025-01-01 00:17:52\n149620 | 5757 | 2025-01-01 00:26:47\n145019 | 9188 | 2025-01-01 00:30:17\n161095 | 7441 | 2025-01-01 00:31:17\n120349 | 5211 | 2025-01-01 00:31:29"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.353,
+          "p50": 4.389,
+          "p90": 4.684,
+          "p95": 4.753,
+          "p99": 4.809,
+          "max": 4.822,
+          "mean": 4.48,
+          "stdev": 0.151,
+          "first_ms": 5.035
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "66293 | 19521 | 2025-01-01 00:14:55\n194364 | 13970 | 2025-01-01 00:17:52\n149620 | 5757 | 2025-01-01 00:26:47\n145019 | 9188 | 2025-01-01 00:30:17\n161095 | 7441 | 2025-01-01 00:31:17\n120349 | 5211 | 2025-01-01 00:31:29\n156369 | 9706 | 2025-01-01 00:34:31\n33769 | 3412 | 2025-01-01 00:55:43\n91131 | 9058 | 2025-01-01 01:00:41\n129918 | 16680 | 2025-01-01 01:01:24\n138897 | 14259 | 2025-01-01 01:07:39\n132632 | 4043 | 2025-01-01 01:07:50\n136390 | 314 | 2025-01-01 01:19:19\n122297 | 5712 | 2025-01-01 01:19:20\n108691 | 12402 | 2025-01-01 01:20:58\n34652 | 11441 | 2025-01-01 01:22:44\n45330 | 19010 | 2025-01-01 01:34:36\n55611 | 5067 | 2025-01-01 01:38:58\n124557 | 3084 | 2025-01-01 01:41:04\n24038 | 18787 | 2025-01-01 01:42:42\n122055 | 12714 | 2025-01-01 02:00:15\n4686 | 12009 | 2025-01-01 02:00:42\n62524 | 14104 | 2025-01-01 02:00:58\n64530 | 2530 | 2025-01-01 02:10:14\n106041 | 4507 | 2025-01-01 02:14:11\n151932 | 19334 | 2025-01-01 02:21:10\n59288 | 14349 | 2025-01-01 02:26:38\n146507 | 469 | 2025-01-01 02:29:03\n25228 | 852 | 2025-01-01 02:29:14\n87151 | 167 | 2025-01-01 02:34:53\n102198 | 15176 | 2025-01-01 02:35:10\n89310 | 17450 | 2025-01-01 02:38:35\n85942 | 6873 | 2025-01-01 02:40:38\n27209 | 18607 | 2025-01-01 02:48:05\n51446 | 2891 | 2025-01-01 03:19:27\n182176 | 1164 | 2025-01-01 03:25:28\n154632 | 13118 | 2025-01-01 03:33:36\n29949 | 11217 | 2025-01-01 03:36:00\n152784 | 4980 | 2025-01-01 03:45:11\n102350 | 2777 | 2025-01-01 03:49:31\n35533 | 6282 | 2025-01-01 03:52:05\n132255 | 14075 | 2025-01-01 04:01:44\n95606 | 16760 | 2025-01-01 04:10:55\n142666 | 3150 | 2025-01-01 04:11:28\n126270 | 6836 | 2025-01-01 04:19:26\n131630 | 2625 | 2025-01-01 04:23:01\n95709 | 4274 | 2025-01-01 04:27:30\n199846 | 1175 | 2025-01-01 04:36:48\n159623 | 1246 | 2025-01-01 04:39:07\n37667 | 19183 | 2025-01-01 04:39:18"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 25.586,
+          "p50": 29.875,
+          "p90": 32.317,
+          "p95": 34.578,
+          "p99": 36.386,
+          "max": 36.838,
+          "mean": 30.476,
+          "stdev": 2.722,
+          "first_ms": 29.89
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "20000"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 33.07,
+          "p50": 33.715,
+          "p90": 37.984,
+          "p95": 40.01,
+          "p99": 41.631,
+          "max": 42.036,
+          "mean": 35.01,
+          "stdev": 2.673,
+          "first_ms": 33.787
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\""
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.567,
+          "p50": 18.104,
+          "p90": 22.576,
+          "p95": 24.187,
+          "p99": 25.475,
+          "max": 25.797,
+          "mean": 18.282,
+          "stdev": 3.856,
+          "first_ms": 21.623
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\""
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR (epoch(occurred_at) - epoch(prev_at)) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 43.14,
+          "p50": 60.089,
+          "p90": 67.963,
+          "p95": 68.424,
+          "p99": 68.792,
+          "max": 68.884,
+          "mean": 57.875,
+          "stdev": 9.433,
+          "first_ms": 71.9
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "1 | 57\n2 | 52\n3 | 57\n4 | 43\n5 | 51\n6 | 54\n7 | 68\n8 | 53\n9 | 54\n10 | 57\n11 | 71\n12 | 46\n13 | 58\n14 | 52\n15 | 50\n16 | 57\n17 | 52\n18 | 49\n19 | 42\n20 | 53\n21 | 57\n22 | 54\n23 | 56\n24 | 45\n25 | 45\n26 | 46\n27 | 45\n28 | 34\n29 | 48\n30 | 54\n31 | 43\n32 | 51\n33 | 40\n34 | 45\n35 | 52\n36 | 59\n37 | 53\n38 | 47\n39 | 53\n40 | 55\n41 | 65\n42 | 61\n43 | 45\n44 | 53\n45 | 61\n46 | 48\n47 | 38\n48 | 41\n49 | 44\n50 | 34\n51 | 53\n52 | 65\n53 | 49\n54 | 46\n55 | 49\n56 | 59\n57 | 51\n58 | 42\n59 | 62\n60 | 39\n61 | 54\n62 | 43\n63 | 39\n64 | 48\n65 | 56\n66 | 52\n67 | 34\n68 | 47\n69 | 42\n70 | 54\n71 | 54\n72 | 47\n73 | 51\n74 | 48\n75 | 38\n76 | 48\n77 | 61\n78 | 52\n79 | 39\n80 | 61\n81 | 44\n82 | 48\n83 | 48\n84 | 49\n85 | 50\n86 | 53\n87 | 54\n88 | 54\n89 | 39\n90 | 50\n91 | 40\n92 | 58\n93 | 38\n94 | 59\n95 | 72\n96 | 51\n97 | 61\n98 | 50\n99 | 54\n100 | 54\n101 | 57\n102 | 41\n103 | 59\n104 | 52\n105 | 58\n106 | 60\n107 | 55\n108 | 54\n109 | 42\n110 | 52\n111 | 52\n112 | 49\n113 | 49\n114 | 42\n115 | 67\n116 | 50\n117 | 54\n118 | 41\n119 | 51\n120 | 39\n121 | 60\n122 | 45\n123 | 59\n124 | 35\n125 | 53\n126 | 54\n127 | 42\n128 | 54\n129 | 56\n130 | 56\n131 | 35\n132 | 45\n133 | 45\n134 | 46\n135 | 58\n136 | 51\n137 | 49\n138 | 45\n139 | 53\n140 | 51\n141 | 53\n142 | 39\n143 | 49\n144 | 62\n145 | 55\n146 | 51\n147 | 46\n148 | 43\n149 | 52\n150 | 48\n151 | 44\n152 | 36\n153 | 58\n154 | 58\n155 | 43\n156 | 58\n157 | 55\n158 | 41\n159 | 51\n160 | 48\n161 | 53\n162 | 50\n163 | 46\n164 | 49\n165 | 50\n166 | 42\n167 | 54\n168 | 45\n169 | 46\n170 | 38\n171 | 46\n172 | 40\n173 | 44\n174 | 54\n175 | 59\n176 | 52\n177 | 52\n178 | 48\n179 | 65\n180 | 48\n181 | 46\n182 | 52\n183 | 52\n184 | 46\n185 | 54\n186 | 48\n187 | 35\n188 | 52\n189 | 68\n190 | 58\n191 | 34\n192 | 55\n193 | 44\n194 | 48\n195 | 76\n196 | 53\n197 | 64\n198 | 48\n199 | 43\n200 | 49"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, quantile(total_amount, 0.5) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 32.886,
+          "p50": 33.778,
+          "p90": 38.373,
+          "p95": 39.76,
+          "p99": 40.87,
+          "max": 41.147,
+          "mean": 35.062,
+          "stdev": 2.654,
+          "first_ms": 37.381
+        },
+        "rows": 13,
+        "checksum": "de43c92da84c76f82f5dc326",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "AU | 1668.40\nBR | 1687.34\nCA | 1672.73\nDE | 1677.72\nES | 1617.99\nFR | 1619.64\nGB | 1661.81\nIN | 1665.30\nIT | 1617.68\nJP | 1639.53\nNL | 1670.22\nTR | 1647.16\nUS | 1659.11"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, GROUP_CONCAT(p.sku, ',') AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.891,
+          "p50": 5.027,
+          "p90": 5.216,
+          "p95": 5.302,
+          "p99": 5.371,
+          "max": 5.388,
+          "mean": 5.075,
+          "stdev": 0.139,
+          "first_ms": 5.269
+        },
+        "rows": 500,
+        "checksum": "05124c267281f03892412b29",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "1 | SKU-0002149,SKU-0002518,SKU-0002119,SKU-0000923\n2 | SKU-0003202,SKU-0004568\n3 | SKU-0004468\n4 | SKU-0000722\n5 | SKU-0004238,SKU-0004967,SKU-0002064,SKU-0004994\n6 | SKU-0001323,SKU-0000372,SKU-0002828,SKU-0000345\n7 | SKU-0003983,SKU-0004550,SKU-0003165\n8 | SKU-0003500,SKU-0001710\n9 | SKU-0000032\n10 | SKU-0002739,SKU-0000207\n11 | SKU-0002988\n12 | SKU-0001490,SKU-0000063,SKU-0002257,SKU-0003916,SKU-0000879,SKU-0004950\n13 | SKU-0000863\n14 | SKU-0002549,SKU-0004383,SKU-0000716\n15 | SKU-0003261,SKU-0000223,SKU-0003315\n16 | SKU-0000323\n17 | SKU-0000726,SKU-0003611\n18 | SKU-0004301,SKU-0004408\n19 | SKU-0001247,SKU-0003152,SKU-0004583\n20 | SKU-0003709\n21 | SKU-0003868,SKU-0000023\n22 | SKU-0001421\n23 | SKU-0003808,SKU-0003387,SKU-0004659\n24 | SKU-0000599,SKU-0001534,SKU-0001018,SKU-0002991\n25 | SKU-0004556,SKU-0004673,SKU-0004505,SKU-0004447\n26 | SKU-0001049,SKU-0002322\n27 | SKU-0001759,SKU-0002623\n28 | SKU-0000692,SKU-0002844,SKU-0003914\n29 | SKU-0000105\n30 | SKU-0003303,SKU-0004667\n31 | SKU-0001984\n32 | SKU-0003790,SKU-0001575\n33 | SKU-0001717,SKU-0000763\n34 | SKU-0000746,SKU-0004045,SKU-0004743\n35 | SKU-0003883,SKU-0001788\n36 | SKU-0003603,SKU-0000797,SKU-0002948,SKU-0002401,SKU-0002769\n37 | SKU-0002387,SKU-0003034\n38 | SKU-0001790,SKU-0002002\n39 | SKU-0004275,SKU-0001324,SKU-0003386\n40 | SKU-0004260,SKU-0001458,SKU-0002676,SKU-0004798\n41 | SKU-0000968,SKU-0001725,SKU-0000419\n42 | SKU-0001448\n43 | SKU-0000282,SKU-0000927\n44 | SKU-0004991\n45 | SKU-0001657\n46 | SKU-0003638,SKU-0003825,SKU-0002981\n47 | SKU-0004005\n48 | SKU-0004710\n49 | SKU-0000924,SKU-0000220\n50 | SKU-0004256,SKU-0000782,SKU-0001380\n51 | SKU-0002024,SKU-0001852\n52 | SKU-0001454,SKU-0002324,SKU-0000187,SKU-0003430\n53 | SKU-0003336\n54 | SKU-0004794\n55 | SKU-0003067,SKU-0000778,SKU-0004905,SKU-0004238,SKU-0002108\n56 | SKU-0002618,SKU-0003506,SKU-0004596,SKU-0002904\n57 | SKU-0001034,SKU-0004909,SKU-0002828,SKU-0000422\n58 | SKU-0000409,SKU-0004861\n59 | SKU-0000661,SKU-0001196\n60 | SKU-0002809,SKU-0004949\n61 | SKU-0003440,SKU-0002806\n62 | SKU-0002508,SKU-0004480,SKU-0000163,SKU-0002873,SKU-0002698,SKU-0004732\n63 | SKU-0000971,SKU-0001837,SKU-0001362\n64 | SKU-0001681\n65 | SKU-0000854\n66 | SKU-0003299,SKU-0004948\n67 | SKU-0002858,SKU-0000828,SKU-0004842,SKU-0002832\n68 | SKU-0000412\n69 | SKU-0003472,SKU-0002414\n70 | SKU-0003018,SKU-0002524,SKU-0003223,SKU-0000718\n71 | SKU-0003309\n72 | SKU-0004412,SKU-0004935\n73 | SKU-0002790,SKU-0002861\n74 | SKU-0004990,SKU-0001834\n75 | SKU-0000784,SKU-0000442\n76 | SKU-0001896\n77 | SKU-0003657\n78 | SKU-0003160,SKU-0002270\n79 | SKU-0001106,SKU-0003325,SKU-0001952\n80 | SKU-0000830,SKU-0000349\n81 | SKU-0000479,SKU-0004881,SKU-0000639\n82 | SKU-0003371\n83 | SKU-0003816,SKU-0003093,SKU-0004126\n84 | SKU-0001384,SKU-0003973,SKU-0002298\n85 | SKU-0003304,SKU-0003453,SKU-0002184\n86 | SKU-0004955\n87 | SKU-0001565,SKU-0002552\n88 | SKU-0003695,SKU-0000469,SKU-0002253\n89 | SKU-0000357\n90 | SKU-0004573,SKU-0001770,SKU-0000271\n91 | SKU-0003681,SKU-0001327\n92 | SKU-0004048\n93 | SKU-0000473\n94 | SKU-0002113\n95 | SKU-0004270,SKU-0003125,SKU-0003699,SKU-0004850,SKU-0001692,SKU-0002823\n96 | SKU-0000041,SKU-0003217,SKU-0004443,SKU-0000786\n97 | SKU-0004876\n98 | SKU-0001283,SKU-0004389,SKU-0003588\n99 | SKU-0001667,SKU-0004562,SKU-0001074\n100 | SKU-0001748,SKU-0000602,SKU-0002794\n101 | SKU-0000161,SKU-0001487,SKU-0004138,SKU-0000507\n102 | SKU-0004628,SKU-0003851,SKU-0000733,SKU-0001559,SKU-0000656\n103 | SKU-0000975,SKU-0003539\n104 | SKU-0003993,SKU-0003710,SKU-0001367,SKU-0001287\n105 | SKU-0001945,SKU-0002383,SKU-0000328\n106 | SKU-0003729,SKU-0000925,SKU-0000174\n107 | SKU-0001777\n108 | SKU-0000713,SKU-0004419,SKU-0004829\n109 | SKU-0003208,SKU-0002142\n110 | SKU-0001015,SKU-0001331\n111 | SKU-0004104,SKU-0004576\n112 | SKU-0002618\n113 | SKU-0003245,SKU-0001933,SKU-0004418\n114 | SKU-0002051,SKU-0004789,SKU-0000172,SKU-0000664,SKU-0003599,SKU-0002629\n115 | SKU-0004788,SKU-0002051,SKU-0001836\n116 | SKU-0003862,SKU-0003747,SKU-0002481\n117 | SKU-0000623\n118 | SKU-0001309,SKU-0002536,SKU-0004630,SKU-0002598,SKU-0000038,SKU-0002611\n119 | SKU-0004878,SKU-0003619\n120 | SKU-0004468,SKU-0000861,SKU-0004086\n121 | SKU-0001696\n122 | SKU-0003203,SKU-0002662\n123 | SKU-0004093,SKU-0002759\n124 | SKU-0002439,SKU-0000586,SKU-0001843,SKU-0003839\n125 | SKU-0001379,SKU-0002310,SKU-0002037,SKU-0001192\n126 | SKU-0004530\n127 | SKU-0001874,SKU-0002561,SKU-0004100,SKU-0003475,SKU-0004180\n128 | SKU-0001412,SKU-0000419,SKU-0004288,SKU-0003242\n129 | SKU-0004942,SKU-0002486\n130 | SKU-0002463,SKU-0003601,SKU-0000810,SKU-0001050\n131 | SKU-0002198\n132 | SKU-0004223,SKU-0000310,SKU-0000785,SKU-0004953\n133 | SKU-0000513\n134 | SKU-0003712,SKU-0003906\n135 | SKU-0001111,SKU-0000334,SKU-0003438,SKU-0003080,SKU-0004790,SKU-0002553\n136 | SKU-0001603,SKU-0003373\n137 | SKU-0003289,SKU-0001782,SKU-0004155\n138 | SKU-0002134,SKU-0001597,SKU-0004322,SKU-0002017,SKU-0004100,SKU-0004985\n139 | SKU-0001910,SKU-0002908\n140 | SKU-0003469\n141 | SKU-0004774\n142 | SKU-0003934,SKU-0001890,SKU-0003094\n143 | SKU-0004941,SKU-0003801\n144 | SKU-0004410\n145 | SKU-0003701\n146 | SKU-0002826\n147 | SKU-0001419,SKU-0003721\n148 | SKU-0001118,SKU-0000485\n149 | SKU-0001308\n150 | SKU-0000379,SKU-0002786,SKU-0004804\n151 | SKU-0003563,SKU-0000577\n152 | SKU-0001572\n153 | SKU-0001174,SKU-0000101\n154 | SKU-0003085\n155 | SKU-0000453\n156 | SKU-0003617\n157 | SKU-0004820,SKU-0002954\n158 | SKU-0002507,SKU-0000549,SKU-0002140,SKU-0003329\n159 | SKU-0000684,SKU-0004151,SKU-0004984\n160 | SKU-0001296,SKU-0001127\n161 | SKU-0004708\n162 | SKU-0000332,SKU-0002945\n163 | SKU-0004362,SKU-0000681,SKU-0001174\n164 | SKU-0000621,SKU-0000253,SKU-0001209\n165 | SKU-0004103,SKU-0004414,SKU-0000296,SKU-0000309,SKU-0002100\n166 | SKU-0002704,SKU-0001728,SKU-0002709,SKU-0003512\n167 | SKU-0000507,SKU-0000947,SKU-0001259,SKU-0002085\n168 | SKU-0004466\n169 | SKU-0004361,SKU-0000320\n170 | SKU-0002559\n171 | SKU-0001349,SKU-0000493,SKU-0000484,SKU-0001418\n172 | SKU-0004774\n173 | SKU-0002286,SKU-0001632\n174 | SKU-0003474\n175 | SKU-0003631,SKU-00"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 15.06,
+          "p50": 16.536,
+          "p90": 17.798,
+          "p95": 17.886,
+          "p99": 17.956,
+          "max": 17.974,
+          "mean": 16.589,
+          "stdev": 0.901,
+          "first_ms": 15.724
+        },
+        "rows": 13,
+        "checksum": "04e63b8e25d0c6108afe0f0a",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "AU | 2760 | 278 | 193 | 2130.60\nBR | 5681 | 577 | 425 | 2147.91\nCA | 2735 | 283 | 215 | 2140.85\nDE | 17023 | 1666 | 1212 | 2114.00\nES | 6781 | 685 | 465 | 2113.16\nFR | 11533 | 1166 | 810 | 2113.36\nGB | 14168 | 1445 | 1057 | 2115.83\nIN | 5498 | 585 | 341 | 2121.11\nIT | 6805 | 655 | 513 | 2137.92\nJP | 4417 | 480 | 311 | 2124.66\nNL | 6885 | 702 | 535 | 2098.94\nTR | 14107 | 1417 | 1041 | 2125.13\nUS | 41668 | 4117 | 2936 | 2127.39"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 1.526,
+          "p50": 1.685,
+          "p90": 1.845,
+          "p95": 1.917,
+          "p99": 1.954,
+          "max": 1.964,
+          "mean": 1.695,
+          "stdev": 0.116,
+          "first_ms": 2.366
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "10325\n41576\n45620\n56614\n68515\n69826\n71246\n99948\n115390\n124865\n146741\n156680\n170037"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 5.857,
+          "p50": 6.176,
+          "p90": 6.24,
+          "p95": 6.245,
+          "p99": 6.25,
+          "max": 6.251,
+          "mean": 6.112,
+          "stdev": 0.134,
+          "first_ms": 6.298
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "47 | 971.47\n281 | 248.34\n457 | 4789.65\n869 | 1113.60\n942 | 108.94\n950 | 807.15\n1298 | 1435.27\n3027 | 789.37\n3073 | 1161.40\n3269 | 3315.64\n3737 | 3502.19\n4023 | 936.98\n4216 | 1545.57\n4413 | 4115.67\n4589 | 6265.78\n4762 | 20.00\n4833 | 3315.59\n4939 | 2856.24\n5265 | 561.67\n5718 | 151.14\n5897 | 2410.92\n6511 | 3122.90\n7606 | 990.82\n8169 | 337.71\n8453 | 18.03\n9031 | 459.76\n9687 | 973.71\n10378 | 2614.53\n10923 | 2873.85\n10974 | 3623.32\n11327 | 225.94\n11479 | 8015.34\n11859 | 1755.06\n12255 | 1447.09\n12654 | 4772.16\n12840 | 3284.63\n12970 | 595.04\n13207 | 2520.90\n13312 | 5640.46\n13532 | 1745.85\n14258 | 374.75\n14524 | 316.90\n15081 | 892.98\n15902 | 1178.50\n16269 | 2789.09\n16854 | 303.66\n17034 | 1122.02\n17315 | 1514.31\n17465 | 652.60\n18380 | 589.67\n18540 | 1150.93\n18983 | 2794.43\n19173 | 4324.18\n19517 | 3317.40\n19560 | 1195.30\n19706 | 590.17\n20028 | 416.67\n20045 | 1412.82\n20117 | 2642.03\n20309 | 494.86\n21123 | 1291.57\n21953 | 2060.58\n21992 | 3483.68\n22037 | 1655.01\n22147 | 1302.34\n22148 | 3417.72\n22307 | 471.82\n22507 | 1654.24\n23218 | 2085.65\n23452 | 2124.66\n23529 | 5064.38\n23673 | 1251.66\n23781 | 3125.38\n23817 | 2654.13\n23880 | 252.02\n24103 | 301.24\n24275 | 1698.65\n26089 | 1836.78\n26663 | 929.76\n27468 | 846.50\n27504 | 2607.60\n27862 | 500.40\n28693 | 659.04\n29538 | 1534.11\n29583 | 4556.53\n31065 | 5880.03\n31390 | 3646.36\n31469 | 3533.94\n31696 | 965.04\n31898 | 54.20\n32998 | 412.44\n33358 | 317.23\n33374 | 812.13\n33876 | 2611.68\n33963 | 177.39\n34032 | 504.18\n34762 | 978.80\n34890 | 3223.96\n34981 | 861.84\n36326 | 1920.83\n36519 | 895.1\n36595 | 2636.41\n36627 | 1916.58\n36886 | 671.93\n37157 | 1861.56\n37714 | 2050.47\n37946 | 2971.94\n38647 | 4185.93\n39038 | 3198.02\n39156 | 1264.88\n39181 | 2684.36\n40699 | 1504.02\n41297 | 2674.05\n41699 | 198.27\n42323 | 162.28\n42378 | 606.8\n42795 | 7410.38\n43866 | 383.92\n44765 | 791.27\n45796 | 4589.72\n46636 | 1942.66\n47487 | 1147.74\n47593 | 6913.11\n47962 | 2638.54\n48063 | 872.95\n48589 | 3651.1\n49665 | 574.1\n49768 | 961.57\n50439 | 1444.39\n51313 | 2049.14\n51981 | 402.02\n52069 | 1159.65\n52233 | 3814.77\n52686 | 2340.75\n52893 | 882.07\n52991 | 1692.58\n53330 | 2877.83\n53797 | 2768.89\n53968 | 4179.34\n54493 | 6348.56\n55008 | 708.71\n55052 | 750.2\n55237 | 4351.84\n56409 | 5003.22\n56614 | 2743.43\n57068 | 459.55\n57113 | 3082.07\n57679 | 840.52\n58303 | 317.15\n59915 | 2760.92\n60180 | 1003.7\n60278 | 1939.9\n60487 | 5701.06\n60656 | 3029.28\n61030 | 834.74\n61548 | 984.34\n62505 | 1916.65\n62565 | 1057.82\n62686 | 2390.93\n63495 | 6004.74\n63986 | 2959.18\n64081 | 2378.44\n64110 | 6702.14\n64404 | 766.77\n65059 | 4403.79\n65131 | 3098.29\n65359 | 868.44\n65654 | 5498.25\n66112 | 2804.67\n66379 | 518.35\n66569 | 1657.71\n67003 | 585.77\n67042 | 1496.75\n67727 | 948.13\n67793 | 184.25\n68202 | 1538.57\n68303 | 1486.63\n68632 | 2118.42\n68655 | 3774.71\n69008 | 2867.66\n69152 | 698.21\n69251 | 1604.27\n69325 | 2313.46\n69615 | 3982.98\n69617 | 1794.21\n69660 | 7906.59\n70218 | 1913.4\n70427 | 3958.9\n70458 | 6338.9\n70497 | 1441.51\n70527 | 11905.64\n70842 | 1752.5\n70896 | 1179.27\n70916 | 1211.71\n71047 | 2825.04\n71283 | 1111.38\n72131 | 837.78\n72750 | 726.77\n73120 | 1618.41\n73155 | 551"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 3.639,
+          "p50": 3.82,
+          "p90": 4.627,
+          "p95": 4.653,
+          "p99": 4.673,
+          "max": 4.678,
+          "mean": 3.934,
+          "stdev": 0.365,
+          "first_ms": 3.755
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan_error": "OperationalError: 42000!syntax error, unexpected IDENT in: \"plan\"",
+        "plan_analyze": "8290"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.72,
+          "p50": 1.865,
+          "p90": 1.933,
+          "p95": 1.975,
+          "p99": 2.005,
+          "max": 2.01,
+          "mean": 1.86,
+          "stdev": 0.064,
+          "first_ms": 2.677
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 4.43,
+          "p50": 5.885,
+          "p90": 6.901,
+          "p95": 6.916,
+          "p99": 7.799,
+          "max": 8.157,
+          "mean": 6.007,
+          "stdev": 0.911,
+          "first_ms": 6.285
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 11.951,
+          "p50": 13.117,
+          "p90": 13.438,
+          "p95": 13.729,
+          "p99": 24.485,
+          "max": 28.849,
+          "mean": 13.569,
+          "stdev": 2.858,
+          "first_ms": 11.938
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 10.0
+    }
+  },
+  "server_version": "MonetDB 11.55.7",
+  "finished": "2026-09-12T20:35:45+00:00"
+}

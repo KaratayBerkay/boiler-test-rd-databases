@@ -1,0 +1,25 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  ->  Distributed Subplan 207_1
+        ->  WindowAgg  (cost=8304.89..10554.82 rows=100000 width=28)
+              Window: w1 AS (PARTITION BY remote_scan.customer_id ORDER BY remote_scan.occurred_at, remote_scan.worker_column_4)
+              ->  Sort  (cost=8304.82..8554.82 rows=100000 width=28)
+                    Sort Key: remote_scan.customer_id, remote_scan.occurred_at, remote_scan.worker_column_4
+                    ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=28)
+                          Task Count: 32
+                          Tasks Shown: One of 32
+                          ->  Task
+                                Node: host=w1 port=5432 dbname=lab
+                                ->  Bitmap Heap Scan on events_102074 events  (cost=33.31..536.37 rows=3125 width=28)
+                                      Recheck Cond: (customer_id <= 2000)
+                                      ->  Bitmap Index Scan on ix_events_customer_id_102074  (cost=0.00..32.52 rows=3125 width=0)
+                                            Index Cond: (customer_id <= 2000)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=localhost port=5432 dbname=lab
+        ->  GroupAggregate  (cost=20.06..20.15 rows=5 width=12)
+              Group Key: intermediate_result.customer_id
+              ->  Sort  (cost=20.06..20.07 rows=5 width=4)
+                    Sort Key: intermediate_result.customer_id
+                    ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..20.00 rows=5 width=4)
+                          Filter: (CASE WHEN ((prev_at IS NULL) OR (EXTRACT(epoch FROM (occurred_at - prev_at)) > '1800'::numeric)) THEN 1 ELSE 0 END = 1)

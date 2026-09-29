@@ -1,0 +1,396 @@
+{
+  "engine": "crate",
+  "display": "CrateDB",
+  "category": "distributed SQL (search-backed)",
+  "dialect": "crate",
+  "driver": "crate",
+  "image": "crate:latest",
+  "run_id": "20260914-122419-3bb040",
+  "started": "2026-09-14T09:24:19+00:00",
+  "scale": 0.3,
+  "notes": "3-node cluster; tables are sharded and replicated (number_of_replicas default 0-1), eventually consistent reads (REFRESH TABLE makes writes visible), no transactions, no foreign keys, no recursive CTEs. Uses the HTTP endpoint.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 1.65,
+          "rows_per_s": 3639,
+          "method": "executemany + REFRESH TABLE",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.06,
+          "rows_per_s": 3234,
+          "method": "executemany + REFRESH TABLE",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.64,
+          "rows_per_s": 2330,
+          "method": "executemany + REFRESH TABLE",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 4.21,
+          "rows_per_s": 14238,
+          "method": "executemany + REFRESH TABLE",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 4.72,
+          "rows_per_s": 31146,
+          "method": "executemany + REFRESH TABLE",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 18.25,
+          "rows_per_s": 16438,
+          "method": "executemany + REFRESH TABLE",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.39,
+          "rows_per_s": 15252,
+          "method": "executemany + REFRESH TABLE",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name TEXT NOT NULL,\n  email TEXT NOT NULL,\n  country_code TEXT NOT NULL,\n  tier TEXT NOT NULL,\n  created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,\n  attrs OBJECT(DYNAMIC),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name TEXT NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku TEXT NOT NULL,\n  name TEXT NOT NULL,\n  description TEXT NOT NULL,\n  price DOUBLE PRECISION NOT NULL,\n  attrs OBJECT(DYNAMIC),\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  INDEX description_ft USING FULLTEXT (description) WITH (analyzer = 'english')\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status TEXT NOT NULL,\n  ordered_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,\n  total_amount DOUBLE PRECISION NOT NULL,\n  shipping_country TEXT NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DOUBLE PRECISION NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type TEXT NOT NULL,\n  occurred_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,\n  payload OBJECT(DYNAMIC),\n  value_num DOUBLE PRECISION NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)"
+      ],
+      "errors": [],
+      "schema_seconds": 1.66,
+      "load_seconds": 30.4,
+      "fts_setup": [],
+      "after_load": [
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE",
+        "ANALYZE"
+      ],
+      "post_seconds": 3.78,
+      "server_version": "CrateDB 6.4.4",
+      "_seconds": 35.9
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "snapshot": {
+          "status": "ok",
+          "kind": "snapshot",
+          "tool": "CREATE REPOSITORY fs + CREATE SNAPSHOT ALL / RESTORE SNAPSHOT",
+          "backup_seconds": 3.03,
+          "backup_bytes": 48343780,
+          "backup_mb": 46.1,
+          "restore_seconds": 1.08,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.53
+          },
+          "pitr": {},
+          "notes": "fs repository on the shared volume; snapshots copy Lucene segments (compressed); RESTORE ... schema_rename_replacement restores into another schema",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/crate",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "CREATE SNAPSHOT snap1 ALL",
+              "cmd": "CREATE SNAPSHOT lab_backups.snap1 ALL WITH (wait_for_completion = true)",
+              "rc": 0,
+              "seconds": 3.02,
+              "out": ""
+            },
+            {
+              "name": "RESTORE SNAPSHOT -> schema restored",
+              "cmd": "RESTORE SNAPSHOT lab_backups.snap1 TABLE doc.customers, doc.categories, doc.products, doc.orders, doc.order_items, doc.events, doc.inventory WITH (wait_for_completion = true, schema_rename_pattern = 'doc', schema_rename_replacement = 'restored')",
+              "rc": 0,
+              "seconds": 1.04,
+              "out": ""
+            }
+          ],
+          "snapshot": {
+            "state": "SUCCESS",
+            "started": "1789377898011",
+            "finished": "1789377901013",
+            "tables": 7
+          },
+          "seconds": 6.4,
+          "description": "repository snapshot restored into another schema"
+        },
+        "incremental": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "second CREATE SNAPSHOT (new segments only)",
+          "backup_seconds": 0.15,
+          "backup_bytes": 151000,
+          "backup_mb": 0.1,
+          "restore_seconds": 0.15,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.39
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "dropped table restored from the second snapshot"
+          },
+          "notes": "a second snapshot into the same repository only adds new segment files (incremental by construction)",
+          "error": null,
+          "steps": [
+            {
+              "name": "CREATE SNAPSHOT snap2 ALL",
+              "cmd": "CREATE SNAPSHOT lab_backups.snap2 ALL WITH (wait_for_completion = true)",
+              "rc": 0,
+              "seconds": 0.15,
+              "out": ""
+            },
+            {
+              "name": "DROP TABLE backup_probe",
+              "cmd": "DROP TABLE backup_probe",
+              "rc": 0,
+              "seconds": 0.04,
+              "out": ""
+            },
+            {
+              "name": "RESTORE SNAPSHOT snap2 TABLE backup_probe",
+              "cmd": "RESTORE SNAPSHOT lab_backups.snap2 TABLE doc.backup_probe WITH (wait_for_completion = true)",
+              "rc": 0,
+              "seconds": 0.15,
+              "out": ""
+            }
+          ],
+          "repository_bytes_total": 48494780,
+          "snapshot": {
+            "state": "SUCCESS",
+            "started": "1789377904414",
+            "finished": "1789377904614",
+            "tables": 8
+          },
+          "seconds": 2.2,
+          "description": "incremental snapshot, dropped-table restore drill"
+        }
+      },
+      "order": [
+        "snapshot",
+        "incremental"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "738f5ee2ac7ddedec0a692a4"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "9e538dbeb3d6332bd032ddcd"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "3f4d233005616174638e804b"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "bf96bdd2c3aeb0333057022c"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "fb27abf5c6d8fd886e803721"
+        }
+      },
+      "fingerprint_seconds": 2.07,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "snapshot",
+          "incremental"
+        ],
+        "pitr_ok": [
+          "incremental"
+        ]
+      },
+      "_seconds": 10.7
+    },
+    "logging": {
+      "sink": "sys.jobs_log (+ stats.jobs_log_persistent_filter -> JSON lines in the CrateDB log / docker logs)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "stats": {
+          "enabled": true,
+          "jobs_log_size": 20000,
+          "jobs_log_expiration": "1h",
+          "jobs_log_filter": "true",
+          "jobs_log_persistent_filter": "ended::bigint - started::bigint > 100",
+          "operations_log_size": 10000
+        }
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "sys.jobs_log (+ stats.jobs_log_persistent_filter -> JSON lines in the CrateDB log / docker logs)",
+        "slow_query_ms": 202.6,
+        "slow_logged": true,
+        "seen_after_s": 0.08,
+        "sample": "started=1789377906617 ended=1789377906775 user=crate stmt=SELECT count(*) AS rdlab_mk_086ea8cce1 FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer_id WHERE e1.id < 30",
+        "duration_ms": 158.0,
+        "docker_log_line": "[2026-09-14T09:25:06,775][INFO ][StatementLog             ] [crate1] Statement execution: stmt=\"SELECT count(*) AS rdlab_mk_086ea8cce1 FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer_id WHERE e1.id < 3000 AND e2.id < 3000\" duration=158, user=crate error=\"null\"",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "sys.jobs_log (username, stmt, started, ended, error)",
+        "setup": "sys.jobs_log is always on (stats.enabled=true)",
+        "event_found": true,
+        "seen_after_s": 0.01,
+        "sample": "started=1789377906895 user=crate stmt=CREATE TABLE audit_rdlab_mk_78a79b47f7 (id INTEGER)",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 6096,
+          "p50_ms": 1.232136,
+          "p99_ms": 2.4301843400000003,
+          "errors": 0
+        },
+        "full_logging": "SET GLOBAL TRANSIENT stats.jobs_log_persistent_filter = 'true' (every job written to the log)",
+        "full": {
+          "qps": 6108,
+          "p50_ms": 1.275957,
+          "p99_ms": 2.029605,
+          "errors": 0
+        },
+        "log_bytes_written": 4495306,
+        "bytes_per_statement": 184.0,
+        "overhead_pct": -0.2,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-crate-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 10771067,
+          "docker_logs_lines": 58603
+        },
+        "rdlab-crate-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 20586,
+          "docker_logs_lines": 156
+        },
+        "rdlab-crate-3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 3960,
+          "docker_logs_lines": 25
+        }
+      },
+      "extra": {
+        "jobs_log_rows": 58161,
+        "jobs_by_type": [
+          {
+            "type": "SELECT",
+            "count": 57960,
+            "avg_ms": 0.44
+          },
+          {
+            "type": "INSERT",
+            "count": 110,
+            "avg_ms": 140.66
+          },
+          {
+            "type": "DDL",
+            "count": 83,
+            "avg_ms": 91.12
+          },
+          {
+            "type": "MANAGEMENT",
+            "count": 9,
+            "avg_ms": 457.56
+          }
+        ],
+        "docker_logs_saved": "results/crate/logs/crate-1__docker-logs.log"
+      },
+      "collected": [],
+      "_seconds": 18.9
+    }
+  },
+  "harness_log": "results/logs/crate/20260914-122419-3bb040.log",
+  "server_version": "CrateDB 6.4.4",
+  "finished": "2026-09-14T09:25:25+00:00"
+}

@@ -1,0 +1,813 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260912-213642-c4943c",
+  "started": "2026-09-12T18:36:42+00:00",
+  "scale": 1.0,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "connections": {
+      "max_connections": 300,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 11.714391,
+            "p50": 12.012193,
+            "p90": 12.9057597,
+            "p95": 13.15568115,
+            "p99": 13.26053476,
+            "max": 13.263335,
+            "mean": 12.211913466666665,
+            "stdev": 0.4601504204141462
+          },
+          "errors": [],
+          "error_count": 0
+        },
+        "pgbouncer": {
+          "target": "pgbouncer",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 7.968726,
+            "p50": 8.4432235,
+            "p90": 8.6233841,
+            "p95": 8.76777895,
+            "p99": 9.402616600000002,
+            "max": 9.61996,
+            "mean": 8.4372044,
+            "stdev": 0.2990473523104773
+          },
+          "errors": [],
+          "error_count": 0
+        },
+        "haproxy-ro": {
+          "target": "haproxy-ro",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 11.970984,
+            "p50": 13.3013045,
+            "p90": 14.6272304,
+            "p95": 14.837978999999999,
+            "p99": 15.12127405,
+            "max": 15.17639,
+            "mean": 13.3160151,
+            "stdev": 0.9509645358469596
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 10,
+              "min": 22.302171,
+              "p50": 24.6344265,
+              "p90": 28.5292154,
+              "p95": 28.960776199999998,
+              "p99": 29.306024840000003,
+              "max": 29.392337,
+              "mean": 25.1094506,
+              "stdev": 2.516210721465601
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 108.6,
+            "connect_ms": {
+              "n": 50,
+              "min": 48.30065,
+              "p50": 80.183077,
+              "p90": 94.4867121,
+              "p95": 97.7785095,
+              "p99": 100.18550087,
+              "max": 100.728488,
+              "mean": 79.21250323999999,
+              "stdev": 12.150706384038521
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 212.4,
+            "connect_ms": {
+              "n": 100,
+              "min": 48.619864,
+              "p50": 125.9454135,
+              "p90": 158.0882775,
+              "p95": 163.0231498,
+              "p99": 172.81641315,
+              "max": 172.823556,
+              "mean": 124.85836874,
+              "stdev": 26.811045684582474
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 348.2,
+            "connect_ms": {
+              "n": 200,
+              "min": 55.061876,
+              "p50": 225.66479149999998,
+              "p90": 275.2292733,
+              "p95": 286.82827065000004,
+              "p99": 300.14354908,
+              "max": 312.297571,
+              "mean": 220.074721705,
+              "stdev": 49.9715057305566
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 310,
+            "opened": 295,
+            "failed": 15,
+            "wall_ms_to_open_all": 485.7,
+            "connect_ms": {
+              "n": 295,
+              "min": 56.87317,
+              "p50": 315.907228,
+              "p90": 410.51391820000003,
+              "p95": 420.0818506,
+              "p99": 438.79147872000004,
+              "max": 448.014109,
+              "mean": 310.70801126440676,
+              "stdev": 79.80909558686659
+            },
+            "error_codes": {
+              "53300": 15
+            },
+            "sample_error": "OperationalError: connection failed: connection to server at \"127.0.0.1\", port 15432 failed: FATAL: sorry, too many clients already"
+          }
+        ],
+        "pgbouncer": [
+          {
+            "target": "pgbouncer",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 10,
+              "min": 18.486452,
+              "p50": 20.836796,
+              "p90": 21.622511,
+              "p95": 22.277800999999997,
+              "p99": 22.802033,
+              "max": 22.933091,
+              "mean": 20.7277467,
+              "stdev": 1.1653915780729713
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "pgbouncer",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 110.4,
+            "connect_ms": {
+              "n": 50,
+              "min": 45.679859,
+              "p50": 71.04102800000001,
+              "p90": 83.323692,
+              "p95": 85.6085566,
+              "p99": 89.95796756,
+              "max": 90.284335,
+              "mean": 72.2733202,
+              "stdev": 9.273884252399691
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "pgbouncer",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 214.8,
+            "connect_ms": {
+              "n": 100,
+              "min": 33.897787,
+              "p50": 120.4908615,
+              "p90": 141.8533998,
+              "p95": 144.9957761,
+              "p99": 154.40642194000003,
+              "max": 162.989023,
+              "mean": 119.68018824999999,
+              "stdev": 19.54798099067216
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "pgbouncer",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 349.6,
+            "connect_ms": {
+              "n": 200,
+              "min": 33.103133,
+              "p50": 200.1511915,
+              "p90": 256.08594,
+              "p95": 264.30031625,
+              "p99": 280.35600301,
+              "max": 282.688393,
+              "mean": 191.58812269499998,
+              "stdev": 52.258835948194395
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "pgbouncer",
+            "requested": 310,
+            "opened": 310,
+            "failed": 0,
+            "wall_ms_to_open_all": 494.9,
+            "connect_ms": {
+              "n": 310,
+              "min": 80.806344,
+              "p50": 297.64486850000003,
+              "p90": 394.16807,
+              "p95": 408.6765605,
+              "p99": 429.45609718000003,
+              "max": 444.350953,
+              "mean": 289.1458795032258,
+              "stdev": 81.51893793520344
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ],
+        "haproxy-ro": [
+          {
+            "target": "haproxy-ro",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 23.311997,
+              "p50": 26.346083999999998,
+              "p90": 29.640959199999998,
+              "p95": 30.0936286,
+              "p99": 30.45576412,
+              "max": 30.546298,
+              "mean": 26.667242599999998,
+              "stdev": 2.2824598189757994
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "haproxy-ro",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 105.5,
+            "connect_ms": {
+              "n": 50,
+              "min": 41.903548,
+              "p50": 77.861547,
+              "p90": 85.84901430000001,
+              "p95": 87.8030612,
+              "p99": 88.47770547,
+              "max": 88.596627,
+              "mean": 76.17909232,
+              "stdev": 9.703001554734495
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "haproxy-ro",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 211.3,
+            "connect_ms": {
+              "n": 100,
+              "min": 46.886534,
+              "p50": 130.37564250000003,
+              "p90": 158.5578528,
+              "p95": 160.8778842,
+              "p99": 173.73809289000002,
+              "max": 175.67076,
+              "mean": 128.01778661,
+              "stdev": 24.67300920018812
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "haproxy-ro",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 373.0,
+            "connect_ms": {
+              "n": 200,
+              "min": 63.826661,
+              "p50": 227.487774,
+              "p90": 283.56989409999994,
+              "p95": 294.73370625,
+              "p99": 305.93529834,
+              "max": 315.575684,
+              "mean": 219.930698075,
+              "stdev": 53.75554544152288
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "haproxy-ro",
+            "requested": 310,
+            "opened": 310,
+            "failed": 0,
+            "wall_ms_to_open_all": 543.6,
+            "connect_ms": {
+              "n": 310,
+              "min": 53.408876,
+              "p50": 345.8478045,
+              "p90": 439.6876337,
+              "p95": 459.15194645,
+              "p99": 476.29213131000006,
+              "max": 484.629452,
+              "mean": 337.4294864483871,
+              "stdev": 82.83855347109323
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 8497,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 2124,
+            "latency_ms": {
+              "n": 8497,
+              "min": 0.192926,
+              "p50": 0.446046,
+              "p90": 0.6799762,
+              "p95": 0.7368528,
+              "p99": 0.76964692,
+              "max": 3.904909,
+              "mean": 0.4678483537719195,
+              "stdev": 0.14514078559497934
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 34068,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 8517,
+            "latency_ms": {
+              "n": 34068,
+              "min": 0.162015,
+              "p50": 0.469442,
+              "p90": 0.6346478999999999,
+              "p95": 0.6802432,
+              "p99": 0.7443049899999999,
+              "max": 4.48379,
+              "mean": 0.4667568596043208,
+              "stdev": 0.13129488589395402
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 218853,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 54713,
+            "latency_ms": {
+              "n": 218853,
+              "min": 0.189473,
+              "p50": 0.281325,
+              "p90": 0.33176,
+              "p95": 0.37338879999999997,
+              "p99": 0.4943527600000014,
+              "max": 4.856914,
+              "mean": 0.290762983856744,
+              "stdev": 0.05598209897059779
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 241757,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 60439,
+            "latency_ms": {
+              "n": 241757,
+              "min": 0.196345,
+              "p50": 0.498272,
+              "p90": 0.7279389999999999,
+              "p95": 0.8097985999999997,
+              "p99": 1.0203330000000004,
+              "max": 7.257902,
+              "mean": 0.5277942842689146,
+              "stdev": 0.17395734950902247
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 297813,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 74453,
+            "latency_ms": {
+              "n": 297813,
+              "min": 0.211219,
+              "p50": 0.790638,
+              "p90": 1.2800346,
+              "p95": 1.4814627999999999,
+              "p99": 2.0350198,
+              "max": 12.140963,
+              "mean": 0.8580648057472307,
+              "stdev": 0.368358408508765
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ],
+        "pgbouncer": [
+          {
+            "workers": 1,
+            "targets": [
+              "pgbouncer"
+            ],
+            "queries": 4915,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1229,
+            "latency_ms": {
+              "n": 4915,
+              "min": 0.27591,
+              "p50": 0.877822,
+              "p90": 1.0055878,
+              "p95": 1.0320904,
+              "p99": 1.0741743799999999,
+              "max": 5.206981,
+              "mean": 0.8106273981688709,
+              "stdev": 0.21852726250247587
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "pgbouncer"
+            ],
+            "queries": 25153,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 6288,
+            "latency_ms": {
+              "n": 25153,
+              "min": 0.222033,
+              "p50": 0.647333,
+              "p90": 0.8183794,
+              "p95": 0.86497,
+              "p99": 0.9657066000000001,
+              "max": 4.350251,
+              "mean": 0.6329848156084761,
+              "stdev": 0.15752718025623366
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "pgbouncer"
+            ],
+            "queries": 99775,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 24944,
+            "latency_ms": {
+              "n": 99775,
+              "min": 0.320643,
+              "p50": 0.61675,
+              "p90": 0.763062,
+              "p95": 0.8147943,
+              "p99": 0.9655722399999999,
+              "max": 29.276633,
+              "mean": 0.6394631130343272,
+              "stdev": 0.48371133989915666
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "pgbouncer"
+            ],
+            "queries": 96714,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 24178,
+            "latency_ms": {
+              "n": 96714,
+              "min": 0.626419,
+              "p50": 1.2344505,
+              "p90": 1.6806921,
+              "p95": 1.7794730499999996,
+              "p99": 2.0941518799999983,
+              "max": 22.156503,
+              "mean": 1.3214824593026864,
+              "stdev": 0.6742238281326616
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "pgbouncer"
+            ],
+            "queries": 86608,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 21652,
+            "latency_ms": {
+              "n": 86608,
+              "min": 1.617682,
+              "p50": 2.864485,
+              "p90": 3.5007886000000004,
+              "p95": 3.7101036,
+              "p99": 4.159988370000001,
+              "max": 12.276919,
+              "mean": 2.9559171322626083,
+              "stdev": 0.4294847782075709
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ],
+        "haproxy-ro": [
+          {
+            "workers": 1,
+            "targets": [
+              "haproxy-ro"
+            ],
+            "queries": 4733,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1183,
+            "latency_ms": {
+              "n": 4733,
+              "min": 0.262018,
+              "p50": 0.916178,
+              "p90": 1.0307514,
+              "p95": 1.0443262,
+              "p99": 1.0918452,
+              "max": 4.475061,
+              "mean": 0.84174986139869,
+              "stdev": 0.2132916525332694
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "haproxy-ro"
+            ],
+            "queries": 23759,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 5940,
+            "latency_ms": {
+              "n": 23759,
+              "min": 0.248721,
+              "p50": 0.682742,
+              "p90": 0.8782036,
+              "p95": 0.9236996999999999,
+              "p99": 1.00411126,
+              "max": 4.212736,
+              "mean": 0.6703499196094111,
+              "stdev": 0.17264174465815105
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "haproxy-ro"
+            ],
+            "queries": 160072,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 40018,
+            "latency_ms": {
+              "n": 160072,
+              "min": 0.27031,
+              "p50": 0.382153,
+              "p90": 0.4607269,
+              "p95": 0.5197883499999999,
+              "p99": 0.6806904800000001,
+              "max": 5.497861,
+              "mean": 0.39808811095631963,
+              "stdev": 0.08659820513228401
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "haproxy-ro"
+            ],
+            "queries": 183339,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 45835,
+            "latency_ms": {
+              "n": 183339,
+              "min": 0.304902,
+              "p50": 0.662859,
+              "p90": 0.9362152,
+              "p95": 1.0434273,
+              "p99": 1.3096628999999989,
+              "max": 9.255066,
+              "mean": 0.6964930246919641,
+              "stdev": 0.21480049828285794
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "haproxy-ro"
+            ],
+            "queries": 216387,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 54097,
+            "latency_ms": {
+              "n": 216387,
+              "min": 0.304104,
+              "p50": 1.114284,
+              "p90": 1.6946198,
+              "p95": 1.9169405,
+              "p99": 2.5120057399999993,
+              "max": 13.698261,
+              "mean": 1.1819375799146898,
+              "stdev": 0.4408765234058994
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 9394,
+        "qps": 2340,
+        "checkout_wait_ms": {
+          "n": 9394,
+          "min": 0.001858,
+          "p50": 0.006,
+          "p90": 0.008559,
+          "p95": 0.00934105,
+          "p99": 0.013055179999999804,
+          "max": 4005.823244,
+          "mean": 10.201492092825207,
+          "stdev": 201.45312574621212
+        },
+        "exec_ms": {
+          "n": 9394,
+          "min": 0.354525,
+          "p50": 2.9160139999999997,
+          "p90": 6.180931200000002,
+          "p95": 7.475746550000003,
+          "p99": 10.309924029999998,
+          "max": 20.960831,
+          "mean": 3.4039975222482437,
+          "stdev": 2.0767934660646676
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "SerializationFailure: could not serialize access due to concurrent update",
+          "ms": 1.5,
+          "final_balance": 90
+        },
+        "write_conflict_serializable": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "SerializationFailure: could not serialize access due to concurrent update",
+          "ms": 1.5,
+          "final_balance": 90
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t1"
+          ],
+          "error_codes": {
+            "t1": "40P01"
+          },
+          "detection_ms": 1001.1,
+          "timeline_s": {
+            "t1": 1.001,
+            "t2": 0.701
+          }
+        }
+      },
+      "rw_split": {
+        "haproxy-ro": {
+          "proxy": "haproxy-ro",
+          "connections": 40,
+          "reads_by_backend": {
+            "172.18.0.2/32/false": 20,
+            "172.18.0.4/32/true": 20
+          },
+          "writes_ok_by_backend": {
+            "172.18.0.2/32/false": 20
+          },
+          "writes_rejected_by_backend": {
+            "172.18.0.4/32/true": 20
+          },
+          "write_error_codes": {
+            "25006": 20
+          }
+        }
+      },
+      "_seconds": 118.1
+    }
+  },
+  "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "finished": "2026-09-12T18:38:40+00:00"
+}

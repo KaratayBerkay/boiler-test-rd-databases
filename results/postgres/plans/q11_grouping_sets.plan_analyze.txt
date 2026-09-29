@@ -1,0 +1,16 @@
+Sort  (cost=1665.01..1665.21 rows=79 width=52) (actual time=9.939..9.943 rows=79.00 loops=1)
+  Sort Key: shipping_country, status
+  Sort Method: quicksort  Memory: 29kB
+  Buffers: shared hit=592
+  ->  MixedAggregate  (cost=0.00..1662.52 rows=79 width=52) (actual time=9.846..9.872 rows=79.00 loops=1)
+        Hash Key: shipping_country, status
+        Hash Key: shipping_country
+        Group Key: ()
+        Batches: 1  Memory Usage: 72kB
+        Buffers: shared hit=592
+        ->  Seq Scan on orders  (cost=0.00..1492.00 rows=7535 width=18) (actual time=0.009..5.679 rows=7518.00 loops=1)
+              Filter: ((ordered_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-09-01 00:00:00'::timestamp without time zone))
+              Rows Removed by Filter: 52482
+              Buffers: shared hit=592
+Planning Time: 0.062 ms
+Execution Time: 9.974 ms

@@ -1,0 +1,2002 @@
+{
+  "engine": "db2",
+  "display": "IBM Db2 12.1 CE",
+  "category": "row-store OLTP",
+  "dialect": "db2",
+  "driver": "ibm_db",
+  "image": "icr.io/db2_community/db2:latest",
+  "run_id": "20260913-035015-1067c7",
+  "started": "2026-09-13T00:50:15+00:00",
+  "scale": 1.0,
+  "notes": "Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but needs two instances with matching configuration and a takeover procedure; not automated in this stack.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 1.6,
+          "rows_per_s": 12493,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 13731,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.68,
+          "rows_per_s": 7371,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 13.09,
+          "rows_per_s": 15283,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 29.65,
+          "rows_per_s": 16446,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 75.42,
+          "rows_per_s": 13259,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.86,
+          "rows_per_s": 23303,
+          "method": "executemany (commit per 5000 rows)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs VARCHAR(4000),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description VARCHAR(4000) NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs VARCHAR(4000),\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload VARCHAR(4000),\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.39,
+      "load_seconds": 121.43,
+      "fts_setup": [
+        "(Db2 Text Search not enabled in the community container; LIKE fallback used)"
+      ],
+      "after_load": [
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE CUSTOMERS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE CATEGORIES WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE PRODUCTS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDER_ITEMS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE EVENTS WITH DISTRIBUTION AND INDEXES ALL')",
+        "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE INVENTORY WITH DISTRIBUTION AND INDEXES ALL')"
+      ],
+      "post_seconds": 1.09,
+      "server_version": "DB2 v12.1.5.0",
+      "_seconds": 123.1
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "supported",
+        "note": "MQT",
+        "sample": "[(13,)]",
+        "ms": 103.9
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "",
+        "ms": 78.8
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 61.5
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 67.9
+      },
+      "returning": {
+        "status": "supported",
+        "note": "data-change-table-reference",
+        "sample": "[(1, 7)]",
+        "ms": 53.1
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 39.1
+      },
+      "arrays": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL20441N A \"ARRAY\" data type is not supported in the context where it is being used. SQLSTATE=428H2 SQLCODE=-20441",
+        "error_code": null,
+        "ms": 25.9
+      },
+      "vector_type": {
+        "status": "supported",
+        "note": "Db2 12.1.2+",
+        "sample": "[(0.2142857142857143,)]",
+        "ms": 26.2
+      },
+      "filter_clause": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0104N An unexpected token \"COUNT(*) FILTER (WHERE status = \\'delivered\\'\" was found following \"SELECT \". Expected tokens may include: \"<ElemStart>\". SQLSTATE=42601 SQLCODE=-104",
+        "error_code": null,
+        "ms": 27.9
+      },
+      "distinct_on": {
+        "status": "error",
+        "note": "",
+        "error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0440N No authorized routine named \"ON\" of type \"FUNCTION\" having compatible arguments was found. SQLSTATE=42884 SQLCODE=-440",
+        "error_code": null,
+        "ms": 9.3
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0104N An unexpected token \"ROW_NUMBER\" was found following \"FROM orders QUALIFY\". Expected tokens may include: \"HAVING\". SQLSTATE=42601 SQLCODE=-104",
+        "error_code": null,
+        "ms": 11.5
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": null,
+        "detail": "IntegrityError: ibm_db_dbi::IntegrityError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0545N The requested operation is not allowed because a row does not satisfy the check constraint \"DB2INST1.CK_LAB.SQL260913005219360\". SQLSTATE=23513 SQLCODE=-545",
+        "ms": 28.9
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": null,
+        "detail": "IntegrityError: ibm_db_dbi::IntegrityError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0530N The insert or update value of the FOREIGN KEY \"DB2INST1.ORDER_ITEMS.SQL260913005016060\" is not equal to any value of the parent key of the parent table. SQLSTATE=23503 SQLCODE=-530",
+        "ms": 22.3
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 35.0
+      },
+      "temporal_query": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(2,)]",
+        "ms": 105.8
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[('[\"{\\\\\"id\\\\\":1,\\\\\"name\\\\\":\\\\\"Category 1\\\\\"}\",\"{\\\\\"id\\\\\":2,\\\\\"name\\\\\":\\\\\"Category 2\\\\\"}\",\"{\\\\\"id\\\\\":3,\\\\\"name\\\\\":\\\\\"Category 3\\\\\"}\"]',)]",
+        "ms": 46.8
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "RR",
+        "sample": "[(1,)]",
+        "ms": 29.2
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "RS",
+        "sample": "[(1,)]",
+        "ms": 24.9
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "UR",
+        "sample": "[(1,)]",
+        "ms": 10.1
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 27.0
+      },
+      "_seconds": 0.8
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 FROM SYSIBM.SYSDUMMY1",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.745,
+          "p50": 0.812,
+          "p90": 1.013,
+          "p95": 1.076,
+          "p99": 1.18,
+          "max": 1.219,
+          "mean": 0.851,
+          "stdev": 0.113,
+          "first_ms": 3.097
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.767,
+          "p50": 1.876,
+          "p90": 2.022,
+          "p95": 2.115,
+          "p99": 2.519,
+          "max": 2.655,
+          "mean": 1.914,
+          "stdev": 0.164,
+          "first_ms": 5.275
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id FETCH FIRST 500 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 36.036,
+          "p50": 37.467,
+          "p90": 39.99,
+          "p95": 40.153,
+          "p99": 40.284,
+          "max": 40.317,
+          "mean": 37.685,
+          "stdev": 1.356,
+          "first_ms": 44.106
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, DATE_TRUNC('MONTH', o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_TRUNC('MONTH', o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 118.234,
+          "p50": 119.589,
+          "p90": 121.912,
+          "p95": 122.251,
+          "p99": 122.522,
+          "max": 122.59,
+          "mean": 120.092,
+          "stdev": 1.514,
+          "first_ms": 144.469
+        },
+        "rows": 50,
+        "checksum": "4b01a7659958ecf823e8a1bc",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 103.448,
+          "p50": 105.208,
+          "p90": 106.993,
+          "p95": 107.157,
+          "p99": 107.289,
+          "max": 107.322,
+          "mean": 105.307,
+          "stdev": 1.233,
+          "first_ms": 113.77
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE(ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE(ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 19.113,
+          "p50": 19.844,
+          "p90": 21.365,
+          "p95": 22.396,
+          "p99": 23.222,
+          "max": 23.428,
+          "mean": 20.229,
+          "stdev": 1.182,
+          "first_ms": 31.429
+        },
+        "rows": 90,
+        "checksum": "39f1b6619fae5745061db2c7",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS VARCHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(t.path || ' > ' || c.name AS VARCHAR(400)) FROM tree t, categories c WHERE c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 8.089,
+          "p50": 8.963,
+          "p90": 9.569,
+          "p95": 9.588,
+          "p99": 9.603,
+          "max": 9.606,
+          "mean": 9.004,
+          "stdev": 0.513,
+          "first_ms": 12.001
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_TRUNC('MONTH', first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_TRUNC('MONTH', o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, DATE_TRUNC('MONTH', o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 291.335,
+          "p50": 298.152,
+          "p90": 304.503,
+          "p95": 305.259,
+          "p99": 305.863,
+          "max": 306.015,
+          "mean": 298.456,
+          "stdev": 4.703,
+          "first_ms": 332.876
+        },
+        "rows": 22,
+        "checksum": "8560c89b626435e14906c6cd",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id FETCH FIRST 200 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 85.867,
+          "p50": 87.33,
+          "p90": 90.937,
+          "p95": 94.862,
+          "p99": 98.002,
+          "max": 98.787,
+          "mean": 88.664,
+          "stdev": 3.609,
+          "first_ms": 105.0
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 17.71,
+          "p50": 26.612,
+          "p90": 27.485,
+          "p95": 27.527,
+          "p99": 27.56,
+          "max": 27.569,
+          "mean": 25.238,
+          "stdev": 2.952,
+          "first_ms": 26.049
+        },
+        "rows": 500,
+        "checksum": "6bc68625c58e84ac582dbee2",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id AS customer_id, o.id AS order_id, o.ordered_at, o.total_amount FROM customers c , LATERAL (SELECT o2.id, o2.ordered_at, o2.total_amount FROM orders o2 WHERE o2.customer_id = c.id ORDER BY o2.ordered_at DESC, o2.id DESC FETCH FIRST 3 ROWS ONLY) o WHERE c.id <= 100 ORDER BY c.id, o.ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 8.491,
+          "p50": 13.127,
+          "p90": 13.586,
+          "p95": 13.616,
+          "p99": 13.64,
+          "max": 13.645,
+          "mean": 12.418,
+          "stdev": 1.755,
+          "first_ms": 15.086
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.906,
+          "p50": 11.186,
+          "p90": 11.379,
+          "p95": 11.511,
+          "p99": 11.616,
+          "max": 11.643,
+          "mean": 11.209,
+          "stdev": 0.19,
+          "first_ms": 14.719
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 21.653,
+          "p50": 22.422,
+          "p90": 24.968,
+          "p95": 26.254,
+          "p99": 27.283,
+          "max": 27.54,
+          "mean": 23.081,
+          "stdev": 1.711,
+          "first_ms": 41.27
+        },
+        "rows": 79,
+        "checksum": "36792a55606ee54971e90f0e",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE JSON_VALUE(attrs, '$.color') = 'red' AND JSON_VALUE(attrs, '$.weight' RETURNING DECIMAL(12,2)) > 10 ORDER BY id FETCH FIRST 100 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 55.86,
+          "p50": 56.861,
+          "p90": 57.983,
+          "p95": 58.546,
+          "p99": 58.997,
+          "max": 59.109,
+          "mean": 56.982,
+          "stdev": 0.925,
+          "first_ms": 68.918
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE description LIKE '%bluetooth%' AND description LIKE '%waterproof%' ORDER BY id FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.701,
+          "p50": 2.776,
+          "p90": 2.875,
+          "p95": 2.893,
+          "p99": 2.908,
+          "max": 2.912,
+          "mean": 2.784,
+          "stdev": 0.066,
+          "first_ms": 5.372
+        },
+        "rows": 50,
+        "checksum": "13c3c7dd358069b0c82817de",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INTEGER) AS product_id, CAST(? AS INTEGER) AS warehouse_id, CAST(? AS INTEGER) AS qty FROM SYSIBM.SYSDUMMY1) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT TIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.244,
+          "p50": 1.422,
+          "p90": 1.556,
+          "p95": 1.562,
+          "p99": 1.596,
+          "max": 1.609,
+          "mean": 1.425,
+          "stdev": 0.088,
+          "first_ms": 8.726
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INTEGER) AS product_id, CAST(? AS INTEGER) AS warehouse_id, CAST(? AS INTEGER) AS qty FROM SYSIBM.SYSDUMMY1) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT_TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT_TIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.837,
+          "p50": 0.984,
+          "p90": 1.057,
+          "p95": 1.064,
+          "p99": 1.175,
+          "max": 1.218,
+          "mean": 0.968,
+          "stdev": 0.089,
+          "first_ms": 8.36
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 100000 ROWS FETCH NEXT 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 148.944,
+          "p50": 151.76,
+          "p90": 153.933,
+          "p95": 155.004,
+          "p99": 155.861,
+          "max": 156.075,
+          "mean": 151.776,
+          "stdev": 2.066,
+          "first_ms": 189.527
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 22.161,
+          "p50": 23.419,
+          "p90": 23.586,
+          "p95": 23.668,
+          "p99": 23.733,
+          "max": 23.75,
+          "mean": 23.132,
+          "stdev": 0.541,
+          "first_ms": 29.964
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 135.032,
+          "p50": 137.594,
+          "p90": 140.792,
+          "p95": 142.775,
+          "p99": 144.362,
+          "max": 144.758,
+          "mean": 138.022,
+          "stdev": 2.807,
+          "first_ms": 149.173
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 58.129,
+          "p50": 60.082,
+          "p90": 60.537,
+          "p95": 60.626,
+          "p99": 60.698,
+          "max": 60.716,
+          "mean": 59.953,
+          "stdev": 0.694,
+          "first_ms": 66.989
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 56.853,
+          "p50": 57.825,
+          "p90": 58.429,
+          "p95": 59.165,
+          "p99": 59.754,
+          "max": 59.901,
+          "mean": 57.902,
+          "stdev": 0.788,
+          "first_ms": 67.637
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR ((DAYS(occurred_at) - DAYS(prev_at)) * 86400 + (MIDNIGHT_SECONDS(occurred_at) - MIDNIGHT_SECONDS(prev_at))) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 303.769,
+          "p50": 308.929,
+          "p90": 313.568,
+          "p95": 314.218,
+          "p99": 314.738,
+          "max": 314.868,
+          "mean": 308.777,
+          "stdev": 3.497,
+          "first_ms": 321.501
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_amount) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 116.233,
+          "p50": 118.128,
+          "p90": 119.618,
+          "p95": 119.648,
+          "p99": 119.671,
+          "max": 119.677,
+          "mean": 118.019,
+          "stdev": 1.19,
+          "first_ms": 129.904
+        },
+        "rows": 13,
+        "checksum": "aed577b8503f2718cc990366",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, LISTAGG(p.sku, ',') WITHIN GROUP (ORDER BY p.sku) AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 11.961,
+          "p50": 12.368,
+          "p90": 12.599,
+          "p95": 12.666,
+          "p99": 12.72,
+          "max": 12.734,
+          "mean": 12.385,
+          "stdev": 0.209,
+          "first_ms": 24.924
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 95.298,
+          "p50": 98.484,
+          "p90": 99.537,
+          "p95": 99.86,
+          "p99": 100.117,
+          "max": 100.182,
+          "mean": 98.095,
+          "stdev": 1.45,
+          "first_ms": 122.002
+        },
+        "rows": 13,
+        "checksum": "aead62a734254ac91c59d5af",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 0.976,
+          "p50": 1.117,
+          "p90": 1.174,
+          "p95": 1.269,
+          "p99": 1.319,
+          "max": 1.331,
+          "mean": 1.121,
+          "stdev": 0.074,
+          "first_ms": 4.03
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.569,
+          "p50": 11.475,
+          "p90": 11.957,
+          "p95": 12.076,
+          "p99": 12.172,
+          "max": 12.195,
+          "mean": 11.482,
+          "stdev": 0.4,
+          "first_ms": 46.533
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 11.568,
+          "p50": 12.518,
+          "p90": 15.189,
+          "p95": 15.6,
+          "p99": 15.929,
+          "max": 16.011,
+          "mean": 13.035,
+          "stdev": 1.419,
+          "first_ms": 23.618
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204",
+        "plan_analyze_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.609,
+          "p50": 1.177,
+          "p90": 1.41,
+          "p95": 1.465,
+          "p99": 1.489,
+          "max": 1.489,
+          "mean": 1.112,
+          "stdev": 0.232,
+          "first_ms": 3.424
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.136,
+          "p50": 1.392,
+          "p90": 1.49,
+          "p95": 1.533,
+          "p99": 1.655,
+          "max": 1.699,
+          "mean": 1.373,
+          "stdev": 0.124,
+          "first_ms": 3.878
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 4.185,
+          "p50": 4.95,
+          "p90": 5.496,
+          "p95": 5.724,
+          "p99": 5.871,
+          "max": 5.887,
+          "mean": 5.034,
+          "stdev": 0.373,
+          "first_ms": 15.297
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 26.4
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 79.973,
+            "p95_ms": 83.123,
+            "rows": 1,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE EVENTS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 6.251,
+            "p95_ms": 6.594,
+            "rows": 1,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE EVENTS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.441,
+            "p95_ms": 2.654,
+            "rows": 1,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 32.76
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 20.211,
+            "p95_ms": 27.585,
+            "rows": 2430,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "db2: INCLUDE columns not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 13.13,
+            "p95_ms": 17.758,
+            "rows": 1,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 12.705,
+            "p95_ms": 13.226,
+            "rows": 1,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.393,
+            "p95_ms": 1.523,
+            "rows": 1,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.268,
+            "p95_ms": 1.36,
+            "rows": 1,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          }
+        ],
+        "best_variant": "nonsargable_with_index",
+        "speedup_vs_first": 10.35
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 100000 ROWS FETCH NEXT 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 151.822,
+            "p95_ms": 156.406,
+            "rows": 50,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 23.2,
+            "p95_ms": 23.559,
+            "rows": 50,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id OFFSET 100000 ROWS FETCH NEXT 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 153.721,
+            "p95_ms": 160.298,
+            "rows": 50,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id FETCH FIRST 50 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.718,
+            "p95_ms": 1.88,
+            "rows": 50,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "ok": false,
+            "status": "n/a",
+            "error": "db2: no syntax for keyset_pred"
+          }
+        ],
+        "best_variant": "keyset_with_index",
+        "speedup_vs_first": 88.37
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 18.892,
+            "p95_ms": 22.443,
+            "rows": 500,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id FETCH FIRST 500 ROWS ONLY",
+            "ok": true,
+            "error": null,
+            "p50_ms": 17.458,
+            "p95_ms": 17.872,
+            "rows": 500,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 1.08
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 58.509,
+            "p95_ms": 60.84,
+            "rows": 0,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 59.952,
+            "p95_ms": 60.792,
+            "rows": 0,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 59.587,
+            "p95_ms": 61.424,
+            "rows": 0,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          }
+        ],
+        "best_variant": "left_join_is_null",
+        "speedup_vs_first": 1.0
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.977,
+            "p95_ms": 1.061,
+            "rows": 13,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.348,
+            "p95_ms": 1.6,
+            "rows": 13,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          }
+        ],
+        "best_variant": "or_predicate",
+        "speedup_vs_first": 1.0
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 24.552,
+            "p95_ms": 26.87,
+            "rows": 644,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE ORDERS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 7.723,
+            "p95_ms": 8.386,
+            "rows": 644,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "db2: partial indexes not supported"
+          }
+        ],
+        "best_variant": "full_index_(status,ordered_at)",
+        "speedup_vs_first": 3.18
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 79.859,
+            "p95_ms": 82.608,
+            "rows": 13,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "CALL SYSPROC.ADMIN_CMD('RUNSTATS ON TABLE EVENTS WITH DISTRIBUTION AND INDEXES ALL')"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 76.903,
+            "p95_ms": 83.513,
+            "rows": 13,
+            "plan_error": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0204N \"DB2INST1.EXPLAIN_OPERATOR\" is an undefined name. SQLSTATE=42704 SQLCODE=-204"
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 1.04
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 4.666,
+            "rows_per_s": 643,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 0.094,
+            "rows_per_s": 31941,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.239,
+            "rows_per_s": 12565,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver ibm_db: no server-side prepare toggle exposed"
+      },
+      "_seconds": 27.8
+    },
+    "connections": {
+      "max_connections": -1,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 3.858203,
+            "p50": 4.1957355,
+            "p90": 4.5041863,
+            "p95": 4.60228025,
+            "p99": 5.0201608,
+            "max": 5.169186,
+            "mean": 4.2267155333333335,
+            "stdev": 0.28377953068027223
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 4.310632,
+              "p50": 9.4553405,
+              "p90": 12.4762821,
+              "p95": 12.85773855,
+              "p99": 13.16290371,
+              "max": 13.239195,
+              "mean": 8.4503602,
+              "stdev": 3.217444105817747
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 100.4,
+            "connect_ms": {
+              "n": 50,
+              "min": 5.774633,
+              "p50": 21.9023335,
+              "p90": 54.3934342,
+              "p95": 55.333120599999994,
+              "p99": 62.73646804,
+              "max": 63.219218,
+              "mean": 26.358889039999998,
+              "stdev": 16.516767549618205
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 150.7,
+            "connect_ms": {
+              "n": 100,
+              "min": 9.432391,
+              "p50": 54.079772,
+              "p90": 101.5163382,
+              "p95": 103.48966904999999,
+              "p99": 104.91079373,
+              "max": 105.291818,
+              "mean": 58.69899743,
+              "stdev": 33.59778021734027
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 301.2,
+            "connect_ms": {
+              "n": 200,
+              "min": 3.647141,
+              "p50": 77.98356749999999,
+              "p90": 182.0495759,
+              "p95": 190.39213199999998,
+              "p99": 245.6307313599998,
+              "max": 278.828554,
+              "mean": 96.763572825,
+              "stdev": 62.26842235006769
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 2972,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 743,
+            "latency_ms": {
+              "n": 2972,
+              "min": 0.578799,
+              "p50": 1.4774825,
+              "p90": 1.8373826,
+              "p95": 1.86979465,
+              "p99": 1.97248847,
+              "max": 7.617327,
+              "mean": 1.342866622139973,
+              "stdev": 0.4312653292960986
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 10965,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 2741,
+            "latency_ms": {
+              "n": 10965,
+              "min": 0.650672,
+              "p50": 1.475942,
+              "p90": 1.764174,
+              "p95": 1.8293298,
+              "p99": 1.948350800000001,
+              "max": 4.391701,
+              "mean": 1.4558150103055174,
+              "stdev": 0.2573796268138669
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 79532,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 19883,
+            "latency_ms": {
+              "n": 79532,
+              "min": 0.579841,
+              "p50": 0.7792220000000001,
+              "p90": 0.9073405999999999,
+              "p95": 0.9739114,
+              "p99": 1.255840330000001,
+              "max": 5.908095,
+              "mean": 0.8029677907257456,
+              "stdev": 0.1414627078115561
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 88508,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 22127,
+            "latency_ms": {
+              "n": 88508,
+              "min": 0.750753,
+              "p50": 1.40762,
+              "p90": 1.8215119,
+              "p95": 1.9606413499999997,
+              "p99": 2.2947607899999984,
+              "max": 10.322402,
+              "mean": 1.4444780852126362,
+              "stdev": 0.30730011131586016
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 97453,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 24363,
+            "latency_ms": {
+              "n": 97453,
+              "min": 0.842868,
+              "p50": 2.553874,
+              "p90": 3.418902,
+              "p95": 3.728573999999999,
+              "p99": 4.466516359999997,
+              "max": 21.714874,
+              "mean": 2.6248014912932387,
+              "stdev": 0.6665207437802236
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 5669,
+        "qps": 1405,
+        "checkout_wait_ms": {
+          "n": 5669,
+          "min": 0.002056,
+          "p50": 0.006004,
+          "p90": 0.0086776,
+          "p95": 0.009444799999999998,
+          "p99": 0.01947815999999988,
+          "max": 4020.470489,
+          "mean": 16.957508264244137,
+          "stdev": 259.9736000709067
+        },
+        "exec_ms": {
+          "n": 5669,
+          "min": 1.328832,
+          "p50": 5.547371,
+          "p90": 7.732685399999999,
+          "p95": 8.4550098,
+          "p99": 9.921091799999981,
+          "max": 13.919894,
+          "mean": 5.673297150291057,
+          "stdev": 1.5687556113826013
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 1.6,
+          "t2": {
+            "outcome": "committed",
+            "ms": 4.2
+          },
+          "final_balance": 80
+        },
+        "write_conflict_serializable": {
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 1.4,
+          "t2": {
+            "outcome": "committed",
+            "ms": 1.8
+          },
+          "final_balance": 80
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t1"
+          ],
+          "error_codes": {
+            "t1": "ProgrammingError: ibm_db_dbi::ProgrammingError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0911N The current transaction has been rolled back because of a deadlock or timeout. Reason code \"2\". SQLSTATE=40001 SQLCODE=-911"
+          },
+          "detection_ms": 5746.2,
+          "timeline_s": {
+            "t2": 5.445,
+            "t1": 5.746
+          }
+        }
+      },
+      "_seconds": 45.4
+    },
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-db2"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 708000,
+          "batches": 708,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 47200,
+          "batch_ms": {
+            "n": 708,
+            "min": 60.91569,
+            "p50": 77.1514,
+            "p90": 89.33251080000002,
+            "p95": 105.92517334999995,
+            "p99": 275.4386143499971,
+            "max": 472.327526,
+            "mean": 84.15407837429379,
+            "stdev": 35.92722368849863
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-db2": {
+              "cpu_cores_avg": 0.966,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2637,
+              "mem_end_mb": 2619,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.087
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 440000,
+          "batches": 440,
+          "errors": 4,
+          "seconds": 15.0,
+          "rows_per_s": 29333,
+          "batch_ms": {
+            "n": 440,
+            "min": 65.989289,
+            "p50": 314.878417,
+            "p90": 1011.6607605,
+            "p95": 2491.661042849998,
+            "p99": 18732.98181531,
+            "max": 18787.518341,
+            "mean": 898.6365852295454,
+            "stdev": 3007.93943846436
+          },
+          "first_error": "ibm_db_dbi::InternalError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0964C  The transaction log for the database is full.  SQLSTATE=57011 SQLCODE=-964",
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-db2": {
+              "cpu_cores_avg": 0.484,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2650,
+              "mem_end_mb": 2632,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.026
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 75000,
+          "batches": 75,
+          "errors": 6,
+          "seconds": 15.0,
+          "rows_per_s": 5000,
+          "batch_ms": {
+            "n": 75,
+            "min": 93.197445,
+            "p50": 7184.283721,
+            "p90": 10965.4551396,
+            "p95": 10970.9448669,
+            "p99": 10986.670339159999,
+            "max": 10997.245506,
+            "mean": 7108.727143066667,
+            "stdev": 3946.3647587612422
+          },
+          "first_error": "ibm_db_dbi::InternalError: Statement Execute Failed: [IBM][CLI Driver][DB2/LINUXX8664] SQL0964C  The transaction log for the database is full.  SQLSTATE=57011 SQLCODE=-964",
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-db2": {
+              "cpu_cores_avg": 0.164,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2660,
+              "mem_end_mb": 2637,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 0.233
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "mode": "values",
+        "workers": 4,
+        "rows_per_s": 47200
+      },
+      "_seconds": 79.3
+    },
+    "replication": {
+      "kind": "none",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "DB2 v12.1.5.0",
+          "status": {}
+        }
+      },
+      "status": "single-node",
+      "_seconds": 0.0
+    }
+  },
+  "server_version": "DB2 v12.1.5.0",
+  "finished": "2026-09-13T00:55:18+00:00"
+}

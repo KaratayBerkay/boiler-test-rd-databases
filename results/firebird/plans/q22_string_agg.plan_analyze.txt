@@ -1,0 +1,16 @@
+Select Expression
+    -> Aggregate
+        -> Filter
+            -> Hash Join (inner)
+                -> Hash Join (inner)
+                    -> Filter
+                        -> Table "ORDER_ITEMS" as "OI" Access By ID
+                            -> Index "RDB$FOREIGN8" Range Scan (upper bound: 1/1)
+                    -> Record Buffer (record length: 113)
+                        -> Table "PRODUCTS" as "P" Full Scan
+                -> Record Buffer (record length: 25)
+                    -> Filter
+                        -> Table "ORDERS" as "O" Access By ID
+                            -> Bitmap
+                                -> Index "RDB$PRIMARY5" Range Scan (upper bound: 1/1)
+fetches=23076740 reads=8326

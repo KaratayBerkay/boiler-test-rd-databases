@@ -1,0 +1,34 @@
+Sort  (cost=78.08..78.11 rows=11 width=4) (actual time=0.902..0.904 rows=13 loops=1)
+  Sort Key: id
+  Sort Method: quicksort  Memory: 25kB
+  ->  YB Bitmap Table Scan on orders  (cost=76.26..77.89 rows=11 width=4) (actual time=0.860..0.865 rows=13 loops=1)
+        Storage Table Read Requests: 1
+        Storage Table Read Execution Time: 0.212 ms
+        Storage Table Read Ops: 1
+        Storage Table Rows Scanned: 13
+        ->  BitmapOr  (cost=50.16..50.16 rows=11 width=0) (actual time=0.613..0.613 rows=13 loops=1)
+              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..26.95 rows=10 width=0) (actual time=0.403..0.403 rows=12 loops=1)
+                    Index Cond: (customer_id = '14824'::smallint)
+                    Storage Index Read Requests: 1
+                    Storage Index Read Execution Time: 0.334 ms
+                    Storage Index Read Ops: 1
+                    Storage Index Rows Scanned: 12
+              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..23.21 rows=1 width=0) (actual time=0.206..0.206 rows=1 loops=1)
+                    Index Cond: (id = 146741)
+                    Storage Table Read Requests: 1
+                    Storage Table Read Execution Time: 0.150 ms
+                    Storage Table Read Ops: 1
+                    Storage Table Rows Scanned: 1
+Planning Time: 0.166 ms
+Execution Time: 1.043 ms
+Storage Read Requests: 3
+Storage Read Execution Time: 0.696 ms
+Storage Read Ops: 3
+Storage Rows Scanned: 26
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 0.696 ms
+Peak Memory Usage: 186 kB

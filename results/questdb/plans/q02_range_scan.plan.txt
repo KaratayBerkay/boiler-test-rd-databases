@@ -1,0 +1,9 @@
+SelectedRecord
+    Encode sort light lo: 500 partiallySorted: true
+      keys: [ordered_at, id]
+        Async JIT Filter workers: 27
+          filter: status='delivered'
+            PageFrame
+                Row forward scan
+                Interval forward scan on: orders
+                  intervals: [("2025-03-01T00:00:00.000000Z","2025-03-07T23:59:59.999999Z")]

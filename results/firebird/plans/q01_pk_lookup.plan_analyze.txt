@@ -1,0 +1,6 @@
+Select Expression
+    -> Filter
+        -> Table "CUSTOMERS" Access By ID
+            -> Bitmap
+                -> Index "RDB$PRIMARY1" Unique Scan
+fetches=2569 reads=144

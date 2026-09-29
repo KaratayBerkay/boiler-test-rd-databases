@@ -1,0 +1,7 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=w5 port=5432 dbname=lab
+        ->  Index Scan using customers_pkey_102019 on customers_102019 customers  (cost=0.28..2.49 rows=1 width=43)
+              Index Cond: (id = '4403'::smallint)

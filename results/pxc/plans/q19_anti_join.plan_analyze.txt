@@ -1,0 +1,4 @@
+-> Filter: (oi.id is null)  (cost=469194 rows=467216) (actual time=54..54 rows=0 loops=1)
+    -> Nested loop antijoin  (cost=469194 rows=467216) (actual time=54..54 rows=0 loops=1)
+        -> Covering index scan on p using PRIMARY  (cost=693 rows=4688) (actual time=0.0295..1.76 rows=5000 loops=1)
+        -> Covering index lookup on oi using ix_order_items_product_id (product_id=p.id)  (cost=0.274 rows=99.7) (actual time=0.0103..0.0103 rows=1 loops=5000)

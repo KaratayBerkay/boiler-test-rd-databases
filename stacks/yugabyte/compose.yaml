@@ -1,0 +1,78 @@
+# YugabyteDB — 3-node cluster started with yugabyted (RF=3 once three nodes join); YSQL is PostgreSQL-compatible (port 5433).
+#
+# Backup strategy (`rdlab run yugabyte --phases backup`): ysql_dump into the shared `yb-backups` volume, distributed
+#   snapshots (yb-admin create_database_snapshot / restore_snapshot, export_snapshot metadata) and PITR through a snapshot
+#   schedule (create_snapshot_schedule / restore_snapshot_schedule <timestamp>).
+# Logging strategy: PostgreSQL logging parameters through --tserver_flags=ysql_pg_conf_csv={...} (slow statements >= 100 ms,
+#   lock waits, connections, checkpoints) -> <base_dir>/data/yb-data/tserver/logs/postgresql-*.log; Docker json-file rotation.
+name: rdlab-yugabyte
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-yb: &yb
+  image: yugabytedb/yugabyte:latest
+  logging: *logging
+  healthcheck:
+    test: ["CMD-SHELL", "postgres/bin/pg_isready -h $$(hostname) -p 5433 -U yugabyte"]   # YSQL listens on the advertised address, not loopback
+    interval: 5s
+    timeout: 5s
+    retries: 60
+
+services:
+  volumes-init:
+    image: yugabytedb/yugabyte:latest
+    container_name: rdlab-yb-volumes-init
+    user: root
+    entrypoint: ["sh", "-c", "chmod 1777 /backups && echo volumes ready"]
+    volumes: [yb-backups:/backups]
+    logging: *logging
+    restart: "no"
+  yb1:
+    <<: *yb
+    container_name: rdlab-yb-1
+    hostname: yb1
+    command: bin/yugabyted start --base_dir=/home/yugabyte/yb_data --background=false --advertise_address=yb1 --cloud_location=lab.zone1.a --fault_tolerance=zone --ysql_enable_auth=false --tserver_flags="ysql_max_connections=500,ysql_pg_conf_csv={log_min_duration_statement=100ms,log_lock_waits=on,log_temp_files=0,log_checkpoints=on,log_connections=on,log_disconnections=on,log_line_prefix='%m [%p] %u@%d app=%a '}"
+    volumes: [yb1:/home/yugabyte/yb_data, yb-backups:/backups]
+    ports: ["15433:5433", "17000:7000", "15434:15433"]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+  yb2:
+    <<: *yb
+    container_name: rdlab-yb-2
+    hostname: yb2
+    command: bin/yugabyted start --base_dir=/home/yugabyte/yb_data --background=false --advertise_address=yb2 --join=yb1 --cloud_location=lab.zone1.b --fault_tolerance=zone --tserver_flags="ysql_max_connections=500,ysql_pg_conf_csv={log_min_duration_statement=100ms,log_lock_waits=on,log_temp_files=0,log_checkpoints=on,log_connections=on,log_disconnections=on,log_line_prefix='%m [%p] %u@%d app=%a '}"
+    volumes: [yb2:/home/yugabyte/yb_data, yb-backups:/backups]
+    ports: ["15435:5433"]
+    depends_on:
+      yb1: { condition: service_healthy }
+  yb3:
+    <<: *yb
+    container_name: rdlab-yb-3
+    hostname: yb3
+    command: bin/yugabyted start --base_dir=/home/yugabyte/yb_data --background=false --advertise_address=yb3 --join=yb1 --cloud_location=lab.zone1.c --fault_tolerance=zone --tserver_flags="ysql_max_connections=500,ysql_pg_conf_csv={log_min_duration_statement=100ms,log_lock_waits=on,log_temp_files=0,log_checkpoints=on,log_connections=on,log_disconnections=on,log_line_prefix='%m [%p] %u@%d app=%a '}"
+    volumes: [yb3:/home/yugabyte/yb_data, yb-backups:/backups]
+    ports: ["15436:5433"]
+    depends_on:
+      yb2: { condition: service_healthy }
+  init:
+    image: yugabytedb/yugabyte:latest
+    container_name: rdlab-yb-init
+    logging: *logging
+    entrypoint: ["bash", "-ec"]
+    command:
+      - |
+        for i in $$(seq 1 60); do bin/ysqlsh -h yb1 -U yugabyte -c 'SELECT 1' >/dev/null 2>&1 && break; sleep 3; done
+        bin/ysqlsh -h yb1 -U yugabyte -c "CREATE DATABASE lab" || true
+        bin/ysqlsh -h yb1 -U yugabyte -d lab -c "CREATE EXTENSION IF NOT EXISTS vector" || true
+        for i in $$(seq 1 60); do n=$$(bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 list_all_tablet_servers 2>/dev/null | grep -c ALIVE || true); [ "$$n" -ge 3 ] && break; sleep 3; done
+        bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 list_all_tablet_servers | head -5
+        bin/ysqlsh -h yb1 -U yugabyte -c "SELECT * FROM yb_servers()"
+    depends_on:
+      yb3: { condition: service_healthy }
+    restart: "no"
+
+volumes:
+  yb1:
+  yb2:
+  yb3:
+  yb-backups:

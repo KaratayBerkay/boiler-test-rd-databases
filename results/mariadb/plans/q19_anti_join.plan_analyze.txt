@@ -1,0 +1,62 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.04125879
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 387.0452489,
+    "r_loops": 1,
+    "r_total_time_ms": 12.61873802,
+    "nested_loop": [
+      {
+        "table": {
+          "table_name": "p",
+          "access_type": "index",
+          "key": "PRIMARY",
+          "key_length": "4",
+          "used_key_parts": ["id"],
+          "loops": 1,
+          "r_loops": 1,
+          "rows": 4874,
+          "r_rows": 5000,
+          "cost": 0.72415301,
+          "r_table_time_ms": 1.201343808,
+          "r_other_time_ms": 0.343052853,
+          "r_engine_stats": {
+            "pages_accessed": 156
+          },
+          "filtered": 100,
+          "r_total_filtered": 100,
+          "r_filtered": 100
+        }
+      },
+      {
+        "table": {
+          "table_name": "oi",
+          "access_type": "ref",
+          "possible_keys": ["ix_order_items_product_id"],
+          "key": "ix_order_items_product_id",
+          "key_length": "4",
+          "used_key_parts": ["product_id"],
+          "ref": ["lab.p.id"],
+          "loops": 4874,
+          "r_loops": 5000,
+          "rows": 95,
+          "r_rows": 1,
+          "cost": 72.20867523,
+          "r_table_time_ms": 10.80010405,
+          "r_other_time_ms": 0.271680851,
+          "r_engine_stats": {
+            "pages_accessed": 10186
+          },
+          "filtered": 100,
+          "r_total_filtered": 100,
+          "attached_condition": "trigcond(oi.`id` is null)",
+          "r_filtered": 100,
+          "using_index": true,
+          "not_exists": true
+        }
+      }
+    ]
+  }
+}

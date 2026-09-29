@@ -1,0 +1,2239 @@
+{
+  "engine": "h2",
+  "display": "H2 2.x",
+  "category": "embedded / Java server",
+  "dialect": "h2",
+  "driver": "psycopg",
+  "image": "rdlab/h2:2.3.232 (eclipse-temurin:21-jre + h2 jar)",
+  "run_id": "20260914-145935-029d2a",
+  "started": "2026-09-14T11:59:35+00:00",
+  "scale": 1.0,
+  "notes": "H2 in server mode using its PostgreSQL-protocol emulation (MODE=PostgreSQL); accessed with psycopg. The PG emulation is partial (no COPY, limited pg_catalog), so loading uses executemany. Single node; H2 has no replication (clustering mode is deprecated).",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 3.32,
+          "rows_per_s": 6032,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.05,
+          "rows_per_s": 4360,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.8,
+          "rows_per_s": 6285,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 29.23,
+          "rows_per_s": 6843,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 62.92,
+          "rows_per_s": 7749,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 151.1,
+          "rows_per_s": 6618,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 2.57,
+          "rows_per_s": 7769,
+          "method": "multi-row INSERT with inlined literals (500/stmt)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs VARCHAR(2000),\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description VARCHAR(4000) NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs VARCHAR(2000),\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload VARCHAR(2000),\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.88,
+      "load_seconds": 250.29,
+      "fts_setup": [
+        "FAILED CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description)): Syntax error in SQL statement \"CREATE INDEX ix_products_fts ON products USING [*]GIN (to_tsvector('english', description))\"; expected \"BTREE, HASH, RTREE\"; SQL statement:\nCREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description)) [42001-232]\nDETAIL:  org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement \"CREATE INDEX ix_products_fts ON products USING [*]GIN (to_tsvector('english', description))\"; expected \"BTREE, HASH, RTREE\"; SQL statement:\nCREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description)) [42001-232]"
+      ],
+      "after_load": [
+        "ANALYZE TABLE customers",
+        "ANALYZE TABLE categories",
+        "ANALYZE TABLE products",
+        "ANALYZE TABLE orders",
+        "ANALYZE TABLE order_items",
+        "ANALYZE TABLE events",
+        "ANALYZE TABLE inventory"
+      ],
+      "post_seconds": 0.63,
+      "server_version": "PostgreSQL 8.2.23 server protocol using H2 2.3.232 (2024-08-11)",
+      "_seconds": 251.9
+    },
+    "capabilities": {
+      "generated_column": {
+        "status": "unsupported",
+        "note": "",
+        "error": "ProgrammingError: Syntax error in SQL statement \"CREATE TABLE gen_lab (a INT, b INT GENERATED ALWAYS AS (a * 2) [*]STORED)\"; expected \"[, ., ::, AT, FORMAT, *, /, %, +, -, ||, NOT, IS, ILIKE, REGEXP, AND, OR, NOT NULL, DEFAULT ON NULL, SELECTIVITY, COMMENT, CONSTRAINT, COMMENT, PRIMARY KEY, UNIQUE, ",
+        "error_code": "42001",
+        "ms": 877.7
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 768.0
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 766.3
+      },
+      "arrays": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([1, 2, 3, 4],)]",
+        "ms": 649.4
+      },
+      "filter_clause": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(140061,)]",
+        "ms": 724.5
+      },
+      "distinct_on": {
+        "status": "error",
+        "note": "",
+        "error": "DatabaseError: Order by expression \"ordered_at\" must be in the result list in this case; SQL statement: SELECT DISTINCT ON (customer_id) customer_id, id FROM orders WHERE customer_id <= 20 ORDER BY customer_id, ordered_at DESC [90068-232] DETAIL: org.h2.jdbc.JdbcSQLSyntaxErrorException: Order by exp",
+        "error_code": "90068",
+        "ms": 565.3
+      },
+      "qualify": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,), (5,)]",
+        "ms": 1115.0
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23513",
+        "detail": "IntegrityError: Check constraint violation: \"CONSTRAINT_A: \"; SQL statement: INSERT INTO ck_lab VALUES (0) [23513-232] DETAIL: org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException: Check constraint violation: \"CONSTRAINT_A: \"; SQL statement: INSERT INTO ck_lab VALUES (0) [23513-232]",
+        "ms": 899.5
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23506",
+        "detail": "IntegrityError: Referential integrity constraint violation: \"CONSTRAINT_751: public.order_items FOREIGN KEY(product_id) REFERENCES public.products(id) (999999999)\"; SQL statement: INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (999999999, 1, 999999999, 1, 1) [23506-232] D",
+        "ms": 881.1
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "expects 1",
+        "sample": "[(1,)]",
+        "ms": 1173.3
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 840.4
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 772.4
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 865.3
+      },
+      "materialized_view": {
+        "status": "supported",
+        "note": "",
+        "ms": 865.2
+      },
+      "partitioning": {
+        "status": "unsupported",
+        "note": "",
+        "error": "SyntaxErrorOrAccessRuleViolation: Syntax error in SQL statement \"CREATE TABLE part_lab (id INT, d DATE) [*]PARTITION BY RANGE (d)\"; SQL statement: CREATE TABLE part_lab (id INT, d DATE) PARTITION BY RANGE (d) [42000-232] DETAIL: org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement ",
+        "error_code": "42000",
+        "ms": 836.5
+      },
+      "returning": {
+        "status": "supported",
+        "note": "FINAL TABLE",
+        "sample": "[(1, 7)]",
+        "ms": 849.9
+      },
+      "statement_timeout": {
+        "status": "supported",
+        "note": "",
+        "error_code": "57014",
+        "detail": "QueryCanceled: canceling statement due to user request",
+        "ms": 1106.2
+      },
+      "vector_type": {
+        "status": "unsupported",
+        "note": "",
+        "error": "OperationalError: Unknown data type: \"VECTOR\"; SQL statement: CREATE TABLE vec_lab (e VECTOR(3)) [50004-232] DETAIL: org.h2.jdbc.JdbcSQLNonTransientException: Unknown data type: \"VECTOR\"; SQL statement: CREATE TABLE vec_lab (e VECTOR(3)) [50004-232]",
+        "error_code": "HY004",
+        "ms": 832.3
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "",
+        "error": "SyntaxErrorOrAccessRuleViolation: Syntax error in SQL statement \"SELECT COUNT(*) FROM orders AS OF [*]SYSTEM TIME '-5s'\"; SQL statement: SELECT COUNT(*) FROM orders AS OF SYSTEM TIME '-5s' [42000-232] DETAIL: org.h2.jdbc.JdbcSQLSyntaxErrorException: Syntax error in SQL statement \"SELECT COUNT(*) FRO",
+        "error_code": "42000",
+        "ms": 774.2
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[('[{\"id\":1,\"name\":\"Category 1\"},{\"id\":2,\"name\":\"Category 2\"},{\"id\":3,\"name\":\"Category 3\"}]',)]",
+        "ms": 991.1
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 762.6
+      },
+      "_seconds": 17.9
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 ",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 40.841,
+          "p50": 41.022,
+          "p90": 41.933,
+          "p95": 42.083,
+          "p99": 72.595,
+          "max": 85.052,
+          "mean": 42.628,
+          "stdev": 7.886,
+          "first_ms": 41.988
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    1",
+        "plan_analyze": "SELECT\n    1"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 40.91,
+          "p50": 41.013,
+          "p90": 41.972,
+          "p95": 42.069,
+          "p99": 71.094,
+          "max": 82.945,
+          "mean": 42.565,
+          "stdev": 7.508,
+          "first_ms": 42.714
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"id\",\n    \"name\",\n    \"email\",\n    \"country_code\",\n    \"tier\"\nFROM \"public\".\"customers\"\n    /* public.PRIMARY_KEY_6: id = ?1 */\nWHERE \"id\" = ?1",
+        "plan_analyze": "SELECT\n    \"id\",\n    \"name\",\n    \"email\",\n    \"country_code\",\n    \"tier\"\nFROM \"public\".\"customers\"\n    /* public.PRIMARY_KEY_6: id = ?1 */\n    /* scanCount: 2 */\nWHERE \"id\" = ?1"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 47.944,
+          "p50": 49.004,
+          "p90": 55.195,
+          "p95": 73.704,
+          "p99": 88.511,
+          "max": 92.212,
+          "mean": 53.506,
+          "stdev": 12.928,
+          "first_ms": 245.759
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"status\",\n    \"total_amount\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\nWHERE (\"status\" = 'delivered')\n    AND (\"ordered_at\" >= TIMESTAMP '2025-03-01 00:00:00')\n    AND (\"ordered_at\" < TIMESTAMP '2025-03-08 00:00:00')\nORDER BY \"ordered_at\", 1\nFETCH FIRST 500 ROWS ONLY",
+        "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"status\",\n    \"total_amount\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nWHERE (\"status\" = 'delivered')\n    AND (\"ordered_at\" >= TIMESTAMP '2025-03-01 00:00:00')\n    AND (\"ordered_at\" < TIMESTAMP '2025-03-08 00:00:00')\nORDER BY \"ordered_at\", 1\nFETCH FIRST 500 ROWS ONLY"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, DATE_TRUNC('MONTH', o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_TRUNC('MONTH', o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 41.835,
+          "p50": 42.18,
+          "p90": 47.162,
+          "p95": 65.605,
+          "p99": 80.358,
+          "max": 84.047,
+          "mean": 46.528,
+          "stdev": 12.513,
+          "first_ms": 1090.875
+        },
+        "rows": 50,
+        "checksum": "4b01a7659958ecf823e8a1bc",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"c\".\"country_code\",\n    DATE_TRUNC(MONTH, \"o\".\"ordered_at\") AS \"month_start\",\n    COUNT(DISTINCT \"o\".\"id\") AS \"orders\",\n    SUM(\"oi\".\"qty\" * \"oi\".\"unit_price\") AS \"revenue\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.customers.tableScan */\nINNER JOIN \"public\".\"orders\" \"o\"\n    /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */\n    ON 1=1\n    /* WHERE (c.id = o.customer_id)\n        AND (o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00')\n        AND (o.ordered_at < TIMESTAMP '2025-07-01 00:00:00')\n        AND (o.status = 'delivered')\n    */\nINNER JOIN \"public\".\"order_items\" \"oi\"\n    /* public.CONSTRAINT_INDEX_7: order_id = o.id */\n    ON 1=1\nWHERE ((\"o\".\"ordered_at\" < TIMESTAMP '2025-07-01 00:00:00')\n    AND (\"o\".\"status\" = 'delivered')\n    AND (\"o\".\"ordered_at\" >= TIMESTAMP '2025-01-01 00:00:00'))\n    AND (\"oi\".\"order_id\" = \"o\".\"id\")\n    AND (\"c\".\"id\" = \"o\".\"customer_id\")\nGROUP BY \"c\".\"country_code\", DATE_TRUNC(MONTH, \"o\".\"ordered_at\")\nORDER BY 4 DESC, 1, 2\nFETCH FIRST 50 ROWS ONLY",
+        "plan_analyze": "SELECT\n    \"c\".\"country_code\",\n    DATE_TRUNC(MONTH, \"o\".\"ordered_at\") AS \"month_start\",\n    COUNT(DISTINCT \"o\".\"id\") AS \"orders\",\n    SUM(\"oi\".\"qty\" * \"oi\".\"unit_price\") AS \"revenue\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.customers.tableScan */\n    /* scanCount: 20001 */\nINNER JOIN \"public\".\"orders\" \"o\"\n    /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */\n    ON 1=1\n    /* WHERE (c.id = o.customer_id)\n        AND (o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00')\n        AND (o.ordered_at < TIMESTAMP '2025-07-01 00:00:00')\n        AND (o.status = 'delivered')\n    */\n    /* scanCount: 220000 */\nINNER JOIN \"public\".\"order_items\" \"oi\"\n    /* public.CONSTRAINT_INDEX_7: order_id = o.id */\n    ON 1=1\n    /* scanCount: 118934 */\nWHERE ((\"o\".\"ordered_at\" < TIMESTAMP '2025-07-01 00:00:00')\n    AND (\"o\".\"status\" = 'delivered')\n    AND (\"o\".\"ordered_at\" >= TIMESTAMP '2025-01-01 00:00:00'))\n    AND (\"oi\".\"order_id\" = \"o\".\"id\")\n    AND (\"c\".\"id\" = \"o\".\"customer_id\")\nGROUP BY \"c\".\"country_code\", DATE_TRUNC(MONTH, \"o\".\"ordered_at\")\nORDER BY 4 DESC, 1, 2\nFETCH FIRST 50 ROWS ONLY\n/*\nreads: 50477\n*/"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1274.689,
+          "p50": 1313.641,
+          "p90": 1421.915,
+          "p95": 1431.078,
+          "p99": 1438.409,
+          "max": 1440.242,
+          "mean": 1330.556,
+          "stdev": 52.968,
+          "first_ms": 1508.06
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"category_id\",\n    \"product_id\",\n    \"revenue\",\n    \"rn\"\nFROM (\n    SELECT\n        \"p\".\"category_id\",\n        \"oi\".\"product_id\",\n        SUM(\"oi\".\"qty\" * \"oi\".\"unit_price\") AS \"revenue\",\n        ROW_NUMBER() OVER (PARTITION BY \"p\".\"category_id\" ORDER BY SUM(\"oi\".\"qty\" * \"oi\".\"unit_price\") DESC, \"oi\".\"product_id\") AS \"rn\"\n    FROM \"public\".\"order_items\" \"oi\"\n    INNER JOIN \"public\".\"products\" \"p\"\n        ON 1=1\n    WHERE \"p\".\"id\" = \"oi\".\"product_id\"\n    GROUP BY \"p\".\"category_id\", \"oi\".\"product_id\"\n) \"t\"\n    /* SELECT\n        p.category_id,\n        oi.product_id,\n        SUM(oi.qty * oi.unit_price) AS revenue,\n        ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn\n    FROM public.products p\n        /* public.CONSTRAINT_INDEX_C */\n    INNER JOIN public.order_items oi\n        /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n        ON 1=1\n    WHERE p.id = oi.product_id\n    GROUP BY p.category_id, oi.product_id\n    QUALIFY ?1 IS NOT DISTINCT FROM ?1: rn <= CAST(3 AS BIGINT)\n     */\nWHERE \"rn\" <= CAST(3 AS BIGINT)\nORDER BY 1, 4",
+        "plan_analyze": "SELECT\n    \"category_id\",\n    \"product_id\",\n    \"revenue\",\n    \"rn\"\nFROM (\n    SELECT\n        \"p\".\"category_id\",\n        \"oi\".\"product_id\",\n        SUM(\"oi\".\"qty\" * \"oi\".\"unit_price\") AS \"revenue\",\n        ROW_NUMBER() OVER (PARTITION BY \"p\".\"category_id\" ORDER BY SUM(\"oi\".\"qty\" * \"oi\".\"unit_price\") DESC, \"oi\".\"product_id\") AS \"rn\"\n    FROM \"public\".\"order_items\" \"oi\"\n    INNER JOIN \"public\".\"products\" \"p\"\n        ON 1=1\n    WHERE \"p\".\"id\" = \"oi\".\"product_id\"\n    GROUP BY \"p\".\"category_id\", \"oi\".\"product_id\"\n) \"t\"\n    /* SELECT\n        p.category_id,\n        oi.product_id,\n        SUM(oi.qty * oi.unit_price) AS revenue,\n        ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn\n    FROM public.products p\n        /* public.CONSTRAINT_INDEX_C */\n        /* scanCount: 5001 */\n    INNER JOIN public.order_items oi\n        /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n        ON 1=1\n        /* scanCount: 492606 */\n    WHERE p.id = oi.product_id\n    GROUP BY p.category_id, oi.product_id\n    QUALIFY ?1 IS NOT DISTINCT FROM ?1: rn <= CAST(3 AS BIGINT)\n     */\n    /* scanCount: 601 */\nWHERE \"rn\" <= CAST(3 AS BIGINT)\nORDER BY 1, 4\n/*\nreads: 17117\n*/"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE_TRUNC('DAY', ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE_TRUNC('DAY', ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 42.427,
+          "p50": 43.986,
+          "p90": 48.985,
+          "p95": 67.003,
+          "p99": 81.417,
+          "max": 85.02,
+          "mean": 47.84,
+          "stdev": 12.412,
+          "first_ms": 199.107
+        },
+        "rows": 90,
+        "checksum": "d18d7920a3c2ac35a4a4429e",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"d\",\n    \"daily\",\n    SUM(\"daily\") OVER (ORDER BY \"d\" ROWS UNBOUNDED PRECEDING) AS \"running\",\n    LAG(\"daily\", 1) OVER (ORDER BY \"d\") AS \"prev_day\"\nFROM (\n    SELECT\n        DATE_TRUNC(DAY, \"ordered_at\") AS \"d\",\n        SUM(\"total_amount\") AS \"daily\"\n    FROM \"public\".\"orders\"\n    WHERE (\"ordered_at\" >= TIMESTAMP '2025-01-01 00:00:00')\n        AND (\"ordered_at\" < TIMESTAMP '2025-04-01 00:00:00')\n    GROUP BY DATE_TRUNC(DAY, \"ordered_at\")\n) \"s\"\n    /* SELECT\n        DATE_TRUNC(DAY, ordered_at) AS d,\n        SUM(total_amount) AS daily\n    FROM public.orders\n        /* public.orders.tableScan */\n    WHERE (ordered_at >= TIMESTAMP '2025-01-01 00:00:00')\n        AND (ordered_at < TIMESTAMP '2025-04-01 00:00:00')\n    GROUP BY DATE_TRUNC(DAY, ordered_at)\n     */\nORDER BY 1",
+        "plan_analyze": "SELECT\n    \"d\",\n    \"daily\",\n    SUM(\"daily\") OVER (ORDER BY \"d\" ROWS UNBOUNDED PRECEDING) AS \"running\",\n    LAG(\"daily\", 1) OVER (ORDER BY \"d\") AS \"prev_day\"\nFROM (\n    SELECT\n        DATE_TRUNC(DAY, \"ordered_at\") AS \"d\",\n        SUM(\"total_amount\") AS \"daily\"\n    FROM \"public\".\"orders\"\n    WHERE (\"ordered_at\" >= TIMESTAMP '2025-01-01 00:00:00')\n        AND (\"ordered_at\" < TIMESTAMP '2025-04-01 00:00:00')\n    GROUP BY DATE_TRUNC(DAY, \"ordered_at\")\n) \"s\"\n    /* SELECT\n        DATE_TRUNC(DAY, ordered_at) AS d,\n        SUM(total_amount) AS daily\n    FROM public.orders\n        /* public.orders.tableScan */\n        /* scanCount: 200001 */\n    WHERE (ordered_at >= TIMESTAMP '2025-01-01 00:00:00')\n        AND (ordered_at < TIMESTAMP '2025-04-01 00:00:00')\n    GROUP BY DATE_TRUNC(DAY, ordered_at)\n     */\n    /* scanCount: 91 */\nORDER BY 1"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS VARCHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(t.path || ' > ' || c.name AS VARCHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 51.973,
+          "p50": 55.962,
+          "p90": 60.282,
+          "p95": 79.087,
+          "p99": 94.132,
+          "max": 97.893,
+          "mean": 59.504,
+          "stdev": 12.858,
+          "first_ms": 68.873
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan": "WITH  RECURSIVE \"tree\"(\"id\", \"parent_id\", \"name\", \"depth\", \"path\") AS (\n    (SELECT\n        \"id\",\n        \"parent_id\",\n        \"name\",\n        0,\n        CAST(\"name\" AS CHARACTER VARYING(400))\n    FROM \"public\".\"categories\"\n    WHERE \"parent_id\" IS NULL)\n    UNION ALL\n    (SELECT\n        \"c\".\"id\",\n        \"c\".\"parent_id\",\n        \"c\".\"name\",\n        \"t\".\"depth\" + 1,\n        CAST(\"t\".\"path\" || ' > ' || \"c\".\"name\" AS CHARACTER VARYING(400))\n    FROM \"public\".\"categories\" \"c\"\n    INNER JOIN \"tree\" \"t\"\n        ON 1=1\n    WHERE \"c\".\"parent_id\" = \"t\".\"id\")\n)\nSELECT\n    \"id\",\n    \"depth\",\n    \"path\"\nFROM \"tree\" \"tree\"\n    /* null */\nORDER BY 3",
+        "plan_analyze": "WITH  RECURSIVE \"tree\"(\"id\", \"parent_id\", \"name\", \"depth\", \"path\") AS (\n    (SELECT\n        \"id\",\n        \"parent_id\",\n        \"name\",\n        0,\n        CAST(\"name\" AS CHARACTER VARYING(400))\n    FROM \"public\".\"categories\"\n    WHERE \"parent_id\" IS NULL)\n    UNION ALL\n    (SELECT\n        \"c\".\"id\",\n        \"c\".\"parent_id\",\n        \"c\".\"name\",\n        \"t\".\"depth\" + 1,\n        CAST(\"t\".\"path\" || ' > ' || \"c\".\"name\" AS CHARACTER VARYING(400))\n    FROM \"public\".\"categories\" \"c\"\n    INNER JOIN \"tree\" \"t\"\n        ON 1=1\n    WHERE \"c\".\"parent_id\" = \"t\".\"id\")\n)\nSELECT\n    \"id\",\n    \"depth\",\n    \"path\"\nFROM \"tree\" \"tree\"\n    /* (SELECT\n        id,\n        parent_id,\n        name,\n        0,\n        CAST(name AS CHARACTER VARYING(400))\n    FROM public.categories\n        /* public.categories.tableScan */\n        /* scanCount: 201 */\n    WHERE parent_id IS NULL)\n    UNION ALL\n    (SELECT\n        c.id,\n        c.parent_id,\n        c.name,\n        t.depth + 1,\n        CAST(t.path || ' > ' || c.name AS CHARACTER VARYING(400))\n    FROM public.categories c\n        /* public.categories.tableScan */\n        /* scanCount: 201 */\n    INNER JOIN tree t\n        /* null */\n        ON 1=1\n        /* scanCount: 11400 */\n    WHERE c.parent_id = t.id)\n     */\n    /* scanCount: 201 */\nORDER BY 3"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_TRUNC('MONTH', first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_TRUNC('MONTH', o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, DATE_TRUNC('MONTH', o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.948,
+          "p50": 41.832,
+          "p90": 46.9,
+          "p95": 64.462,
+          "p99": 78.512,
+          "max": 82.025,
+          "mean": 45.766,
+          "stdev": 12.108,
+          "first_ms": 950.79
+        },
+        "rows": 22,
+        "checksum": "8560c89b626435e14906c6cd",
+        "error": null,
+        "error_code": null,
+        "plan": "WITH \"first_orders\"(\"customer_id\", \"first_at\") AS (\n    SELECT\n        \"customer_id\",\n        MIN(\"ordered_at\") AS \"first_at\"\n    FROM \"public\".\"orders\"\n    GROUP BY \"customer_id\"\n),\n\"cohorts\"(\"customer_id\", \"cohort\") AS (\n    SELECT\n        \"customer_id\",\n        DATE_TRUNC(MONTH, \"first_at\") AS \"cohort\"\n    FROM \"first_orders\" \"first_orders\"\n),\n\"activity\"(\"customer_id\", \"m\") AS (\n    SELECT\n        \"o\".\"customer_id\",\n        DATE_TRUNC(MONTH, \"o\".\"ordered_at\") AS \"m\"\n    FROM \"public\".\"orders\" \"o\"\n    GROUP BY \"o\".\"customer_id\", DATE_TRUNC(MONTH, \"o\".\"ordered_at\")\n)\nSELECT\n    \"c\".\"cohort\",\n    COUNT(DISTINCT \"c\".\"customer_id\") AS \"cohort_size\",\n    COUNT(DISTINCT \"a\".\"customer_id\") AS \"active_later\"\nFROM \"cohorts\" \"c\"\n    /* SELECT\n        customer_id,\n        DATE_TRUNC(MONTH, first_at) AS cohort\n    FROM first_orders first_orders\n        /* SELECT\n            customer_id,\n            MIN(ordered_at) AS first_at\n        FROM public.orders\n            /* public.CONSTRAINT_INDEX_C3 */\n        GROUP BY customer_id\n        /* group sorted */\n         */\n     */\nLEFT OUTER JOIN \"activity\" \"a\"\n    /* SELECT\n        o.customer_id,\n        DATE_TRUNC(MONTH, o.ordered_at) AS m\n    FROM public.orders o\n        /* public.CONSTRAINT_INDEX_C3: customer_id IS NOT DISTINCT FROM ?1 */\n    WHERE (o.customer_id IS NOT DISTINCT FROM ?1)\n        AND (DATE_TRUNC(MONTH, o.ordered_at) >= ?2)\n    GROUP BY o.customer_id, DATE_TRUNC(MONTH, o.ordered_at): customer_id = c.customer_id\n        AND m > c.cohort\n     */\n    ON (\"a\".\"customer_id\" = \"c\".\"customer_id\")\n    AND (\"a\".\"m\" > \"c\".\"cohort\")\nGROUP BY \"c\".\"cohort\"\nORDER BY 1",
+        "plan_analyze": "WITH \"first_orders\"(\"customer_id\", \"first_at\") AS (\n    SELECT\n        \"customer_id\",\n        MIN(\"ordered_at\") AS \"first_at\"\n    FROM \"public\".\"orders\"\n    GROUP BY \"customer_id\"\n),\n\"cohorts\"(\"customer_id\", \"cohort\") AS (\n    SELECT\n        \"customer_id\",\n        DATE_TRUNC(MONTH, \"first_at\") AS \"cohort\"\n    FROM \"first_orders\" \"first_orders\"\n),\n\"activity\"(\"customer_id\", \"m\") AS (\n    SELECT\n        \"o\".\"customer_id\",\n        DATE_TRUNC(MONTH, \"o\".\"ordered_at\") AS \"m\"\n    FROM \"public\".\"orders\" \"o\"\n    GROUP BY \"o\".\"customer_id\", DATE_TRUNC(MONTH, \"o\".\"ordered_at\")\n)\nSELECT\n    \"c\".\"cohort\",\n    COUNT(DISTINCT \"c\".\"customer_id\") AS \"cohort_size\",\n    COUNT(DISTINCT \"a\".\"customer_id\") AS \"active_later\"\nFROM \"cohorts\" \"c\"\n    /* SELECT\n        customer_id,\n        DATE_TRUNC(MONTH, first_at) AS cohort\n    FROM first_orders first_orders\n        /* SELECT\n            customer_id,\n            MIN(ordered_at) AS first_at\n        FROM public.orders\n            /* public.CONSTRAINT_INDEX_C3 */\n            /* scanCount: 200001 */\n        GROUP BY customer_id\n        /* group sorted */\n         */\n        /* scanCount: 20001 */\n     */\n    /* scanCount: 20001 */\nLEFT OUTER JOIN \"activity\" \"a\"\n    /* SELECT\n        o.customer_id,\n        DATE_TRUNC(MONTH, o.ordered_at) AS m\n    FROM public.orders o\n        /* public.CONSTRAINT_INDEX_C3: customer_id IS NOT DISTINCT FROM ?1 */\n        /* scanCount: 12 */\n    WHERE (o.customer_id IS NOT DISTINCT FROM ?1)\n        AND (DATE_TRUNC(MONTH, o.ordered_at) >= ?2)\n    GROUP BY o.customer_id, DATE_TRUNC(MONTH, o.ordered_at): customer_id = c.customer_id\n        AND m > c.cohort\n     */\n    ON (\"a\".\"customer_id\" = \"c\".\"customer_id\")\n    AND (\"a\".\"m\" > \"c\".\"cohort\")\n    /* scanCount: 183618 */\nGROUP BY \"c\".\"cohort\"\nORDER BY 1"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 42.076,
+          "p50": 43.974,
+          "p90": 48.131,
+          "p95": 66.463,
+          "p99": 81.129,
+          "max": 84.795,
+          "mean": 47.624,
+          "stdev": 12.413,
+          "first_ms": 191.319
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"c\".\"id\",\n    \"c\".\"email\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.PRIMARY_KEY_6 */\nWHERE EXISTS(    SELECT\n        1\n    FROM \"public\".\"orders\" \"o\"\n        /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */\n    WHERE (\"o\".\"ordered_at\" >= TIMESTAMP '2025-11-01 00:00:00')\n        AND (\"o\".\"customer_id\" = \"c\".\"id\"))\n    AND (NOT EXISTS(    SELECT\n        1\n    FROM \"public\".\"events\" \"e\"\n        /* public.ix_events_customer_id: customer_id = c.id */\n    WHERE (\"e\".\"event_type\" = 'churn')\n        AND (\"e\".\"customer_id\" = \"c\".\"id\")))\nORDER BY 1\nFETCH FIRST 200 ROWS ONLY\n/* index sorted */",
+        "plan_analyze": "SELECT\n    \"c\".\"id\",\n    \"c\".\"email\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.PRIMARY_KEY_6 */\n    /* scanCount: 549 */\nWHERE EXISTS(    SELECT\n        1\n    FROM \"public\".\"orders\" \"o\"\n        /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */\n        /* scanCount: 2 */\n    WHERE (\"o\".\"ordered_at\" >= TIMESTAMP '2025-11-01 00:00:00')\n        AND (\"o\".\"customer_id\" = \"c\".\"id\"))\n    AND (NOT EXISTS(    SELECT\n        1\n    FROM \"public\".\"events\" \"e\"\n        /* public.ix_events_customer_id: customer_id = c.id */\n        /* scanCount: 46 */\n    WHERE (\"e\".\"event_type\" = 'churn')\n        AND (\"e\".\"customer_id\" = \"c\".\"id\")))\nORDER BY 1\nFETCH FIRST 200 ROWS ONLY\n/* index sorted */"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 46.736,
+          "p50": 49.158,
+          "p90": 54.028,
+          "p95": 72.174,
+          "p99": 86.691,
+          "max": 90.32,
+          "mean": 53.18,
+          "stdev": 12.409,
+          "first_ms": 101.39
+        },
+        "rows": 500,
+        "checksum": "6bc68625c58e84ac582dbee2",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"p\".\"id\",\n    \"p\".\"price\",\n    (SELECT\n        AVG(\"p2\".\"price\")\n    FROM \"public\".\"products\" \"p2\"\n        /* public.CONSTRAINT_INDEX_C: category_id = p.category_id */\n    WHERE \"p2\".\"category_id\" = \"p\".\"category_id\") AS \"cat_avg\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\nWHERE \"p\".\"active\" = TRUE\nORDER BY 1\nFETCH FIRST 500 ROWS ONLY\n/* index sorted */",
+        "plan_analyze": "SELECT\n    \"p\".\"id\",\n    \"p\".\"price\",\n    (SELECT\n        AVG(\"p2\".\"price\")\n    FROM \"public\".\"products\" \"p2\"\n        /* public.CONSTRAINT_INDEX_C: category_id = p.category_id */\n        /* scanCount: 15 */\n    WHERE \"p2\".\"category_id\" = \"p\".\"category_id\") AS \"cat_avg\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 593 */\nWHERE \"p\".\"active\" = TRUE\nORDER BY 1\nFETCH FIRST 500 ROWS ONLY\n/* index sorted */"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 48.153,
+          "p50": 51.257,
+          "p90": 56.019,
+          "p95": 74.54,
+          "p99": 89.356,
+          "max": 93.06,
+          "mean": 55.201,
+          "stdev": 12.659,
+          "first_ms": 56.748
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"customer_id\",\n    \"id\" AS \"order_id\",\n    \"ordered_at\",\n    \"total_amount\"\nFROM (\n    SELECT\n        \"customer_id\",\n        \"id\",\n        \"ordered_at\",\n        \"total_amount\",\n        ROW_NUMBER() OVER (PARTITION BY \"customer_id\" ORDER BY \"ordered_at\" DESC, \"id\" DESC) AS \"rn\"\n    FROM \"public\".\"orders\"\n    WHERE \"customer_id\" <= 100\n) \"t\"\n    /* SELECT\n        customer_id,\n        id,\n        ordered_at,\n        total_amount,\n        ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn\n    FROM public.orders\n        /* public.CONSTRAINT_INDEX_C3: customer_id <= 100 */\n    WHERE customer_id <= 100\n    QUALIFY ?1 IS NOT DISTINCT FROM ?1: rn <= CAST(3 AS BIGINT)\n     */\nWHERE \"rn\" <= CAST(3 AS BIGINT)\nORDER BY 1, 3 DESC",
+        "plan_analyze": "SELECT\n    \"customer_id\",\n    \"id\" AS \"order_id\",\n    \"ordered_at\",\n    \"total_amount\"\nFROM (\n    SELECT\n        \"customer_id\",\n        \"id\",\n        \"ordered_at\",\n        \"total_amount\",\n        ROW_NUMBER() OVER (PARTITION BY \"customer_id\" ORDER BY \"ordered_at\" DESC, \"id\" DESC) AS \"rn\"\n    FROM \"public\".\"orders\"\n    WHERE \"customer_id\" <= 100\n) \"t\"\n    /* SELECT\n        customer_id,\n        id,\n        ordered_at,\n        total_amount,\n        ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn\n    FROM public.orders\n        /* public.CONSTRAINT_INDEX_C3: customer_id <= 100 */\n        /* scanCount: 999 */\n    WHERE customer_id <= 100\n    QUALIFY ?1 IS NOT DISTINCT FROM ?1: rn <= CAST(3 AS BIGINT)\n     */\n    /* scanCount: 301 */\nWHERE \"rn\" <= CAST(3 AS BIGINT)\nORDER BY 1, 3 DESC"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "SyntaxErrorOrAccessRuleViolation: Syntax error in SQL statement \"SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING [*]SETS ((shipping_country, sta",
+        "error_code": null
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE description LIKE '%bluetooth%' AND description LIKE '%waterproof%' ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 42.97,
+          "p50": 43.461,
+          "p90": 54.47,
+          "p95": 70.215,
+          "p99": 82.811,
+          "max": 85.96,
+          "mean": 48.466,
+          "stdev": 12.709,
+          "first_ms": 50.681
+        },
+        "rows": 50,
+        "checksum": "13c3c7dd358069b0c82817de",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"id\",\n    \"name\"\nFROM \"public\".\"products\"\n    /* public.PRIMARY_KEY_C */\nWHERE (\"description\" LIKE '%bluetooth%')\n    AND (\"description\" LIKE '%waterproof%')\nORDER BY 1\nFETCH FIRST 50 ROWS ONLY\n/* index sorted */",
+        "plan_analyze": "SELECT\n    \"id\",\n    \"name\"\nFROM \"public\".\"products\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 808 */\nWHERE (\"description\" LIKE '%bluetooth%')\n    AND (\"description\" LIKE '%waterproof%')\nORDER BY 1\nFETCH FIRST 50 ROWS ONLY\n/* index sorted */"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory (product_id, warehouse_id, qty, updated_at) KEY (product_id, warehouse_id) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 40.878,
+          "p50": 41.035,
+          "p90": 42.005,
+          "p95": 42.083,
+          "p99": 71.144,
+          "max": 83.013,
+          "mean": 42.632,
+          "stdev": 7.51,
+          "first_ms": 44.898
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INTEGER) AS product_id, CAST(? AS INTEGER) AS warehouse_id, CAST(? AS INTEGER) AS qty ) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT_TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT_TIMESTAMP)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 40.861,
+          "p50": 41.017,
+          "p90": 42.138,
+          "p95": 43.012,
+          "p99": 72.137,
+          "max": 84.027,
+          "mean": 42.691,
+          "stdev": 7.697,
+          "first_ms": 43.87
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 41.125,
+          "p50": 41.987,
+          "p90": 46.173,
+          "p95": 64.6,
+          "p99": 79.342,
+          "max": 83.027,
+          "mean": 45.954,
+          "stdev": 12.361,
+          "first_ms": 1446.89
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\nORDER BY 3, 1\nOFFSET 100000 ROWS\nFETCH NEXT 50 ROWS ONLY",
+        "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nORDER BY 3, 1\nOFFSET 100000 ROWS\nFETCH NEXT 50 ROWS ONLY\n/*\nreads: 5021\n*/"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 41.439,
+          "p50": 42.029,
+          "p90": 47.099,
+          "p95": 65.536,
+          "p99": 80.285,
+          "max": 83.972,
+          "mean": 46.242,
+          "stdev": 12.582,
+          "first_ms": 337.845
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\nWHERE (\"ordered_at\" > TIMESTAMP '2025-01-01 00:00:00')\n    OR ((\"ordered_at\" = TIMESTAMP '2025-01-01 00:00:00')\n    AND (\"id\" > 0))\nORDER BY 3, 1\nFETCH FIRST 50 ROWS ONLY",
+        "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nWHERE (\"ordered_at\" > TIMESTAMP '2025-01-01 00:00:00')\n    OR ((\"ordered_at\" = TIMESTAMP '2025-01-01 00:00:00')\n    AND (\"id\" > 0))\nORDER BY 3, 1\nFETCH FIRST 50 ROWS ONLY"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.847,
+          "p50": 41.068,
+          "p90": 45.959,
+          "p95": 64.01,
+          "p99": 78.451,
+          "max": 82.061,
+          "mean": 45.214,
+          "stdev": 12.286,
+          "first_ms": 1303.413
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    COUNT(DISTINCT \"customer_id\") AS \"uniq\"\nFROM \"public\".\"events\"\n    /* public.events.tableScan */\nWHERE \"occurred_at\" >= TIMESTAMP '2025-01-01 00:00:00'\nGROUP BY ()",
+        "plan_analyze": "SELECT\n    COUNT(DISTINCT \"customer_id\") AS \"uniq\"\nFROM \"public\".\"events\"\n    /* public.events.tableScan */\n    /* scanCount: 1000001 */\nWHERE \"occurred_at\" >= TIMESTAMP '2025-01-01 00:00:00'\nGROUP BY ()\n/*\nreads: 108903\n*/"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.918,
+          "p50": 41.012,
+          "p90": 45.917,
+          "p95": 63.975,
+          "p99": 78.422,
+          "max": 82.034,
+          "mean": 45.187,
+          "stdev": 12.285,
+          "first_ms": 224.848
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"p\".\"id\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\nLEFT OUTER JOIN \"public\".\"order_items\" \"oi\"\n    /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n    ON \"oi\".\"product_id\" = \"p\".\"id\"\nWHERE \"oi\".\"id\" IS NULL\nORDER BY 1\n/* index sorted */",
+        "plan_analyze": "SELECT\n    \"p\".\"id\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 5001 */\nLEFT OUTER JOIN \"public\".\"order_items\" \"oi\"\n    /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n    ON \"oi\".\"product_id\" = \"p\".\"id\"\n    /* scanCount: 492606 */\nWHERE \"oi\".\"id\" IS NULL\nORDER BY 1\n/* index sorted */\n/*\nreads: 27639\n*/"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.913,
+          "p50": 41.01,
+          "p90": 46.072,
+          "p95": 64.098,
+          "p99": 78.519,
+          "max": 82.125,
+          "mean": 45.215,
+          "stdev": 12.308,
+          "first_ms": 73.834
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"p\".\"id\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\nWHERE NOT EXISTS(    SELECT\n        1\n    FROM \"public\".\"order_items\" \"oi\"\n        /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n    WHERE \"oi\".\"product_id\" = \"p\".\"id\")\nORDER BY 1\n/* index sorted */",
+        "plan_analyze": "SELECT\n    \"p\".\"id\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 5001 */\nWHERE NOT EXISTS(    SELECT\n        1\n    FROM \"public\".\"order_items\" \"oi\"\n        /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n        /* scanCount: 1 */\n    WHERE \"oi\".\"product_id\" = \"p\".\"id\")\nORDER BY 1\n/* index sorted */"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR DATEDIFF('SECOND', prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 891.975,
+          "p50": 1073.337,
+          "p90": 1356.888,
+          "p95": 1386.766,
+          "p99": 1410.669,
+          "max": 1416.644,
+          "mean": 1122.725,
+          "stdev": 191.304,
+          "first_ms": 1300.833
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"customer_id\",\n    COUNT(*) AS \"sessions\"\nFROM (\n    SELECT\n        \"customer_id\",\n        \"occurred_at\",\n        \"prev_at\",\n        CASE WHEN (\"prev_at\" IS NULL)\n            OR (DATEDIFF(SECOND, \"prev_at\", \"occurred_at\") > 1800) THEN 1 ELSE 0 END AS \"new_session\"\n    FROM (\n        SELECT\n            \"customer_id\",\n            \"occurred_at\",\n            LAG(\"occurred_at\") OVER (PARTITION BY \"customer_id\" ORDER BY \"occurred_at\", \"id\") AS \"prev_at\"\n        FROM \"public\".\"events\"\n        WHERE \"customer_id\" <= 2000\n    ) \"w\"\n) \"s\"\n    /* SELECT\n        customer_id,\n        occurred_at,\n        prev_at,\n        CASE WHEN (prev_at IS NULL)\n            OR (DATEDIFF(SECOND, prev_at, occurred_at) > 1800) THEN 1 ELSE 0 END AS new_session\n    FROM (\n        SELECT\n            \"customer_id\",\n            \"occurred_at\",\n            LAG(\"occurred_at\") OVER (PARTITION BY \"customer_id\" ORDER BY \"occurred_at\", \"id\") AS \"prev_at\"\n        FROM \"public\".\"events\"\n        WHERE \"customer_id\" <= 2000\n    ) w\n        /* SELECT\n            customer_id,\n            occurred_at,\n            LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at\n        FROM public.events\n            /* public.ix_events_customer_id: customer_id <= 2000 */\n        WHERE customer_id <= 2000\n         */\n    WHERE CASE WHEN (prev_at IS NULL)\n        OR (DATEDIFF(SECOND, prev_at, occurred_at) > 1800) THEN 1 ELSE 0 END IS NOT DISTINCT FROM ?1: new_session = 1\n     */\nWHERE \"new_session\" = 1\nGROUP BY \"customer_id\"\nORDER BY 1",
+        "plan_analyze": "SELECT\n    \"customer_id\",\n    COUNT(*) AS \"sessions\"\nFROM (\n    SELECT\n        \"customer_id\",\n        \"occurred_at\",\n        \"prev_at\",\n        CASE WHEN (\"prev_at\" IS NULL)\n            OR (DATEDIFF(SECOND, \"prev_at\", \"occurred_at\") > 1800) THEN 1 ELSE 0 END AS \"new_session\"\n    FROM (\n        SELECT\n            \"customer_id\",\n            \"occurred_at\",\n            LAG(\"occurred_at\") OVER (PARTITION BY \"customer_id\" ORDER BY \"occurred_at\", \"id\") AS \"prev_at\"\n        FROM \"public\".\"events\"\n        WHERE \"customer_id\" <= 2000\n    ) \"w\"\n) \"s\"\n    /* SELECT\n        customer_id,\n        occurred_at,\n        prev_at,\n        CASE WHEN (prev_at IS NULL)\n            OR (DATEDIFF(SECOND, prev_at, occurred_at) > 1800) THEN 1 ELSE 0 END AS new_session\n    FROM (\n        SELECT\n            \"customer_id\",\n            \"occurred_at\",\n            LAG(\"occurred_at\") OVER (PARTITION BY \"customer_id\" ORDER BY \"occurred_at\", \"id\") AS \"prev_at\"\n        FROM \"public\".\"events\"\n        WHERE \"customer_id\" <= 2000\n    ) w\n        /* SELECT\n            customer_id,\n            occurred_at,\n            LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at\n        FROM public.events\n            /* public.ix_events_customer_id: customer_id <= 2000 */\n            /* scanCount: 99905 */\n        WHERE customer_id <= 2000\n         */\n        /* scanCount: 99905 */\n    WHERE CASE WHEN (prev_at IS NULL)\n        OR (DATEDIFF(SECOND, prev_at, occurred_at) > 1800) THEN 1 ELSE 0 END IS NOT DISTINCT FROM ?1: new_session = 1\n     */\n    /* scanCount: 99766 */\nWHERE \"new_session\" = 1\nGROUP BY \"customer_id\"\nORDER BY 1\n/*\nreads: 49291\n*/"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_amount) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.898,
+          "p50": 41.021,
+          "p90": 46.15,
+          "p95": 64.587,
+          "p99": 79.337,
+          "max": 83.024,
+          "mean": 45.489,
+          "stdev": 12.52,
+          "first_ms": 514.418
+        },
+        "rows": 13,
+        "checksum": "aed577b8503f2718cc990366",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"shipping_country\",\n    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY \"total_amount\") AS \"median\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\nGROUP BY \"shipping_country\"\nORDER BY 1",
+        "plan_analyze": "SELECT\n    \"shipping_country\",\n    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY \"total_amount\") AS \"median\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nGROUP BY \"shipping_country\"\nORDER BY 1"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, LISTAGG(p.sku, ',') WITHIN GROUP (ORDER BY p.sku) AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 44.01,
+          "p50": 47.034,
+          "p90": 52.929,
+          "p95": 71.416,
+          "p99": 86.207,
+          "max": 89.904,
+          "mean": 50.892,
+          "stdev": 13.097,
+          "first_ms": 66.16
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"o\".\"id\",\n    LISTAGG(\"p\".\"sku\", ',') WITHIN GROUP (ORDER BY \"p\".\"sku\") AS \"skus\"\nFROM \"public\".\"orders\" \"o\"\n    /* public.PRIMARY_KEY_C3: id <= 500 */\n    /* WHERE o.id <= 500\n    */\nINNER JOIN \"public\".\"order_items\" \"oi\"\n    /* public.CONSTRAINT_INDEX_7: order_id = o.id */\n    ON 1=1\n    /* WHERE oi.order_id = o.id\n    */\nINNER JOIN \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C: id = oi.product_id */\n    ON 1=1\nWHERE (\"o\".\"id\" <= 500)\n    AND (\"p\".\"id\" = \"oi\".\"product_id\")\n    AND (\"oi\".\"order_id\" = \"o\".\"id\")\nGROUP BY \"o\".\"id\"\nORDER BY 1\n/* group sorted */",
+        "plan_analyze": "SELECT\n    \"o\".\"id\",\n    LISTAGG(\"p\".\"sku\", ',') WITHIN GROUP (ORDER BY \"p\".\"sku\") AS \"skus\"\nFROM \"public\".\"orders\" \"o\"\n    /* public.PRIMARY_KEY_C3: id <= 500 */\n    /* WHERE o.id <= 500\n    */\n    /* scanCount: 501 */\nINNER JOIN \"public\".\"order_items\" \"oi\"\n    /* public.CONSTRAINT_INDEX_7: order_id = o.id */\n    ON 1=1\n    /* WHERE oi.order_id = o.id\n    */\n    /* scanCount: 1709 */\nINNER JOIN \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C: id = oi.product_id */\n    ON 1=1\n    /* scanCount: 2418 */\nWHERE (\"o\".\"id\" <= 500)\n    AND (\"p\".\"id\" = \"oi\".\"product_id\")\n    AND (\"oi\".\"order_id\" = \"o\".\"id\")\nGROUP BY \"o\".\"id\"\nORDER BY 1\n/* group sorted */"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.775,
+          "p50": 41.03,
+          "p90": 45.195,
+          "p95": 63.615,
+          "p99": 78.351,
+          "max": 82.035,
+          "mean": 45.091,
+          "stdev": 12.315,
+          "first_ms": 568.89
+        },
+        "rows": 13,
+        "checksum": "aead62a734254ac91c59d5af",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"c\".\"country_code\",\n    SUM(CASE WHEN \"o\".\"status\" = 'delivered' THEN 1 ELSE 0 END) AS \"delivered\",\n    SUM(CASE WHEN \"o\".\"status\" = 'cancelled' THEN 1 ELSE 0 END) AS \"cancelled\",\n    SUM(CASE WHEN \"o\".\"status\" = 'returned' THEN 1 ELSE 0 END) AS \"returned\",\n    AVG(\"o\".\"total_amount\") AS \"avg_amount\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.customers.tableScan */\nINNER JOIN \"public\".\"orders\" \"o\"\n    /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */\n    ON 1=1\nWHERE \"c\".\"id\" = \"o\".\"customer_id\"\nGROUP BY \"c\".\"country_code\"\nORDER BY 1",
+        "plan_analyze": "SELECT\n    \"c\".\"country_code\",\n    SUM(CASE WHEN \"o\".\"status\" = 'delivered' THEN 1 ELSE 0 END) AS \"delivered\",\n    SUM(CASE WHEN \"o\".\"status\" = 'cancelled' THEN 1 ELSE 0 END) AS \"cancelled\",\n    SUM(CASE WHEN \"o\".\"status\" = 'returned' THEN 1 ELSE 0 END) AS \"returned\",\n    AVG(\"o\".\"total_amount\") AS \"avg_amount\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.customers.tableScan */\n    /* scanCount: 20001 */\nINNER JOIN \"public\".\"orders\" \"o\"\n    /* public.CONSTRAINT_INDEX_C3: customer_id = c.id */\n    ON 1=1\n    /* scanCount: 220000 */\nWHERE \"c\".\"id\" = \"o\".\"customer_id\"\nGROUP BY \"c\".\"country_code\"\nORDER BY 1"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 43.422,
+          "p50": 56.705,
+          "p90": 59.965,
+          "p95": 62.508,
+          "p99": 93.033,
+          "max": 100.665,
+          "mean": 56.021,
+          "stdev": 11.531,
+          "first_ms": 42.024
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"id\"\nFROM \"public\".\"orders\"\n    /* public.PRIMARY_KEY_C3 */\nWHERE (\"customer_id\" = ?1)\n    OR (\"id\" = ?2)\nORDER BY 1\n/* index sorted */",
+        "plan_analyze": "SELECT\n    \"id\"\nFROM \"public\".\"orders\"\n    /* public.PRIMARY_KEY_C3 */\n    /* scanCount: 200001 */\nWHERE (\"customer_id\" = ?1)\n    OR (\"id\" = ?2)\nORDER BY 1\n/* index sorted */"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 44.402,
+          "p50": 47.895,
+          "p90": 52.168,
+          "p95": 70.651,
+          "p99": 85.438,
+          "max": 89.135,
+          "mean": 51.179,
+          "stdev": 12.73,
+          "first_ms": 48.546
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    \"id\",\n    \"total_amount\"\nFROM \"public\".\"orders\"\n    /* public.PRIMARY_KEY_C3: id IN(47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) */\nWHERE \"id\" IN(47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955",
+        "plan_analyze": "SELECT\n    \"id\",\n    \"total_amount\"\nFROM \"public\".\"orders\"\n    /* public.PRIMARY_KEY_C3: id IN(47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) */\n    /* scanCount: 501 */\nWHERE \"id\" IN(47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 11819"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 40.876,
+          "p50": 41.111,
+          "p90": 46.64,
+          "p95": 64.339,
+          "p99": 78.498,
+          "max": 82.038,
+          "mean": 45.382,
+          "stdev": 12.231,
+          "first_ms": 142.964
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan": "SELECT\n    COUNT(*)\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\nWHERE (EXTRACT(YEAR FROM \"ordered_at\") = 2025)\n    AND (EXTRACT(MONTH FROM \"ordered_at\") = 5)",
+        "plan_analyze": "SELECT\n    COUNT(*)\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nWHERE (EXTRACT(YEAR FROM \"ordered_at\") = 2025)\n    AND (EXTRACT(MONTH FROM \"ordered_at\") = 5)"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 40.824,
+          "p50": 40.998,
+          "p90": 42.018,
+          "p95": 42.075,
+          "p99": 70.436,
+          "max": 82.018,
+          "mean": 42.496,
+          "stdev": 7.348,
+          "first_ms": 41.155
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 40.85,
+          "p50": 41.016,
+          "p90": 42.024,
+          "p95": 42.044,
+          "p99": 70.443,
+          "max": 82.043,
+          "mean": 42.498,
+          "stdev": 7.352,
+          "first_ms": 42.222
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 245.886,
+          "p50": 246.455,
+          "p90": 247.243,
+          "p95": 269.914,
+          "p99": 317.869,
+          "max": 330.09,
+          "mean": 250.658,
+          "stdev": 16.529,
+          "first_ms": 249.932
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 77.1
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.505,
+            "p95_ms": 63.98,
+            "rows": 1,
+            "plan_analyze": "SELECT\n    COUNT(*) AS \"n\",\n    SUM(\"value_num\") AS \"total\"\nFROM \"public\".\"events\"\n    /* public.events.tableScan */\n    /* scanCount: 1020001 */\nWHERE (\"occurred_at\" < TIMESTAMP '2025-07-01 00:00:00')\n    AND (\"event_type\" = 'checkout')\n    AND (\"occurred_at\" >= TIMESTAMP '2025-06-01 00:00:00')\nGROUP BY ()\n/*\nreads: 86657\n*/"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.004,
+            "p95_ms": 41.098,
+            "rows": 1,
+            "plan_analyze": "SELECT\n    COUNT(*) AS \"n\",\n    SUM(\"value_num\") AS \"total\"\nFROM \"public\".\"events\"\n    /* public.ix_ev_ts_type: occurred_at < TIMESTAMP '2025-07-01 00:00:00'\n        AND event_type = 'checkout'\n        AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00'\n     */\n    /* scanCount: 40942 */\nWHERE (\"occurred_at\" < TIMESTAMP '2025-07-01 00:00:00')\n    AND (\"event_type\" = 'checkout')\n    AND (\"occurred_at\" >= TIMESTAMP '2025-06-01 00:00:00')\nGROUP BY ()"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.045,
+            "p95_ms": 41.902,
+            "rows": 1,
+            "plan_analyze": "SELECT\n    COUNT(*) AS \"n\",\n    SUM(\"value_num\") AS \"total\"\nFROM \"public\".\"events\"\n    /* public.ix_ev_type_ts: occurred_at < TIMESTAMP '2025-07-01 00:00:00'\n        AND event_type = 'checkout'\n        AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00'\n     */\n    /* scanCount: 3146 */\nWHERE (\"occurred_at\" < TIMESTAMP '2025-07-01 00:00:00')\n    AND (\"event_type\" = 'checkout')\n    AND (\"occurred_at\" >= TIMESTAMP '2025-06-01 00:00:00')\nGROUP BY ()\n/*\nreads: 289\n*/"
+          }
+        ],
+        "best_variant": "index_(occurred_at,event_type)",
+        "speedup_vs_first": 1.01
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 76.001,
+            "p95_ms": 100.768,
+            "rows": 2430,
+            "plan_analyze": "SELECT\n    \"order_id\",\n    \"product_id\",\n    \"qty\"\nFROM \"public\".\"order_items\"\n    /* public.CONSTRAINT_INDEX_7: order_id >= ?1\n        AND order_id < ?2\n     */\n    /* scanCount: 2463 */\nWHERE (\"order_id\" >= ?1)\n    AND (\"order_id\" < ?2)\nORDER BY 1, 2\n/* index sorted: 1 of 2 columns */"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "h2: INCLUDE not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.021,
+            "p95_ms": 64.056,
+            "rows": 1,
+            "plan_analyze": "SELECT\n    COUNT(*)\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nWHERE (EXTRACT(YEAR FROM \"ordered_at\") = 2025)\n    AND (EXTRACT(MONTH FROM \"ordered_at\") = 5)\n/*\nreads: 23395\n*/"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.028,
+            "p95_ms": 63.515,
+            "rows": 1,
+            "plan_analyze": "SELECT\n    COUNT(*)\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nWHERE (\"ordered_at\" >= TIMESTAMP '2025-05-01 00:00:00')\n    AND (\"ordered_at\" < TIMESTAMP '2025-06-01 00:00:00')\n/*\nreads: 25890\n*/"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 40.997,
+            "p95_ms": 41.068,
+            "rows": 1,
+            "plan_analyze": "SELECT\n    COUNT(*)\nFROM \"public\".\"orders\"\n    /* public.ix_orders_ordered_at: ordered_at >= TIMESTAMP '2025-05-01 00:00:00'\n        AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'\n     */\n    /* scanCount: 8291 */\nWHERE (\"ordered_at\" >= TIMESTAMP '2025-05-01 00:00:00')\n    AND (\"ordered_at\" < TIMESTAMP '2025-06-01 00:00:00')"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 40.981,
+            "p95_ms": 41.6,
+            "rows": 1,
+            "plan_analyze": "SELECT\n    COUNT(*)\nFROM \"public\".\"orders\"\n    /* public.ix_orders_ordered_at */\n    /* scanCount: 200001 */\nWHERE (EXTRACT(YEAR FROM \"ordered_at\") = 2025)\n    AND (EXTRACT(MONTH FROM \"ordered_at\") = 5)"
+          }
+        ],
+        "best_variant": "nonsargable_with_index",
+        "speedup_vs_first": 1.0
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 42.06,
+            "p95_ms": 64.568,
+            "rows": 50,
+            "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nORDER BY 3, 1\nOFFSET 100000 ROWS\nFETCH NEXT 50 ROWS ONLY"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 42.023,
+            "p95_ms": 65.021,
+            "rows": 50,
+            "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nWHERE (\"ordered_at\" > TIMESTAMP '2025-01-01 00:00:00')\n    OR ((\"ordered_at\" = TIMESTAMP '2025-01-01 00:00:00')\n    AND (\"id\" > 0))\nORDER BY 3, 1\nFETCH FIRST 50 ROWS ONLY"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.99,
+            "p95_ms": 42.599,
+            "rows": 50,
+            "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.ix_orders_ts_id */\n    /* scanCount: 100050 */\nORDER BY 3, 1\nOFFSET 100000 ROWS\nFETCH NEXT 50 ROWS ONLY\n/* index sorted */"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.983,
+            "p95_ms": 42.072,
+            "rows": 50,
+            "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.ix_orders_ts_id */\n    /* scanCount: 100094 */\nWHERE (\"ordered_at\" > TIMESTAMP '2025-01-01 00:00:00')\n    OR ((\"ordered_at\" = TIMESTAMP '2025-01-01 00:00:00')\n    AND (\"id\" > 0))\nORDER BY 3, 1\nFETCH FIRST 50 ROWS ONLY\n/* index sorted */"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 42.013,
+            "p95_ms": 65.236,
+            "rows": 50,
+            "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\",\n    \"ordered_at\"\nFROM \"public\".\"orders\"\n    /* public.ix_orders_ts_id: ordered_at >= TIMESTAMP '2025-01-01 00:00:00' */\n    /* scanCount: 50 */\nWHERE ROW (\"ordered_at\", \"id\") > ROW (TIMESTAMP '2025-01-01 00:00:00', 0)\nORDER BY 3, 1\nFETCH FIRST 50 ROWS ONLY\n/* index sorted */\n/*\nreads: 244\n*/"
+          }
+        ],
+        "best_variant": "keyset_with_index",
+        "speedup_vs_first": 1.0
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 48.976,
+            "p95_ms": 72.318,
+            "rows": 500,
+            "plan_analyze": "SELECT\n    \"p\".\"id\",\n    \"p\".\"price\",\n    (SELECT\n        AVG(\"p2\".\"price\")\n    FROM \"public\".\"products\" \"p2\"\n        /* public.CONSTRAINT_INDEX_C: category_id = p.category_id */\n        /* scanCount: 15 */\n    WHERE \"p2\".\"category_id\" = \"p\".\"category_id\") AS \"cat_avg\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 593 */\nWHERE \"p\".\"active\" = TRUE\nORDER BY 1\nFETCH FIRST 500 ROWS ONLY\n/* index sorted */\n/*\nreads: 3724\n*/"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 48.978,
+            "p95_ms": 71.666,
+            "rows": 500,
+            "plan_analyze": "SELECT\n    \"p\".\"id\",\n    \"p\".\"price\",\n    \"a\".\"cat_avg\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* WHERE p.active = TRUE\n    */\n    /* scanCount: 593 */\nINNER JOIN (\n    SELECT\n        \"category_id\",\n        AVG(\"price\") AS \"cat_avg\"\n    FROM \"public\".\"products\"\n    GROUP BY \"category_id\"\n) \"a\"\n    /* SELECT\n        category_id,\n        AVG(price) AS cat_avg\n    FROM public.products\n        /* public.CONSTRAINT_INDEX_C: category_id IS NOT DISTINCT FROM ?1 */\n        /* scanCount: 15 */\n    WHERE category_id IS NOT DISTINCT FROM ?1\n    GROUP BY category_id\n    /* group sorted */: category_id = p.category_id\n     */\n    ON 1=1\n    /* scanCount: 999 */\nWHERE (\"p\".\"active\" = TRUE)\n    AND (\"a\".\"category_id\" = \"p\".\"category_id\")\nORDER BY 1\nFETCH FIRST 500 ROWS ONLY\n/* index sorted */"
+          }
+        ],
+        "best_variant": "correlated_subquery",
+        "speedup_vs_first": 1.0
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.012,
+            "p95_ms": 63.685,
+            "rows": 0,
+            "plan_analyze": "SELECT\n    \"p\".\"id\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 5001 */\nLEFT OUTER JOIN \"public\".\"order_items\" \"oi\"\n    /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n    ON \"oi\".\"product_id\" = \"p\".\"id\"\n    /* scanCount: 492606 */\nWHERE \"oi\".\"id\" IS NULL\nORDER BY 1\n/* index sorted */\n/*\nreads: 26478\n*/"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.046,
+            "p95_ms": 64.067,
+            "rows": 0,
+            "plan_analyze": "SELECT\n    \"p\".\"id\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 5001 */\nWHERE NOT EXISTS(    SELECT\n        1\n    FROM \"public\".\"order_items\" \"oi\"\n        /* public.CONSTRAINT_INDEX_75: product_id = p.id */\n        /* scanCount: 1 */\n    WHERE \"oi\".\"product_id\" = \"p\".\"id\")\nORDER BY 1\n/* index sorted */"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.044,
+            "p95_ms": 63.992,
+            "rows": 0,
+            "plan_analyze": "SELECT\n    \"p\".\"id\"\nFROM \"public\".\"products\" \"p\"\n    /* public.PRIMARY_KEY_C */\n    /* scanCount: 5001 */\nWHERE \"p\".\"id\" NOT IN(    SELECT DISTINCT\n        \"oi\".\"product_id\"\n    FROM \"public\".\"order_items\" \"oi\"\n        /* public.CONSTRAINT_INDEX_75 */\n        /* scanCount: 487607 */)\nORDER BY 1\n/* index sorted */"
+          }
+        ],
+        "best_variant": "left_join_is_null",
+        "speedup_vs_first": 1.0
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 50.045,
+            "p95_ms": 75.912,
+            "rows": 13,
+            "plan_analyze": "SELECT\n    \"id\"\nFROM \"public\".\"orders\"\n    /* public.PRIMARY_KEY_C3 */\n    /* scanCount: 200001 */\nWHERE (\"customer_id\" = ?1)\n    OR (\"id\" = ?2)\nORDER BY 1\n/* index sorted */"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 41.933,
+            "p95_ms": 64.546,
+            "rows": 13,
+            "plan_analyze": "SELECT\n    \"id\"\nFROM (\n    (SELECT\n        \"id\"\n    FROM \"public\".\"orders\"\n    WHERE \"customer_id\" = ?1)\n    UNION\n    (SELECT\n        \"id\"\n    FROM \"public\".\"orders\"\n    WHERE \"id\" = ?2)\n) \"u\"\n    /* (SELECT DISTINCT\n        id\n    FROM public.orders\n        /* public.CONSTRAINT_INDEX_C3: customer_id = ?1 */\n        /* scanCount: 12 */\n    WHERE customer_id = ?1)\n    UNION\n    (SELECT DISTINCT\n        id\n    FROM public.orders\n        /* public.PRIMARY_KEY_C3: id = ?2 */\n        /* scanCount: 2 */\n    WHERE id = ?2)\n     */\n    /* scanCount: 13 */\nORDER BY 1"
+          }
+        ],
+        "best_variant": "union_rewrite",
+        "speedup_vs_first": 1.19
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 48.976,
+            "p95_ms": 72.196,
+            "rows": 644,
+            "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\"\nFROM \"public\".\"orders\"\n    /* public.orders.tableScan */\n    /* scanCount: 200001 */\nWHERE (\"ordered_at\" < TIMESTAMP '2025-10-01 00:00:00')\n    AND (\"status\" = 'pending')\n    AND (\"ordered_at\" >= TIMESTAMP '2025-09-01 00:00:00')\nORDER BY \"ordered_at\", 1"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "ANALYZE TABLE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 48.931,
+            "p95_ms": 49.819,
+            "rows": 644,
+            "plan_analyze": "SELECT\n    \"id\",\n    \"customer_id\"\nFROM \"public\".\"orders\"\n    /* public.ix_orders_status_ts: ordered_at < TIMESTAMP '2025-10-01 00:00:00'\n        AND status = 'pending'\n        AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00'\n     */\n    /* scanCount: 645 */\nWHERE (\"ordered_at\" < TIMESTAMP '2025-10-01 00:00:00')\n    AND (\"status\" = 'pending')\n    AND (\"ordered_at\" >= TIMESTAMP '2025-09-01 00:00:00')\nORDER BY \"ordered_at\", 1"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "h2: partial indexes not supported"
+          }
+        ],
+        "best_variant": "full_index_(status,ordered_at)",
+        "speedup_vs_first": 1.0
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 40.98,
+            "p95_ms": 63.662,
+            "rows": 13,
+            "plan_analyze": "SELECT\n    \"c\".\"country_code\",\n    COUNT(*) AS \"n\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.customers.tableScan */\n    /* scanCount: 20001 */\nINNER JOIN \"public\".\"events\" \"e\"\n    /* public.ix_events_customer_id: customer_id = c.id */\n    ON 1=1\n    /* scanCount: 1040000 */\nWHERE (\"e\".\"event_type\" = 'bench_stats')\n    AND (\"c\".\"id\" = \"e\".\"customer_id\")\nGROUP BY \"c\".\"country_code\"\nORDER BY 1\n/*\nreads: 519542\n*/"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "ANALYZE TABLE events"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 40.974,
+            "p95_ms": 41.108,
+            "rows": 13,
+            "plan_analyze": "SELECT\n    \"c\".\"country_code\",\n    COUNT(*) AS \"n\"\nFROM \"public\".\"customers\" \"c\"\n    /* public.customers.tableScan */\n    /* scanCount: 20001 */\nINNER JOIN \"public\".\"events\" \"e\"\n    /* public.ix_events_customer_id: customer_id = c.id */\n    ON 1=1\n    /* scanCount: 1040000 */\nWHERE (\"e\".\"event_type\" = 'bench_stats')\n    AND (\"c\".\"id\" = \"e\".\"customer_id\")\nGROUP BY \"c\".\"country_code\"\nORDER BY 1\n/*\nreads: 523728\n*/"
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 1.0
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 123.283,
+            "rows_per_s": 24,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 0.397,
+            "rows_per_s": 7555,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.323,
+            "rows_per_s": 9301,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups (psycopg prepare=True)",
+        "what": "server-side prepared statements skip parse/plan per execution",
+        "variants": [
+          {
+            "name": "unprepared",
+            "p50_ms": 41.0676,
+            "p99_ms": 42.5323,
+            "n": 242,
+            "error": null
+          },
+          {
+            "name": "prepared",
+            "p50_ms": 41.0028,
+            "p99_ms": 42.0418,
+            "n": 244,
+            "error": null
+          },
+          {
+            "name": "unprepared_again",
+            "p50_ms": 41.0391,
+            "p99_ms": 42.1116,
+            "n": 243,
+            "error": null
+          }
+        ]
+      },
+      "_seconds": 225.0
+    },
+    "connections": {
+      "max_connections": null,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 604.010875,
+            "p50": 761.0139449999999,
+            "p90": 827.420169,
+            "p95": 841.1649747499999,
+            "p99": 884.6117371400001,
+            "max": 901.985705,
+            "mean": 745.9060865666667,
+            "stdev": 73.35029736851351
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 802.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 772.760297,
+              "p50": 773.9033684999999,
+              "p90": 776.9129732,
+              "p95": 777.6208061,
+              "p99": 778.1870724199999,
+              "max": 778.328639,
+              "mean": 774.7049185,
+              "stdev": 1.774888455163771
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 851.9,
+            "connect_ms": {
+              "n": 50,
+              "min": 786.646455,
+              "p50": 806.753796,
+              "p90": 816.3467885,
+              "p95": 817.7946379499999,
+              "p99": 821.73768312,
+              "max": 822.668052,
+              "mean": 805.4459489799999,
+              "stdev": 8.987413631710654
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 608.3,
+            "connect_ms": {
+              "n": 100,
+              "min": 522.593098,
+              "p50": 557.892363,
+              "p90": 576.3261648,
+              "p95": 583.42343035,
+              "p99": 590.14181106,
+              "max": 594.517617,
+              "mean": 556.16374689,
+              "stdev": 16.767522641105593
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 722.3,
+            "connect_ms": {
+              "n": 200,
+              "min": 542.271488,
+              "p50": 601.4043690000001,
+              "p90": 646.4222036,
+              "p95": 658.074209,
+              "p99": 663.80623295,
+              "max": 667.675942,
+              "mean": 603.141461985,
+              "stdev": 32.71117719304358
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 98,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 24,
+            "latency_ms": {
+              "n": 98,
+              "min": 2.872686,
+              "p50": 41.009443000000005,
+              "p90": 41.9415717,
+              "p95": 42.005027399999996,
+              "p99": 43.277119310000046,
+              "max": 82.994523,
+              "mean": 41.15602168367347,
+              "stdev": 5.7379449533060685
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 392,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 98,
+            "latency_ms": {
+              "n": 392,
+              "min": 2.696408,
+              "p50": 41.0104135,
+              "p90": 41.916159900000004,
+              "p95": 42.036377200000004,
+              "p99": 46.536078559999,
+              "max": 83.093943,
+              "mean": 41.17631346173469,
+              "stdev": 5.747866818574558
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 1559,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 390,
+            "latency_ms": {
+              "n": 1559,
+              "min": 3.09146,
+              "p50": 41.025433,
+              "p90": 41.999958400000004,
+              "p95": 42.0986057,
+              "p99": 59.82098290000279,
+              "max": 83.814359,
+              "mean": 41.25423161834509,
+              "stdev": 5.693471078752855
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 3110,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 778,
+            "latency_ms": {
+              "n": 3110,
+              "min": 4.164531,
+              "p50": 41.034474,
+              "p90": 42.0320427,
+              "p95": 42.153856,
+              "p99": 78.4010204799944,
+              "max": 83.633848,
+              "mean": 41.287423405466235,
+              "stdev": 5.598513952643761
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 6212,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 1553,
+            "latency_ms": {
+              "n": 6212,
+              "min": 2.020801,
+              "p50": 41.06657,
+              "p90": 42.0719,
+              "p95": 42.2214882,
+              "p99": 81.87092400000003,
+              "max": 85.912212,
+              "mean": 41.414644366548615,
+              "stdev": 5.596687976628711
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 801,
+        "qps": 192,
+        "checkout_wait_ms": {
+          "n": 801,
+          "min": 0.002629,
+          "p50": 0.006203,
+          "p90": 0.008353,
+          "p95": 0.009636,
+          "p99": 4071.259499,
+          "max": 4111.020743,
+          "mean": 121.34791088639201,
+          "stdev": 690.4504405316031
+        },
+        "exec_ms": {
+          "n": 801,
+          "min": 1.610236,
+          "p50": 41.028863,
+          "p90": 42.05733,
+          "p95": 42.367597,
+          "p99": 43.816707,
+          "max": 83.037925,
+          "mean": 41.342774431960045,
+          "stdev": 5.494674012694327
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "SerializationFailure: Deadlock detected. The current transaction was rolled back. Details: \"conflict_lab\"; SQL statement: UPDATE conflict_lab SET balance = balance - 10 WHERE id = 1 [40001-232] DETAIL: org.h2.jdbc.JdbcSQLTransactionRollbackException: Deadlock detected. The current transaction was ro",
+          "ms": 3.1,
+          "t2": {
+            "outcome": "committed",
+            "ms": 83.6
+          },
+          "final_balance": 90
+        },
+        "write_conflict_serializable": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "SerializationFailure: Deadlock detected. The current transaction was rolled back. Details: \"conflict_lab\"; SQL statement: UPDATE conflict_lab SET balance = balance - 10 WHERE id = 1 [40001-232] DETAIL: org.h2.jdbc.JdbcSQLTransactionRollbackException: Deadlock detected. The current transaction was ro",
+          "ms": 1.6,
+          "t2": {
+            "outcome": "committed",
+            "ms": 82.7
+          },
+          "final_balance": 90
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t2"
+          ],
+          "error_codes": {
+            "t2": "40001"
+          },
+          "detection_ms": 44.4,
+          "timeline_s": {
+            "t2": 0.044,
+            "t1": 0.345
+          }
+        }
+      },
+      "_seconds": 67.0
+    },
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-h2"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 784000,
+          "batches": 784,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 52267,
+          "batch_ms": {
+            "n": 784,
+            "min": 52.070156,
+            "p50": 71.480639,
+            "p90": 87.08459140000001,
+            "p95": 93.06542925,
+            "p99": 111.74362377999972,
+            "max": 156.343861,
+            "mean": 73.622881,
+            "stdev": 11.963315590605774
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-h2": {
+              "cpu_cores_avg": 1.874,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2837,
+              "mem_end_mb": 2836,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 2.097
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 792000,
+          "batches": 792,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 52800,
+          "batch_ms": {
+            "n": 792,
+            "min": 101.718355,
+            "p50": 295.96727350000003,
+            "p90": 400.95801099999994,
+            "p95": 434.38416384999994,
+            "p99": 500.9170773900001,
+            "max": 654.144108,
+            "mean": 301.1475732108586,
+            "stdev": 75.70845866080697
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-h2": {
+              "cpu_cores_avg": 2.484,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 3938,
+              "mem_end_mb": 3938,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.052
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 637000,
+          "batches": 637,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 42467,
+          "batch_ms": {
+            "n": 637,
+            "min": 416.86966,
+            "p50": 743.310083,
+            "p90": 982.3033378,
+            "p95": 1165.831937199997,
+            "p99": 1423.20826816,
+            "max": 1559.799714,
+            "mean": 772.9507834709576,
+            "stdev": 188.9196636090394
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-h2": {
+              "cpu_cores_avg": 2.568,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4792,
+              "mem_end_mb": 4792,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.198
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "mode": "values",
+        "workers": 16,
+        "rows_per_s": 52800
+      },
+      "_seconds": 198.0
+    },
+    "replication": {
+      "kind": "none",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "PostgreSQL 8.2.23 server protocol using H2 2.3.232 (2024-08-11)",
+          "status": {
+            "error": "Function \"pg_is_in_recovery\" not found; SQL statement:\nSELECT pg_is_in_recovery() [90022-232]\nDETAIL:  org.h2.jdbc.JdbcSQLSyntaxErrorException: Function \"pg_is_in_recovery\" not found; SQL statement:\nSELECT pg_is_in_recovery() [90022-232]"
+          }
+        }
+      },
+      "status": "single-node",
+      "_seconds": 7.4
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "backup_zip": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP TO 'lab.zip' + org.h2.tools.Restore",
+          "backup_seconds": 29.19,
+          "backup_bytes": 157449362,
+          "backup_mb": 150.2,
+          "restore_seconds": 7.68,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 3.05
+          },
+          "pitr": {},
+          "notes": "online zip of the .mv.db file taken by the server; the Restore tool unpacks it under a new database name",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.zip /data/lab_restore.mv.db /data/lab_restore.trace.db",
+              "rc": 0,
+              "seconds": 0.1,
+              "out": ""
+            },
+            {
+              "name": "BACKUP TO",
+              "cmd": "BACKUP TO '/backups/lab.zip'",
+              "rc": 0,
+              "seconds": 29.19,
+              "out": ""
+            },
+            {
+              "name": "org.h2.tools.Restore",
+              "cmd": "java -cp /opt/h2.jar org.h2.tools.Restore -file /backups/lab.zip -dir /data -db lab_restore",
+              "rc": 0,
+              "seconds": 7.68,
+              "out": ""
+            }
+          ],
+          "seconds": 40.2,
+          "description": "online zip of the database file restored under a new name"
+        },
+        "script": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "SCRIPT TO / RUNSCRIPT FROM",
+          "backup_seconds": 5.81,
+          "backup_bytes": 158583968,
+          "backup_mb": 151.2,
+          "restore_seconds": 19.57,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 4.33
+          },
+          "pitr": {},
+          "notes": "SQL script (DDL + INSERTs) replayed into a fresh database through the same connection type",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.sql /data/lab_script.mv.db /data/lab_script.trace.db",
+              "rc": 0,
+              "seconds": 0.13,
+              "out": ""
+            },
+            {
+              "name": "SCRIPT TO",
+              "cmd": "SCRIPT TO '/backups/lab.sql'",
+              "rc": 0,
+              "seconds": 5.79,
+              "out": ""
+            },
+            {
+              "name": "RUNSCRIPT FROM (new db)",
+              "cmd": "RUNSCRIPT FROM '/backups/lab.sql'",
+              "rc": 0,
+              "seconds": 19.57,
+              "out": ""
+            }
+          ],
+          "seconds": 29.9,
+          "description": "SQL script replayed into a new database"
+        }
+      },
+      "order": [
+        "backup_zip",
+        "script"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "a09b6ef969b801ce72f4c97a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "d4b190320472f02e5320b032"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "8404af509146dd29000a59f2"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 4.71,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "backup_zip",
+          "script"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 74.9
+    },
+    "logging": {
+      "sink": "INFORMATION_SCHEMA.QUERY_STATISTICS (SET QUERY_STATISTICS TRUE) + trace file (SET TRACE_LEVEL_FILE 2, t:<ms> per statement)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "trace_level_file": 1,
+        "query_statistics": true,
+        "info.VERSION": "2.3.232 (2024-08-11)",
+        "MODE": "PostgreSQL"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "INFORMATION_SCHEMA.QUERY_STATISTICS (SET QUERY_STATISTICS TRUE) + trace file (SET TRACE_LEVEL_FILE 2, t:<ms> per statement)",
+        "slow_query_ms": 282.7,
+        "slow_logged": true,
+        "seen_after_s": 0.04,
+        "sample": "count=1 max_ms=238.641908 avg_ms=238.641908 rows=1 sql=SELECT COUNT(*) AS rdlab_mk_82e2c73d68 FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer",
+        "duration_ms": 238.641908,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "trace file level 2 (every statement, DDL included)",
+        "setup": "SET TRACE_LEVEL_FILE 2",
+        "event_found": true,
+        "seen_after_s": 0.11,
+        "sample": "/*SQL */CREATE TABLE audit_rdlab_mk_a73a53a20b (id INTEGER);",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 196,
+          "p50_ms": 41.0149245,
+          "p99_ms": 50.009131399998374,
+          "errors": 0
+        },
+        "full_logging": "SET TRACE_LEVEL_FILE 2 (every statement with its time written to /data/lab.trace.db)",
+        "full": {
+          "qps": 196,
+          "p50_ms": 41.009968,
+          "p99_ms": 48.93962248999838,
+          "errors": 0
+        },
+        "log_bytes_written": 110461,
+        "bytes_per_statement": 140.9,
+        "overhead_pct": 0.0,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-h2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 202,
+          "docker_logs_lines": 3
+        }
+      },
+      "extra": {
+        "query_statistics_top5": [
+          {
+            "sql": "SELECT id, name, email FROM customers WHERE id = $1",
+            "calls": 1959,
+            "avg_ms": 0.1483263874425729
+          },
+          {
+            "sql": "SET DEFAULT_NULL_ORDERING HIGH",
+            "calls": 24,
+            "avg_ms": 0.04226120833333333
+          },
+          {
+            "sql": "set search_path = public, pg_catalog",
+            "calls": 24,
+            "avg_ms": 0.030113708333333336
+          },
+          {
+            "sql": "SET MODE PostgreSQL",
+            "calls": 24,
+            "avg_ms": 0.02820475
+          },
+          {
+            "sql": "SET TRACE_LEVEL_FILE 1",
+            "calls": 3,
+            "avg_ms": 0.012812
+          }
+        ]
+      },
+      "collected": [
+        "results/h2/logs/h2__data_lab.trace.db"
+      ],
+      "_seconds": 19.6
+    }
+  },
+  "server_version": "PostgreSQL 8.2.23 server protocol using H2 2.3.232 (2024-08-11)",
+  "finished": "2026-09-14T12:05:23+00:00",
+  "harness_log": "results/logs/h2/20260914-145935-029d2a.log"
+}

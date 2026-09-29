@@ -1,0 +1,12 @@
+SELECT
+    "id",
+    "customer_id",
+    "status",
+    "total_amount"
+FROM "public"."orders"
+    /* public.orders.tableScan */
+WHERE ("status" = 'delivered')
+    AND ("ordered_at" >= TIMESTAMP '2025-03-01 00:00:00')
+    AND ("ordered_at" < TIMESTAMP '2025-03-08 00:00:00')
+ORDER BY "ordered_at", 1
+FETCH FIRST 500 ROWS ONLY

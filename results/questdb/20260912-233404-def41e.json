@@ -1,0 +1,1352 @@
+{
+  "engine": "questdb",
+  "display": "QuestDB",
+  "category": "time-series",
+  "dialect": "questdb",
+  "driver": "questdb",
+  "image": "questdb/questdb:latest",
+  "run_id": "20260912-233404-def41e",
+  "started": "2026-09-12T20:34:04+00:00",
+  "scale": 1.0,
+  "notes": "Append-optimised time-series engine with a PostgreSQL wire endpoint. Tables with a designated timestamp are partitioned by month (WAL). No primary keys / foreign keys / UPDATE-heavy workloads; replication is an Enterprise feature.",
+  "phases": {
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 ",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.269,
+          "p50": 0.295,
+          "p90": 0.338,
+          "p95": 0.36,
+          "p99": 0.491,
+          "max": 0.544,
+          "mean": 0.308,
+          "stdev": 0.049,
+          "first_ms": 0.72
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "VirtualRecord\n  functions: [1]\n    long_sequence count: 1"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.378,
+          "p50": 0.444,
+          "p90": 0.549,
+          "p95": 0.62,
+          "p99": 0.684,
+          "max": 0.693,
+          "mean": 0.463,
+          "stdev": 0.075,
+          "first_ms": 1.54
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "Async JIT Filter workers: 27\n  filter: id=$0::short\n    PageFrame\n        Row forward scan\n        Frame forward scan on: customers"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= '2025-03-01T00:00:00' AND ordered_at < '2025-03-08T00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1.266,
+          "p50": 1.562,
+          "p90": 1.939,
+          "p95": 2.069,
+          "p99": 2.174,
+          "max": 2.2,
+          "mean": 1.626,
+          "stdev": 0.317,
+          "first_ms": 1.733
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan": "SelectedRecord\n    Encode sort light lo: 500 partiallySorted: true\n      keys: [ordered_at, id]\n        Async JIT Filter workers: 27\n          filter: status='delivered'\n            PageFrame\n                Row forward scan\n                Interval forward scan on: orders\n                  intervals: [(\"2025-03-01T00:00:00.000000Z\",\"2025-03-07T23:59:59.999999Z\")]"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, timestamp_floor('M', o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= '2025-01-01T00:00:00' AND o.ordered_at < '2025-07-01T00:00:00' GROUP BY c.country_code, timestamp_floor('M', o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 66.238,
+          "p50": 67.541,
+          "p90": 69.37,
+          "p95": 70.273,
+          "p99": 70.996,
+          "max": 71.176,
+          "mean": 67.869,
+          "stdev": 1.344,
+          "first_ms": 92.976
+        },
+        "rows": 50,
+        "checksum": "4b01a7659958ecf823e8a1bc",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light lo: 50\n  keys: [revenue desc, country_code, month_start]\n    VirtualRecord\n      functions: [country_code,memoize(timestamp_floor),orders,revenue]\n        GroupBy vectorized: false\n          keys: [country_code,timestamp_floor]\n          values: [count_distinct(id),sum(qty*unit_price)]\n            SelectedRecord\n                Hash Join Light\n                  condition: oi.order_id=o.id\n                    Hash Join Light\n                      condition: c.id=o.customer_id\n                        Async JIT Filter workers: 27\n                          filter: status='delivered'\n                            PageFrame\n                                Row forward scan\n                                Interval forward scan on: orders\n                                  intervals: [(\"2025-01-01T00:00:00.000000Z\",\"2025-06-30T23:59:59.999999Z\")]\n                        Hash\n                            PageFrame\n                                Row forward scan\n                                Frame forward scan on: customers\n                    Hash\n                        PageFrame\n                            Row forward scan\n                            Frame forward scan on: order_items"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "DatabaseError: Window function is not allowed in context of aggregation. Use sub-query. LINE 1: SELECT category_id, product_id, revenue, rn FROM (SELECT p.c... ^",
+        "error_code": null
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT timestamp_floor('d', ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= '2025-01-01T00:00:00' AND ordered_at < '2025-04-01T00:00:00' GROUP BY timestamp_floor('d', ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.409,
+          "p50": 8.463,
+          "p90": 9.069,
+          "p95": 9.086,
+          "p99": 9.101,
+          "max": 9.104,
+          "mean": 6.649,
+          "stdev": 2.845,
+          "first_ms": 3.735
+        },
+        "rows": 90,
+        "checksum": "d18d7920a3c2ac35a4a4429e",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [d]\n    CachedWindowLight\n      orderedFunctions: [[d] => [sum(daily) over (rows between unbounded preceding and current row),lag(daily, 1, NULL) over ()]]\n        VirtualRecord\n          functions: [timestamp_floor,memoize(daily)]\n            Async Group By workers: 27\n              keys: [timestamp_floor]\n              keyFunctions: [timestamp_floor('day',ordered_at)]\n              values: [sum(total_amount)]\n              filter: null\n                PageFrame\n                    Row forward scan\n                    Interval forward scan on: orders\n                      intervals: [(\"2025-01-01T00:00:00.000000Z\",\"2025-03-31T23:59:59.999999Z\")]"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, timestamp_floor('M', first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, timestamp_floor('M', o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, timestamp_floor('M', o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 100.612,
+          "p50": 110.265,
+          "p90": 112.875,
+          "p95": 113.091,
+          "p99": 113.264,
+          "max": 113.307,
+          "mean": 109.642,
+          "stdev": 3.616,
+          "first_ms": 153.766
+        },
+        "rows": 22,
+        "checksum": "8560c89b626435e14906c6cd",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [cohort]\n    GroupBy vectorized: false\n      keys: [cohort]\n      values: [count_distinct(customer_id),count_distinct(customer_id1)]\n        SelectedRecord\n            Hash Left Outer Join Light\n              condition: a.customer_id=c.customer_id\n              filter: c.cohort<a.m\n                VirtualRecord\n                  functions: [timestamp_floor('month',first_at),customer_id]\n                    GroupBy vectorized: true workers: 27\n                      keys: [customer_id]\n                      values: [min_designated(ordered_at)]\n                        PageFrame\n                            Row forward scan\n                            Frame forward scan on: orders\n                Hash\n                    VirtualRecord\n                      functions: [customer_id,timestamp_floor]\n                        Async Group By workers: 27\n                          keys: [customer_id,timestamp_floor]\n                          keyFunctions: [timestamp_floor('month',ordered_at)]\n                          filter: null\n                            PageFrame\n                                Row forward scan\n                                Frame forward scan on: orders"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1.205,
+          "p50": 1.411,
+          "p90": 1.552,
+          "p95": 1.602,
+          "p99": 1.642,
+          "max": 1.652,
+          "mean": 1.399,
+          "stdev": 0.139,
+          "first_ms": 1.606
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [customer_id, ordered_at desc]\n    SelectedRecord\n        Filter filter: 3>=rn\n            CachedWindowLight\n              orderedFunctions: [[ordered_at desc, id desc] => [row_number() over (partition by [customer_id])]]\n                Async JIT Filter workers: 27\n                  filter: 100>=customer_id\n                    PageFrame\n                        Row forward scan\n                        Frame forward scan on: orders"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= '2025-06-01T00:00:00' AND ordered_at < '2025-09-01T00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "DatabaseError: unexpected token [SETS] LINE 1: ...ered_at < '2025-09-01T00:00:00' GROUP BY GROUPING SETS ((shi... ^",
+        "error_code": null
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE description LIKE '%bluetooth%' AND description LIKE '%waterproof%' ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1.961,
+          "p50": 2.11,
+          "p90": 4.351,
+          "p95": 5.034,
+          "p99": 5.58,
+          "max": 5.717,
+          "mean": 2.677,
+          "stdev": 1.198,
+          "first_ms": 7.348
+        },
+        "rows": 50,
+        "checksum": "13c3c7dd358069b0c82817de",
+        "error": null,
+        "error_code": null,
+        "plan": "SelectedRecord\n    Async Top K lo: 50 workers: 27\n      filter: (description like %bluetooth% and description like %waterproof%)\n      keys: [id]\n        PageFrame\n            Row forward scan\n            Frame forward scan on: products"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 100000,100050",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 5.181,
+          "p50": 5.348,
+          "p90": 5.515,
+          "p95": 5.541,
+          "p99": 5.563,
+          "max": 5.568,
+          "mean": 5.348,
+          "stdev": 0.115,
+          "first_ms": 6.269
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light lo: 100000 hi: 100050 partiallySorted: true\n  keys: [ordered_at, id]\n    PageFrame\n        Row forward scan\n        Frame forward scan on: orders"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > '2025-01-01T00:00:00' OR (ordered_at = '2025-01-01T00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1.363,
+          "p50": 1.579,
+          "p90": 2.408,
+          "p95": 3.974,
+          "p99": 5.226,
+          "max": 5.54,
+          "mean": 1.987,
+          "stdev": 1.205,
+          "first_ms": 1.487
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light lo: 50 partiallySorted: true\n  keys: [ordered_at, id]\n    Async JIT Filter workers: 27\n      filter: (2025-01-01T00:00:00.000000Z<ordered_at or (2025-01-01T00:00:00.000000Z=ordered_at and 0<id))\n        PageFrame\n            Row forward scan\n            Frame forward scan on: orders"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= '2025-01-01T00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 7.791,
+          "p50": 8.046,
+          "p90": 12.2,
+          "p95": 13.7,
+          "p99": 14.9,
+          "max": 15.2,
+          "mean": 9.769,
+          "stdev": 2.435,
+          "first_ms": 13.851
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "Count\n    Async JIT Group By workers: 27\n      keys: [customer_id]\n      filter: customer_id!=null\n        PageFrame\n            Row forward scan\n            Interval forward scan on: events\n              intervals: [(\"2025-01-01T00:00:00.000000Z\",\"MAX\")]"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 41.397,
+          "p50": 43.143,
+          "p90": 43.906,
+          "p95": 44.003,
+          "p99": 44.082,
+          "max": 44.101,
+          "mean": 42.942,
+          "stdev": 0.759,
+          "first_ms": 46.111
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort\n  keys: [id]\n    SelectedRecord\n        Filter filter: oi.id=null\n            Hash Left Outer Join Light\n              condition: oi.product_id=p.id\n                PageFrame\n                    Row forward scan\n                    Frame forward scan on: products\n                Hash\n                    PageFrame\n                        Row forward scan\n                        Frame forward scan on: order_items"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR datediff('s', prev_at, occurred_at) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 38.12,
+          "p50": 44.128,
+          "p90": 45.038,
+          "p95": 45.099,
+          "p99": 45.149,
+          "max": 45.161,
+          "mean": 42.599,
+          "stdev": 2.647,
+          "first_ms": 44.826
+        },
+        "rows": 2000,
+        "checksum": "5d24f870b1b9c901f01b0ee2",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [customer_id]\n    GroupBy vectorized: false\n      keys: [customer_id]\n      values: [count(*)]\n        Filter filter: new_session=1\n            VirtualRecord\n              functions: [customer_id,case([(null=prev_at or 1800<datediff('s',prev_at,occurred_at)),1,0])]\n                CachedWindowLight\n                  orderedFunctions: [[occurred_at, id] => [lag(occurred_at, 1, NULL) over (partition by [customer_id])]]\n                    Async JIT Filter workers: 27\n                      filter: 2000>=customer_id\n                        PageFrame\n                            Row forward scan\n                            Frame forward scan on: events"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, approx_percentile(total_amount, 0.5, 5) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1614.845,
+          "p50": 1625.446,
+          "p90": 1636.425,
+          "p95": 1636.89,
+          "p99": 1637.263,
+          "max": 1637.356,
+          "mean": 1625.364,
+          "stdev": 9.154,
+          "first_ms": 1619.58
+        },
+        "rows": 13,
+        "checksum": "543fd44fb66e21efa26ae707",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [shipping_country]\n    GroupBy vectorized: false\n      keys: [shipping_country]\n      values: [approx_percentile(total_amount,0.5)]\n        PageFrame\n            Row forward scan\n            Frame forward scan on: orders"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, string_agg(p.sku, ',') AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 39.548,
+          "p50": 40.344,
+          "p90": 41.416,
+          "p95": 41.436,
+          "p99": 41.452,
+          "max": 41.456,
+          "mean": 40.482,
+          "stdev": 0.615,
+          "first_ms": 77.696
+        },
+        "rows": 500,
+        "checksum": "2a7a111091a3a20d73ac8fbc",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [id]\n    GroupBy vectorized: false\n      keys: [id]\n      values: [string_agg(sku,,)]\n        SelectedRecord\n            Hash Join Light\n              condition: p.id=oi.product_id\n                Hash Join Light\n                  condition: oi.order_id=o.id\n                    Async JIT Filter workers: 27\n                      filter: 500>=id\n                        PageFrame\n                            Row forward scan\n                            Frame forward scan on: orders\n                    Hash\n                        PageFrame\n                            Row forward scan\n                            Frame forward scan on: order_items\n                Hash\n                    PageFrame\n                        Row forward scan\n                        Frame forward scan on: products"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 41.737,
+          "p50": 42.389,
+          "p90": 43.144,
+          "p95": 43.463,
+          "p99": 43.718,
+          "max": 43.781,
+          "mean": 42.488,
+          "stdev": 0.622,
+          "first_ms": 43.048
+        },
+        "rows": 13,
+        "checksum": "aead62a734254ac91c59d5af",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [country_code]\n    GroupBy vectorized: false\n      keys: [country_code]\n      values: [sum(switch(status,'delivered',1,0)),sum(switch(status,'cancelled',1,0)),sum(switch(status,'returned',1,0)),avg(total_amount)]\n        SelectedRecord\n            Hash Join Light\n              condition: c.id=o.customer_id\n                PageFrame\n                    Row forward scan\n                    Frame forward scan on: orders\n                Hash\n                    PageFrame\n                        Row forward scan\n                        Frame forward scan on: customers"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 0.714,
+          "p50": 1.007,
+          "p90": 1.265,
+          "p95": 2.757,
+          "p99": 2.866,
+          "max": 2.893,
+          "mean": 1.139,
+          "stdev": 0.574,
+          "first_ms": 1.435
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [id]\n    SelectedRecord\n        Async JIT Filter workers: 27\n          filter: (customer_id=$0::short or id=$1::int)\n            PageFrame\n                Row forward scan\n                Frame forward scan on: orders"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 2.347,
+          "p50": 3.123,
+          "p90": 3.694,
+          "p95": 3.774,
+          "p99": 3.838,
+          "max": 3.854,
+          "mean": 3.082,
+          "stdev": 0.453,
+          "first_ms": 3.572
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "Encode sort light\n  keys: [id]\n    Async Filter workers: 27\n      filter: id in [47,281,457,869,942,950,1298,3027,3073,3269,3737,4023,4216,4413,4589,4762,4833,4939,5265,5718,5897,6511,7606,8169,8453,9031,9687,10378,10923,10974,11327,11479,11859,12255,12654,12840,12970,13207,13312,13532,14258,14524,15081,15902,16269,16854,17034,17315,17465,18380,18540,18983,19173,19517,19560,19706,20028,20045,20117,20309,21123,21953,21992,22037,22147,22148,22307,22507,23218,23452,23529,23673,23781,23817,23880,24103,24275,26089,26663,27468,27504,27862,28693,29538,29583,31065,31390,31469,31696,31898,32998,33358,33374,33876,33963,34032,34762,34890,34981,36326,36519,36595,36627,36886,37157,37714,37946,38647,39038,39156,39181,40699,41297,41699,42323,42378,42795,43866,44765,45796,46636,47487,47593,47962,48063,48589,49665,49768,50439,51313,51981,52069,52233,52686,52893,52991,53330,53797,53968,54493,55008,55052,55237,56409,56614,57068,57113,57679,58303,59915,60180,60278,60487,60656,61030,61548,62505,62565,62686,63495,63986,64081,64110,64404,65059,65131,65359,65654,66112,66379,66569,67003,67042,67727,67793,68202,68303,68632,68655,69008,69152,69251,69325,69615,69617,69660,70218,70427,70458,70497,70527,70842,70896,70916,71047,71283,72131,72750,73120,73155,73288,73568,73859,73908,74496,74854,74875,75028,75319,75914,75978,76012,76247,76824,77452,78060,78551,78863,79155,79756,79802,79956,80684,81147,81704,81787,81794,82734,82858,83700,84813,85079,85495,85734,86227,86855,86973,87251,87906,88658,88677,88907,89642,89838,90090,90168,90965,91109,93477,94255,94410,94558,95458,95732,96550,97576,97872,98594,98729,98794,99846,100042,100286,100359,100811,101410,102110,102279,102635,102997,103046,103280,103306,103382,104402,104730,104794,104869,106090,106279,106417,106486,107712,108209,108498,108755,109100,109514,110692,111464,111495,112047,112132,112212,112524,112917,113204,113293,114358,116835,116871,116880,117193,117821,117955,118165,118191,118329,118748,118955,119787,120317,120443,120676,121809,122133,122249,123781,123980,124065,124220,124425,124456,125570,126464,126664,127291,127350,127439,128266,128350,128405,128896,129486,129550,129660,129762,130306,130519,130586,131096,131231,131797,131851,131963,132218,132314,132525,132555,132630,132808,132825,133365,133946,134287,134475,134804,134948,135407,135643,137300,137381,137408,137886,138128,138376,138724,138734,139221,139315,140300,140667,143107,143413,143599,143938,143977,144208,144281,144455,144983,145268,145720,146099,146415,148836,149024,149322,149579,150545,152430,153109,153508,153827,153925,154450,156385,156967,157210,158169,159431,161197,161737,162191,162831,162976,163559,163958,164162,164452,164566,164803,165053,165065,165386,165589,165883,166315,166452,166718,167018,168497,168530,168613,168617,168950,169291,170376,170422,170796,171133,171966,171972,172101,172372,172575,172832,173534,174386,175342,175779,176162,176202,177133,177203,178433,178675,179017,179227,179955,180029,180288,180409,181453,181584,181637,181752,183611,183777,184376,185264,185827,185995,186001,186434,186915,187436,187694,188632,188922,189834,190627,191063,191191,191982,192173,192375,193145,193658,193733,193942,193963,194220,194830,195489,195518,195950,196154,196519,196750,196801,197162,197308,197360,198091,198123,198297,199033,199098,199664]\n        PageFrame\n            Row forward scan\n            Frame forward scan on: orders"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE year(ordered_at) = 2025 AND month(ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1.125,
+          "p50": 1.282,
+          "p90": 1.535,
+          "p95": 1.543,
+          "p99": 1.549,
+          "max": 1.551,
+          "mean": 1.345,
+          "stdev": 0.161,
+          "first_ms": 1.573
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan": "Count\n    Async Filter workers: 27\n      filter: month(ordered_at)=5\n        PageFrame\n            Row forward scan\n            Interval forward scan on: orders\n              intervals: [(\"2025-01-01T00:00:00.000000Z\",\"2025-12-31T23:59:59.999999Z\")]"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 7.144,
+          "p50": 16.629,
+          "p90": 50.894,
+          "p95": 85.69,
+          "p99": 129.442,
+          "max": 142.15,
+          "mean": 28.914,
+          "stdev": 29.154,
+          "first_ms": 56.69
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', now(), NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.344,
+          "p50": 0.401,
+          "p90": 0.626,
+          "p95": 0.675,
+          "p99": 0.714,
+          "max": 0.729,
+          "mean": 0.453,
+          "stdev": 0.11,
+          "first_ms": 2.325
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "status": "unsupported",
+        "error": "no syntax for this dialect"
+      },
+      "_seconds": 25.3
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= '2025-06-01T00:00:00' AND occurred_at < '2025-07-01T00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.731,
+            "p95_ms": 2.598,
+            "rows": 1,
+            "plan_analyze": ""
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          }
+        ]
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.432,
+            "p95_ms": 5.051,
+            "rows": 2430,
+            "plan_analyze": ""
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE year(ordered_at) = 2025 AND month(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.62,
+            "p95_ms": 2.196,
+            "rows": 1,
+            "plan_analyze": ""
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= '2025-05-01T00:00:00' AND ordered_at < '2025-06-01T00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.468,
+            "p95_ms": 0.726,
+            "rows": 1,
+            "plan_analyze": ""
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          }
+        ],
+        "best_variant": "sargable_no_index",
+        "speedup_vs_first": 3.46
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 100000,100050",
+            "ok": true,
+            "error": null,
+            "p50_ms": 5.843,
+            "p95_ms": 8.331,
+            "rows": 50,
+            "plan_analyze": ""
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > '2025-01-01T00:00:00' OR (ordered_at = '2025-01-01T00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.912,
+            "p95_ms": 1.169,
+            "rows": 50,
+            "plan_analyze": ""
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          }
+        ],
+        "best_variant": "keyset_no_index",
+        "speedup_vs_first": 6.41
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = true ORDER BY p.id LIMIT 500",
+            "ok": false,
+            "error": "DatabaseError: query is not expected, did you mean column? LINE 1: SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2... ^",
+            "p50_ms": null,
+            "p95_ms": null,
+            "rows": null
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = true ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 4.276,
+            "p95_ms": 5.402,
+            "rows": 500,
+            "plan_analyze": ""
+          }
+        ]
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 48.788,
+            "p95_ms": 88.943,
+            "rows": 0,
+            "plan_analyze": ""
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": false,
+            "error": "DatabaseError: Invalid table name or alias LINE 1: ...ELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDE... ^",
+            "p50_ms": null,
+            "p95_ms": null,
+            "rows": null
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": false,
+            "error": "DatabaseError: cannot compare LONG with type CURSOR LINE 1: SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.pro... ^",
+            "p50_ms": null,
+            "p95_ms": null,
+            "rows": null
+          }
+        ]
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.664,
+            "p95_ms": 2.63,
+            "rows": 13,
+            "plan_analyze": ""
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1.286,
+            "p95_ms": 7.104,
+            "rows": 13,
+            "plan_analyze": ""
+          }
+        ],
+        "best_variant": "union_rewrite",
+        "speedup_vs_first": 1.29
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= '2025-09-01T00:00:00' AND ordered_at < '2025-10-01T00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.87,
+            "p95_ms": 1.111,
+            "rows": 644,
+            "plan_analyze": ""
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "questdb: setup step not supported"
+          }
+        ]
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 8.338,
+            "p95_ms": 10.268,
+            "rows": 13,
+            "plan_analyze": ""
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 8.544,
+            "p95_ms": 10.048,
+            "rows": 13,
+            "plan_analyze": ""
+          }
+        ],
+        "best_variant": "after_bulk_insert_no_analyze",
+        "speedup_vs_first": 1.0
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 0.945,
+            "rows_per_s": 3173,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 0.163,
+            "rows_per_s": 18416,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.347,
+            "rows_per_s": 8638,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver questdb: no server-side prepare toggle exposed"
+      },
+      "_seconds": 3.6
+    },
+    "connections": {
+      "max_connections": null,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 0.935788,
+            "p50": 1.1384064999999999,
+            "p90": 1.4612066000000001,
+            "p95": 1.7019965999999993,
+            "p99": 2.1511558100000006,
+            "max": 2.279542,
+            "mean": 1.1896885,
+            "stdev": 0.2751370306529397
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 3.252643,
+              "p50": 4.8795555,
+              "p90": 6.1304612999999994,
+              "p95": 6.716335649999999,
+              "p99": 7.18503513,
+              "max": 7.30221,
+              "mean": 4.9739866,
+              "stdev": 1.1758787910482271
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.2,
+            "connect_ms": {
+              "n": 50,
+              "min": 8.463754,
+              "p50": 29.28614,
+              "p90": 39.121841100000005,
+              "p95": 40.13145085,
+              "p99": 41.15371506,
+              "max": 41.316006,
+              "mean": 27.15347788,
+              "stdev": 9.922640983631
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 104.8,
+            "connect_ms": {
+              "n": 100,
+              "min": 16.177317,
+              "p50": 59.578687,
+              "p90": 79.24795710000001,
+              "p95": 83.24605075,
+              "p99": 89.74403211,
+              "max": 89.827104,
+              "mean": 55.34179412,
+              "stdev": 19.273595019497797
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 227.4,
+            "connect_ms": {
+              "n": 200,
+              "min": 29.7795,
+              "p50": 101.73177050000001,
+              "p90": 149.500407,
+              "p95": 160.20237729999994,
+              "p99": 173.65615415,
+              "max": 177.516553,
+              "mean": 102.205781525,
+              "stdev": 35.991220340153575
+            },
+            "error_codes": {},
+            "sample_error": null
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 14231,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 3558,
+            "latency_ms": {
+              "n": 14231,
+              "min": 0.169141,
+              "p50": 0.278762,
+              "p90": 0.333786,
+              "p95": 0.352556,
+              "p99": 0.41313430000000023,
+              "max": 4.668883,
+              "mean": 0.27937525289860166,
+              "stdev": 0.06051612986284762
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 39939,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 9985,
+            "latency_ms": {
+              "n": 39939,
+              "min": 0.192313,
+              "p50": 0.363471,
+              "p90": 0.5104122,
+              "p95": 0.5888130999999999,
+              "p99": 0.7910064000000001,
+              "max": 52.460757,
+              "mean": 0.39864355424522396,
+              "stdev": 0.44832002900747786
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 95497,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 23874,
+            "latency_ms": {
+              "n": 95497,
+              "min": 0.212614,
+              "p50": 0.461253,
+              "p90": 0.7503266000000002,
+              "p95": 0.9184435999999997,
+              "p99": 5.012380759999989,
+              "max": 101.347569,
+              "mean": 0.6686734100442946,
+              "stdev": 1.8818871788642975
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 129452,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 32363,
+            "latency_ms": {
+              "n": 129452,
+              "min": 0.214619,
+              "p50": 0.593358,
+              "p90": 1.0799698000000009,
+              "p95": 1.5080536999999992,
+              "p99": 10.61807587,
+              "max": 164.817229,
+              "mean": 0.987524012035349,
+              "stdev": 3.0495291629670183
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 216366,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 54092,
+            "latency_ms": {
+              "n": 216366,
+              "min": 0.214816,
+              "p50": 0.8596895,
+              "p90": 1.944061,
+              "p95": 2.60905825,
+              "p99": 5.877969750000009,
+              "max": 93.815006,
+              "mean": 1.1816437006461273,
+              "stdev": 1.80838193752942
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 15596,
+        "qps": 3892,
+        "checkout_wait_ms": {
+          "n": 15596,
+          "min": 0.001881,
+          "p50": 0.003895,
+          "p90": 0.004407,
+          "p95": 0.00458,
+          "p99": 0.009047199999999997,
+          "max": 3998.728565,
+          "mean": 6.138252103872788,
+          "stdev": 156.2600632075787
+        },
+        "exec_ms": {
+          "n": 15596,
+          "min": 0.292995,
+          "p50": 1.8188564999999999,
+          "p90": 3.4311245,
+          "p95": 4.13411625,
+          "p99": 5.814296449999984,
+          "max": 19.983413,
+          "mean": 2.0473179423570147,
+          "stdev": 1.11678234758963
+        }
+      },
+      "transactions": {
+        "status": "n/a",
+        "note": "engine has no transactional isolation"
+      },
+      "_seconds": 39.1
+    },
+    "replication": {
+      "kind": "none",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "PostgreSQL 12.3, compiled by Visual C++ build 1914, 64-bit, QuestDB",
+          "status": {}
+        }
+      },
+      "status": "single-node",
+      "_seconds": 0.0
+    }
+  },
+  "server_version": "PostgreSQL 12.3, compiled by Visual C++ build 1914, 64-bit, QuestDB",
+  "finished": "2026-09-12T20:35:12+00:00"
+}

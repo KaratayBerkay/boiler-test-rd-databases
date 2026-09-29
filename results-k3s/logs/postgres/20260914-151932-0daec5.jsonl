@@ -1,0 +1,28 @@
+{"ts": "2026-09-14T12:19:32.790+00:00", "level": "DEBUG", "stack": "postgres", "phase": "-", "msg": "logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-151932-0daec5.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/postgres/20260914-151932-0daec5.jsonl"}
+{"ts": "2026-09-14T12:19:32.790+00:00", "level": "INFO", "stack": "postgres", "phase": "-", "msg": "[postgres] run 20260914-151932-0daec5 phases=['backup'] scale=0.3 (log: results-k3s/logs/postgres/20260914-151932-0daec5.log)"}
+{"ts": "2026-09-14T12:19:32.805+00:00", "level": "INFO", "stack": "postgres", "phase": "-", "msg": "[postgres] phase: backup"}
+{"ts": "2026-09-14T12:19:33.669+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  source fingerprint: 7 tables, 520,772 rows (0.86s)"}
+{"ts": "2026-09-14T12:19:33.669+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  strategy pg_dump: parallel directory-format dump restored into a second database"}
+{"ts": "2026-09-14T12:19:34.087+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    prepare                            rc=0    0.42s"}
+{"ts": "2026-09-14T12:19:34.762+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    pg_dump -Fd                        rc=0    0.67s"}
+{"ts": "2026-09-14T12:19:35.044+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    pg_dumpall --globals-only          rc=0    0.28s"}
+{"ts": "2026-09-14T12:19:35.365+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    create restore db                  ok    0.08s"}
+{"ts": "2026-09-14T12:19:36.878+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    pg_restore -j                      rc=0    1.51s"}
+{"ts": "2026-09-14T12:19:37.852+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:19:38.220+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    drop restore db                    ok    0.37s"}
+{"ts": "2026-09-14T12:19:38.220+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  pg_dump: backup 0.67s / 9.2 MB, restore 1.51s, verified=True"}
+{"ts": "2026-09-14T12:19:38.221+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  strategy pg_basebackup: full physical copy restored in a scratch container"}
+{"ts": "2026-09-14T12:19:38.446+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    prepare                            rc=0    0.22s"}
+{"ts": "2026-09-14T12:19:39.824+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    pg_basebackup                      rc=0    1.38s"}
+{"ts": "2026-09-14T12:19:40.398+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    pg_verifybackup                    rc=0    0.32s"}
+{"ts": "2026-09-14T12:19:43.767+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:19:45.224+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  pg_basebackup: backup 1.38s / 113.4 MB, restore 0.24s, verified=True"}
+{"ts": "2026-09-14T12:19:45.225+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  strategy incremental: PG17+ block-level incremental on top of the full backup"}
+{"ts": "2026-09-14T12:19:48.679+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    pg_basebackup --incremental        rc=0    2.86s"}
+{"ts": "2026-09-14T12:19:52.059+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:19:54.211+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  incremental: backup 2.86s / 20.7 MB, restore 0.25s, verified=True, pitr=True"}
+{"ts": "2026-09-14T12:19:54.211+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  strategy pitr: WAL-archive point-in-time recovery to a restore point before a destructive DELETE"}
+{"ts": "2026-09-14T12:19:59.413+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "    verify restored copy               MATCH (7 tables, 520,772 rows)"}
+{"ts": "2026-09-14T12:20:01.230+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "  pitr: backup 0.0s / 304.0 MB, restore 0.26s, verified=True, pitr=True"}
+{"ts": "2026-09-14T12:20:01.248+00:00", "level": "INFO", "stack": "postgres", "phase": "backup", "msg": "[postgres] phase backup done in 28.4s"}
+{"ts": "2026-09-14T12:20:01.315+00:00", "level": "INFO", "stack": "postgres", "phase": "-", "msg": "saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/postgres/20260914-151932-0daec5.json"}

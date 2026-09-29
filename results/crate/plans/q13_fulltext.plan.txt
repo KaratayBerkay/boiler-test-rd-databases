@@ -1,0 +1,4 @@
+Fetch[id, name] (rows=50)
+  └ Limit[50::bigint;0] (rows=50)
+    └ OrderBy[id ASC] (rows=5000)
+      └ Collect[doc.products | [_fetchid, id] | MATCH((description_ft NULL), 'bluetooth waterproof') USING best_fields WITH ({})] (rows=5000)

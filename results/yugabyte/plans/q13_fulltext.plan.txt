@@ -1,0 +1,5 @@
+Limit  (cost=29.74..29.87 rows=50 width=24)
+  ->  Sort  (cost=29.74..30.42 rows=271 width=24)
+        Sort Key: id
+        ->  Index Scan using ix_products_fts on products  (cost=8.00..20.74 rows=271 width=24)
+              Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)

@@ -1,0 +1,8 @@
+Select Expression
+    -> Sort (record length: 1662, key length: 1608)
+        -> Recursion
+            -> Filter
+                -> Table "CATEGORIES" as "TREE CATEGORIES" Full Scan
+            -> Filter
+                -> Table "CATEGORIES" as "TREE C" Full Scan
+fetches=7109365 reads=2523

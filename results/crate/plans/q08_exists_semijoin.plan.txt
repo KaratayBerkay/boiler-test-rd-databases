@@ -1,0 +1,16 @@
+Eval[id, email] (rows=200)
+  └ Limit[200::bigint;0] (rows=200)
+    └ OrderBy[id ASC] (rows=4442)
+      └ Filter[(EXISTS (SELECT 1 FROM (o)) AND (NOT EXISTS (SELECT 1 FROM (e))))] (rows=4442)
+        └ CorrelatedJoin[id, email, (SELECT 1 FROM (o)), (SELECT 1 FROM (e))] (rows=20000)
+          └ CorrelatedJoin[id, email, (SELECT 1 FROM (o))] (rows=20000)
+            └ Rename[id, email] AS c (rows=20000)
+              └ Collect[doc.customers | [id, email] | true] (rows=20000)
+            └ SubPlan
+              └ Rename[1] AS o (rows=1)
+                └ Limit[1;0] (rows=1)
+                  └ Collect[doc.orders | [1] | ((customer_id = id) AND (ordered_at >= 1761955200000::bigint))] (rows=3)
+          └ SubPlan
+            └ Rename[1] AS e (rows=0)
+              └ Limit[1;0] (rows=0)
+                └ Collect[doc.events | [1] | ((customer_id = id) AND (event_type = 'churn'))] (rows=0)

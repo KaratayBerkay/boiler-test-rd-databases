@@ -1,0 +1,142 @@
+# MySQL 9 — source + replica (GTID auto-positioned asynchronous replication) + ProxySQL read/write split.
+#
+# Backup strategy (`rdlab run mysql --phases backup`): MySQL Shell dump utility (util.dumpTables/loadDump), mysqldump,
+#   and the clone plugin (CLONE LOCAL DATA DIRECTORY) into the shared `my-backups` volume; the clone is started in a
+#   scratch container that replays the source's binlog with START REPLICA UNTIL SQL_BEFORE_GTIDS (point-in-time recovery).
+#   Binlogs are kept for 1 day (binlog-expire-logs-seconds) which bounds the PITR window.
+# Logging strategy: slow query log (long_query_time=0.1, log_slow_extra) + error log as text and JSON
+#   (component_log_sink_json, installed by init/setup.sh) in the shared `my-logs` volume; general log off (switched on only
+#   for the audit test); performance_schema statement digests; Docker json-file rotation on every container.
+name: rdlab-mysql
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-mysql-common: &mysql-common
+  image: mysql:9
+  cap_add: [SYS_NICE]          # silences "mbind: Operation not permitted"
+  ulimits:
+    nofile: { soft: 65536, hard: 65536 }
+  logging: *logging
+  environment:
+    MYSQL_ROOT_PASSWORD: rootpass
+  healthcheck:
+    test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -prootpass --silent"]
+    interval: 3s
+    timeout: 3s
+    retries: 40
+
+services:
+  volumes-init:
+    # one-shot: shared backup + log volumes writable by the mysql user (uid 999) of every container
+    image: mysql:9
+    container_name: rdlab-my-volumes-init
+    entrypoint: ["sh", "-c", "mkdir -p /backups /var/log/mysql && chmod 1777 /backups /var/log/mysql && echo volumes ready"]
+    volumes: [my-backups:/backups, my-logs:/var/log/mysql]
+    logging: *logging
+    restart: "no"
+
+  source:
+    <<: *mysql-common
+    container_name: rdlab-my-source
+    command:
+      - --server-id=1
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --binlog-expire-logs-seconds=86400
+      - --local-infile=ON
+      - --max-connections=1000
+      - --innodb-buffer-pool-size=2G
+      - --innodb-redo-log-capacity=2G
+      - --innodb-flush-log-at-trx-commit=1
+      - --performance-schema=ON
+      - --character-set-server=utf8mb4
+      # logging strategy
+      - --slow-query-log=ON
+      - --long-query-time=0.1
+      - --log-slow-extra=ON
+      - --slow-query-log-file=/var/log/mysql/slow.log
+      - --log-queries-not-using-indexes=OFF
+      - --log-error=/var/log/mysql/error.log
+      - --log-error-verbosity=3
+      - --log-timestamps=SYSTEM
+      - --general-log=OFF
+      - --general-log-file=/var/log/mysql/general.log
+      - --innodb-print-all-deadlocks=ON
+    volumes:
+      - my-source:/var/lib/mysql
+      - my-backups:/backups
+      - my-logs:/var/log/mysql
+    ports:
+      - "13306:3306"
+    depends_on:
+      volumes-init:
+        condition: service_completed_successfully
+
+  replica:
+    <<: *mysql-common
+    container_name: rdlab-my-replica
+    command:
+      - --server-id=2
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --local-infile=ON
+      - --max-connections=1000
+      - --innodb-buffer-pool-size=2G
+      - --innodb-redo-log-capacity=2G
+      - --performance-schema=ON
+      - --replica-parallel-workers=4
+      - --replica-preserve-commit-order=ON
+      - --character-set-server=utf8mb4
+      - --slow-query-log=ON
+      - --long-query-time=0.1
+      - --log-slow-extra=ON
+      - --slow-query-log-file=/var/log/mysql/replica-slow.log
+      - --log-error=/var/log/mysql/replica-error.log
+      - --log-timestamps=SYSTEM
+    volumes:
+      - my-replica:/var/lib/mysql
+      - my-backups:/backups
+      - my-logs:/var/log/mysql
+    ports:
+      - "13307:3306"
+    depends_on:
+      source:
+        condition: service_healthy
+
+  init:
+    image: mysql:9
+    container_name: rdlab-my-init
+    logging: *logging
+    entrypoint: ["bash", "/init/setup.sh"]
+    volumes:
+      - ./init:/init:ro
+    depends_on:
+      source:
+        condition: service_healthy
+      replica:
+        condition: service_healthy
+    restart: "no"
+
+  proxysql:
+    image: proxysql/proxysql:latest
+    container_name: rdlab-my-proxysql
+    logging: *logging
+    volumes:
+      - ./proxysql/proxysql.cnf:/etc/proxysql.cnf:ro
+    ports:
+      - "16033:6033"   # MySQL protocol (read/write split)
+      - "16032:6032"   # admin interface
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -h127.0.0.1 -P6032 -uadmin -padmin -e 'select 1' >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  my-source:
+  my-replica:
+  my-backups:
+  my-logs:

@@ -1,0 +1,200 @@
+1 | 0 | Category 1
+113 | 1 | Category 1 > Category 113
+132 | 1 | Category 1 > Category 132
+158 | 2 | Category 1 > Category 132 > Category 158
+182 | 1 | Category 1 > Category 182
+20 | 1 | Category 1 > Category 20
+37 | 2 | Category 1 > Category 20 > Category 37
+133 | 3 | Category 1 > Category 20 > Category 37 > Category 133
+99 | 3 | Category 1 > Category 20 > Category 37 > Category 99
+51 | 1 | Category 1 > Category 51
+183 | 2 | Category 1 > Category 51 > Category 183
+52 | 1 | Category 1 > Category 52
+55 | 2 | Category 1 > Category 52 > Category 55
+10 | 0 | Category 10
+126 | 1 | Category 10 > Category 126
+138 | 1 | Category 10 > Category 138
+14 | 1 | Category 10 > Category 14
+115 | 2 | Category 10 > Category 14 > Category 115
+124 | 2 | Category 10 > Category 14 > Category 124
+24 | 2 | Category 10 > Category 14 > Category 24
+46 | 3 | Category 10 > Category 14 > Category 24 > Category 46
+42 | 2 | Category 10 > Category 14 > Category 42
+194 | 3 | Category 10 > Category 14 > Category 42 > Category 194
+44 | 2 | Category 10 > Category 14 > Category 44
+143 | 3 | Category 10 > Category 14 > Category 44 > Category 143
+48 | 3 | Category 10 > Category 14 > Category 44 > Category 48
+71 | 2 | Category 10 > Category 14 > Category 71
+87 | 3 | Category 10 > Category 14 > Category 71 > Category 87
+164 | 1 | Category 10 > Category 164
+28 | 1 | Category 10 > Category 28
+57 | 2 | Category 10 > Category 28 > Category 57
+172 | 3 | Category 10 > Category 28 > Category 57 > Category 172
+73 | 3 | Category 10 > Category 28 > Category 57 > Category 73
+82 | 3 | Category 10 > Category 28 > Category 57 > Category 82
+86 | 2 | Category 10 > Category 28 > Category 86
+97 | 2 | Category 10 > Category 28 > Category 97
+119 | 3 | Category 10 > Category 28 > Category 97 > Category 119
+174 | 3 | Category 10 > Category 28 > Category 97 > Category 174
+36 | 1 | Category 10 > Category 36
+45 | 2 | Category 10 > Category 36 > Category 45
+117 | 3 | Category 10 > Category 36 > Category 45 > Category 117
+165 | 3 | Category 10 > Category 36 > Category 45 > Category 165
+186 | 3 | Category 10 > Category 36 > Category 45 > Category 186
+59 | 2 | Category 10 > Category 36 > Category 59
+39 | 1 | Category 10 > Category 39
+110 | 2 | Category 10 > Category 39 > Category 110
+173 | 3 | Category 10 > Category 39 > Category 110 > Category 173
+180 | 3 | Category 10 > Category 39 > Category 110 > Category 180
+120 | 2 | Category 10 > Category 39 > Category 120
+147 | 3 | Category 10 > Category 39 > Category 120 > Category 147
+166 | 3 | Category 10 > Category 39 > Category 120 > Category 166
+53 | 1 | Category 10 > Category 53
+171 | 2 | Category 10 > Category 53 > Category 171
+2 | 0 | Category 2
+12 | 1 | Category 2 > Category 12
+130 | 2 | Category 2 > Category 12 > Category 130
+16 | 2 | Category 2 > Category 12 > Category 16
+17 | 3 | Category 2 > Category 12 > Category 16 > Category 17
+67 | 3 | Category 2 > Category 12 > Category 16 > Category 67
+80 | 3 | Category 2 > Category 12 > Category 16 > Category 80
+27 | 2 | Category 2 > Category 12 > Category 27
+29 | 3 | Category 2 > Category 12 > Category 27 > Category 29
+60 | 3 | Category 2 > Category 12 > Category 27 > Category 60
+95 | 3 | Category 2 > Category 12 > Category 27 > Category 95
+146 | 1 | Category 2 > Category 146
+188 | 2 | Category 2 > Category 146 > Category 188
+70 | 1 | Category 2 > Category 70
+112 | 2 | Category 2 > Category 70 > Category 112
+161 | 3 | Category 2 > Category 70 > Category 112 > Category 161
+145 | 2 | Category 2 > Category 70 > Category 145
+89 | 2 | Category 2 > Category 70 > Category 89
+155 | 3 | Category 2 > Category 70 > Category 89 > Category 155
+94 | 3 | Category 2 > Category 70 > Category 89 > Category 94
+90 | 1 | Category 2 > Category 90
+160 | 2 | Category 2 > Category 90 > Category 160
+3 | 0 | Category 3
+103 | 1 | Category 3 > Category 103
+190 | 1 | Category 3 > Category 190
+23 | 1 | Category 3 > Category 23
+144 | 2 | Category 3 > Category 23 > Category 144
+181 | 2 | Category 3 > Category 23 > Category 181
+26 | 2 | Category 3 > Category 23 > Category 26
+49 | 1 | Category 3 > Category 49
+156 | 2 | Category 3 > Category 49 > Category 156
+4 | 0 | Category 4
+104 | 1 | Category 4 > Category 104
+18 | 1 | Category 4 > Category 18
+149 | 2 | Category 4 > Category 18 > Category 149
+191 | 3 | Category 4 > Category 18 > Category 149 > Category 191
+22 | 2 | Category 4 > Category 18 > Category 22
+100 | 3 | Category 4 > Category 18 > Category 22 > Category 100
+114 | 3 | Category 4 > Category 18 > Category 22 > Category 114
+32 | 3 | Category 4 > Category 18 > Category 22 > Category 32
+56 | 3 | Category 4 > Category 18 > Category 22 > Category 56
+35 | 2 | Category 4 > Category 18 > Category 35
+47 | 3 | Category 4 > Category 18 > Category 35 > Category 47
+62 | 3 | Category 4 > Category 18 > Category 35 > Category 62
+83 | 3 | Category 4 > Category 18 > Category 35 > Category 83
+40 | 2 | Category 4 > Category 18 > Category 40
+105 | 3 | Category 4 > Category 18 > Category 40 > Category 105
+54 | 2 | Category 4 > Category 18 > Category 54
+170 | 3 | Category 4 > Category 18 > Category 54 > Category 170
+185 | 1 | Category 4 > Category 185
+192 | 1 | Category 4 > Category 192
+74 | 1 | Category 4 > Category 74
+167 | 2 | Category 4 > Category 74 > Category 167
+91 | 2 | Category 4 > Category 74 > Category 91
+163 | 3 | Category 4 > Category 74 > Category 91 > Category 163
+84 | 1 | Category 4 > Category 84
+142 | 2 | Category 4 > Category 84 > Category 142
+157 | 3 | Category 4 > Category 84 > Category 142 > Category 157
+5 | 0 | Category 5
+134 | 1 | Category 5 > Category 134
+140 | 2 | Category 5 > Category 134 > Category 140
+154 | 1 | Category 5 > Category 154
+159 | 2 | Category 5 > Category 154 > Category 159
+187 | 1 | Category 5 > Category 187
+193 | 2 | Category 5 > Category 187 > Category 193
+25 | 1 | Category 5 > Category 25
+58 | 2 | Category 5 > Category 25 > Category 58
+79 | 2 | Category 5 > Category 25 > Category 79
+30 | 1 | Category 5 > Category 30
+128 | 2 | Category 5 > Category 30 > Category 128
+150 | 2 | Category 5 > Category 30 > Category 150
+152 | 2 | Category 5 > Category 30 > Category 152
+189 | 2 | Category 5 > Category 30 > Category 189
+43 | 2 | Category 5 > Category 30 > Category 43
+75 | 1 | Category 5 > Category 75
+109 | 2 | Category 5 > Category 75 > Category 109
+177 | 3 | Category 5 > Category 75 > Category 109 > Category 177
+76 | 1 | Category 5 > Category 76
+6 | 0 | Category 6
+106 | 1 | Category 6 > Category 106
+123 | 1 | Category 6 > Category 123
+129 | 2 | Category 6 > Category 123 > Category 129
+136 | 2 | Category 6 > Category 123 > Category 136
+125 | 1 | Category 6 > Category 125
+31 | 1 | Category 6 > Category 31
+162 | 2 | Category 6 > Category 31 > Category 162
+93 | 2 | Category 6 > Category 31 > Category 93
+116 | 3 | Category 6 > Category 31 > Category 93 > Category 116
+169 | 3 | Category 6 > Category 31 > Category 93 > Category 169
+92 | 1 | Category 6 > Category 92
+107 | 2 | Category 6 > Category 92 > Category 107
+7 | 0 | Category 7
+11 | 1 | Category 7 > Category 11
+61 | 2 | Category 7 > Category 11 > Category 61
+68 | 2 | Category 7 > Category 11 > Category 68
+137 | 3 | Category 7 > Category 11 > Category 68 > Category 137
+72 | 3 | Category 7 > Category 11 > Category 68 > Category 72
+15 | 1 | Category 7 > Category 15
+63 | 1 | Category 7 > Category 63
+8 | 0 | Category 8
+127 | 1 | Category 8 > Category 127
+131 | 2 | Category 8 > Category 127 > Category 131
+175 | 1 | Category 8 > Category 175
+19 | 1 | Category 8 > Category 19
+121 | 2 | Category 8 > Category 19 > Category 121
+141 | 2 | Category 8 > Category 19 > Category 141
+153 | 2 | Category 8 > Category 19 > Category 153
+69 | 2 | Category 8 > Category 19 > Category 69
+197 | 3 | Category 8 > Category 19 > Category 69 > Category 197
+198 | 1 | Category 8 > Category 198
+21 | 1 | Category 8 > Category 21
+50 | 2 | Category 8 > Category 21 > Category 50
+168 | 3 | Category 8 > Category 21 > Category 50 > Category 168
+77 | 3 | Category 8 > Category 21 > Category 50 > Category 77
+33 | 1 | Category 8 > Category 33
+41 | 2 | Category 8 > Category 33 > Category 41
+66 | 3 | Category 8 > Category 33 > Category 41 > Category 66
+85 | 3 | Category 8 > Category 33 > Category 41 > Category 85
+96 | 3 | Category 8 > Category 33 > Category 41 > Category 96
+65 | 2 | Category 8 > Category 33 > Category 65
+78 | 3 | Category 8 > Category 33 > Category 65 > Category 78
+34 | 1 | Category 8 > Category 34
+139 | 2 | Category 8 > Category 34 > Category 139
+176 | 3 | Category 8 > Category 34 > Category 139 > Category 176
+38 | 2 | Category 8 > Category 34 > Category 38
+148 | 3 | Category 8 > Category 34 > Category 38 > Category 148
+81 | 1 | Category 8 > Category 81
+122 | 2 | Category 8 > Category 81 > Category 122
+9 | 0 | Category 9
+101 | 1 | Category 9 > Category 101
+135 | 2 | Category 9 > Category 101 > Category 135
+102 | 1 | Category 9 > Category 102
+108 | 1 | Category 9 > Category 108
+111 | 1 | Category 9 > Category 111
+184 | 2 | Category 9 > Category 111 > Category 184
+13 | 1 | Category 9 > Category 13
+88 | 2 | Category 9 > Category 13 > Category 88
+118 | 3 | Category 9 > Category 13 > Category 88 > Category 118
+98 | 2 | Category 9 > Category 13 > Category 98
+199 | 3 | Category 9 > Category 13 > Category 98 > Category 199
+151 | 1 | Category 9 > Category 151
+196 | 2 | Category 9 > Category 151 > Category 196
+178 | 1 | Category 9 > Category 178
+179 | 1 | Category 9 > Category 179
+200 | 2 | Category 9 > Category 179 > Category 200
+195 | 1 | Category 9 > Category 195
+64 | 1 | Category 9 > Category 64

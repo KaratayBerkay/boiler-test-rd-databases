@@ -1,0 +1,29 @@
+2026-09-14 15:31:05,138 DEBUG   [cockroach/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/cockroach/20260914-153105-941b62.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/cockroach/20260914-153105-941b62.jsonl
+2026-09-14 15:31:05,138 INFO    [cockroach/-] [cockroach] run 20260914-153105-941b62 phases=['backup'] scale=0.3 (log: results-k3s/logs/cockroach/20260914-153105-941b62.log)
+2026-09-14 15:31:05,160 INFO    [cockroach/-] [cockroach] phase: backup
+2026-09-14 15:31:06,610 INFO    [cockroach/backup]   source fingerprint: 7 tables, 520,772 rows (1.45s)
+2026-09-14 15:31:06,611 INFO    [cockroach/backup]   strategy full: distributed full backup restored under a new name
+2026-09-14 15:31:07,053 INFO    [cockroach/backup]     prepare                            rc=0    0.44s
+2026-09-14 15:31:08,167 INFO    [cockroach/backup]     BACKUP DATABASE (full, revision_history) ok    1.11s
+2026-09-14 15:31:08,384 INFO    [cockroach/backup]     drop lab_restore if exists         ok    0.00s
+2026-09-14 15:31:09,811 INFO    [cockroach/backup]     RESTORE DATABASE AS lab_restore    ok    1.43s
+2026-09-14 15:31:11,941 INFO    [cockroach/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:31:13,716 INFO    [cockroach/backup]     drop restore db                    ok    1.78s
+2026-09-14 15:31:13,718 INFO    [cockroach/backup]   full: backup 1.11s / 21.7 MB, restore 1.43s, verified=True
+2026-09-14 15:31:13,718 INFO    [cockroach/backup]   strategy incremental: incremental layer on the same collection
+2026-09-14 15:31:14,868 INFO    [cockroach/backup]     BACKUP DATABASE INTO LATEST (incremental) ok    0.40s
+2026-09-14 15:31:15,080 INFO    [cockroach/backup]     drop lab_restore2 if exists        ok    0.00s
+2026-09-14 15:31:16,207 INFO    [cockroach/backup]     RESTORE DATABASE AS lab_restore2   ok    1.13s
+2026-09-14 15:31:17,883 INFO    [cockroach/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:31:18,691 INFO    [cockroach/backup]     drop restore db                    ok    0.80s
+2026-09-14 15:31:18,691 INFO    [cockroach/backup]   incremental: backup 0.41s / 0.1 MB, restore 1.13s, verified=True, pitr=True
+2026-09-14 15:31:18,692 INFO    [cockroach/backup]   strategy pitr: point-in-time restore from the revision history
+2026-09-14 15:31:19,260 INFO    [cockroach/backup]     AS OF SYSTEM TIME stale read: 1000 rows (current 0)
+2026-09-14 15:31:19,829 INFO    [cockroach/backup]     BACKUP INTO LATEST (captures the DELETE) ok    0.37s
+2026-09-14 15:31:20,027 INFO    [cockroach/backup]     drop lab_pitr if exists            ok    0.00s
+2026-09-14 15:31:21,171 INFO    [cockroach/backup]     RESTORE DATABASE AS lab_pitr       ok    1.14s
+2026-09-14 15:31:22,976 INFO    [cockroach/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:31:23,724 INFO    [cockroach/backup]     drop pitr db                       ok    0.74s
+2026-09-14 15:31:23,724 INFO    [cockroach/backup]   pitr: backup 0.37s / 0.1 MB, restore 1.14s, verified=True, pitr=True
+2026-09-14 15:31:23,890 INFO    [cockroach/backup] [cockroach] phase backup done in 18.7s
+2026-09-14 15:31:23,900 INFO    [cockroach/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/cockroach/20260914-153105-941b62.json

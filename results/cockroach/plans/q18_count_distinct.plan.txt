@@ -1,0 +1,21 @@
+distribution: full
+
+• group (scalar)
+│ estimated row count: 1
+│
+└── • distinct
+    │ estimated row count: 20,035
+    │ distinct on: customer_id
+    │
+    └── • filter
+        │ estimated row count: 499,312
+        │ filter: occurred_at >= '2025-01-01 00:00:00'
+        │
+        └── • scan
+              estimated row count: 1,000,000 (100% of the table; stats collected 4 minutes ago)
+              table: events@events_pkey
+              spans: FULL SCAN
+
+index recommendations: 1
+1. type: index creation
+   SQL command: CREATE INDEX ON lab.public.events (occurred_at) STORING (customer_id);

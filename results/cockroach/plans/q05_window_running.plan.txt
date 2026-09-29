@@ -1,0 +1,29 @@
+distribution: local
+
+• sort
+│ estimated row count: 24,508
+│ order: +column12
+│
+└── • window
+    │ estimated row count: 24,508
+    │
+    └── • render
+        │
+        └── • group (hash)
+            │ estimated row count: 24,508
+            │ group by: column12
+            │
+            └── • render
+                │
+                └── • filter
+                    │ estimated row count: 24,623
+                    │ filter: (ordered_at >= '2025-01-01 00:00:00') AND (ordered_at < '2025-04-01 00:00:00')
+                    │
+                    └── • scan
+                          estimated row count: 200,000 (100% of the table; stats collected 3 minutes ago)
+                          table: orders@orders_pkey
+                          spans: FULL SCAN
+
+index recommendations: 1
+1. type: index creation
+   SQL command: CREATE INDEX ON lab.public.orders (ordered_at) STORING (total_amount);

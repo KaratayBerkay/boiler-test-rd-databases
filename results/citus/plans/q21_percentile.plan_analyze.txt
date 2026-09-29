@@ -1,0 +1,22 @@
+GroupAggregate  (cost=8304.82..9057.32 rows=200 width=20) (actual time=302.585..394.190 rows=13.00 loops=1)
+  Group Key: remote_scan.shipping_country
+  ->  Sort  (cost=8304.82..8554.82 rows=100000 width=20) (actual time=300.638..313.639 rows=200000.00 loops=1)
+        Sort Key: remote_scan.shipping_country
+        Sort Method: quicksort  Memory: 12395kB
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=20) (actual time=214.832..227.050 rows=200000.00 loops=1)
+              Task Count: 32
+              Tuple data received from nodes: 1953 kB
+              Tasks Shown: One of 32
+              ->  Task
+                    Tuple data received from node: 61 kB
+                    Node: host=w5 port=5432 dbname=lab
+                    ->  Seq Scan on orders_102051 orders  (cost=0.00..136.22 rows=6258 width=11) (actual time=0.028..6.377 rows=6258.00 loops=1)
+                          Buffers: shared hit=58
+                        Planning:
+                          Buffers: shared hit=117
+                        Planning Time: 0.618 ms
+                        Execution Time: 8.860 ms
+Planning:
+  Buffers: shared hit=2
+Planning Time: 0.586 ms
+Execution Time: 394.224 ms

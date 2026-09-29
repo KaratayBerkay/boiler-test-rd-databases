@@ -1,0 +1,194 @@
+analyzed_plan | ┌─────────────────────────────────────┐
+│┌───────────────────────────────────┐│
+││    Query Profiling Information    ││
+│└───────────────────────────────────┘│
+└─────────────────────────────────────┘
+EXPLAIN ANALYZE SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn
+┌────────────────────────────────────────────────┐
+│┌──────────────────────────────────────────────┐│
+││              Total Time: 0.0451s             ││
+│└──────────────────────────────────────────────┘│
+└────────────────────────────────────────────────┘
+┌───────────────────────────┐
+│           QUERY           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│      EXPLAIN_ANALYZE      │
+│    ────────────────────   │
+│                           │
+│           0 rows          │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_integ│
+│     ral_integer(#0, 1)    │
+│__internal_decompress_integ│
+│     ral_integer(#1, 1)    │
+│             #2            │
+│             #3            │
+│                           │
+│                           │
+│                           │
+│          600 rows         │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│     t.category_id ASC     │
+│          t.rn ASC         │
+│                           │
+│                           │
+│                           │
+│          600 rows         │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_compress_integra│
+│     l_utinyint(#0, 1)     │
+│__internal_compress_integra│
+│     l_usmallint(#1, 1)    │
+│             #2            │
+│             #3            │
+│                           │
+│                           │
+│                           │
+│          600 rows         │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           FILTER          │
+│    ────────────────────   │
+│         (rn <= 3)         │
+│                           │
+│                           │
+│                           │
+│          600 rows         │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│             #2            │
+│             #3            │
+│                           │
+│                           │
+│                           │
+│         5,000 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           WINDOW          │
+│    ────────────────────   │
+│        Projections:       │
+│     ROW_NUMBER() OVER     │
+│ (PARTITION BY category_id │
+│  ORDER BY sum((CAST(qty AS│
+│      DECIMAL(18,0)) *     │
+│   unit_price)) DESC NULLS │
+│    LAST, product_id ASC   │
+│         NULLS LAST)       │
+│                           │
+│                           │
+│                           │
+│         5,000 rows        │
+│           0.04s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_integ│
+│     ral_integer(#0, 1)    │
+│__internal_decompress_integ│
+│     ral_integer(#1, 1)    │
+│             #2            │
+│                           │
+│                           │
+│                           │
+│         5,000 rows        │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│          Groups:          │
+│             #0            │
+│             #1            │
+│                           │
+│    Aggregates: sum(#2)    │
+│                           │
+│                           │
+│                           │
+│         5,000 rows        │
+│           0.08s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│        category_id        │
+│         product_id        │
+│ (CAST(qty AS DECIMAL(18,0)│
+│      ) * unit_price)      │
+│                           │
+│                           │
+│                           │
+│        487,606 rows       │
+│           0.01s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_compress_integra│
+│     l_usmallint(#0, 1)    │
+│             #1            │
+│             #2            │
+│__internal_compress_integra│
+│     l_utinyint(#3, 1)     │
+│                           │
+│                           │
+│                           │
+│        487,606 rows       │
+│           0.00s           │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│      Join Type: INNER     │
+│                           │
+│        Conditions:        │
+│      product_id = id      ├──────────────┐
+│                           │              │
+│                           │              │
+│                           │              │
+│        487,606 rows       │              │
+│           0.00s           │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│         TABLE_SCAN        ││         TABLE_SCAN        │
+│    ────────────────────   ││    ────────────────────   │
+│           Table:          ││           Table:          │
+│    lab.main.order_items   ││     lab.main.products     │
+│                           ││                           │
+│   Type: Sequential Scan   ││   Type: Sequential Scan   │
+│                           ││                           │
+│        Projections:       ││        Projections:       │
+│         product_id        ││             id            │
+│            qty            ││        category_id        │
+│         unit_price        ││                           │
+│                           ││                           │
+│      Dynamic Filters:     ││                           │
+│  optional: product_id>=1  ││                           │
+│  AND optional: product_id<││           0.00s           │
+│           =5000           ││                           │
+│                           ││                           │
+│                           ││                           │
+│                           ││                           │
+│        487,606 rows       ││         5,000 rows        │
+│           0.01s           ││          (0.00s)          │
+└───────────────────────────┘└───────────────────────────┘

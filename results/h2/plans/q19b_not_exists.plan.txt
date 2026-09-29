@@ -1,0 +1,11 @@
+SELECT
+    "p"."id"
+FROM "public"."products" "p"
+    /* public.PRIMARY_KEY_C */
+WHERE NOT EXISTS(    SELECT
+        1
+    FROM "public"."order_items" "oi"
+        /* public.CONSTRAINT_INDEX_75: product_id = p.id */
+    WHERE "oi"."product_id" = "p"."id")
+ORDER BY 1
+/* index sorted */

@@ -1,0 +1,247 @@
+{
+  "engine": "firebird",
+  "display": "Firebird 5",
+  "category": "row-store OLTP",
+  "dialect": "firebird",
+  "driver": "firebird-driver",
+  "image": "firebirdsql/firebird:5",
+  "run_id": "20260914-125124-a7f536",
+  "started": "2026-09-14T09:51:24+00:00",
+  "scale": 0.3,
+  "notes": "Firebird 5 SuperServer. MVCC with SNAPSHOT / READ COMMITTED isolation, UPDATE OR INSERT and MERGE, no LATERAL/JSON. Built-in asynchronous replication (replication.conf + nbackup copy) exists since Firebird 4 but is not automated here. Loaded at scale 0.3 because firebird-driver executemany sends one row per round trip (a few thousand rows/s).",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "gbak": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "gbak -b / gbak -c",
+          "backup_seconds": 3.73,
+          "backup_bytes": 42043904,
+          "backup_mb": 40.1,
+          "restore_seconds": 8.84,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 3.5
+          },
+          "pitr": {},
+          "notes": "transportable format (any platform / version), garbage collected on the way; the restore rebuilds the database and its indexes",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.fbk /var/lib/firebird/data/lab_restore.fdb",
+              "rc": 0,
+              "seconds": 0.09,
+              "out": ""
+            },
+            {
+              "name": "gbak -b",
+              "cmd": "/opt/firebird/bin/gbak -b -g -user lab -password labpass localhost:/var/lib/firebird/data/lab.fdb /backups/lab.fbk",
+              "rc": 0,
+              "seconds": 3.73,
+              "out": ""
+            },
+            {
+              "name": "gbak -c (restore)",
+              "cmd": "/opt/firebird/bin/gbak -c -user lab -password labpass /backups/lab.fbk localhost:/var/lib/firebird/data/lab_restore.fdb",
+              "rc": 0,
+              "seconds": 8.84,
+              "out": ""
+            }
+          ],
+          "seconds": 16.2,
+          "description": "transportable backup restored into a second database file"
+        },
+        "nbackup": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "nbackup -B 0/1 + nbackup -R",
+          "backup_seconds": 0.59,
+          "backup_bytes": 79060992,
+          "backup_mb": 75.4,
+          "restore_seconds": 0.25,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 6.05
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "rows inserted after level 0 come from the level-1 increment"
+          },
+          "notes": "page-level physical backup with incremental levels (only pages changed since the previous level); restore merges the chain",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab-level0.nbk /backups/lab-level1.nbk /var/lib/firebird/data/lab_nbk.fdb",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "nbackup -B 0",
+              "cmd": "/opt/firebird/bin/nbackup -B 0 /var/lib/firebird/data/lab.fdb /backups/lab-level0.nbk -user lab -password labpass",
+              "rc": 0,
+              "seconds": 0.59,
+              "out": "time elapsed\t1 sec \npage reads\t9652 \npage writes\t9651\n"
+            },
+            {
+              "name": "nbackup -B 1 (incremental)",
+              "cmd": "/opt/firebird/bin/nbackup -B 1 /var/lib/firebird/data/lab.fdb /backups/lab-level1.nbk -user lab -password labpass",
+              "rc": 0,
+              "seconds": 0.26,
+              "out": "time elapsed\t0 sec \npage reads\t64 \npage writes\t61\n"
+            },
+            {
+              "name": "nbackup -R (level 0 + 1)",
+              "cmd": "/opt/firebird/bin/nbackup -R /var/lib/firebird/data/lab_nbk.fdb /backups/lab-level0.nbk /backups/lab-level1.nbk",
+              "rc": 0,
+              "seconds": 0.25,
+              "out": ""
+            }
+          ],
+          "incremental": {
+            "seconds": 0.26,
+            "bytes": 499712
+          },
+          "seconds": 8.3,
+          "description": "physical page-level level-0 + level-1 chain restored into a new file"
+        }
+      },
+      "order": [
+        "gbak",
+        "nbackup"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 3.71,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "gbak",
+          "nbackup"
+        ],
+        "pitr_ok": [
+          "nbackup"
+        ]
+      },
+      "_seconds": 28.3
+    },
+    "logging": {
+      "sink": "system audit trace (fbtrace.conf, time_threshold=100) -> /var/log/firebird/audit.log",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "firebird_conf": "AuditTraceConfigFile =/etc/firebird/fbtrace.conf\nDefaultDbCachePages = 65536\nWireCryptPlugin = ChaCha64, ChaCha, Arc4\nWireCrypt = Enabled\n# Trace configuration. Following rules are used :\n# - configuration is processed from top to bottom\n# - there is two kind of sections allowed : \"database\" and \"services\"\n# - parameters at default section are used for all databases or services\n# - only one default section for each kind is allowed\n# - after processing of default database section, search is continued\n# - if database name matches pattern, options are immediately applied and\n#   search does not c",
+        "audit_log": "/var/log/firebird/audit.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "system audit trace (fbtrace.conf, time_threshold=100) -> /var/log/firebird/audit.log",
+        "slow_query_ms": 117.0,
+        "slow_logged": false,
+        "seen_after_s": 25.49,
+        "sample": "",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "audit trace: log_connections + log_statement_finish (DDL included)",
+        "setup": "always on (AuditTraceConfigFile)",
+        "event_found": false,
+        "seen_after_s": 20.27,
+        "sample": "",
+        "status": "not-found"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 2911,
+          "p50_ms": 2.137118,
+          "p99_ms": 4.329114559999997,
+          "errors": 0
+        },
+        "full_logging": "fbtracemgr -start user trace session with time_threshold=0 (every statement to full-trace.log)",
+        "full": {
+          "qps": 3542,
+          "p50_ms": 2.183803,
+          "p99_ms": 3.70914124,
+          "errors": 0
+        },
+        "log_bytes_written": 6307427,
+        "bytes_per_statement": 445.2,
+        "overhead_pct": -21.7,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-firebird": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 365,
+          "docker_logs_lines": 10
+        }
+      },
+      "extra": {},
+      "collected": [
+        "results/firebird/logs/firebird__var_log_firebird_full-trace.log",
+        "results/firebird/logs/firebird__opt_firebird_firebird.log"
+      ],
+      "_seconds": 64.0
+    }
+  },
+  "harness_log": "results/logs/firebird/20260914-125124-a7f536.log",
+  "server_version": "Firebird LI-V6.3.4.1812 Firebird 5.0",
+  "finished": "2026-09-14T09:52:57+00:00"
+}

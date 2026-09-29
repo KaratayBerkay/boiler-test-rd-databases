@@ -1,0 +1,13 @@
+2026-09-14 15:29:17,266 DEBUG   [clickhouse/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/clickhouse/20260914-152917-6701f2.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/clickhouse/20260914-152917-6701f2.jsonl
+2026-09-14 15:29:17,267 INFO    [clickhouse/-] [clickhouse] run 20260914-152917-6701f2 phases=['load'] scale=0.3 (log: results-k3s/logs/clickhouse/20260914-152917-6701f2.log)
+2026-09-14 15:29:17,281 INFO    [clickhouse/-] [clickhouse] phase: load
+2026-09-14 15:29:19,285 INFO    [clickhouse/load]   schema created (17 statements, 1.98s)
+2026-09-14 15:29:19,502 INFO    [clickhouse/load]   customers        6,000 rows     0.21s     28,221 rows/s  [client.insert (native batches)]
+2026-09-14 15:29:19,619 INFO    [clickhouse/load]   categories         200 rows     0.11s      1,829 rows/s  [client.insert (native batches)]
+2026-09-14 15:29:19,753 INFO    [clickhouse/load]   products         1,500 rows     0.13s     11,676 rows/s  [client.insert (native batches)]
+2026-09-14 15:29:20,887 INFO    [clickhouse/load]   orders          60,000 rows     1.13s     53,121 rows/s  [client.insert (native batches)]
+2026-09-14 15:29:21,941 INFO    [clickhouse/load]   order_items    147,072 rows     1.05s    140,365 rows/s  [client.insert (native batches)]
+2026-09-14 15:29:27,702 INFO    [clickhouse/load]   events         300,000 rows     5.76s     52,117 rows/s  [client.insert (native batches)]
+2026-09-14 15:29:27,911 INFO    [clickhouse/load]   inventory        6,000 rows     0.20s     29,402 rows/s  [client.insert (native batches)]
+2026-09-14 15:29:27,912 INFO    [clickhouse/load] [clickhouse] phase load done in 10.6s
+2026-09-14 15:29:27,931 INFO    [clickhouse/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/clickhouse/20260914-152917-6701f2.json

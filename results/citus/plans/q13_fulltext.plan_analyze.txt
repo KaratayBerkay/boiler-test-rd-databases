@@ -1,0 +1,27 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=1.787..1.791 rows=50.00 loops=1)
+  Task Count: 1
+  Tuple data received from nodes: 1203 bytes
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 1203 bytes
+        Node: host=coordinator port=5432 dbname=lab
+        ->  Limit  (cost=283.82..283.95 rows=50 width=24) (actual time=0.575..0.585 rows=50.00 loops=1)
+              Buffers: shared hit=198
+              ->  Sort  (cost=283.82..284.50 rows=271 width=24) (actual time=0.574..0.578 rows=50.00 loops=1)
+                    Sort Key: id
+                    Sort Method: top-N heapsort  Memory: 28kB
+                    Buffers: shared hit=198
+                    ->  Bitmap Heap Scan on products_102009 products  (cost=8.38..274.82 rows=271 width=24) (actual time=0.284..0.489 rows=308.00 loops=1)
+                          Recheck Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)
+                          Heap Blocks: exact=193
+                          Buffers: shared hit=198
+                          ->  Bitmap Index Scan on ix_products_fts_102009  (cost=0.00..8.31 rows=271 width=0) (actual time=0.248..0.248 rows=308.00 loops=1)
+                                Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)
+                                Index Searches: 1
+                                Buffers: shared hit=5
+            Planning:
+              Buffers: shared hit=1
+            Planning Time: 0.121 ms
+            Execution Time: 0.614 ms
+Planning Time: 0.049 ms
+Execution Time: 1.802 ms

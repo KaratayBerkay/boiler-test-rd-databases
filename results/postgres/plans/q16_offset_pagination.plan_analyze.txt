@@ -1,0 +1,10 @@
+Limit  (cost=6028.80..6028.93 rows=50 width=16) (actual time=26.375..26.385 rows=50.00 loops=1)
+  Buffers: shared hit=592
+  ->  Sort  (cost=5953.80..6103.80 rows=60000 width=16) (actual time=21.837..25.328 rows=30050.00 loops=1)
+        Sort Key: ordered_at, id
+        Sort Method: quicksort  Memory: 3880kB
+        Buffers: shared hit=592
+        ->  Seq Scan on orders  (cost=0.00..1192.00 rows=60000 width=16) (actual time=0.012..7.678 rows=60000.00 loops=1)
+              Buffers: shared hit=592
+Planning Time: 0.034 ms
+Execution Time: 26.409 ms

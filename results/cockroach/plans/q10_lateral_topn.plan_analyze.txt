@@ -1,0 +1,81 @@
+planning time: 1ms
+execution time: 20ms
+distribution: full
+plan type: generic, re-optimized
+rows decoded from KV: 2,096 (87 KiB, 4 gRPC calls)
+DistSQL network usage: 23 KiB (53 messages)
+regions: lab
+
+• sort
+│ sql nodes: n2, n3
+│ regions: lab
+│ execution time: 114µs
+│ sql cpu time: 114µs
+│ actual row count: 300
+│ estimated row count: 316
+│ order: +id,-ordered_at
+│
+└── • filter
+    │ sql nodes: n2, n3
+    │ regions: lab
+    │ execution time: 30µs
+    │ sql cpu time: 30µs
+    │ actual row count: 300
+    │ estimated row count: 316
+    │ filter: row_num <= 3
+    │
+    └── • window
+        │ sql nodes: n2, n3
+        │ regions: lab
+        │ execution time: 653µs
+        │ sql cpu time: 653µs
+        │ actual row count: 998
+        │ estimated row count: 947
+        │
+        └── • lookup join (streamer)
+            │ sql nodes: n2, n3
+            │ kv nodes: n1
+            │ regions: lab
+            │ KV time: 18ms
+            │ KV rows decoded: 998
+            │ execution time: 22ms
+            │ sql cpu time: 3ms
+            │ actual row count: 998
+            │ estimated row count: 947
+            │ table: orders@orders_pkey
+            │ equality: (id) = (id)
+            │ equality cols are key
+            │
+            └── • merge join
+                │ sql nodes: n2, n3
+                │ regions: lab
+                │ execution time: 291µs
+                │ sql cpu time: 462µs
+                │ actual row count: 998
+                │ estimated row count: 947
+                │ equality: (customer_id) = (id)
+                │ right cols are key
+                │
+                ├── • scan
+                │     sql nodes: n2
+                │     kv nodes: n2
+                │     regions: lab
+                │     KV time: 2ms
+                │     KV rows decoded: 998
+                │     sql cpu time: 375µs
+                │     actual row count: 998
+                │     estimated row count: 1,080 (0.54% of the table; stats collected 4 minutes ago)
+                │     table: orders@ix_orders_customer_id
+                │     spans: [ - /100]
+                │
+                └── • scan
+                      sql nodes: n3
+                      kv nodes: n3
+                      regions: lab
+                      KV time: 413µs
+                      KV rows decoded: 100
+                      sql cpu time: 37µs
+                      actual row count: 100
+                      estimated row count: 102 (0.51% of the table; stats collected 4 minutes ago)
+                      table: customers@customers_pkey
+                      spans: [ - /100]

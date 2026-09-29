@@ -1,0 +1,14 @@
+GroupAggregate  (cost=13103.97..13118.16 rows=461 width=36)
+  Group Key: o.id
+  ->  Sort  (cost=13103.97..13106.78 rows=1124 width=16)
+        Sort Key: o.id
+        ->  YB Batched Nested Loop Join  (cost=98.37..13047.02 rows=1124 width=16)
+              Join Filter: (oi.product_id = p.id)
+              ->  YB Batched Nested Loop Join  (cost=75.29..12766.50 rows=1124 width=8)
+                    Join Filter: (o.id = oi.order_id)
+                    ->  Seq Scan on orders o  (cost=23.10..12255.98 rows=461 width=4)
+                          Storage Filter: (id <= 500)
+                    ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=52.20..502.61 rows=1405 width=8)
+                          Index Cond: (order_id = ANY (ARRAY[o.id, $1, $2, ..., $1023]))
+              ->  Index Scan using products_pkey on products p  (cost=23.08..242.76 rows=1024 width=16)
+                    Index Cond: (id = ANY (ARRAY[oi.product_id, $1025, $1026, ..., $2047]))

@@ -1,0 +1,5 @@
+Output: id, depth, path
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: path ASC
+└──ReadFromRecursiveCTEStep ((WITH RECURSIVE tree AS ((SELECT id AS id, parent_id AS parent_id, name AS name, 0 AS depth, name AS path FROM lab.categories AS __table3 WHERE parent_id IS NULL) UNION ALL (SELECT id AS id, parent_id AS parent_id, name AS name, depth + 1 AS `plus(t.depth, 1)`, concat(path, ' > ', name) AS `concat(path, ' > ', name)` FROM lab.categories AS __table5 ALL INNER JOIN tree AS __table6 ON parent)

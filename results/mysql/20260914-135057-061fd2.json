@@ -1,0 +1,514 @@
+{
+  "engine": "mysql",
+  "display": "MySQL 9",
+  "category": "row-store OLTP",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "mysql:9",
+  "run_id": "20260914-135057-061fd2",
+  "started": "2026-09-14T10:50:57+00:00",
+  "scale": 1.0,
+  "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.5,
+          "rows_per_s": 40042,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 31550,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.21,
+          "rows_per_s": 23852,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 2.86,
+          "rows_per_s": 70029,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 9.13,
+          "rows_per_s": 53410,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 13.84,
+          "rows_per_s": 72264,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.3,
+          "rows_per_s": 66121,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at DATETIME(6) NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at DATETIME(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at DATETIME(6) NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at DATETIME(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n) ENGINE=InnoDB",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.15,
+      "load_seconds": 27.06,
+      "fts_setup": [
+        "CREATE FULLTEXT INDEX ft_products_description ON products (description)"
+      ],
+      "after_load": [
+        "ANALYZE TABLE customers",
+        "ANALYZE TABLE categories",
+        "ANALYZE TABLE products",
+        "ANALYZE TABLE orders",
+        "ANALYZE TABLE order_items",
+        "ANALYZE TABLE events",
+        "ANALYZE TABLE inventory"
+      ],
+      "post_seconds": 0.9,
+      "server_version": "9.7.2",
+      "_seconds": 28.1
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "mysqlsh_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "mysqlsh util dump-tables / load-dump",
+          "backup_seconds": 4.67,
+          "backup_bytes": 33032522,
+          "backup_mb": 31.5,
+          "restore_seconds": 20.14,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 2.34
+          },
+          "pitr": {},
+          "notes": "MySQL Shell dump utility: 4 threads, zstd chunks, loaded with LOAD DATA LOCAL INFILE into a second schema",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/shell",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "mysqlsh dump-tables",
+              "cmd": "mysqlsh --uri root:rootpass@localhost:3306 -- util dump-tables lab --all --outputUrl=/backups/shell --threads=4 --compression=zstd",
+              "rc": 0,
+              "seconds": 4.67,
+              "out": "al read lock has been released\nWriting global DDL files\nWriting schema metadata...\nWriting DDL...\nWriting table metadata...\nRunning data dump using 4 threads.\nDumping data...\nWriting schema metadata - done\nWriting DDL - done\nWriting table metadata - done\nStarting data dump\nDumping data - done\nDump duration: 00:00:01s\nTotal duration: 00:00:02s\nSchemas dumped: 1\nTables dumped: 7\nUncompressed data size: 132.23 MB\nCompressed data size: 32.98 MB\nCompression ratio: 4.0\nRows written: 1732806\nBytes written: 32.98 MB\nAverage uncompressed throughput: 81.28 MB/s\nAverage compressed throughput: 20.27 MB/s\n"
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.01,
+              "out": ""
+            },
+            {
+              "name": "mysqlsh load-dump",
+              "cmd": "mysqlsh --uri root:rootpass@localhost:3306 -- util load-dump /backups/shell --schema=lab_restore --threads=4 --resetProgress",
+              "rc": 0,
+              "seconds": 20.14,
+              "out": "uting schema DDL...\nExecuting schema DDL - done\nExecuting table DDL...\nExecuting table DDL - done\nLoading data...\nStarting data load\nBuilding indexes...\nLoading data - done\nExecuting view DDL...\nBuilding indexes - done\nExecuting view DDL - done\nExecuting common postamble SQL...\nExecuting common postamble SQL - done\n7 chunks (1.73M rows, 132.23 MB) for 7 tables in 1 schemas were loaded in 17 sec (avg throughput 7.66 MB/s, 100.41K rows/s)\n8 DDL files were executed in 0 sec.\nData load duration: 17 sec\n1 indexes were built in 1 sec.\nTotal duration: 18 sec\n0 warnings were reported during the load.\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 2.08,
+              "out": ""
+            }
+          ],
+          "seconds": 29.4,
+          "description": "MySQL Shell parallel zstd dump loaded into a second schema"
+        },
+        "mysqldump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "mysqldump --single-transaction",
+          "backup_seconds": 3.16,
+          "backup_bytes": 153057309,
+          "backup_mb": 146.0,
+          "restore_seconds": 39.71,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 2.47
+          },
+          "pitr": {},
+          "notes": "single-transaction consistent snapshot, plain SQL restored serially with the mysql client",
+          "error": null,
+          "steps": [
+            {
+              "name": "mysqldump",
+              "cmd": "mysqldump -uroot -prootpass --single-transaction --routines --triggers --events --set-gtid-purged=OFF lab > /backups/lab.sql",
+              "rc": 0,
+              "seconds": 3.16,
+              "out": "\nmysqldump: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.01,
+              "out": ""
+            },
+            {
+              "name": "restore",
+              "cmd": "mysql -uroot -prootpass lab_restore < /backups/lab.sql",
+              "rc": 0,
+              "seconds": 39.71,
+              "out": "\nmysql: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 3.5,
+              "out": ""
+            }
+          ],
+          "seconds": 48.9,
+          "description": "classic logical dump restored into a second schema"
+        },
+        "clone": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "CLONE LOCAL DATA DIRECTORY + START REPLICA UNTIL SQL_BEFORE_GTIDS",
+          "backup_seconds": 3.38,
+          "backup_bytes": 447053203,
+          "backup_mb": 426.3,
+          "restore_seconds": 2.17,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 2.85
+          },
+          "pitr": {
+            "match": true,
+            "method": "START REPLICA UNTIL SQL_BEFORE_GTIDS='141f5f04-b02a-11f1-821f-7aaf666c07c6:256'",
+            "replay_seconds": 0.51,
+            "stopped_before_target": true,
+            "probe_rows_recovered": 1000,
+            "probe_rows_expected": 1000,
+            "replica_status": {
+              "Replica_IO_Running": "Yes",
+              "Replica_SQL_Running": "No",
+              "Seconds_Behind_Source": "None",
+              "Source_Host": "source",
+              "Executed_Gtid_Set": "141f5f04-b02a-11f1-821f-7aaf666c07c6:1-255",
+              "Last_IO_Error": "",
+              "Last_SQL_Error": "",
+              "Last_Error": ""
+            }
+          },
+          "notes": "clone plugin physical hot copy (no external tool), scratch instance replays the source binlog with GTID auto-positioning and stops before the bad transaction",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/clone",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "install clone plugin",
+              "cmd": "INSTALL PLUGIN clone SONAME 'mysql_clone.so'",
+              "rc": 0,
+              "seconds": 0.01,
+              "out": ""
+            },
+            {
+              "name": "CLONE LOCAL DATA DIRECTORY",
+              "cmd": "CLONE LOCAL DATA DIRECTORY = '/backups/clone'",
+              "rc": 0,
+              "seconds": 3.38,
+              "out": ""
+            },
+            {
+              "name": "clone status",
+              "cmd": "SELECT state, error_no, gtid_executed FROM performance_schema.clone_status",
+              "rc": 0,
+              "seconds": 0.0,
+              "out": "[('Completed', 0, '')]"
+            },
+            {
+              "name": "START REPLICA UNTIL SQL_BEFORE_GTIDS",
+              "cmd": "CHANGE REPLICATION SOURCE TO SOURCE_HOST='source', SOURCE_PORT=3306, SOURCE_USER='repl', SOURCE_PASSWORD='replpass', SOURCE_AUTO_POSITION=1, GET_SOURCE_PUBLIC_KEY=1; START REPLICA UNTIL SQL_BEFORE_GTIDS='141f5f04-b02a-11f1-821f-7aaf666c07c6:256'",
+              "rc": 0,
+              "seconds": 0.04,
+              "out": ""
+            }
+          ],
+          "clone_status": "('Completed', 0, '')",
+          "gtid_before_delete": "141f5f04-b02a-11f1-821f-7aaf666c07c6:1-255",
+          "bad_transaction_gtid": "141f5f04-b02a-11f1-821f-7aaf666c07c6:256",
+          "seconds": 10.5,
+          "description": "clone-plugin physical copy started in a scratch container, PITR by GTID replication"
+        }
+      },
+      "order": [
+        "mysqlsh_dump",
+        "mysqldump",
+        "clone"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "8e01e2dc01699210d015fae6"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "8a02af9917541b7af197b199"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "96ea0e0968091ca4746f681b"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 2.27,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "mysqlsh_dump",
+          "mysqldump",
+          "clone"
+        ],
+        "pitr_ok": [
+          "clone"
+        ]
+      },
+      "_seconds": 91.1
+    },
+    "logging": {
+      "sink": "slow query log file (long_query_time)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "binlog_format": "ROW",
+        "general_log": "OFF",
+        "general_log_file": "/var/log/mysql/general.log",
+        "innodb_print_all_deadlocks": "ON",
+        "log_bin": "ON",
+        "log_error": "/var/log/mysql/error.log",
+        "log_error_services": "log_filter_internal; log_sink_internal; log_sink_json",
+        "log_error_verbosity": "3",
+        "log_output": "FILE",
+        "log_queries_not_using_indexes": "OFF",
+        "log_slow_extra": "ON",
+        "log_timestamps": "SYSTEM",
+        "long_query_time": "0.100000",
+        "min_examined_row_limit": "0",
+        "performance_schema": "ON",
+        "slow_query_log": "ON",
+        "slow_query_log_file": "/var/log/mysql/slow.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "slow query log file (long_query_time)",
+        "slow_query_ms": 302.3,
+        "slow_logged": true,
+        "seen_after_s": 0.26,
+        "sample": "# Time: 2026-09-14T10:52:56.908770-00:00\n# User@Host: lab[lab] @  [172.19.0.1]  Id:   110\n# Query_time: 0.300287  Lock_time: 0.000000 Rows_sent: 1  Rows_examined: 1 Thread_id: 110 Errno: 0 Killed: 0 Bytes_received: 45 Bytes_sent: 74 Read_first: 0 Read_last: 0 Read_key: 0 Read_next: 0 Read_prev: 0 Read_rnd: 0 Read_rnd_next: 0 Sort_merge_passes: 0 Sort_range_count: 0 Sort_rows: 0 Sort_scan_count: 0 Created_tmp_disk_tables: 0 Created_tmp_tables: 0 Count_hit_tmp_table_size: 0  Start: 2026-09-14T10:52:56.608483-00:00 End: 2026-09-14T10:52:56.908770-00:00\nuse lab;\nSET timestamp=1789383176;\nSELECT SL",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "general log (no audit plugin in MySQL Community)",
+        "setup": "SET GLOBAL general_log = ON (temporary, for the test)",
+        "event_found": true,
+        "seen_after_s": 0.08,
+        "sample": "2026-09-14T10:52:57.345832-00:00\t  112 Query\tCREATE TABLE audit_rdlab_mk_0f92cef123 (id INTEGER)",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 21543,
+          "p50_ms": 0.351526,
+          "p99_ms": 0.6380686199999988,
+          "errors": 0
+        },
+        "full_logging": "SET GLOBAL long_query_time = 0 (every statement written to the slow log, new connections)",
+        "full": {
+          "qps": 21739,
+          "p50_ms": 0.345682,
+          "p99_ms": 0.7072579800000004,
+          "errors": 0
+        },
+        "log_bytes_written": 55528573,
+        "bytes_per_statement": 638.6,
+        "overhead_pct": -0.9,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-my-source": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 885,
+          "docker_logs_lines": 14
+        },
+        "rdlab-my-replica": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 885,
+          "docker_logs_lines": 14
+        },
+        "rdlab-my-proxysql": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 12529,
+          "docker_logs_lines": 103
+        }
+      },
+      "extra": {
+        "performance_schema_top5": [
+          {
+            "calls": 214363,
+            "total_ms": 26834.1,
+            "avg_ms": 0.125,
+            "digest": "SELECT `id` , NAME , `email` FROM `customers` WHERE `id` = ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 13640.5,
+            "avg_ms": 13640.46,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE EVENTS FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 9071.1,
+            "avg_ms": 9071.094,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `order_items` FIELDS TERMINATED BY ? OPTIONALLY ENCLOS"
+          },
+          {
+            "calls": 1,
+            "total_ms": 2826.9,
+            "avg_ms": 2826.924,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `orders` FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY"
+          },
+          {
+            "calls": 1,
+            "total_ms": 1574.4,
+            "avg_ms": 1574.384,
+            "digest": "SELECT SQL_NO_CACHE * FROM `events`"
+          }
+        ],
+        "error_log_last": [
+          "(datetime.datetime(2026, 9, 14, 10, 52, 55, 638439), 'Note', 'Repl', 'Start binlog_dump to source_thread_id(105) replica_server(99), pos(, 4)')",
+          "(datetime.datetime(2026, 9, 14, 10, 52, 49, 553966), 'Note', 'InnoDB', 'Clone End Master Task ID: 0 Passed, code: 0: ')",
+          "(datetime.datetime(2026, 9, 14, 10, 52, 49, 553917), 'Note', 'InnoDB', 'Clone Apply End Master Task ID: 0 Passed, code: 0: ')",
+          "(datetime.datetime(2026, 9, 14, 10, 52, 49, 553743), 'Note', 'InnoDB', 'Clone Apply State DONE')",
+          "(datetime.datetime(2026, 9, 14, 10, 52, 49, 275597), 'Note', 'InnoDB', 'Clone Apply State FLUSH REDO: ')"
+        ]
+      },
+      "collected": [
+        "results/mysql/logs/my-source__var_log_mysql_slow.log",
+        "results/mysql/logs/my-source__var_log_mysql_error.log",
+        "results/mysql/logs/my-source__var_log_mysql_error.log.00.json",
+        "results/mysql/logs/my-source__var_log_mysql_general.log"
+      ],
+      "_seconds": 18.6
+    }
+  },
+  "harness_log": "results/logs/mysql/20260914-135057-061fd2.log",
+  "server_version": "9.7.2",
+  "finished": "2026-09-14T10:53:15+00:00"
+}

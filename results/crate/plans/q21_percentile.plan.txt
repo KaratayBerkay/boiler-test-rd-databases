@@ -1,0 +1,4 @@
+Eval[shipping_country, percentile(total_amount, 0.5) AS median] (rows=12)
+  └ OrderBy[shipping_country ASC] (rows=12)
+    └ GroupHashAggregate[shipping_country | percentile(total_amount, 0.5)] (rows=12)
+      └ Collect[doc.orders | [total_amount, 0.5, shipping_country] | true] (rows=200000)

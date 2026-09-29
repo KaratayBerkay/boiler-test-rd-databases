@@ -1,0 +1,3 @@
+4 | 0 | 0 | SCAN p
+11 | 0 | 0 | CORRELATED SCALAR SUBQUERY 1
+17 | 11 | 0 | SEARCH p2 USING INDEX ix_products_category_id (category_id=?)

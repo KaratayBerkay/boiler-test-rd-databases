@@ -1,0 +1,6 @@
+SELECT
+    COUNT(*)
+FROM "public"."orders"
+    /* public.orders.tableScan */
+WHERE (EXTRACT(YEAR FROM "ordered_at") = 2025)
+    AND (EXTRACT(MONTH FROM "ordered_at") = 5)

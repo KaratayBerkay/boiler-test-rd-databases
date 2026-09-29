@@ -1,0 +1,10 @@
+SELECT
+    "id",
+    "name"
+FROM "public"."products"
+    /* public.PRIMARY_KEY_C */
+WHERE ("description" LIKE '%bluetooth%')
+    AND ("description" LIKE '%waterproof%')
+ORDER BY 1
+FETCH FIRST 50 ROWS ONLY
+/* index sorted */

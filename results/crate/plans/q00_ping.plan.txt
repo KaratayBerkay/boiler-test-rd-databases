@@ -1,0 +1,2 @@
+Eval[1] (rows=unknown)
+  └ TableFunction[empty_row | [] | true] (rows=unknown)

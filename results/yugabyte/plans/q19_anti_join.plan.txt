@@ -1,0 +1,8 @@
+Sort  (cost=50338.56..50338.57 rows=1 width=4)
+  Sort Key: p.id
+  ->  Hash Right Join  (cost=575.63..50338.55 rows=1 width=4)
+        Hash Cond: (oi.product_id = p.id)
+        Filter: (oi.id IS NULL)
+        ->  Seq Scan on order_items oi  (cost=23.10..43081.44 rows=487606 width=8)
+        ->  Hash  (cost=490.03..490.03 rows=5000 width=4)
+              ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4)

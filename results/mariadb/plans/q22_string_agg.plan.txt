@@ -1,0 +1,3 @@
+1 | SIMPLE | o | range | PRIMARY | PRIMARY | 4 | None | 500 | Using where
+1 | SIMPLE | oi | ref | ix_order_items_order_id,ix_order_items_product_id | ix_order_items_order_id | 4 | lab.o.id | 2 | 
+1 | SIMPLE | p | eq_ref | PRIMARY | PRIMARY | 4 | lab.oi.product_id | 1 | 

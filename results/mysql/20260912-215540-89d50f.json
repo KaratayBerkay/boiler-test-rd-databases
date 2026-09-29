@@ -1,0 +1,173 @@
+{
+  "engine": "mysql",
+  "display": "MySQL 9",
+  "category": "row-store OLTP",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "mysql:9",
+  "run_id": "20260912-215540-89d50f",
+  "started": "2026-09-12T18:55:40+00:00",
+  "scale": 1.0,
+  "notes": "MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.",
+  "phases": {
+    "replication": {
+      "kind": "GTID async (binlog row)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "9.7.2",
+          "status": {
+            "read_only": 0,
+            "replica_status": null,
+            "gtid_executed": "95fbd30a-aed9-11f1-94e6-0a31e42f2aba:1-55568",
+            "replicas": [
+              {
+                "Server_Id": 2,
+                "Host": "",
+                "Port": 3306,
+                "Source_Id": 1,
+                "Replica_UUID": "9f52c40c-aed9-11f1-8aae-26cf83c78646"
+              }
+            ]
+          }
+        },
+        "replica": {
+          "role_reported": "replica",
+          "role_configured": "replica",
+          "version": "9.7.2",
+          "status": {
+            "read_only": 1,
+            "replica_status": {
+              "Replica_IO_Running": "Yes",
+              "Replica_SQL_Running": "Yes",
+              "Seconds_Behind_Source": 0,
+              "Source_Host": "source",
+              "Executed_Gtid_Set": "95fbd30a-aed9-11f1-94e6-0a31e42f2aba:1-55568,\n9f52c40c-aed9-11f1-8aae-26cf83c78646:1-5",
+              "Last_IO_Error": "",
+              "Last_SQL_Error": "",
+              "Last_Error": ""
+            },
+            "gtid_executed": "95fbd30a-aed9-11f1-94e6-0a31e42f2aba:1-55568,\n9f52c40c-aed9-11f1-8aae-26cf83c78646:1-5",
+            "replicas": []
+          }
+        },
+        "proxysql": {
+          "role_reported": "replica",
+          "role_configured": "proxy",
+          "version": "9.7.2",
+          "status": {
+            "read_only": 1,
+            "replica_status": null,
+            "gtid_executed": "95fbd30a-aed9-11f1-94e6-0a31e42f2aba:1-55568,\n9f52c40c-aed9-11f1-8aae-26cf83c78646:1-5",
+            "replicas": [
+              {
+                "Server_Id": 2,
+                "Host": "",
+                "Port": 3306,
+                "Source_Id": 1,
+                "Replica_UUID": "9f52c40c-aed9-11f1-8aae-26cf83c78646"
+              }
+            ]
+          }
+        }
+      },
+      "visibility_lag": {
+        "replica": {
+          "replica": "replica",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 1.7430400184821337,
+            "p50": 2.4203179928008467,
+            "p90": 2.786575607024133,
+            "p95": 2.816252144111786,
+            "p99": 3.476758303295356,
+            "max": 3.7437610153574497,
+            "mean": 2.4457113662113747,
+            "stdev": 0.37813532123935206
+          }
+        }
+      },
+      "write_rejection": {
+        "replica": {
+          "replica": "replica",
+          "writes_rejected": true,
+          "error_code": "1290",
+          "error": "OperationalError: (1290, 'The MySQL server is running with the --read-only option so it cannot execute this statement')"
+        }
+      },
+      "lag_under_load": {
+        "error": "OperationalError: (2006, \"MySQL server has gone away (OSError(9, 'Bad file descriptor'))\")"
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 198926,
+          "qps": 49732,
+          "errors": 0,
+          "latency_ms": {
+            "n": 198926,
+            "min": 0.257507,
+            "p50": 0.606653,
+            "p90": 0.8925495,
+            "p95": 0.99645825,
+            "p99": 1.23676575,
+            "max": 4.913282,
+            "mean": 0.6418369757246414,
+            "stdev": 0.19534569618738817
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "replica"
+          ],
+          "workers": 32,
+          "queries": 203516,
+          "qps": 50879,
+          "errors": 0,
+          "latency_ms": {
+            "n": 203516,
+            "min": 0.257915,
+            "p50": 0.5922624999999999,
+            "p90": 0.883475,
+            "p95": 0.98749375,
+            "p99": 1.2244170500000007,
+            "max": 4.656217,
+            "mean": 0.6273086160596709,
+            "stdev": 0.19874814803577753
+          }
+        },
+        "gain": 1.02
+      },
+      "failover": {
+        "kind": "GTID async (binlog row)",
+        "stopped_at": 0.0,
+        "old_primary_error": "OperationalError: (2003, \"Can't connect to MySQL server on '127.0.0.1' ([Errno 111] Connection refused)\")",
+        "promote_cmd": "STOP REPLICA; RESET REPLICA ALL; SET GLOBAL super_read_only = OFF; SET GLOBAL read_only = OFF",
+        "promote_ms": 53.5,
+        "write_attempts_until_success": 1,
+        "last_error_before_success": null,
+        "downtime_ms": 497.8,
+        "new_primary": "replica",
+        "new_primary_role": "primary",
+        "new_primary_status": {
+          "read_only": 0,
+          "replica_status": null,
+          "gtid_executed": "95fbd30a-aed9-11f1-94e6-0a31e42f2aba:1-55600,\n9f52c40c-aed9-11f1-8aae-26cf83c78646:1-6",
+          "replicas": []
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 16.1
+    }
+  },
+  "finished": "2026-09-12T18:55:56+00:00"
+}

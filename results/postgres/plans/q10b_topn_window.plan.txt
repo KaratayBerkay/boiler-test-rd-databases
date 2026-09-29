@@ -1,0 +1,10 @@
+Subquery Scan on t  (cost=646.11..681.24 rows=1081 width=22)
+  ->  WindowAgg  (cost=646.11..670.43 rows=1081 width=30)
+        Window: w1 AS (PARTITION BY orders.customer_id ORDER BY orders.ordered_at, orders.id ROWS UNBOUNDED PRECEDING)
+        Run Condition: (row_number() OVER w1 <= 3)
+        ->  Sort  (cost=646.11..648.81 rows=1081 width=22)
+              Sort Key: orders.customer_id, orders.ordered_at DESC, orders.id DESC
+              ->  Bitmap Heap Scan on orders  (cost=10.87..591.64 rows=1081 width=22)
+                    Recheck Cond: (customer_id <= 100)
+                    ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..10.60 rows=1081 width=0)
+                          Index Cond: (customer_id <= 100)

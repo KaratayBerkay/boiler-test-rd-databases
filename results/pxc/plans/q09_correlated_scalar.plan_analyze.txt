@@ -1,0 +1,6 @@
+-> Limit: 500 row(s)  (cost=69.4 rows=50) (actual time=0.0273..0.374 rows=500 loops=1)
+    -> Filter: (p.`active` = true)  (cost=69.4 rows=50) (actual time=0.0267..0.343 rows=500 loops=1)
+        -> Index scan on p using PRIMARY  (cost=69.4 rows=500) (actual time=0.0248..0.26 rows=593 loops=1)
+-> Select #2 (subquery in projection; dependent)
+    -> Aggregate: avg(p2.price)  (cost=28 rows=1) (actual time=0.0408..0.0408 rows=1 loops=500)
+        -> Index lookup on p2 using ix_products_category_id (category_id=p.category_id)  (cost=25.7 rows=23.4) (actual time=0.0104..0.0379 rows=26.2 loops=500)

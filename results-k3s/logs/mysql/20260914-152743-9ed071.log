@@ -1,0 +1,30 @@
+2026-09-14 15:27:43,298 DEBUG   [mysql/-] logging to /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152743-9ed071.log and /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/logs/mysql/20260914-152743-9ed071.jsonl
+2026-09-14 15:27:43,298 INFO    [mysql/-] [mysql] run 20260914-152743-9ed071 phases=['backup'] scale=0.3 (log: results-k3s/logs/mysql/20260914-152743-9ed071.log)
+2026-09-14 15:27:43,313 INFO    [mysql/-] [mysql] phase: backup
+2026-09-14 15:27:44,735 INFO    [mysql/backup]   source fingerprint: 7 tables, 520,772 rows (1.42s)
+2026-09-14 15:27:44,736 INFO    [mysql/backup]   strategy mysqlsh_dump: MySQL Shell parallel zstd dump loaded into a second schema
+2026-09-14 15:27:45,759 INFO    [mysql/backup]     prepare                            rc=0    1.02s
+2026-09-14 15:27:48,094 INFO    [mysql/backup]     mysqlsh dump-tables                rc=0    2.33s
+2026-09-14 15:27:48,339 INFO    [mysql/backup]     create restore db                  ok    0.05s
+2026-09-14 15:27:58,694 INFO    [mysql/backup]     mysqlsh load-dump                  rc=0   10.35s
+2026-09-14 15:28:00,060 INFO    [mysql/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:28:00,131 INFO    [mysql/backup]     drop restore db                    ok    0.07s
+2026-09-14 15:28:00,132 INFO    [mysql/backup]   mysqlsh_dump: backup 2.33s / 9.2 MB, restore 10.35s, verified=True
+2026-09-14 15:28:00,132 INFO    [mysql/backup]   strategy mysqldump: classic logical dump restored into a second schema
+2026-09-14 15:28:01,123 INFO    [mysql/backup]     mysqldump                          rc=0    0.99s
+2026-09-14 15:28:01,379 INFO    [mysql/backup]     create restore db                  ok    0.04s
+2026-09-14 15:28:14,233 INFO    [mysql/backup]     restore                            rc=0   12.85s
+2026-09-14 15:28:15,616 INFO    [mysql/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:28:15,676 INFO    [mysql/backup]     drop restore db                    ok    0.06s
+2026-09-14 15:28:15,677 INFO    [mysql/backup]   mysqldump: backup 0.99s / 43.3 MB, restore 12.85s, verified=True
+2026-09-14 15:28:15,678 INFO    [mysql/backup]   strategy clone: clone-plugin physical copy started in a scratch container, PITR by GTID replication
+2026-09-14 15:28:15,871 INFO    [mysql/backup]     prepare                            rc=0    0.19s
+2026-09-14 15:28:15,880 INFO    [mysql/backup]     install clone plugin               ok    0.01s
+2026-09-14 15:28:18,059 INFO    [mysql/backup]     CLONE LOCAL DATA DIRECTORY         ok    2.18s
+2026-09-14 15:28:18,256 INFO    [mysql/backup]     clone status                       ok    0.00s
+2026-09-14 15:28:24,822 INFO    [mysql/backup]     verify restored copy               MATCH (7 tables, 520,772 rows)
+2026-09-14 15:28:24,857 INFO    [mysql/backup]     START REPLICA UNTIL SQL_BEFORE_GTIDS ok    0.04s
+2026-09-14 15:28:25,370 INFO    [mysql/backup]     pitr via replication until GTID: 1000 probe rows (MATCH)
+2026-09-14 15:28:27,904 INFO    [mysql/backup]   clone: backup 2.18s / 258.0 MB, restore 1.53s, verified=True, pitr=True
+2026-09-14 15:28:27,919 INFO    [mysql/backup] [mysql] phase backup done in 44.6s
+2026-09-14 15:28:27,926 INFO    [mysql/-] saved /home/berkay-server/repos/boilers/raw-codes/databases/rd-databases/results-k3s/mysql/20260914-152743-9ed071.json

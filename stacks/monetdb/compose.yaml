@@ -1,0 +1,39 @@
+# MonetDB — column-store analytical RDBMS (MAPI protocol on 50000).
+#
+# Backup strategy (`rdlab run monetdb --phases backup`): msqldump (SQL) and CALL sys.hot_snapshot(tar) into the shared
+#   `monetdb-backups` volume, both restored into a second database in the same dbfarm.
+# Logging strategy: the built-in query log (sys.querylog_enable(100) -> sys.querylog_calls) switched on by the lab,
+#   merovingian.log in the dbfarm, Docker json-file rotation.
+name: rdlab-monetdb
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+services:
+  volumes-init:
+    image: monetdb/monetdb:latest
+    container_name: rdlab-monetdb-volumes-init
+    user: root
+    entrypoint: ["sh", "-c", "chmod 1777 /backups && echo volumes ready"]
+    volumes: [monetdb-backups:/backups]
+    logging: *logging
+    restart: "no"
+  monetdb:
+    image: monetdb/monetdb:latest
+    container_name: rdlab-monetdb
+    logging: *logging
+    environment:
+      MDB_DB_ADMIN_PASS: labpass
+      MDB_DAEMON_PASS: labpass
+      MDB_CREATE_DBS: lab
+    volumes: [monetdb:/var/monetdb5/dbfarm, monetdb-backups:/backups]
+    ports: ["50000:50000"]
+    depends_on:
+      volumes-init: { condition: service_completed_successfully }
+    healthcheck:
+      test: ["CMD-SHELL", "printf 'user=monetdb\\npassword=labpass\\n' > /tmp/.monetdb && DOTMONETDBFILE=/tmp/.monetdb mclient -d lab -s 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  monetdb:
+  monetdb-backups:

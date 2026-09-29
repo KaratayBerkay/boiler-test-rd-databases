@@ -1,0 +1,54 @@
+display: CrateDB
+category: distributed SQL (search-backed)
+dialect: crate
+driver: crate
+image: crate:latest
+project: rdlab-crate
+scale: 1
+notes: >-
+  3-node cluster; tables are sharded and replicated (number_of_replicas default 0-1), eventually consistent reads
+  (REFRESH TABLE makes writes visible), no transactions, no foreign keys, no recursive CTEs. Uses the HTTP endpoint.
+docs:
+  - https://cratedb.com/docs/crate/reference/en/latest/sql/general/index.html
+  - https://cratedb.com/docs/crate/reference/en/latest/config/cluster.html
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 14200
+    user: crate
+    password: ""
+    database: doc
+    container: rdlab-crate-1
+  - name: node2
+    role: node
+    host: 127.0.0.1
+    port: 14201
+    user: crate
+    password: ""
+    database: doc
+    container: rdlab-crate-2
+  - name: node3
+    role: node
+    host: 127.0.0.1
+    port: 14202
+    user: crate
+    password: ""
+    database: doc
+    container: rdlab-crate-3
+replication:
+  kind: sharded, replicated shards (multi-active, eventually consistent)
+  promote:
+    method: none
+    target: node2
+backup:
+  dir: /backups
+  volume: crate-backups
+  repository: lab_backups
+  strategies: [snapshot, incremental]
+logging:
+  slow_ms: 100
+features:
+  settle_seconds: 5
+  connection_storm: false

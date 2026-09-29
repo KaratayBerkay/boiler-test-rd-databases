@@ -1,0 +1,50 @@
+planning time: 244µs
+execution time: 395ms
+distribution: full
+plan type: generic, reused
+rows decoded from KV: 492,606 (18 MiB, 3 gRPC calls)
+DistSQL network usage: 1.9 MiB (514 messages)
+regions: lab
+
+• sort
+│ sql nodes: n2, n3
+│ regions: lab
+│ execution time: 58µs
+│ sql cpu time: 57µs
+│ actual row count: 0
+│ estimated row count: 1
+│ order: +id
+│
+└── • hash join (right anti)
+    │ sql nodes: n2, n3
+    │ regions: lab
+    │ execution time: 28ms
+    │ sql cpu time: 45ms
+    │ actual row count: 0
+    │ estimated row count: 1
+    │ equality: (product_id) = (id)
+    │ right cols are key
+    │
+    ├── • scan
+    │     sql nodes: n2
+    │     kv nodes: n2
+    │     regions: lab
+    │     KV time: 379ms
+    │     KV rows decoded: 487,606
+    │     sql cpu time: 142ms
+    │     actual row count: 487,606
+    │     estimated row count: 487,606 (100% of the table; stats collected 5 minutes ago)
+    │     table: order_items@ix_order_items_product_id
+    │     spans: FULL SCAN
+    │
+    └── • scan
+          sql nodes: n3
+          kv nodes: n3
+          regions: lab
+          KV time: 6ms
+          KV rows decoded: 5,000
+          sql cpu time: 2ms
+          actual row count: 5,000
+          estimated row count: 5,000 (100% of the table; stats collected 4 minutes ago)
+          table: products@ix_products_category_id
+          spans: FULL SCAN

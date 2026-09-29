@@ -1,0 +1,3 @@
+9 | 0 | 0 | SCAN c
+11 | 0 | 0 | SEARCH o USING INDEX ix_orders_customer_id (customer_id=?)
+16 | 0 | 0 | USE TEMP B-TREE FOR GROUP BY

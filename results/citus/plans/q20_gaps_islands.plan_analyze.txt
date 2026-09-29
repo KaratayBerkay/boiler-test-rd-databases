@@ -1,0 +1,51 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=221.532..221.631 rows=2000.00 loops=1)
+  ->  Distributed Subplan 209_1
+        Subplan Duration: 482.32 ms
+        Intermediate Data Size: 3302 kB
+        Result destination: Write locally
+        ->  WindowAgg  (cost=8304.89..10554.82 rows=100000 width=28) (actual time=0.000..0.000 rows=99904.00 loops=1)
+              Window: w1 AS (PARTITION BY remote_scan.customer_id ORDER BY remote_scan.occurred_at, remote_scan.worker_column_4)
+              ->  Sort  (cost=8304.82..8554.82 rows=100000 width=28) (actual time=0.000..0.000 rows=99904.00 loops=1)
+                    Sort Key: remote_scan.customer_id, remote_scan.occurred_at, remote_scan.worker_column_4
+                    ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=28) (never executed)
+                          Task Count: 32
+                          Tuple data received from nodes: 2732 kB
+                          Tasks Shown: One of 32
+                          ->  Task
+                                Tuple data received from node: 85 kB
+                                Node: host=w1 port=5432 dbname=lab
+                                ->  Bitmap Heap Scan on events_102084 events  (cost=33.14..530.92 rows=3103 width=28) (actual time=0.713..3.581 rows=3096.00 loops=1)
+                                      Recheck Cond: (customer_id <= 2000)
+                                      Heap Blocks: exact=456
+                                      Buffers: shared hit=465
+                                      ->  Bitmap Index Scan on ix_events_customer_id_102084  (cost=0.00..32.36 rows=3103 width=0) (actual time=0.588..0.589 rows=3096.00 loops=1)
+                                            Index Cond: (customer_id <= 2000)
+                                            Index Searches: 1
+                                            Buffers: shared hit=9
+                                    Planning:
+                                      Buffers: shared hit=137
+                                    Planning Time: 0.811 ms
+                                    Execution Time: 5.278 ms
+        Planning Time: 0.000 ms
+        Execution Time: 0.003 ms
+  Task Count: 1
+  Tuple data received from nodes: 23 kB
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 23 kB
+        Node: host=localhost port=5432 dbname=lab
+        ->  Sort  (cost=4638.72..4638.73 rows=5 width=12) (actual time=217.848..217.961 rows=2000.00 loops=1)
+              Sort Key: intermediate_result.customer_id
+              Sort Method: quicksort  Memory: 111kB
+              ->  HashAggregate  (cost=4638.61..4638.66 rows=5 width=12) (actual time=217.068..217.391 rows=2000.00 loops=1)
+                    Group Key: intermediate_result.customer_id
+                    Batches: 1  Memory Usage: 241kB
+                    ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..3699.51 rows=187819 width=4) (actual time=122.439..195.986 rows=99765.00 loops=1)
+                          Filter: (CASE WHEN ((prev_at IS NULL) OR (EXTRACT(epoch FROM (occurred_at - prev_at)) > '1800'::numeric)) THEN 1 ELSE 0 END = 1)
+                          Rows Removed by Filter: 139
+            Planning Time: 0.163 ms
+            Execution Time: 218.146 ms
+Planning:
+  Buffers: shared hit=4
+Planning Time: 0.548 ms
+Execution Time: 704.049 ms

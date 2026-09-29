@@ -1,0 +1,19 @@
+Index Scan using customers_pkey on customers  (cost=23.09..23.25 rows=1 width=43) (actual time=0.228..0.230 rows=1 loops=1)
+  Index Cond: (id = '4403'::smallint)
+  Storage Table Read Requests: 1
+  Storage Table Read Execution Time: 0.168 ms
+  Storage Table Read Ops: 1
+  Storage Table Rows Scanned: 1
+Planning Time: 0.053 ms
+Execution Time: 0.293 ms
+Storage Read Requests: 1
+Storage Read Execution Time: 0.168 ms
+Storage Read Ops: 1
+Storage Rows Scanned: 1
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 0.168 ms
+Peak Memory Usage: 72 kB

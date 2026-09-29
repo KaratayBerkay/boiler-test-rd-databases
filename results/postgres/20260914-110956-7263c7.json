@@ -1,0 +1,175 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260914-110956-7263c7",
+  "started": "2026-09-14T08:09:56+00:00",
+  "scale": 0.3,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "logging": {
+      "sink": "jsonlog file (logging_collector) via log_min_duration_statement",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "logging_collector": "on",
+        "log_destination": "stderr,jsonlog",
+        "log_directory": "/var/lib/postgresql/log",
+        "log_filename": "postgresql-%Y-%m-%d.log",
+        "log_rotation_size": "100MB",
+        "log_rotation_age": "1d",
+        "log_min_duration_statement": "100ms",
+        "log_min_duration_sample": "-1",
+        "log_statement_sample_rate": "1",
+        "log_statement": "none",
+        "log_lock_waits": "on",
+        "log_temp_files": "0",
+        "log_checkpoints": "on",
+        "log_connections": "all",
+        "log_disconnections": "on",
+        "log_autovacuum_min_duration": "1s",
+        "log_line_prefix": "%m [%p] %q%u@%d app=%a",
+        "log_error_verbosity": "default",
+        "shared_preload_libraries": "pg_stat_statements,auto_explain",
+        "auto_explain.log_min_duration": "500ms",
+        "auto_explain.log_format": "json",
+        "track_io_timing": "on",
+        "archive_mode": "on",
+        "summarize_wal": "on",
+        "log_files": [
+          "postgresql-2026-09-14.json",
+          "postgresql-2026-09-14.log"
+        ],
+        "current_logfile_json": "/var/lib/postgresql/log/postgresql-2026-09-14.json"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "jsonlog file (logging_collector) via log_min_duration_statement",
+        "slow_query_ms": 313.4,
+        "slow_logged": true,
+        "seen_after_s": 0.08,
+        "sample": "{\"timestamp\": \"2026-09-14 08:09:56.963 UTC\", \"user\": \"lab\", \"dbname\": \"lab\", \"application_name\": \"rdlab\", \"message\": \"duration: 300.933 ms  statement: SELECT pg_sleep(0.3) AS rdlab_mk_8ddaf1cd3f\", \"error_severity\": \"LOG\"}",
+        "duration_ms": 300.933,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "log_statement=ddl (pgaudit not bundled in the image)",
+        "setup": "log_statement=ddl",
+        "event_found": true,
+        "seen_after_s": 0.08,
+        "sample": "{\"timestamp\": \"2026-09-14 08:09:57.155 UTC\", \"user\": \"lab\", \"dbname\": \"lab\", \"application_name\": \"rdlab\", \"message\": \"statement: CREATE TABLE audit_rdlab_mk_2419353fb3 (id INTEGER)\"}",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 28474,
+          "p50_ms": 0.266695,
+          "p99_ms": 0.47541435999999965,
+          "errors": 0
+        },
+        "full_logging": "ALTER SYSTEM SET log_min_duration_statement = 0 + pg_reload_conf() (every statement logged with its duration)",
+        "full": {
+          "qps": 29676,
+          "p50_ms": 0.25768,
+          "p99_ms": 0.45355591,
+          "errors": 0
+        },
+        "log_bytes_written": 41906,
+        "bytes_per_statement": 0.4,
+        "overhead_pct": -4.2,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-pg-primary": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null
+        },
+        "rdlab-pg-replica": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null
+        },
+        "rdlab-pg-pgbouncer": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null
+        },
+        "rdlab-pg-haproxy": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null
+        }
+      },
+      "extra": {
+        "pg_stat_statements_top5": [
+          {
+            "calls": 1,
+            "total_ms": 3503.9,
+            "mean_ms": 3503.88,
+            "query": "COPY order_items (id, order_id, product_id, qty, unit_price) FROM STDIN (FORMAT csv, HEADE"
+          },
+          {
+            "calls": 232601,
+            "total_ms": 2758.0,
+            "mean_ms": 0.01,
+            "query": "SELECT id, name, email FROM customers WHERE id = $1"
+          },
+          {
+            "calls": 1,
+            "total_ms": 1916.9,
+            "mean_ms": 1916.91,
+            "query": "COPY events (id, customer_id, event_type, occurred_at, payload, value_num) FROM STDIN (FOR"
+          },
+          {
+            "calls": 355644,
+            "total_ms": 1063.5,
+            "mean_ms": 0.0,
+            "query": "SELECT $2 FROM ONLY \"public\".\"categories\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY S"
+          },
+          {
+            "calls": 1,
+            "total_ms": 804.0,
+            "mean_ms": 803.95,
+            "query": "COPY orders (id, customer_id, status, ordered_at, total_amount, shipping_country) FROM STD"
+          }
+        ],
+        "log_dir_bytes": 442386
+      },
+      "collected": [
+        "results/postgres/logs/pg-primary__var_lib_postgresql_log_postgresql-2026-09-14.json",
+        "results/postgres/logs/pg-primary__var_lib_postgresql_log_postgresql-2026-09-14.log",
+        "results/postgres/logs/pg-replica__var_lib_postgresql_log_postgresql-2026-09-14.json"
+      ],
+      "_seconds": 14.4
+    }
+  },
+  "harness_log": "results/logs/postgres/20260914-110956-7263c7.log",
+  "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "finished": "2026-09-14T08:10:11+00:00"
+}

@@ -1,0 +1,39 @@
+<!-- Logging strategy: JSON server log (file with rotation + console for `docker logs`), query_log flushed every second,
+     session_log for logins, text_log for server messages as a table. -->
+<clickhouse>
+    <logger>
+        <level>information</level>
+        <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+        <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+        <size>100M</size>
+        <count>3</count>
+        <console>1</console>
+        <formatting>
+            <type>json</type>
+        </formatting>
+    </logger>
+    <query_log>
+        <database>system</database>
+        <table>query_log</table>
+        <ttl>event_date + INTERVAL 7 DAY</ttl>
+        <flush_interval_milliseconds>1000</flush_interval_milliseconds>
+    </query_log>
+    <session_log>
+        <database>system</database>
+        <table>session_log</table>
+        <ttl>event_date + INTERVAL 7 DAY</ttl>
+        <flush_interval_milliseconds>1000</flush_interval_milliseconds>
+    </session_log>
+    <text_log>
+        <database>system</database>
+        <table>text_log</table>
+        <level>information</level>
+        <ttl>event_date + INTERVAL 3 DAY</ttl>
+        <flush_interval_milliseconds>2000</flush_interval_milliseconds>
+    </text_log>
+    <part_log>
+        <database>system</database>
+        <table>part_log</table>
+        <ttl>event_date + INTERVAL 3 DAY</ttl>
+    </part_log>
+</clickhouse>

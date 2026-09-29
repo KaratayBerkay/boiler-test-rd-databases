@@ -1,0 +1,107 @@
+physical_plan | ┌───────────────────────────┐
+│           TOP_N           │
+│    ────────────────────   │
+│          Top: 50          │
+│                           │
+│         Order By:         │
+│      sum((oi.qty * oi     │
+│     .unit_price)) DESC    │
+│     c.country_code ASC    │
+│   date_trunc('month', o   │
+│      .ordered_at) ASC     │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│__internal_decompress_strin│
+│           g(#0)           │
+│             #1            │
+│             #2            │
+│             #3            │
+│                           │
+│        ~79,484 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│          Groups:          │
+│             #0            │
+│             #1            │
+│                           │
+│        Aggregates:        │
+│     count(DISTINCT #2)    │
+│          sum(#3)          │
+│                           │
+│        ~79,484 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│        country_code       │
+│    date_trunc('month',    │
+│         ordered_at)       │
+│             id            │
+│ (CAST(qty AS DECIMAL(18,0)│
+│      ) * unit_price)      │
+│                           │
+│       ~107,304 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│             #2            │
+│             #3            │
+│__internal_compress_string_│
+│        uinteger(#4)       │
+│                           │
+│       ~107,304 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         HASH_JOIN         │
+│    ────────────────────   │
+│      Join Type: INNER     │
+│                           │
+│        Conditions:        ├──────────────┐
+│       order_id = id       │              │
+│                           │              │
+│       ~107,304 rows       │              │
+└─────────────┬─────────────┘              │
+┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+│          SEQ_SCAN         ││         HASH_JOIN         │
+│    ────────────────────   ││    ────────────────────   │
+│           Table:          ││      Join Type: INNER     │
+│    lab.main.order_items   ││                           │
+│                           ││        Conditions:        │
+│   Type: Sequential Scan   ││      customer_id = id     │
+│                           ││                           ├──────────────┐
+│        Projections:       ││                           │              │
+│          order_id         ││                           │              │
+│            qty            ││                           │              │
+│         unit_price        ││                           │              │
+│                           ││                           │              │
+│       ~487,734 rows       ││        ~37,262 rows       │              │
+└───────────────────────────┘└─────────────┬─────────────┘              │
+                             ┌─────────────┴─────────────┐┌─────────────┴─────────────┐
+                             │          SEQ_SCAN         ││          SEQ_SCAN         │
+                             │    ────────────────────   ││    ────────────────────   │
+                             │           Table:          ││           Table:          │
+                             │      lab.main.orders      ││     lab.main.customers    │
+                             │                           ││                           │
+                             │   Type: Sequential Scan   ││   Type: Sequential Scan   │
+                             │                           ││                           │
+                             │        Projections:       ││        Projections:       │
+                             │        customer_id        ││             id            │
+                             │             id            ││        country_code       │
+                             │         ordered_at        ││                           │
+                             │                           ││                           │
+                             │          Filters:         ││                           │
+                             │     status='delivered'    ││                           │
+                             │ ordered_at>='2025-01-01 00││                           │
+                             │   :00:00'::TIMESTAMP AND  ││                           │
+                             │  ordered_at<'2025-07-01 00││                           │
+                             │     :00:00'::TIMESTAMP    ││                           │
+                             │                           ││                           │
+                             │        ~40,013 rows       ││        ~20,000 rows       │
+                             └───────────────────────────┘└───────────────────────────┘

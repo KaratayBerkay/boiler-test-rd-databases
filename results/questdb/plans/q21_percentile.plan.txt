@@ -1,0 +1,8 @@
+Encode sort light
+  keys: [shipping_country]
+    GroupBy vectorized: false
+      keys: [shipping_country]
+      values: [approx_percentile(total_amount,0.5)]
+        PageFrame
+            Row forward scan
+            Frame forward scan on: orders

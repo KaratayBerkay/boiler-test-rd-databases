@@ -1,0 +1,9 @@
+Limit  (cost=0.28..5159.11 rows=500 width=42)
+  ->  Index Scan using products_pkey on products p  (cost=0.28..13330.69 rows=1292 width=42)
+        Filter: active
+        SubPlan 1
+          ->  Aggregate  (cost=10.17..10.18 rows=1 width=32)
+                ->  Bitmap Heap Scan on products p2  (cost=1.44..10.15 rows=8 width=6)
+                      Recheck Cond: (category_id = p.category_id)
+                      ->  Bitmap Index Scan on ix_products_category_id  (cost=0.00..1.44 rows=8 width=0)
+                            Index Cond: (category_id = p.category_id)

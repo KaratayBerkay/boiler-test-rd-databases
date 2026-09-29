@@ -1,0 +1,12 @@
+Limit  (cost=181.51..181.51 rows=2 width=22) (actual time=0.458..0.470 rows=100.00 loops=1)
+  Buffers: shared hit=144
+  ->  Sort  (cost=181.51..181.51 rows=2 width=22) (actual time=0.457..0.462 rows=100.00 loops=1)
+        Sort Key: id
+        Sort Method: quicksort  Memory: 35kB
+        Buffers: shared hit=144
+        ->  Seq Scan on products  (cost=0.00..181.50 rows=2 width=22) (actual time=0.010..0.426 rows=152.00 loops=1)
+              Filter: (((attrs ->> 'color'::text) = 'red'::text) AND (((attrs ->> 'weight'::text))::numeric > '10'::numeric))
+              Rows Removed by Filter: 1348
+              Buffers: shared hit=144
+Planning Time: 0.060 ms
+Execution Time: 0.487 ms

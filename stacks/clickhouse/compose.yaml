@@ -1,0 +1,76 @@
+# ClickHouse — 1 shard x 2 replicas (ReplicatedMergeTree) coordinated by ClickHouse Keeper.
+#
+# Backup strategy (`rdlab run clickhouse --phases backup`): native BACKUP/RESTORE to a `backups` disk on the shared
+#   `ch-backups` volume (config/backups.xml): single-replica, ON CLUSTER, and incremental (base_backup).
+# Logging strategy (config/logging.xml): JSON server log to file (rotated) and console, system.query_log (every query
+#   = slow log + audit trail), system.session_log, system.text_log; Docker json-file rotation on every container.
+name: rdlab-clickhouse
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "50m", max-file: "3", compress: "true", tag: "{{.Name}}" }
+x-ch: &ch
+  image: clickhouse/clickhouse-server:latest
+  logging: *logging
+  ulimits:
+    nofile: { soft: 262144, hard: 262144 }
+  environment:
+    CLICKHOUSE_USER: lab
+    CLICKHOUSE_PASSWORD: labpass
+    CLICKHOUSE_DB: lab
+    CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8123/ping | grep -q Ok"]
+    interval: 3s
+    timeout: 3s
+    retries: 40
+
+services:
+  volumes-init:
+    image: clickhouse/clickhouse-server:latest
+    container_name: rdlab-ch-volumes-init
+    user: root
+    entrypoint: ["sh", "-c", "chmod 1777 /backups && echo volumes ready"]
+    volumes: [ch-backups:/backups]
+    logging: *logging
+    restart: "no"
+  keeper:
+    image: clickhouse/clickhouse-keeper:latest
+    container_name: rdlab-ch-keeper
+    logging: *logging
+    hostname: keeper
+    x-k8s: { port: 9181 }             # k8s generator: port the servers wait for (compose ignores x-* keys)
+    volumes: ["./config/keeper.xml:/etc/clickhouse-keeper/keeper_config.xml:ro", "ch-keeper:/var/lib/clickhouse-keeper"]
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | timeout 2 bash -c 'exec 3<>/dev/tcp/127.0.0.1/9181; cat >&3; head -c4 <&3' | grep -q imok"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+  ch1:
+    <<: *ch
+    container_name: rdlab-ch-1
+    hostname: ch1
+    volumes: ["./config/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml:ro", "./config/macros-ch1.xml:/etc/clickhouse-server/config.d/macros.xml:ro",
+              "./config/backups.xml:/etc/clickhouse-server/config.d/backups.xml:ro", "./config/logging.xml:/etc/clickhouse-server/config.d/logging.xml:ro",
+              "ch1:/var/lib/clickhouse", "ch1-logs:/var/log/clickhouse-server", "ch-backups:/backups"]
+    ports: ["18123:8123", "19000:9000"]
+    depends_on:
+      keeper: { condition: service_healthy }
+      volumes-init: { condition: service_completed_successfully }
+  ch2:
+    <<: *ch
+    container_name: rdlab-ch-2
+    hostname: ch2
+    volumes: ["./config/cluster.xml:/etc/clickhouse-server/config.d/cluster.xml:ro", "./config/macros-ch2.xml:/etc/clickhouse-server/config.d/macros.xml:ro",
+              "./config/backups.xml:/etc/clickhouse-server/config.d/backups.xml:ro", "./config/logging.xml:/etc/clickhouse-server/config.d/logging.xml:ro",
+              "ch2:/var/lib/clickhouse", "ch2-logs:/var/log/clickhouse-server", "ch-backups:/backups"]
+    ports: ["18124:8123", "19001:9000"]
+    depends_on:
+      keeper: { condition: service_healthy }
+
+volumes:
+  ch-keeper:
+  ch1:
+  ch2:
+  ch1-logs:
+  ch2-logs:
+  ch-backups:

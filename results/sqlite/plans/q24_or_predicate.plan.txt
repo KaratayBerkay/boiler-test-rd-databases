@@ -1,0 +1,6 @@
+5 | 0 | 0 | MULTI-INDEX OR
+6 | 5 | 0 | INDEX 1
+14 | 6 | 0 | SEARCH orders USING COVERING INDEX ix_orders_customer_id (customer_id=?)
+19 | 5 | 0 | INDEX 2
+22 | 19 | 0 | SEARCH orders USING INTEGER PRIMARY KEY (rowid=?)
+31 | 0 | 0 | USE TEMP B-TREE FOR ORDER BY

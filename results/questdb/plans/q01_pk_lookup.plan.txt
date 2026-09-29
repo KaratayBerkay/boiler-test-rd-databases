@@ -1,0 +1,5 @@
+Async JIT Filter workers: 27
+  filter: id=$0::short
+    PageFrame
+        Row forward scan
+        Frame forward scan on: customers

@@ -1,0 +1,27 @@
+Sort  (cost=14826.62..14826.82 rows=79 width=52) (actual time=256.348..256.359 rows=79 loops=1)
+  Sort Key: shipping_country, status
+  Sort Method: quicksort  Memory: 31kB
+  ->  MixedAggregate  (cost=23.10..14824.13 rows=79 width=52) (actual time=256.091..256.150 rows=79 loops=1)
+        Hash Key: shipping_country, status
+        Hash Key: shipping_country
+        Group Key: ()
+        Batches: 1  Memory Usage: 96kB
+        ->  Seq Scan on orders  (cost=23.10..14249.08 rows=25514 width=18) (actual time=12.496..212.267 rows=25268 loops=1)
+              Storage Filter: ((ordered_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-09-01 00:00:00'::timestamp without time zone))
+              Storage Table Read Requests: 25
+              Storage Table Read Execution Time: 167.961 ms
+              Storage Table Read Ops: 25
+              Storage Table Rows Scanned: 200000
+Planning Time: 0.224 ms
+Execution Time: 256.666 ms
+Storage Read Requests: 25
+Storage Read Execution Time: 167.961 ms
+Storage Read Ops: 25
+Storage Rows Scanned: 200000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 167.961 ms
+Peak Memory Usage: 228 kB

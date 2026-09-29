@@ -1,0 +1,9 @@
+2 | 0 | 0 | CO-ROUTINE tree
+5 | 2 | 0 | SETUP
+7 | 5 | 0 | SCAN categories
+31 | 2 | 0 | RECURSIVE STEP
+33 | 31 | 0 | SCAN t
+36 | 31 | 0 | BLOOM FILTER ON c (parent_id=?)
+46 | 31 | 0 | SEARCH c USING AUTOMATIC COVERING INDEX (parent_id=?)
+70 | 0 | 0 | SCAN tree
+79 | 0 | 0 | USE TEMP B-TREE FOR ORDER BY

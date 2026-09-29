@@ -1,0 +1,251 @@
+{
+  "engine": "yugabyte",
+  "display": "YugabyteDB",
+  "category": "distributed SQL",
+  "dialect": "yugabyte",
+  "driver": "psycopg",
+  "image": "yugabytedb/yugabyte:latest",
+  "run_id": "20260914-120500-5316f3",
+  "started": "2026-09-14T09:05:00+00:00",
+  "scale": 0.3,
+  "notes": "3 nodes via yugabyted, replication factor 3 (Raft per tablet), PostgreSQL-compatible YSQL layer on every node (any node serves reads and writes; no promotion). Auth disabled for the lab.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "ysql_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "ysql_dump | ysqlsh",
+          "backup_seconds": 7.24,
+          "backup_bytes": 36634904,
+          "backup_mb": 34.9,
+          "restore_seconds": 53.47,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.49
+          },
+          "pitr": {},
+          "notes": "plain SQL dump (ysql_dump keeps YB-specific DDL such as SPLIT INTO); restored serially with ysqlsh",
+          "error": null,
+          "steps": [
+            {
+              "name": "ysql_dump",
+              "cmd": "cd /home/yugabyte && postgres/bin/ysql_dump -h yb1 -U yugabyte -d lab -f /backups/lab.sql",
+              "rc": 0,
+              "seconds": 7.24,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'lab_restore' AND pid <> pg_backend_pid(); DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 3.85,
+              "out": ""
+            },
+            {
+              "name": "ysqlsh -f (restore)",
+              "cmd": "__o=$(mktemp); ( cd /home/yugabyte && bin/ysqlsh -h yb1 -U yugabyte -d lab_restore -q -v ON_ERROR_STOP=0 -f /backups/lab.sql ) > $__o 2>&1; __rc=$?; tail -n 5 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 53.47,
+              "out": " pg_restore_relation_stats \n---------------------------\n t\n(1 row)\n\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 4.44,
+              "out": ""
+            }
+          ],
+          "seconds": 71.6,
+          "description": "logical dump restored into a second database"
+        },
+        "snapshot": {
+          "status": "ok",
+          "kind": "snapshot",
+          "tool": "yb-admin create_database_snapshot / restore_snapshot",
+          "backup_seconds": 1.46,
+          "backup_bytes": 101453,
+          "backup_mb": 0.1,
+          "restore_seconds": 1.43,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.18
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_after_delete": 0,
+            "probe_rows_after_restore": 1000,
+            "probe_rows_expected": 1000
+          },
+          "notes": "cluster-wide consistent snapshot (hybrid-time), restored in place; off-cluster copy = export_snapshot metadata + tablet snapshot files",
+          "error": null,
+          "steps": [
+            {
+              "name": "create_database_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 create_database_snapshot ysql.lab",
+              "rc": 0,
+              "seconds": 0.16,
+              "out": "Started snapshot creation: 68da1950-d53c-459f-85b2-a0acfbac528f\n"
+            },
+            {
+              "name": "export_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 export_snapshot 68da1950-d53c-459f-85b2-a0acfbac528f /backups/lab.snapshot",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "Exporting snapshot 68da1950-d53c-459f-85b2-a0acfbac528f (2) to file /backups/lab.snapshot\nSnapshot metadata was saved into file: /backups/lab.snapshot\n"
+            },
+            {
+              "name": "restore_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 restore_snapshot 68da1950-d53c-459f-85b2-a0acfbac528f",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "Started restoring snapshot: 68da1950-d53c-459f-85b2-a0acfbac528f\nRestoration id: e9c93e3c-a222-48d6-9a13-4bd369448fb8\n"
+            },
+            {
+              "name": "delete_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 delete_snapshot 68da1950-d53c-459f-85b2-a0acfbac528f",
+              "rc": 0,
+              "seconds": 0.15,
+              "out": "Deleted snapshot: 68da1950-d53c-459f-85b2-a0acfbac528f\n"
+            }
+          ],
+          "snapshot_id": "68da1950-d53c-459f-85b2-a0acfbac528f",
+          "export_snapshot": "Exporting snapshot 68da1950-d53c-459f-85b2-a0acfbac528f (2) to file /backups/lab.snapshot\nSnapshot metadata was saved into file: /backups/lab.snapshot",
+          "note_size": "the snapshot itself is copy-on-write tablet files on every node; export_snapshot writes only the metadata",
+          "seconds": 7.2,
+          "description": "distributed snapshot restored in place"
+        },
+        "pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "yb-admin create_snapshot_schedule / restore_snapshot_schedule",
+          "backup_seconds": 4.43,
+          "backup_bytes": 0,
+          "backup_mb": 0.0,
+          "restore_seconds": 3.32,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.19
+          },
+          "pitr": {
+            "match": true,
+            "target": "2026-09-14 09:06:29.741160",
+            "probe_rows_after_delete": 0,
+            "probe_rows_recovered": 1000,
+            "probe_rows_expected": 1000
+          },
+          "notes": "snapshot schedule (1 min interval, 10 min retention) keeps history; restore_snapshot_schedule rolls the database back to the timestamp in place",
+          "error": null,
+          "steps": [
+            {
+              "name": "delete stale schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 delete_snapshot_schedule 69454af5-e4ad-470e-aa86-c62ca236eb18",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": "{\n    \"schedule_id\": \"69454af5-e4ad-470e-aa86-c62ca236eb18\"\n}\n"
+            },
+            {
+              "name": "create_snapshot_schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 create_snapshot_schedule 1 10 ysql.lab",
+              "rc": 0,
+              "seconds": 0.19,
+              "out": "{\n    \"schedule_id\": \"63d8d472-ff62-46b8-aa5e-a4adadacef95\"\n}\n"
+            },
+            {
+              "name": "restore_snapshot_schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 restore_snapshot_schedule 63d8d472-ff62-46b8-aa5e-a4adadacef95 \"2026-09-14 09:06:29.741160\"",
+              "rc": 0,
+              "seconds": 0.89,
+              "out": "{\n    \"snapshot_id\": \"9ede086d-8c5b-406f-9fca-1fd424dff3b7\",\n    \"restoration_id\": \"fd19350d-19cd-4d00-af86-361a88d3513f\"\n}\n"
+            },
+            {
+              "name": "delete_snapshot_schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 delete_snapshot_schedule 63d8d472-ff62-46b8-aa5e-a4adadacef95",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "{\n    \"schedule_id\": \"63d8d472-ff62-46b8-aa5e-a4adadacef95\"\n}\n"
+            }
+          ],
+          "schedule_id": "63d8d472-ff62-46b8-aa5e-a4adadacef95",
+          "first_scheduled_snapshot": {
+            "id": "75a386e2-62df-46d8-a885-5a2a1d465ba1",
+            "snapshot_time": "2026-09-14 09:06:25.220956"
+          },
+          "seconds": 15.7,
+          "description": "point-in-time restore from the snapshot schedule history"
+        }
+      },
+      "order": [
+        "ysql_dump",
+        "snapshot",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "a187be706ac6cc57f65a464b"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "2bc3123ba4e02738250e0776"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "08c9ab7a8dd04a5ed9affae7"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 2.2,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "ysql_dump",
+          "snapshot",
+          "pitr"
+        ],
+        "pitr_ok": [
+          "snapshot",
+          "pitr"
+        ]
+      },
+      "_seconds": 97.6
+    }
+  },
+  "harness_log": "results/logs/yugabyte/20260914-120500-5316f3.log",
+  "server_version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/llvm-project.git efca861cc42178cc4c555d605b36c79d7d121cc1), 64-bit",
+  "finished": "2026-09-14T09:06:38+00:00"
+}

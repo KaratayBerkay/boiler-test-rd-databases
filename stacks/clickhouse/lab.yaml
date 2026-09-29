@@ -1,0 +1,48 @@
+display: ClickHouse
+category: analytical (columnar)
+dialect: clickhouse
+driver: clickhouse-connect
+image: clickhouse/clickhouse-server:latest
+project: rdlab-clickhouse
+scale: 1
+notes: >-
+  Two replicas of one shard using ReplicatedMergeTree with ClickHouse Keeper; DDL runs ON CLUSTER. No transactions,
+  no foreign keys; secondary "indexes" are data-skipping (bloom filter) indexes; UPDATE/DELETE are asynchronous mutations.
+docs:
+  - https://clickhouse.com/docs/en/architecture/replication
+  - https://clickhouse.com/docs/en/sql-reference/statements/explain
+oneshot: [volumes-init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 18123
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-ch-1
+  - name: replica
+    role: replica
+    host: 127.0.0.1
+    port: 18124
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-ch-2
+replication:
+  kind: ReplicatedMergeTree (multi-writer, Keeper-coordinated, eventually consistent)
+  promote:
+    method: none
+    target: replica
+backup:
+  dir: /backups
+  volume: ch-backups
+  disk: backups
+  strategies: [backup_disk, backup_cluster, incremental]
+logging:
+  slow_ms: 100
+features:
+  replicated: true
+  cluster: lab_cluster
+  settle_seconds: 3
+  connection_storm: true

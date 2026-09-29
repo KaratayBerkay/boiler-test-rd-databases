@@ -1,0 +1,76 @@
+planning time: 413µs
+execution time: 1.2s
+distribution: full
+plan type: generic, reused
+rows decoded from KV: 199,808 (12 MiB, 4 gRPC calls)
+DistSQL network usage: 32 KiB (16 messages)
+regions: lab
+
+• group (streaming)
+│ sql nodes: n3
+│ regions: lab
+│ execution time: 523µs
+│ sql cpu time: 523µs
+│ actual row count: 2,000
+│ estimated row count: 1
+│ group by: customer_id
+│ ordered: +customer_id
+│
+└── • sort
+    │ sql nodes: n3
+    │ regions: lab
+    │ execution time: 2ms
+    │ sql cpu time: 2ms
+    │ actual row count: 99,765
+    │ estimated row count: 1
+    │ order: +customer_id
+    │
+    └── • filter
+        │ sql nodes: n3
+        │ regions: lab
+        │ execution time: 208µs
+        │ sql cpu time: 206µs
+        │ actual row count: 99,765
+        │ estimated row count: 1
+        │ filter: new_session = 1
+        │
+        └── • render
+            │ execution time: 19ms
+            │ sql cpu time: 19ms
+            │ actual row count: 99,904
+            │
+            └── • window
+                │ sql nodes: n3
+                │ regions: lab
+                │ execution time: 117ms
+                │ sql cpu time: 117ms
+                │ actual row count: 99,904
+                │ estimated row count: 98,054
+                │
+                └── • render
+                    │ execution time: 446µs
+                    │ sql cpu time: 442µs
+                    │ actual row count: 99,904
+                    │
+                    └── • index join (streamer)
+                        │ sql nodes: n3
+                        │ kv nodes: n3
+                        │ regions: lab
+                        │ KV time: 936ms
+                        │ KV rows decoded: 99,904
+                        │ sql cpu time: 76ms
+                        │ actual row count: 99,904
+                        │ estimated row count: 98,054
+                        │ table: events@events_pkey
+                        │
+                        └── • scan
+                              sql nodes: n3
+                              kv nodes: n3
+                              regions: lab
+                              KV time: 86ms
+                              KV rows decoded: 99,904
+                              sql cpu time: 18ms
+                              actual row count: 99,904
+                              estimated row count: 98,054 (9.8% of the table; stats collected 4 minutes ago)
+                              table: events@ix_events_customer_id
+                              spans: [ - /2000]

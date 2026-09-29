@@ -1,0 +1,5 @@
+1 | PRIMARY | <derived2> | ALL | None | None | None | None | 200 | Using filesort
+2 | DERIVED | categories | ALL | None | None | None | None | 200 | Using where
+3 | RECURSIVE UNION | c | ALL | None | None | None | None | 200 | Using where
+3 | RECURSIVE UNION | <derived2> | ref | key0 | key0 | 5 | lab.c.parent_id | 10 | 
+None | UNION RESULT | <union2,3> | ALL | None | None | None | None | None | 

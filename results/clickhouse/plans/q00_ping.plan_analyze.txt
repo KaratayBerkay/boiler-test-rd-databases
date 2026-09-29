@@ -1,0 +1,4 @@
+query_log: duration_ms=1 read_rows=1 read_bytes=1 memory=4297332 result_rows=1
+(Expression)
+ExpressionTransform
+  (ReadFromSystemOne)

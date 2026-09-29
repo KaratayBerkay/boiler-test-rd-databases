@@ -1,0 +1,273 @@
+{
+  "engine": "postgres",
+  "display": "PostgreSQL 18",
+  "category": "row-store OLTP",
+  "dialect": "postgres",
+  "driver": "psycopg",
+  "image": "pgvector/pgvector:pg18",
+  "run_id": "20260914-110932-23b04c",
+  "started": "2026-09-14T08:09:32+00:00",
+  "scale": 0.3,
+  "notes": "Official postgres:18 image plus pgvector. Physical streaming replication (async) with a replication slot; PgBouncer in transaction mode with max_prepared_statements; HAProxy write (5000) and round-robin read (5001) endpoints.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "pg_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "pg_dump -Fd -j4 --compress=zstd | pg_restore -j4",
+          "backup_seconds": 0.51,
+          "backup_bytes": 9659463,
+          "backup_mb": 9.2,
+          "restore_seconds": 1.13,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.83
+          },
+          "pitr": {},
+          "notes": "directory format, 4 parallel jobs, zstd; globals dumped separately with pg_dumpall",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/dump /backups/globals.sql",
+              "rc": 0,
+              "seconds": 0.09,
+              "out": ""
+            },
+            {
+              "name": "pg_dump -Fd",
+              "cmd": "pg_dump -U lab -d lab -Fd -j 4 --compress=zstd -f /backups/dump",
+              "rc": 0,
+              "seconds": 0.51,
+              "out": ""
+            },
+            {
+              "name": "pg_dumpall --globals-only",
+              "cmd": "pg_dumpall -U lab --globals-only -f /backups/globals.sql",
+              "rc": 0,
+              "seconds": 0.13,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.06,
+              "out": ""
+            },
+            {
+              "name": "pg_restore -j",
+              "cmd": "pg_restore -U lab -d lab_restore -j 4 --no-owner /backups/dump",
+              "rc": 0,
+              "seconds": 1.13,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.23,
+              "out": ""
+            }
+          ],
+          "restore_warnings": "",
+          "seconds": 3.1,
+          "description": "parallel directory-format dump restored into a second database"
+        },
+        "pg_basebackup": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "pg_basebackup -Fp -Xs",
+          "backup_seconds": 1.05,
+          "backup_bytes": 118901020,
+          "backup_mb": 113.4,
+          "restore_seconds": 2.67,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.8
+          },
+          "pitr": {},
+          "notes": "plain-format full copy with streamed WAL (-Xs), verified with pg_verifybackup; restored by copying into a scratch container",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/incr1 && mkdir -p /backups/wal",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": ""
+            },
+            {
+              "name": "pg_basebackup",
+              "cmd": "pg_basebackup -U lab -D /backups/full -Fp -Xs --checkpoint=fast --manifest-checksums=CRC32C",
+              "rc": 0,
+              "seconds": 1.05,
+              "out": ""
+            },
+            {
+              "name": "pg_verifybackup",
+              "cmd": "pg_verifybackup /backups/full",
+              "rc": 0,
+              "seconds": 0.13,
+              "out": "backup successfully verified\n"
+            }
+          ],
+          "pg_verifybackup": "backup successfully verified",
+          "ready_after_s": 2.67,
+          "seconds": 5.9,
+          "description": "full physical copy restored in a scratch container"
+        },
+        "incremental": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "pg_basebackup --incremental + pg_combinebackup",
+          "backup_seconds": 0.71,
+          "backup_bytes": 21943753,
+          "backup_mb": 20.9,
+          "restore_seconds": 1.1,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.96
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "rows inserted after the full backup are present in the combined (full+incremental) restore"
+          },
+          "notes": "block-level incremental (summarize_wal=on, PG17+), restored with pg_combinebackup full incr -o PGDATA",
+          "error": null,
+          "steps": [
+            {
+              "name": "pg_basebackup --incremental",
+              "cmd": "pg_basebackup -U lab -D /backups/incr1 -Fp -Xs --checkpoint=fast --incremental=/backups/full/backup_manifest",
+              "rc": 0,
+              "seconds": 0.71,
+              "out": ""
+            }
+          ],
+          "wal_switch": {
+            "segment": "00000001000000000000001C",
+            "archived_after_s": 0.3
+          },
+          "full_backup_bytes": 118901020,
+          "incremental_pct_of_full": 18.46,
+          "seconds": 4.3,
+          "description": "PG17+ block-level incremental on top of the full backup"
+        },
+        "pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "archive_command + restore_command + recovery_target_name",
+          "backup_seconds": 0.0,
+          "backup_bytes": 520099608,
+          "backup_mb": 496.0,
+          "restore_seconds": 1.63,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.81
+          },
+          "pitr": {
+            "match": true,
+            "target": "recovery_target_name='rdlab_pitr'",
+            "probe_rows_at_restore_point": 1000,
+            "probe_rows_on_primary_after_delete": 0,
+            "probe_rows_recovered": 1000
+          },
+          "notes": "WAL archive (archive_command -> /backups/wal) replayed on top of the full backup up to the named restore point; the DELETE that followed is not replayed",
+          "error": null,
+          "steps": [],
+          "wal_switch": {
+            "segment": "00000001000000000000001F",
+            "archived_after_s": 0.3
+          },
+          "archiver": {
+            "archived_count": 36,
+            "failed_count": 0,
+            "last_archived_wal": "00000001000000000000001F",
+            "last_failed_wal": null
+          },
+          "scratch_log_tail": "00000001C\" from archive\ncp: cannot stat '/backups/wal/00000002.history': No such file or directory\n2026-09-14 08:09:48.732 UTC [30] LOG:  selected new timeline ID: 2\ncp: cannot stat '/backups/wal/00000001.history': No such file or directory\n2026-09-14 08:09:48.809 UTC [30] LOG:  archive recovery complete\n2026-09-14 08:09:48.810 UTC [28] LOG:  checkpoint starting: end-of-recovery immediate wait\n2026-09-14 08:09:48.818 UTC [28] LOG:  checkpoint complete: wrote 44 buffers (0.3%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 1 recycled; write=0.003 s, sync=0.004 s, total=0.009 s; sync files=31, longest=0.002 s, average=0.001 s; distance=16695 kB, estimate=16695 kB; lsn=0/1C04DEB8, redo lsn=0/1C04DEB8\n2026-09-14 08:09:48.824 UTC [1] LOG:  database system is ready to accept connections\n",
+          "seconds": 3.7,
+          "description": "WAL-archive point-in-time recovery to a restore point before a destructive DELETE"
+        }
+      },
+      "order": [
+        "pg_dump",
+        "pg_basebackup",
+        "incremental",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "a187be706ac6cc57f65a464b"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "2bc3123ba4e02738250e0776"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "08c9ab7a8dd04a5ed9affae7"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 0.83,
+      "summary": {
+        "strategies": 4,
+        "ok": 4,
+        "verified": [
+          "pg_dump",
+          "pg_basebackup",
+          "incremental",
+          "pitr"
+        ],
+        "pitr_ok": [
+          "incremental",
+          "pitr"
+        ]
+      },
+      "_seconds": 17.9
+    }
+  },
+  "harness_log": "results/logs/postgres/20260914-110932-23b04c.log",
+  "server_version": "PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+  "finished": "2026-09-14T08:09:50+00:00"
+}

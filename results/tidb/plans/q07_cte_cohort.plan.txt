@@ -1,0 +1,15 @@
+Sort_28 | 19854.00 | root |  | Column#36
+└─Projection_30 | 19854.00 | root |  | Column#36, Column#46, Column#47
+  └─HashAgg_31 | 19854.00 | root |  | group by:Column#36, funcs:count(distinct lab.orders.customer_id)->Column#46, funcs:count(distinct lab.orders.customer_id)->Column#47, funcs:firstrow(Column#36)->Column#36
+    └─HashJoin_33 | 19854.00 | root |  | left outer join, equal:[eq(lab.orders.customer_id, lab.orders.customer_id)], other cond:gt(Column#45, Column#36)
+      ├─Projection_70(Build) | 19854.00 | root |  | lab.orders.customer_id, date_format(Column#35, %Y-%m-01)->Column#36
+      │ └─HashAgg_79 | 19854.00 | root |  | group by:lab.orders.customer_id, funcs:min(Column#65)->Column#35, funcs:firstrow(lab.orders.customer_id)->lab.orders.customer_id
+      │   └─TableReader_80 | 19854.00 | root |  | data:HashAgg_71
+      │     └─HashAgg_71 | 19854.00 | cop[tikv] |  | group by:lab.orders.customer_id, funcs:min(lab.orders.ordered_at)->Column#65
+      │       └─TableFullScan_78 | 200000.00 | cop[tikv] | table:orders | keep order:false
+      └─Projection_83(Probe) | 157849.60 | root |  | lab.orders.customer_id, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#45
+        └─Selection_84 | 157849.60 | root |  | not(isnull(date_format(lab.orders.ordered_at, "%Y-%m-01")))
+          └─HashAgg_87 | 197312.00 | root |  | group by:Column#70, Column#72, funcs:firstrow(Column#70)->lab.orders.customer_id, funcs:firstrow(Column#71)->lab.orders.ordered_at
+            └─Projection_94 | 200000.00 | root |  | lab.orders.customer_id->Column#70, lab.orders.ordered_at->Column#71, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#72
+              └─TableReader_92 | 200000.00 | root |  | data:TableFullScan_91
+                └─TableFullScan_91 | 200000.00 | cop[tikv] | table:o | keep order:false

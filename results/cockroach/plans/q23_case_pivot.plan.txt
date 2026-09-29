@@ -1,0 +1,30 @@
+distribution: full
+
+• sort
+│ estimated row count: 13
+│ order: +country_code
+│
+└── • group (hash)
+    │ estimated row count: 13
+    │ group by: country_code
+    │
+    └── • render
+        │
+        └── • hash join
+            │ estimated row count: 199,651
+            │ equality: (customer_id) = (id)
+            │ right cols are key
+            │
+            ├── • scan
+            │     estimated row count: 200,000 (100% of the table; stats collected 5 minutes ago)
+            │     table: orders@orders_pkey
+            │     spans: FULL SCAN
+            │
+            └── • scan
+                  estimated row count: 20,000 (100% of the table; stats collected 5 minutes ago)
+                  table: customers@customers_pkey
+                  spans: FULL SCAN
+
+index recommendations: 1
+1. type: index replacement
+   SQL commands: CREATE INDEX ON lab.public.orders (customer_id) STORING (status, total_amount) /* After successfully creating the replacement index, manually run: `ALTER INDEX lab.public.orders@ix_orders_customer_id NOT VISIBLE` and then, after verifying workload performance, manually run: `DROP INDEX lab.public.orders@ix_orders_customer_id` */;

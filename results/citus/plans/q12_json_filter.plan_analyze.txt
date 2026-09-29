@@ -1,0 +1,21 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=4.967..4.974 rows=100.00 loops=1)
+  Task Count: 1
+  Tuple data received from nodes: 2700 bytes
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 2700 bytes
+        Node: host=coordinator port=5432 dbname=lab
+        ->  Limit  (cost=443.12..443.14 rows=8 width=22) (actual time=3.400..3.428 rows=100.00 loops=1)
+              Buffers: shared hit=318
+              ->  Sort  (cost=443.12..443.14 rows=8 width=22) (actual time=3.399..3.411 rows=100.00 loops=1)
+                    Sort Key: id
+                    Sort Method: top-N heapsort  Memory: 32kB
+                    Buffers: shared hit=318
+                    ->  Seq Scan on products_102009 products  (cost=0.00..443.00 rows=8 width=22) (actual time=0.024..3.189 rows=443.00 loops=1)
+                          Filter: (((attrs ->> 'color'::text) = 'red'::text) AND (((attrs ->> 'weight'::text))::numeric > '10'::numeric))
+                          Rows Removed by Filter: 4557
+                          Buffers: shared hit=318
+            Planning Time: 0.113 ms
+            Execution Time: 3.471 ms
+Planning Time: 0.035 ms
+Execution Time: 4.987 ms

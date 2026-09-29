@@ -1,0 +1,40 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  ->  Distributed Subplan 94_1
+        ->  HashAggregate  (cost=500.00..502.00 rows=200 width=12)
+              Group Key: remote_scan.customer_id
+              ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=12)
+                    Task Count: 32
+                    Tasks Shown: One of 32
+                    ->  Task
+                          Node: host=w1 port=5432 dbname=lab
+                          ->  HashAggregate  (cost=150.16..203.62 rows=5346 width=12)
+                                Group Key: customer_id
+                                ->  Seq Scan on orders_102042 orders  (cost=0.00..119.11 rows=6211 width=12)
+  ->  Distributed Subplan 94_2
+        ->  HashAggregate  (cost=500.00..502.00 rows=200 width=12)
+              Group Key: remote_scan.customer_id, remote_scan.m
+              ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=12)
+                    Task Count: 32
+                    Tasks Shown: One of 32
+                    ->  Task
+                          Node: host=w1 port=5432 dbname=lab
+                          ->  HashAggregate  (cost=165.69..243.33 rows=6211 width=12)
+                                Group Key: customer_id, date_trunc('month'::text, ordered_at)
+                                ->  Seq Scan on orders_102042 o  (cost=0.00..134.64 rows=6211 width=12)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=localhost port=5432 dbname=lab
+        ->  GroupAggregate  (cost=318.04..337.21 rows=200 width=24)
+              Group Key: (date_trunc('month'::text, intermediate_result.first_at))
+              ->  Sort  (cost=318.04..322.21 rows=1667 width=16)
+                    Sort Key: (date_trunc('month'::text, intermediate_result.first_at)), intermediate_result.customer_id
+                    ->  Merge Left Join  (cost=119.66..228.83 rows=1667 width=16)
+                          Merge Cond: (intermediate_result.customer_id = intermediate_result_1.customer_id)
+                          Join Filter: (intermediate_result_1.m > date_trunc('month'::text, intermediate_result.first_at))
+                          ->  Sort  (cost=59.83..62.33 rows=1000 width=12)
+                                Sort Key: intermediate_result.customer_id
+                                ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..10.00 rows=1000 width=12)
+                          ->  Sort  (cost=59.83..62.33 rows=1000 width=12)
+                                Sort Key: intermediate_result_1.customer_id
+                                ->  Function Scan on read_intermediate_result intermediate_result_1  (cost=0.00..10.00 rows=1000 width=12)

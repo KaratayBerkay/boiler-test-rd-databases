@@ -1,0 +1,20 @@
+Aggregate  (cost=77001.56..77001.57 rows=1 width=8) (actual time=1528.920..1528.922 rows=1 loops=1)
+  ->  Seq Scan on events  (cost=23.10..75768.62 rows=493173 width=4) (actual time=2.277..1060.762 rows=499245 loops=1)
+        Storage Filter: (occurred_at >= '2025-01-01 00:00:00'::timestamp without time zone)
+        Storage Table Read Requests: 488
+        Storage Table Read Execution Time: 869.422 ms
+        Storage Table Read Ops: 488
+        Storage Table Rows Scanned: 1000000
+Planning Time: 0.059 ms
+Execution Time: 1529.042 ms
+Storage Read Requests: 488
+Storage Read Execution Time: 869.422 ms
+Storage Read Ops: 488
+Storage Rows Scanned: 1000000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 869.422 ms
+Peak Memory Usage: 4760 kB

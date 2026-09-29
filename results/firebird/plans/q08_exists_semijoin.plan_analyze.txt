@@ -1,0 +1,16 @@
+Sub-query
+    -> Filter
+        -> Table "ORDERS" as "O" Access By ID
+            -> Bitmap
+                -> Index "RDB$FOREIGN6" Range Scan (full match)
+Sub-query
+    -> Filter
+        -> Table "EVENTS" as "E" Access By ID
+            -> Bitmap
+                -> Index "IX_EVENTS_CUSTOMER_ID" Range Scan (full match)
+Select Expression
+    -> First N Records
+        -> Filter
+            -> Table "CUSTOMERS" as "C" Access By ID
+                -> Index "RDB$PRIMARY1" Full Scan
+fetches=10912390 reads=7606

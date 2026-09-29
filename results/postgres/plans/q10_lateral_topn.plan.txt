@@ -1,0 +1,11 @@
+Incremental Sort  (cost=25.67..1287.62 rows=300 width=22)
+  Sort Key: c.id, o2.ordered_at DESC
+  Presorted Key: c.id
+  ->  Nested Loop  (cost=12.98..1279.49 rows=300 width=22)
+        ->  Index Only Scan using customers_pkey on customers c  (cost=0.28..6.34 rows=100 width=4)
+              Index Cond: (id <= 100)
+        ->  Limit  (cost=12.69..12.70 rows=3 width=18)
+              ->  Sort  (cost=12.69..12.72 rows=10 width=18)
+                    Sort Key: o2.ordered_at DESC, o2.id DESC
+                    ->  Index Scan using ix_orders_customer_id on orders o2  (cost=0.29..12.56 rows=10 width=18)
+                          Index Cond: (customer_id = c.id)

@@ -1,0 +1,24 @@
+# CockroachDB logging strategy: every channel goes to a JSON file group under <store>/logs (rotated), the operational
+# channels also to stderr so `docker logs` shows node health. SQL_PERF = slow query log (sql.log.slow_query.latency_threshold),
+# SENSITIVE_ACCESS = admin/table audit, SQL_EXEC = statement log when sql.log.all_statements.enabled is on.
+file-defaults:
+  dir: /cockroach/cockroach-data/logs
+  format: json
+  max-file-size: 100MiB
+  max-group-size: 300MiB
+  buffered-writes: true
+sinks:
+  file-groups:
+    default:
+      channels: [DEV, OPS, HEALTH, STORAGE, SESSIONS, SQL_SCHEMA, USER_ADMIN, PRIVILEGES, TELEMETRY, KV_DISTRIBUTION]
+    sql-audit:
+      channels: [SENSITIVE_ACCESS]
+      auditable: true
+    sql-perf:
+      channels: [SQL_PERF, SQL_INTERNAL_PERF]
+    sql-exec:
+      channels: [SQL_EXEC]
+  stderr:
+    channels: [OPS, HEALTH]
+    format: json
+    redact: false

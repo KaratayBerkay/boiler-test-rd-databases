@@ -1,0 +1,197 @@
+{
+  "engine": "sqlite",
+  "display": "SQLite 3",
+  "category": "embedded",
+  "dialect": "sqlite",
+  "driver": "sqlite3",
+  "image": "(embedded, python stdlib sqlite3)",
+  "run_id": "20260912-223540-22216d",
+  "started": "2026-09-12T19:35:40+00:00",
+  "scale": 1.0,
+  "notes": "Embedded, single-writer database file (WAL mode, synchronous=NORMAL). No server, no network, no replication in core; libSQL / rqlite / Litestream provide replication on top of SQLite (see docs).",
+  "phases": {
+    "connections": {
+      "max_connections": null,
+      "connect_latency": {
+        "embedded": {
+          "target": "embedded",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 0.607168,
+            "p50": 0.6558755000000001,
+            "p90": 0.6749402,
+            "p95": 0.6892297500000001,
+            "p99": 0.69399719,
+            "max": 0.695212,
+            "mean": 0.6475505666666667,
+            "stdev": 0.02624451292579503
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "concurrency": {
+        "embedded": [
+          {
+            "workers": 1,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 344635,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 86159,
+            "latency_ms": {
+              "n": 344635,
+              "min": 0.008494,
+              "p50": 0.010114,
+              "p90": 0.013252800000000104,
+              "p95": 0.019681,
+              "p99": 0.027104,
+              "max": 0.461089,
+              "mean": 0.011215512286912241,
+              "stdev": 0.0040492184480254625
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 1354846,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 338712,
+            "latency_ms": {
+              "n": 1354846,
+              "min": 0.009432,
+              "p50": 0.010611,
+              "p90": 0.011771,
+              "p95": 0.018247,
+              "p99": 0.024948,
+              "max": 0.469206,
+              "mean": 0.011417423967004368,
+              "stdev": 0.0031937178090335936
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 2436489,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 609122,
+            "latency_ms": {
+              "n": 2436489,
+              "min": 0.010334,
+              "p50": 0.023871,
+              "p90": 0.031299,
+              "p95": 0.033165,
+              "p99": 0.04210912000000011,
+              "max": 0.60033,
+              "mean": 0.02578101857385771,
+              "stdev": 0.005700963833071371
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 1683891,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 420973,
+            "latency_ms": {
+              "n": 1683891,
+              "min": 0.010006,
+              "p50": 0.05848,
+              "p90": 0.066792,
+              "p95": 0.072868,
+              "p99": 0.16307400000000186,
+              "max": 45.722598,
+              "mean": 0.07518453964894403,
+              "stdev": 0.24773931418929646
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "embedded"
+            ],
+            "queries": 1071029,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 267757,
+            "latency_ms": {
+              "n": 1071029,
+              "min": 0.010535,
+              "p50": 0.096572,
+              "p90": 0.111971,
+              "p95": 0.1279206,
+              "p99": 6.1113146,
+              "max": 72.110914,
+              "mean": 0.23743319450360353,
+              "stdev": 0.9982258263590731
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 27025,
+        "qps": 6742,
+        "checkout_wait_ms": {
+          "n": 27025,
+          "min": 0.001325,
+          "p50": 0.00382,
+          "p90": 0.006323,
+          "p95": 0.006983,
+          "p99": 0.009751319999999989,
+          "max": 3999.775192,
+          "mean": 3.5507760834042554,
+          "stdev": 118.96434181532886
+        },
+        "exec_ms": {
+          "n": 27025,
+          "min": 0.053697,
+          "p50": 1.046957,
+          "p90": 2.0879348,
+          "p95": 2.4799404,
+          "p99": 3.291667799999998,
+          "max": 6.647113,
+          "mean": 1.178256619093432,
+          "stdev": 0.678277774438654
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "error": "OperationalError: Safety level may not be changed inside a transaction"
+        },
+        "write_conflict_serializable": {
+          "error": "OperationalError: Safety level may not be changed inside a transaction"
+        },
+        "deadlock": {
+          "error": "OperationalError: Safety level may not be changed inside a transaction"
+        }
+      },
+      "_seconds": 43.8
+    }
+  },
+  "server_version": "SQLite 3.45.1",
+  "finished": "2026-09-12T19:36:24+00:00"
+}

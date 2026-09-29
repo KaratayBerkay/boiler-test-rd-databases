@@ -1,0 +1,4 @@
+TopN_7 | 50.00 | root |  | lab.orders.ordered_at, lab.orders.id, offset:100000, count:50
+└─TableReader_16 | 100050.00 | root |  | data:TopN_15
+  └─TopN_15 | 100050.00 | cop[tikv] |  | lab.orders.ordered_at, lab.orders.id, offset:0, count:100050
+    └─TableFullScan_14 | 200000.00 | cop[tikv] | table:orders | keep order:false

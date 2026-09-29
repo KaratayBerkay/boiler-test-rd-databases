@@ -1,0 +1,13 @@
+# lab settings: keep TiKV from pre-allocating/reserving tens of GB per node and from refusing writes on a nearly full host disk
+[storage]
+reserve-space = "1GB"
+reserve-raft-space = "256MB"
+
+[raftstore]
+capacity = "20GB"
+
+[rocksdb]
+max-open-files = 4096
+
+[raftdb]
+max-open-files = 4096

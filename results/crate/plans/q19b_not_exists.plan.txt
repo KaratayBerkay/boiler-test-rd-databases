@@ -1,0 +1,10 @@
+Eval[id] (rows=3335)
+  └ OrderBy[id ASC] (rows=3335)
+    └ Filter[(NOT EXISTS (SELECT 1 FROM (oi)))] (rows=3335)
+      └ CorrelatedJoin[id, (SELECT 1 FROM (oi))] (rows=5000)
+        └ Rename[id] AS p (rows=5000)
+          └ Collect[doc.products | [id] | true] (rows=5000)
+        └ SubPlan
+          └ Rename[1] AS oi (rows=1)
+            └ Limit[1;0] (rows=1)
+              └ Collect[doc.order_items | [1] | (product_id = id)] (rows=98)

@@ -1,0 +1,50 @@
+physical_plan | ┌───────────────────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│      lab.main.orders      │
+│   .shipping_country ASC   │
+│ lab.main.orders.status ASC│
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│       HASH_GROUP_BY       │
+│    ────────────────────   │
+│          Groups:          │
+│             #0            │
+│             #1            │
+│                           │
+│        Aggregates:        │
+│        count_star()       │
+│    sum_no_overflow(#2)    │
+│                           │
+│          ~61 rows         │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│      shipping_country     │
+│           status          │
+│        total_amount       │
+│                           │
+│        ~40,012 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          SEQ_SCAN         │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.orders      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│      shipping_country     │
+│           status          │
+│        total_amount       │
+│                           │
+│          Filters:         │
+│ ordered_at>='2025-06-01 00│
+│   :00:00'::TIMESTAMP AND  │
+│  ordered_at<'2025-09-01 00│
+│     :00:00'::TIMESTAMP    │
+│                           │
+│        ~40,012 rows       │
+└───────────────────────────┘

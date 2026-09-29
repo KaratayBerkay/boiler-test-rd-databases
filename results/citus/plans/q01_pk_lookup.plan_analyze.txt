@@ -1,0 +1,16 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0) (actual time=2.281..2.282 rows=1.00 loops=1)
+  Task Count: 1
+  Tuple data received from nodes: 42 bytes
+  Tasks Shown: All
+  ->  Task
+        Tuple data received from node: 42 bytes
+        Node: host=w5 port=5432 dbname=lab
+        ->  Index Scan using customers_pkey_102019 on customers_102019 customers  (cost=0.28..2.49 rows=1 width=43) (actual time=0.033..0.034 rows=1.00 loops=1)
+              Index Cond: (id = '4403'::smallint)
+              Index Searches: 1
+              Buffers: shared hit=3
+            Planning Time: 0.098 ms
+            Execution Time: 0.063 ms
+  Buffers: shared hit=3
+Planning Time: 0.033 ms
+Execution Time: 2.375 ms

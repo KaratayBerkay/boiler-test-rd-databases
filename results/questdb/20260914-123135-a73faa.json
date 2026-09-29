@@ -1,0 +1,287 @@
+{
+  "engine": "questdb",
+  "display": "QuestDB",
+  "category": "time-series",
+  "dialect": "questdb",
+  "driver": "questdb",
+  "image": "questdb/questdb:latest",
+  "run_id": "20260914-123135-a73faa",
+  "started": "2026-09-14T09:31:35+00:00",
+  "scale": 0.3,
+  "notes": "Append-optimised time-series engine with a PostgreSQL wire endpoint. Tables with a designated timestamp are partitioned by month (WAL). No primary keys / foreign keys / UPDATE-heavy workloads; replication is an Enterprise feature.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.54,
+          "rows_per_s": 11151,
+          "method": "HTTP /imp CSV import",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.08,
+          "rows_per_s": 2533,
+          "method": "HTTP /imp CSV import",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.16,
+          "rows_per_s": 9470,
+          "method": "HTTP /imp CSV import",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 0,
+          "expected": 60000,
+          "seconds": 0.26,
+          "rows_per_s": 227944,
+          "method": "HTTP /imp CSV import",
+          "ok": false
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 0.18,
+          "rows_per_s": 836136,
+          "method": "HTTP /imp CSV import",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 0,
+          "expected": 300000,
+          "seconds": 0.65,
+          "rows_per_s": 459641,
+          "method": "HTTP /imp CSV import",
+          "ok": false
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.14,
+          "rows_per_s": 43909,
+          "method": "HTTP /imp CSV import",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INT,\n  name VARCHAR,\n  email VARCHAR,\n  country_code SYMBOL CAPACITY 256 CACHE,\n  tier SYMBOL CAPACITY 256 CACHE,\n  created_at TIMESTAMP,\n  attrs VARCHAR\n)",
+        "CREATE TABLE categories (\n  id INT,\n  parent_id INT,\n  name VARCHAR,\n  depth INT\n)",
+        "CREATE TABLE products (\n  id INT,\n  category_id INT,\n  sku VARCHAR,\n  name VARCHAR,\n  description VARCHAR,\n  price DOUBLE,\n  attrs VARCHAR,\n  active BOOLEAN\n)",
+        "CREATE TABLE orders (\n  id INT,\n  customer_id INT,\n  status SYMBOL CAPACITY 256 CACHE,\n  ordered_at TIMESTAMP,\n  total_amount DOUBLE,\n  shipping_country SYMBOL CAPACITY 256 CACHE\n) TIMESTAMP(ordered_at) PARTITION BY MONTH WAL",
+        "CREATE TABLE order_items (\n  id INT,\n  order_id INT,\n  product_id INT,\n  qty INT,\n  unit_price DOUBLE\n)",
+        "CREATE TABLE events (\n  id LONG,\n  customer_id INT,\n  event_type SYMBOL CAPACITY 256 CACHE,\n  occurred_at TIMESTAMP,\n  payload VARCHAR,\n  value_num DOUBLE\n) TIMESTAMP(occurred_at) PARTITION BY MONTH WAL",
+        "CREATE TABLE inventory (\n  product_id INT,\n  warehouse_id INT,\n  qty INT,\n  updated_at TIMESTAMP\n)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.08,
+      "load_seconds": 2.04,
+      "fts_setup": [],
+      "after_load": [],
+      "post_seconds": 0.0,
+      "server_version": "QuestDB 10.0.1",
+      "_seconds": 2.1
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "checkpoint": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "CHECKPOINT CREATE + tar + _restore",
+          "backup_seconds": 1.17,
+          "backup_bytes": 1232287599,
+          "backup_mb": 1175.2,
+          "restore_seconds": 4.16,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 0.86
+          },
+          "pitr": {},
+          "notes": "consistent copy (cp -a of db/, conf/, .checkpoint/) while CHECKPOINT holds the table versions; the _restore trigger file makes the new instance finalize the checkpoint on start",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/questdb-full && mkdir -p /backups/questdb-full",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "CHECKPOINT CREATE",
+              "cmd": "CHECKPOINT CREATE",
+              "rc": 0,
+              "seconds": 0.32,
+              "out": ""
+            },
+            {
+              "name": "checkpoint_status()",
+              "cmd": "SELECT * FROM checkpoint_status()",
+              "rc": 0,
+              "seconds": 0.0,
+              "out": "[(True, datetime.datetime(2026, 9, 14, 9, 31, 38, 593847))]"
+            },
+            {
+              "name": "cp -a server root (during checkpoint)",
+              "cmd": "cd /var/lib/questdb && for d in .checkpoint conf db snapshot public; do [ -e $d ] && cp -a $d /backups/questdb-full/; done; true",
+              "rc": 0,
+              "seconds": 0.84,
+              "out": ""
+            },
+            {
+              "name": "CHECKPOINT RELEASE",
+              "cmd": "CHECKPOINT RELEASE",
+              "rc": 0,
+              "seconds": 0.01,
+              "out": ""
+            }
+          ],
+          "checkpoint_status": "[(True, datetime.datetime(2026, 9, 14, 9, 31, 38, 593847))]",
+          "restore_log": [],
+          "seconds": 16.2,
+          "description": "checkpoint-consistent file copy restored in a scratch container"
+        }
+      },
+      "order": [
+        "checkpoint"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 0.98,
+      "summary": {
+        "strategies": 1,
+        "ok": 1,
+        "verified": [
+          "checkpoint"
+        ],
+        "pitr_ok": []
+      },
+      "_seconds": 17.2
+    },
+    "logging": {
+      "sink": "_query_trace table (query.tracing.enabled; slow = WHERE execution_micros >= threshold)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "build": "Build Information: QuestDB 10.0.1, JDK 25.0.2, Commit Hash 7a391566ac827e0d8c269b91f2415c16b0a32a84",
+        "_query_trace_rows": 27
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "_query_trace table (query.tracing.enabled; slow = WHERE execution_micros >= threshold)",
+        "slow_query_ms": 92.3,
+        "slow_logged": false,
+        "seen_after_s": 25.24,
+        "sample": "",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "_query_trace records every statement with its principal",
+        "setup": "_query_trace",
+        "event_found": true,
+        "seen_after_s": 0.51,
+        "sample": "ts=2026-09-14 09:32:20.126609 principal=admin query=SELECT ts, principal, query_text FROM _query_trace WHERE query_text LIKE '%audit_rdlab_mk_5f91ddf8fd%' ORDER BY ts LIMIT 1",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 16345,
+          "p50_ms": 0.374606,
+          "p99_ms": 1.3604489999999996,
+          "errors": 0
+        },
+        "full_logging": "query tracing is always on for every statement (query.tracing.enabled=true); overhead = tracing on vs off is a restart-time switch",
+        "full": {
+          "qps": 17184,
+          "p50_ms": 0.372456,
+          "p99_ms": 1.2623437599999998,
+          "errors": 0
+        },
+        "log_bytes_written": 22977310,
+        "bytes_per_statement": 334.3,
+        "overhead_pct": -5.1,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-questdb": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 53964057,
+          "docker_logs_lines": 313139
+        }
+      },
+      "extra": {
+        "_query_trace": {
+          "rows": 162595,
+          "avg_ms": 0.052000000000000005,
+          "max_ms": 136.97
+        }
+      },
+      "collected": [],
+      "_seconds": 48.1
+    }
+  },
+  "harness_log": "results/logs/questdb/20260914-123135-a73faa.log",
+  "server_version": "QuestDB 10.0.1",
+  "finished": "2026-09-14T09:32:42+00:00"
+}

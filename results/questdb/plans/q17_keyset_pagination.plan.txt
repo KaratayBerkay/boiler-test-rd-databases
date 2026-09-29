@@ -1,0 +1,7 @@
+Encode sort light lo: 50 partiallySorted: true
+  keys: [ordered_at, id]
+    Async JIT Filter workers: 27
+      filter: (2025-01-01T00:00:00.000000Z<ordered_at or (2025-01-01T00:00:00.000000Z=ordered_at and 0<id))
+        PageFrame
+            Row forward scan
+            Frame forward scan on: orders

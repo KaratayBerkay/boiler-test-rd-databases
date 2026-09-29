@@ -1,0 +1,11 @@
+Encode sort light
+  keys: [customer_id, ordered_at desc]
+    SelectedRecord
+        Filter filter: 3>=rn
+            CachedWindowLight
+              orderedFunctions: [[ordered_at desc, id desc] => [row_number() over (partition by [customer_id])]]
+                Async JIT Filter workers: 27
+                  filter: 100>=customer_id
+                    PageFrame
+                        Row forward scan
+                        Frame forward scan on: orders

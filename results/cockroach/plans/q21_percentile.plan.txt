@@ -1,0 +1,24 @@
+distribution: local
+
+• sort
+│ estimated row count: 13
+│ order: +shipping_country
+│
+└── • group (hash)
+    │ estimated row count: 13
+    │ group by: shipping_country
+    │
+    └── • sort
+        │ estimated row count: 200,000
+        │ order: +column12
+        │
+        └── • render
+            │
+            └── • scan
+                  estimated row count: 200,000 (100% of the table; stats collected 5 minutes ago)
+                  table: orders@orders_pkey
+                  spans: FULL SCAN
+
+index recommendations: 1
+1. type: index creation
+   SQL command: CREATE INDEX ON lab.public.orders (shipping_country) STORING (total_amount);

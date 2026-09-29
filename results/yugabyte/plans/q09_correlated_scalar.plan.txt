@@ -1,0 +1,10 @@
+Limit  (cost=768.71..29651.01 rows=500 width=42)
+  ->  Result  (cost=768.71..245228.46 rows=4232 width=42)
+        ->  Sort  (cost=768.71..779.29 rows=4232 width=14)
+              Sort Key: p.id
+              ->  Seq Scan on products p  (cost=23.08..557.84 rows=4232 width=14)
+                    Storage Filter: active
+        SubPlan 1
+          ->  Aggregate  (cost=57.74..57.75 rows=1 width=32)
+                ->  Index Scan using ix_products_category_id on products p2  (cost=52.16..57.68 rows=25 width=6)
+                      Index Cond: (category_id = p.category_id)

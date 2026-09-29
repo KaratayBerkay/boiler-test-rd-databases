@@ -1,0 +1,6 @@
+11 | 0 | 0 | SCAN o
+19 | 0 | 0 | SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+22 | 0 | 0 | SEARCH oi USING INDEX ix_order_items_order_id (order_id=?)
+27 | 0 | 0 | USE TEMP B-TREE FOR GROUP BY
+87 | 0 | 0 | USE TEMP B-TREE FOR count(DISTINCT)
+90 | 0 | 0 | USE TEMP B-TREE FOR ORDER BY

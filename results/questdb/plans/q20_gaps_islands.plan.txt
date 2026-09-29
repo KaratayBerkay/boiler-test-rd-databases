@@ -1,0 +1,15 @@
+Encode sort light
+  keys: [customer_id]
+    GroupBy vectorized: false
+      keys: [customer_id]
+      values: [count(*)]
+        Filter filter: new_session=1
+            VirtualRecord
+              functions: [customer_id,case([(null=prev_at or 1800<datediff('s',prev_at,occurred_at)),1,0])]
+                CachedWindowLight
+                  orderedFunctions: [[occurred_at, id] => [lag(occurred_at, 1, NULL) over (partition by [customer_id])]]
+                    Async JIT Filter workers: 27
+                      filter: 2000>=customer_id
+                        PageFrame
+                            Row forward scan
+                            Frame forward scan on: events

@@ -1,0 +1,17 @@
+Projection_17 | 50.00 | root |  | lab.customers.country_code, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#21, Column#19, Column#20
+└─Projection_107 | 50.00 | root |  | Column#19, Column#20, lab.orders.ordered_at, lab.customers.country_code
+  └─TopN_20 | 50.00 | root |  | Column#20:desc, lab.customers.country_code, Column#35, offset:0, count:50
+    └─Projection_108 | 34357.96 | root |  | Column#19, Column#20, lab.orders.ordered_at, lab.customers.country_code, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#35
+      └─HashAgg_22 | 34357.96 | root |  | group by:Column#33, Column#34, funcs:count(distinct Column#30)->Column#19, funcs:sum(Column#31)->Column#20, funcs:firstrow(Column#32)->lab.orders.ordered_at, funcs:firstrow(Column#33)->lab.customers.country_code
+        └─Projection_106 | 86851.41 | root |  | lab.orders.id->Column#30, mul(cast(lab.order_items.qty, decimal(10,0) BINARY), lab.order_items.unit_price)->Column#31, lab.orders.ordered_at->Column#32, lab.customers.country_code->Column#33, date_format(lab.orders.ordered_at, %Y-%m-01)->Column#34
+          └─Projection_23 | 86851.41 | root |  | lab.orders.id, lab.orders.ordered_at, lab.customers.country_code, lab.order_items.qty, lab.order_items.unit_price
+            └─IndexHashJoin_32 | 86851.41 | root |  | inner join, inner:IndexLookUp_29, outer key:lab.orders.id, inner key:lab.order_items.order_id, equal cond:eq(lab.orders.id, lab.order_items.order_id)
+              ├─HashJoin_60(Build) | 35082.12 | root |  | inner join, equal:[eq(lab.customers.id, lab.orders.customer_id)]
+              │ ├─TableReader_95(Build) | 20000.00 | root |  | data:TableFullScan_94
+              │ │ └─TableFullScan_94 | 20000.00 | cop[tikv] | table:c | keep order:false
+              │ └─TableReader_98(Probe) | 34826.02 | root |  | data:Selection_97
+              │   └─Selection_97 | 34826.02 | cop[tikv] |  | eq(lab.orders.status, "delivered"), ge(lab.orders.ordered_at, 2025-01-01 00:00:00), lt(lab.orders.ordered_at, 2025-07-01 00:00:00)
+              │     └─TableFullScan_96 | 200000.00 | cop[tikv] | table:o | keep order:false
+              └─IndexLookUp_29(Probe) | 86851.41 | root |  | 
+                ├─IndexRangeScan_27(Build) | 86851.41 | cop[tikv] | table:oi, index:fk_1(order_id) | range: decided by [eq(lab.order_items.order_id, lab.orders.id)], keep order:false
+                └─TableRowIDScan_28(Probe) | 86851.41 | cop[tikv] | table:oi | keep order:false

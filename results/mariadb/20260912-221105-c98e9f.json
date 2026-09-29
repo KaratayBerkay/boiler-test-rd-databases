@@ -1,0 +1,363 @@
+{
+  "engine": "mariadb",
+  "display": "MariaDB 11",
+  "category": "row-store OLTP",
+  "dialect": "mariadb",
+  "driver": "pymysql",
+  "image": "mariadb:11",
+  "run_id": "20260912-221105-c98e9f",
+  "started": "2026-09-12T19:11:05+00:00",
+  "scale": 1.0,
+  "notes": "MariaDB 11.8 LTS. Replica configured by the official image (MARIADB_MASTER_HOST) using GTID slave_pos; MaxScale readwritesplit routes SELECTs to the replica and performs automatic failover (mariadbmon) when the primary dies.",
+  "phases": {
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 233.227,
+            "p95_ms": 235.023,
+            "rows": 1,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.08204441\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 175.6796786,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 243.710947,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"events\",\n          \"access_type\": \"ALL\",\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 1042267,\n          \"r_rows\": 1000000,\n          \"cost\": 175.6796786,\n          \"r_table_time_ms\": 184.2782359,\n          \"r_other_time_ms\": 59.42863541,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 6633\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 0.3145,\n          \"attached_condition\": \"`events`.event_type = 'checkout' and `events`.occurred_at >= TIMESTAMP'2025-06-01 00:00:00' and `events`.occurred_at < TIMESTAMP'2025-07-01 00:00:00'\",\n          \"r_filtered\": 0.3145\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          }
+        ]
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 24.081,
+            "p95_ms": 27.972,
+            "rows": 2430,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.159025171\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 5.142957757,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 8.5200001,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 2460,\n          \"filesort\": {\n            \"sort_key\": \"order_items.order_id, order_items.product_id\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 8.146924719,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 2460,\n            \"r_buffer_size\": \"2048KiB\",\n            \"r_sort_mode\": \"sort_key,addon_fields\",\n            \"table\": {\n              \"table_name\": \"order_items\",\n              \"access_type\": \"range\",\n              \"possible_keys\": [\"ix_order_items_order_id\"],\n              \"key\": \"ix_order_items_order_id\",\n              \"key_length\": \"4\",\n              \"used_key_parts\": [\"order_id\"],\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 2460,\n              \"r_index_rows\": 2460,\n              \"r_rows\": 2460,\n              \"cost\": 3.52440224,\n              \"r_table_time_ms\": 7.386033912,\n              \"r_other_time_ms\": 0.748315759,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 7388\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"index_condition\": \"order_items.order_id >= 163290 and order_items.order_id < 164290\",\n              \"r_icp_filtered\": 100,\n              \"r_filtered\": 100\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "ok": false,
+            "status": "n/a",
+            "error": "mariadb: INCLUDE columns not supported"
+          }
+        ]
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE YEAR(ordered_at) = 2025 AND MONTH(ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 44.819,
+            "p95_ms": 46.148,
+            "rows": 1,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.036088849\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 47.151674,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"orders\",\n          \"access_type\": \"ALL\",\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 199640,\n          \"r_rows\": 200000,\n          \"cost\": 33.1813076,\n          \"r_table_time_ms\": 28.19212137,\n          \"r_other_time_ms\": 18.95666276,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 714\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 4.145,\n          \"attached_condition\": \"year(orders.ordered_at) = 2025 and month(orders.ordered_at) = 5\",\n          \"r_filtered\": 4.145\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 40.782,
+            "p95_ms": 41.71,
+            "rows": 1,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.049768983\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 41.65638166,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"orders\",\n          \"access_type\": \"ALL\",\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 199640,\n          \"r_rows\": 200000,\n          \"cost\": 33.1813076,\n          \"r_table_time_ms\": 27.11422047,\n          \"r_other_time_ms\": 14.538733,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 714\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 4.145,\n          \"attached_condition\": \"orders.ordered_at >= TIMESTAMP'2025-05-01 00:00:00' and orders.ordered_at < TIMESTAMP'2025-06-01 00:00:00'\",\n          \"r_filtered\": 4.145\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          }
+        ],
+        "best_variant": "sargable_no_index",
+        "speedup_vs_first": 1.1
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 80.24,
+            "p95_ms": 82.212,
+            "rows": 50,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.040405457\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 81.08466002,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 100050,\n          \"filesort\": {\n            \"sort_key\": \"orders.ordered_at, orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 77.16125625,\n            \"r_limit\": 100050,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 200000,\n            \"r_sort_passes\": 1,\n            \"r_buffer_size\": \"2047KiB\",\n            \"r_sort_mode\": \"sort_key,addon_fields\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 35.44750595,\n              \"r_other_time_ms\": 41.7083696,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 714\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 55.618,
+            "p95_ms": 56.843,
+            "rows": 50,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.074196717\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 33.1813076,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 57.48531068,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 50,\n          \"filesort\": {\n            \"sort_key\": \"orders.ordered_at, orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 57.38830371,\n            \"r_limit\": 50,\n            \"r_used_priority_queue\": true,\n            \"r_output_rows\": 51,\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"possible_keys\": [\"PRIMARY\"],\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 32.6421103,\n              \"r_other_time_ms\": 24.8315104,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 814\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 49.978,\n              \"attached_condition\": \"orders.ordered_at > TIMESTAMP'2025-01-01 00:00:00' or orders.ordered_at = TIMESTAMP'2025-01-01 00:00:00' and orders.`id` > 0\",\n              \"r_filtered\": 49.978\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          }
+        ],
+        "best_variant": "keyset_no_index",
+        "speedup_vs_first": 1.44
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 9.805,
+            "p95_ms": 10.085,
+            "rows": 500,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.067519778\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.998096,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 6.065681031,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 593,\n          \"cost\": 0.998096,\n          \"r_table_time_ms\": 0.157000298,\n          \"r_other_time_ms\": 0.238409765,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 20\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 84.31703204,\n          \"attached_condition\": \"p.active = 1\",\n          \"r_filtered\": 84.31703204\n        }\n      }\n    ],\n    \"subqueries\": [\n      {\n        \"subquery_cache\": {\n          \"r_loops\": 500,\n          \"r_hit_ratio\": 64,\n          \"query_block\": {\n            \"select_id\": 2,\n            \"cost\": 0.04514928,\n            \"r_loops\": 180,\n            \"r_total_time_ms\": 5.522488636,\n            \"nested_loop\": [\n              {\n                \"table\": {\n                  \"table_name\": \"p2\",\n                  \"access_type\": \"ref\",\n                  \"possible_keys\": [\"ix_products_category_id\"],\n                  \"key\": \"ix_products_category_id\",\n                  \"key_length\": \"4\",\n                  \"used_key_parts\": [\"category_id\"],\n                  \"ref\": [\"lab.p.category_id\"],\n                  \"loops\": 1,\n                  \"r_loops\": 180,\n                  \"rows\": 24,\n                  \"r_rows\": 25.36666667,\n                  \"cost\": 0.04514928,\n                  \"r_table_time_ms\": 4.809075078,\n                  \"r_other_time_ms\": 0.59775482,\n                  \"r_engine_stats\": {\n                    \"pages_accessed\": 9496\n                  },\n                  \"filtered\": 100,\n                  \"r_total_filtered\": 100,\n                  \"r_filtered\": 100\n                }\n              }\n            ]\n          }\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 6.783,
+            "p95_ms": 6.936,
+            "rows": 500,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.092569906\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 10.53396662,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 3.117923491,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"possible_keys\": [\"ix_products_category_id\"],\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 593,\n          \"cost\": 0.998096,\n          \"r_table_time_ms\": 0.183104482,\n          \"r_other_time_ms\": 0.048067436,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 20\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 84.31703204,\n          \"attached_condition\": \"p.active = 1\",\n          \"r_filtered\": 84.31703204\n        }\n      },\n      {\n        \"table\": {\n          \"table_name\": \"<derived2>\",\n          \"access_type\": \"ref\",\n          \"possible_keys\": [\"key0\"],\n          \"key\": \"key0\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"category_id\"],\n          \"ref\": [\"lab.p.category_id\"],\n          \"loops\": 4882,\n          \"r_loops\": 500,\n          \"rows\": 10,\n          \"r_rows\": 1,\n          \"cost\": 9.535870625,\n          \"r_table_time_ms\": 0.061443901,\n          \"r_other_time_ms\": 0.12352651,\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"r_filtered\": 100,\n          \"materialized\": {\n            \"query_block\": {\n              \"select_id\": 2,\n              \"cost\": 0.060510283,\n              \"r_loops\": 1,\n              \"r_total_time_ms\": 2.791762359,\n              \"filesort\": {\n                \"sort_key\": \"products.category_id\",\n                \"r_loops\": 1,\n                \"r_total_time_ms\": 0.063013691,\n                \"r_used_priority_queue\": false,\n                \"r_output_rows\": 200,\n                \"r_buffer_size\": \"4KiB\",\n                \"r_sort_mode\": \"sort_key,rowid\",\n                \"temporary_table\": {\n                  \"nested_loop\": [\n                    {\n                      \"table\": {\n                        \"table_name\": \"products\",\n                        \"access_type\": \"ALL\",\n                        \"possible_keys\": [\"ix_products_category_id\"],\n                        \"loops\": 1,\n                        \"r_loops\": 1,\n                        \"rows\": 4882,\n                        \"r_rows\": 5000,\n                        \"cost\": 0.998096,\n                        \"r_table_time_ms\": 1.093002751,\n                        \"r_other_time_ms\": 1.53738749,\n                        \"r_engine_stats\": {\n                          \"pages_accessed\": 156\n                        },\n                        \"filtered\": 100,\n                        \"r_total_filtered\": 100,\n                        \"r_filtered\": 100\n                      }\n                    }\n                  ]\n                }\n              }\n            }\n          }\n        }\n      }\n "
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 1.45
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.465,
+            "p95_ms": 11.75,
+            "rows": 0,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.042754495\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 395.7775954,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 11.62082782,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 5000,\n          \"cost\": 0.72532649,\n          \"r_table_time_ms\": 0.999226955,\n          \"r_other_time_ms\": 0.376777123,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 156\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"r_filtered\": 100\n        }\n      },\n      {\n        \"table\": {\n          \"table_name\": \"oi\",\n          \"access_type\": \"ref\",\n          \"possible_keys\": [\"ix_order_items_product_id\"],\n          \"key\": \"ix_order_items_product_id\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"product_id\"],\n          \"ref\": [\"lab.p.id\"],\n          \"loops\": 4882,\n          \"r_loops\": 5000,\n          \"rows\": 97,\n          \"r_rows\": 1,\n          \"cost\": 73.75900193,\n          \"r_table_time_ms\": 9.925548265,\n          \"r_other_time_ms\": 0.317376919,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 10186\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 100,\n          \"attached_condition\": \"trigcond(oi.`id` is null)\",\n          \"r_filtered\": 100,\n          \"using_index\": true,\n          \"not_exists\": true\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.105,
+            "p95_ms": 11.623,
+            "rows": 0,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.055416963\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 3.950487766,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 11.1711979,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 5000,\n          \"cost\": 0.72532649,\n          \"r_table_time_ms\": 1.030692601,\n          \"r_other_time_ms\": 0.515684058,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 156\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 0,\n          \"attached_condition\": \"!<in_optimizer>(p.`id`,<exists>(subquery#2))\",\n          \"r_filtered\": 0\n        }\n      }\n    ],\n    \"subqueries\": [\n      {\n        \"query_block\": {\n          \"select_id\": 2,\n          \"cost\": 0.015874365,\n          \"nested_loop\": [\n            {\n              \"table\": {\n                \"table_name\": \"oi\",\n                \"access_type\": \"index_subquery\",\n                \"possible_keys\": [\"ix_order_items_product_id\"],\n                \"key\": \"ix_order_items_product_id\",\n                \"key_length\": \"4\",\n                \"used_key_parts\": [\"product_id\"],\n                \"ref\": [\"func\"],\n                \"loops\": 1,\n                \"r_loops\": 0,\n                \"rows\": 97,\n                \"r_rows\": null,\n                \"cost\": 0.015874365,\n                \"r_table_time_ms\": 9.387649571,\n                \"r_other_time_ms\": 0.235212882,\n                \"r_engine_stats\": {\n                  \"pages_accessed\": 10186\n                },\n                \"filtered\": 100,\n                \"r_total_filtered\": null,\n                \"r_filtered\": null,\n                \"using_index\": true\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 11.526,
+            "p95_ms": 11.956,
+            "rows": 0,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.0477851\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 3.950487766,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 11.30325849,\n    \"nested_loop\": [\n      {\n        \"table\": {\n          \"table_name\": \"p\",\n          \"access_type\": \"index\",\n          \"key\": \"PRIMARY\",\n          \"key_length\": \"4\",\n          \"used_key_parts\": [\"id\"],\n          \"loops\": 1,\n          \"r_loops\": 1,\n          \"rows\": 4882,\n          \"r_rows\": 5000,\n          \"cost\": 0.72532649,\n          \"r_table_time_ms\": 1.032627545,\n          \"r_other_time_ms\": 0.607278963,\n          \"r_engine_stats\": {\n            \"pages_accessed\": 156\n          },\n          \"filtered\": 100,\n          \"r_total_filtered\": 0,\n          \"attached_condition\": \"!<in_optimizer>(p.`id`,<exists>(subquery#2))\",\n          \"r_filtered\": 0\n        }\n      }\n    ],\n    \"subqueries\": [\n      {\n        \"query_block\": {\n          \"select_id\": 2,\n          \"cost\": 0.015874365,\n          \"nested_loop\": [\n            {\n              \"table\": {\n                \"table_name\": \"oi\",\n                \"access_type\": \"index_subquery\",\n                \"possible_keys\": [\"ix_order_items_product_id\"],\n                \"key\": \"ix_order_items_product_id\",\n                \"key_length\": \"4\",\n                \"used_key_parts\": [\"product_id\"],\n                \"ref\": [\"func\"],\n                \"loops\": 1,\n                \"r_loops\": 0,\n                \"rows\": 97,\n                \"r_rows\": null,\n                \"cost\": 0.015874365,\n                \"r_table_time_ms\": 9.409468099,\n                \"r_other_time_ms\": 0.252085715,\n                \"r_engine_stats\": {\n                  \"pages_accessed\": 10186\n                },\n                \"filtered\": 100,\n                \"r_total_filtered\": null,\n                \"r_filtered\": null,\n                \"using_index\": true\n              }\n            }\n          ]\n        }\n      }\n    ]\n  }\n}"
+          }
+        ],
+        "best_variant": "not_exists",
+        "speedup_vs_first": 1.03
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.412,
+            "p95_ms": 0.443,
+            "rows": 13,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.047094944\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.034441884,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 0.094923963,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 12,\n          \"filesort\": {\n            \"sort_key\": \"orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 0.084536498,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 12,\n            \"r_buffer_size\": \"2047KiB\",\n            \"r_sort_mode\": \"sort_key,addon_fields\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"index_merge\",\n              \"possible_keys\": [\"PRIMARY\", \"ix_orders_customer_id\"],\n              \"key_length\": \"4,4\",\n              \"index_merge\": {\n                \"union\": [\n                  {\n                    \"range\": {\n                      \"key\": \"ix_orders_customer_id\",\n                      \"used_key_parts\": [\"customer_id\"]\n                    }\n                  },\n                  {\n                    \"range\": {\n                      \"key\": \"PRIMARY\",\n                      \"used_key_parts\": [\"id\"]\n                    }\n                  }\n                ]\n              },\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 12,\n              \"r_rows\": 12,\n              \"cost\": 0.026792001,\n              \"r_table_time_ms\": 0.041873606,\n              \"r_other_time_ms\": 0.007214005,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 30\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"attached_condition\": \"orders.customer_id = 3342 or orders.`id` = 150456\",\n              \"r_filtered\": 100\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 0.422,
+            "p95_ms": 0.454,
+            "rows": 13,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.083961787\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 0.018186098,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 0.039010089,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 12,\n          \"filesort\": {\n            \"sort_key\": \"u.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 0.004484755,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 12,\n            \"r_buffer_size\": \"440\",\n            \"r_sort_mode\": \"sort_key,rowid\",\n            \"table\": {\n              \"table_name\": \"<derived2>\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 12,\n              \"r_rows\": 12,\n              \"cost\": 0.010536215,\n              \"r_table_time_ms\": 0.002236103,\n              \"r_other_time_ms\": 0.006871437,\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100,\n              \"materialized\": {\n                \"query_block\": {\n                  \"union_result\": {\n                    \"table_name\": \"<union2,3>\",\n                    \"access_type\": \"ALL\",\n                    \"r_loops\": 1,\n                    \"r_rows\": 12,\n                    \"query_specifications\": [\n                      {\n                        \"query_block\": {\n                          \"select_id\": 2,\n                          \"cost\": 0.003259455,\n                          \"r_loops\": 1,\n                          \"r_total_time_ms\": 0.012920962,\n                          \"nested_loop\": [\n                            {\n                              \"table\": {\n                                \"table_name\": \"orders\",\n                                \"access_type\": \"ref\",\n                                \"possible_keys\": [\"ix_orders_customer_id\"],\n                                \"key\": \"ix_orders_customer_id\",\n                                \"key_length\": \"4\",\n                                \"used_key_parts\": [\"customer_id\"],\n                                \"ref\": [\"const\"],\n                                \"loops\": 1,\n                                \"r_loops\": 1,\n                                \"rows\": 11,\n                                \"r_rows\": 11,\n                                \"cost\": 0.003259455,\n                                \"r_table_time_ms\": 0.005809853,\n                                \"r_other_time_ms\": 0.005745857,\n                                \"r_engine_stats\": {\n                                  \"pages_accessed\": 4\n                                },\n                                \"filtered\": 100,\n                                \"r_total_filtered\": 100,\n                                \"r_filtered\": 100,\n                                \"using_index\": true\n                              }\n                            }\n                          ]\n                        }\n                      },\n                      {\n                        \"query_block\": {\n"
+          }
+        ],
+        "best_variant": "or_predicate",
+        "speedup_vs_first": 1.0
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 55.982,
+            "p95_ms": 56.545,
+            "rows": 644,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.068235029\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 167.9586756,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 54.9636563,\n    \"nested_loop\": [\n      {\n        \"read_sorted_file\": {\n          \"r_rows\": 644,\n          \"filesort\": {\n            \"sort_key\": \"orders.ordered_at, orders.`id`\",\n            \"r_loops\": 1,\n            \"r_total_time_ms\": 54.90577987,\n            \"r_used_priority_queue\": false,\n            \"r_output_rows\": 644,\n            \"r_buffer_size\": \"2047KiB\",\n            \"r_sort_mode\": \"sort_key,packed_addon_fields\",\n            \"table\": {\n              \"table_name\": \"orders\",\n              \"access_type\": \"ALL\",\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 199640,\n              \"r_rows\": 200000,\n              \"cost\": 33.1813076,\n              \"r_table_time_ms\": 39.74360531,\n              \"r_other_time_ms\": 15.15538846,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 714\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 0.322,\n              \"attached_condition\": \"orders.`status` = 'pending' and orders.ordered_at >= TIMESTAMP'2025-09-01 00:00:00' and orders.ordered_at < TIMESTAMP'2025-10-01 00:00:00'\",\n              \"r_filtered\": 0.322\n            }\n          }\n        }\n      }\n    ]\n  }\n}"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "ok": false,
+            "status": "n/a",
+            "error": "mariadb: partial indexes not supported"
+          }
+        ]
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 1865.586,
+            "p95_ms": 1885.628,
+            "rows": 0,
+            "plan_analyze": "{\n  \"query_optimization\": {\n    \"r_total_time_ms\": 0.123732301\n  },\n  \"query_block\": {\n    \"select_id\": 1,\n    \"cost\": 1799.355778,\n    \"r_loops\": 1,\n    \"r_total_time_ms\": 1892.527943,\n    \"filesort\": {\n      \"sort_key\": \"c.country_code\",\n      \"r_loops\": 1,\n      \"r_total_time_ms\": 0.006104738,\n      \"r_used_priority_queue\": false,\n      \"r_output_rows\": 0,\n      \"r_buffer_size\": \"720\",\n      \"r_sort_mode\": \"sort_key,rowid\",\n      \"temporary_table\": {\n        \"nested_loop\": [\n          {\n            \"table\": {\n              \"table_name\": \"c\",\n              \"access_type\": \"ALL\",\n              \"possible_keys\": [\"PRIMARY\"],\n              \"loops\": 1,\n              \"r_loops\": 1,\n              \"rows\": 19972,\n              \"r_rows\": 20000,\n              \"cost\": 3.4030588,\n              \"r_table_time_ms\": 6.25306322,\n              \"r_other_time_ms\": 3.133695422,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 153\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 100,\n              \"r_filtered\": 100\n            }\n          },\n          {\n            \"table\": {\n              \"table_name\": \"e\",\n              \"access_type\": \"ref\",\n              \"possible_keys\": [\"ix_events_customer_id\"],\n              \"key\": \"ix_events_customer_id\",\n              \"key_length\": \"4\",\n              \"used_key_parts\": [\"customer_id\"],\n              \"ref\": [\"lab.c.id\"],\n              \"loops\": 19972,\n              \"r_loops\": 20000,\n              \"rows\": 53,\n              \"r_rows\": 50,\n              \"cost\": 1074.456763,\n              \"r_table_time_ms\": 1827.972735,\n              \"r_other_time_ms\": 55.14730956,\n              \"r_engine_stats\": {\n                \"pages_accessed\": 3061767\n              },\n              \"filtered\": 100,\n              \"r_total_filtered\": 0,\n              \"attached_condition\": \"e.event_type = 'bench_stats'\",\n              \"r_filtered\": 0\n            }\n          }\n        ]\n      }\n    }\n  }\n}"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "ok": false,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          }
+        ]
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 0.001,
+            "rows_per_s": null,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 0.002,
+            "rows_per_s": null,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.008,
+            "rows_per_s": null,
+            "error": "OperationalError: (1290, 'The MariaDB server is running with the --read-only option so it cannot execute this statement')"
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups",
+        "status": "n/a",
+        "note": "driver pymysql: no server-side prepare toggle exposed"
+      },
+      "_seconds": 32.2
+    }
+  },
+  "server_version": "11.8.9-MariaDB-ubu2404-log",
+  "finished": "2026-09-12T19:11:37+00:00"
+}

@@ -1,0 +1,48 @@
+Output: toStartOfMonth(min(ordered_at)), uniqExact(customer_id), uniqExact(toNullable(customer_id))
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: toStartOfMonth(min(ordered_at)) ASC
+└──Aggregating
+   │  Keys: toStartOfMonth(min(ordered_at))
+   │  Aggregates: uniqExact(customer_id), uniqExact(toNullable(customer_id))
+   │  Skip merging: 0
+   └──Join (JOIN FillRightFirst)
+      │  a[60000] ⟖ c[5858]
+      │  Type: right | Strictness: all | Algorithm: SpillingHashJoin(HashJoin)
+      │  Result rows: 60000
+      │  Join conditions: toNullable(customer_id) = customer_id
+      │  Residual filter: greater(__table4.m, __table1.cohort)
+      │  Output:
+      │    Left:  toNullable(customer_id)
+      │    Right: customer_id, cohort
+      ├──Aggregating
+      │  │  Keys: customer_id, toStartOfMonth(ordered_at)
+      │  │  Skip merging: 0
+      │  └──ReadFromMergeTree (lab.orders)
+      │        Read type: Default
+      │        Parts: 1 | Granules: 7
+      │        Output: customer_id, ordered_at
+      │        Runtime filters: RF1(customer_id, customer_id from lab.orders)
+      │        Indexes:
+      │          PrimaryKey
+      │            Condition: true
+      │            Parts: 1/1
+      │            Granules: 7/7
+      │          Ranges: 1
+      └──BuildRuntimeFilter (Build runtime join filter on customer_id)
+         │  Filter id: RF1
+         │  Source table: lab.orders
+         └──Aggregating
+            │  Keys: customer_id
+            │  Aggregates: min(ordered_at)
+            │  Skip merging: 0
+            └──ReadFromMergeTree (lab.orders)
+                  Read type: Default
+                  Parts: 1 | Granules: 7
+                  Output: customer_id, ordered_at
+                  Indexes:
+                    PrimaryKey
+                      Condition: true
+                      Parts: 1/1
+                      Granules: 7/7
+                    Ranges: 1

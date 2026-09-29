@@ -1,0 +1,23 @@
+Output: customer_id, id, ordered_at, total_amount
+
+Sorting (Sorting for ORDER BY)
+│  Sort description: customer_id ASC, ordered_at DESC
+└──Filter ((WHERE + (Change column names to column identifiers + (Project names + Projection))))
+   │  Filter column: ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) <= 3
+   └──Window (Window step for window 'PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC')
+      │  Window: (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC)
+      │  Functions: ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC)
+      └──Sorting (Sorting for window 'PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC')
+         │  Sort description: customer_id ASC, ordered_at DESC, id DESC
+         └──ReadFromMergeTree (lab.orders)
+               Read type: Default
+               Parts: 1 | Granules: 7
+               Output: customer_id, id, ordered_at, total_amount
+               Prewhere filter
+               Prewhere filter column:  customer_id <= 100
+               Indexes:
+                 PrimaryKey
+                   Condition: true
+                   Parts: 1/1
+                   Granules: 7/7
+                 Ranges: 1

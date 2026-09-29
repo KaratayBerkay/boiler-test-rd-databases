@@ -1,0 +1,4 @@
+-> Group aggregate with rollup: count(0), sum(orders.total_amount)  (cost=40112 rows=27098)
+    -> Sort: shipping_country, status  (cost=20148 rows=199640)
+        -> Filter: ((orders.ordered_at >= TIMESTAMP'2025-06-01 00:00:00') and (orders.ordered_at < TIMESTAMP'2025-09-01 00:00:00'))  (cost=20148 rows=199640)
+            -> Table scan on orders  (cost=20148 rows=199640)

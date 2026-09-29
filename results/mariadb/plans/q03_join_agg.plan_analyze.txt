@@ -1,0 +1,105 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.117159348
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 708.6993223,
+    "r_loops": 1,
+    "r_total_time_ms": 670.6201519,
+    "filesort": {
+      "sort_key": "sum(oi.qty * oi.unit_price) desc, c.country_code, date_format(o.ordered_at,'%Y-%m-01')",
+      "r_loops": 1,
+      "r_total_time_ms": 0.042603968,
+      "r_limit": 50,
+      "r_used_priority_queue": true,
+      "r_output_rows": 51,
+      "r_sort_mode": "sort_key,rowid",
+      "temporary_table": {
+        "filesort": {
+          "sort_key": "c.country_code, date_format(o.ordered_at,'%Y-%m-01')",
+          "r_loops": 1,
+          "r_total_time_ms": 60.05892039,
+          "r_used_priority_queue": false,
+          "r_output_rows": 84255,
+          "r_sort_passes": 1,
+          "r_buffer_size": "2047KiB",
+          "r_sort_mode": "sort_key,rowid",
+          "temporary_table": {
+            "nested_loop": [
+              {
+                "table": {
+                  "table_name": "c",
+                  "access_type": "ALL",
+                  "possible_keys": ["PRIMARY"],
+                  "loops": 1,
+                  "r_loops": 1,
+                  "rows": 20041,
+                  "r_rows": 20000,
+                  "cost": 3.4143058,
+                  "r_table_time_ms": 5.651499108,
+                  "r_other_time_ms": 1.590541888,
+                  "r_engine_stats": {
+                    "pages_accessed": 153
+                  },
+                  "filtered": 100,
+                  "r_total_filtered": 100,
+                  "r_filtered": 100
+                }
+              },
+              {
+                "table": {
+                  "table_name": "o",
+                  "access_type": "ref",
+                  "possible_keys": ["PRIMARY", "ix_orders_customer_id"],
+                  "key": "ix_orders_customer_id",
+                  "key_length": "4",
+                  "used_key_parts": ["customer_id"],
+                  "ref": ["lab.c.id"],
+                  "loops": 20041,
+                  "r_loops": 20000,
+                  "rows": 9,
+                  "r_rows": 10,
+                  "cost": 196.4618637,
+                  "r_table_time_ms": 303.1211648,
+                  "r_other_time_ms": 29.3308873,
+                  "r_engine_stats": {
+                    "pages_accessed": 440325
+                  },
+                  "filtered": 100,
+                  "r_total_filtered": 17.3395,
+                  "attached_condition": "o.`status` = 'delivered' and o.ordered_at >= TIMESTAMP'2025-01-01 00:00:00' and o.ordered_at < TIMESTAMP'2025-07-01 00:00:00'",
+                  "r_filtered": 17.3395
+                }
+              },
+              {
+                "table": {
+                  "table_name": "oi",
+                  "access_type": "ref",
+                  "possible_keys": ["ix_order_items_order_id"],
+                  "key": "ix_order_items_order_id",
+                  "key_length": "4",
+                  "used_key_parts": ["order_id"],
+                  "ref": ["lab.o.id"],
+                  "loops": 180369,
+                  "r_loops": 34679,
+                  "rows": 2,
+                  "r_rows": 2.429568327,
+                  "cost": 508.8231528,
+                  "r_table_time_ms": 189.1559234,
+                  "r_other_time_ms": 49.12693637,
+                  "r_engine_stats": {
+                    "pages_accessed": 322229
+                  },
+                  "filtered": 100,
+                  "r_total_filtered": 100,
+                  "r_filtered": 100
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

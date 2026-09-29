@@ -1,0 +1,20 @@
+Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=0 width=0)
+  ->  Distributed Subplan 190_1
+        ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=8)
+              Task Count: 32
+              Tasks Shown: One of 32
+              ->  Task
+                    Node: host=w1 port=5432 dbname=lab
+                    ->  Seq Scan on order_items_102106 oi  (cost=0.00..251.66 rows=15366 width=8)
+  Task Count: 1
+  Tasks Shown: All
+  ->  Task
+        Node: host=coordinator port=5432 dbname=lab
+        ->  Sort  (cost=176.69..176.76 rows=25 width=4)
+              Sort Key: p.id
+              ->  Hash Right Join  (cost=163.49..176.11 rows=25 width=4)
+                    Hash Cond: (intermediate_result.product_id = p.id)
+                    Filter: (intermediate_result.id IS NULL)
+                    ->  Function Scan on read_intermediate_result intermediate_result  (cost=0.00..10.00 rows=1000 width=8)
+                    ->  Hash  (cost=100.99..100.99 rows=5000 width=4)
+                          ->  Index Only Scan using products_pkey_102009 on products_102009 p  (cost=0.28..100.99 rows=5000 width=4)

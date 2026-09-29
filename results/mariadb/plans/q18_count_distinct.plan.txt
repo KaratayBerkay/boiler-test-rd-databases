@@ -1,0 +1,1 @@
+1 | SIMPLE | events | ALL | None | None | None | None | 988682 | Using where

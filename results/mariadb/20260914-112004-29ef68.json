@@ -1,0 +1,503 @@
+{
+  "engine": "mariadb",
+  "display": "MariaDB 11",
+  "category": "row-store OLTP",
+  "dialect": "mariadb",
+  "driver": "pymysql",
+  "image": "mariadb:11",
+  "run_id": "20260914-112004-29ef68",
+  "started": "2026-09-14T08:20:04+00:00",
+  "scale": 0.3,
+  "notes": "MariaDB 11.8 LTS. Replica configured by the official image (MARIADB_MASTER_HOST) using GTID slave_pos; MaxScale readwritesplit routes SELECTs to the replica and performs automatic failover (mariadbmon) when the primary dies.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.08,
+          "rows_per_s": 76213,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.0,
+          "rows_per_s": 81232,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.05,
+          "rows_per_s": 29372,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 0.48,
+          "rows_per_s": 125347,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 1.38,
+          "rows_per_s": 106944,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 2.82,
+          "rows_per_s": 106370,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.03,
+          "rows_per_s": 223353,
+          "method": "LOAD DATA LOCAL INFILE",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at DATETIME(6) NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at DATETIME(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at DATETIME(6) NOT NULL,\n  payload JSON,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n) ENGINE=InnoDB",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at DATETIME(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n) ENGINE=InnoDB",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.07,
+      "load_seconds": 4.93,
+      "fts_setup": [
+        "CREATE FULLTEXT INDEX ft_products_description ON products (description)"
+      ],
+      "after_load": [
+        "ANALYZE TABLE customers",
+        "ANALYZE TABLE categories",
+        "ANALYZE TABLE products",
+        "ANALYZE TABLE orders",
+        "ANALYZE TABLE order_items",
+        "ANALYZE TABLE events",
+        "ANALYZE TABLE inventory"
+      ],
+      "post_seconds": 0.16,
+      "server_version": "11.8.9-MariaDB-ubu2404-log",
+      "_seconds": 5.2
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "mariadb_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "mariadb-dump --single-transaction",
+          "backup_seconds": 0.66,
+          "backup_bytes": 45885712,
+          "backup_mb": 43.8,
+          "restore_seconds": 6.94,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.37
+          },
+          "pitr": {},
+          "notes": "single-transaction snapshot with the GTID position recorded in the dump header",
+          "error": null,
+          "steps": [
+            {
+              "name": "mariadb-dump",
+              "cmd": "mariadb-dump -uroot -prootpass --single-transaction --routines --triggers --events --gtid lab > /backups/lab.sql",
+              "rc": 0,
+              "seconds": 0.66,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.0,
+              "out": ""
+            },
+            {
+              "name": "restore",
+              "cmd": "mariadb -uroot -prootpass lab_restore < /backups/lab.sql",
+              "rc": 0,
+              "seconds": 6.94,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.02,
+              "out": ""
+            }
+          ],
+          "seconds": 9.1,
+          "description": "logical dump restored into a second schema"
+        },
+        "mariadb_backup": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "mariadb-backup full + incremental, --prepare",
+          "backup_seconds": 2.71,
+          "backup_bytes": 291456799,
+          "backup_mb": 278.0,
+          "restore_seconds": 3.2,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.35
+          },
+          "pitr": {
+            "match": true,
+            "method": "START SLAVE UNTIL master_gtid_pos='1-1-85' from gtid ",
+            "replay_seconds": 120.31,
+            "probe_rows_recovered": 1000,
+            "probe_rows_expected": 1000,
+            "slave_status": {
+              "Last_IO_Error": "",
+              "Last_SQL_Error": "Error 'Operation CREATE USER failed for 'lab'@'%'' on query. Default database: '",
+              "Slave_IO_Running": "No",
+              "Slave_SQL_Running": "No",
+              "Seconds_Behind_Master": "None",
+              "Master_Host": "primary",
+              "Gtid_IO_Pos": "1-1-85",
+              "Using_Gtid": "Slave_Pos",
+              "Last_Error": "Error 'Operation CREATE USER failed for 'lab'@'%'' on query. Default database: '"
+            }
+          },
+          "notes": "physical hot backup + incremental chain (--prepare then --prepare --incremental-dir), started in a scratch container; PITR by GTID replication from the primary",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/inc1",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "mariadb-backup --backup (full)",
+              "cmd": "mariadb-backup --backup --user=root --password=rootpass --target-dir=/backups/full 2>&1 | tail -3",
+              "rc": 0,
+              "seconds": 2.71,
+              "out": "[00] 2026-09-14 08:20:22 Redo log (from LSN 45434 to 132013912) was copied.\n2026-09-14  8:20:22 0 [Note] InnoDB: Starting shutdown...\n[00] 2026-09-14 08:20:22 completed OK!\n"
+            },
+            {
+              "name": "mariadb-backup --prepare (full)",
+              "cmd": "mariadb-backup --prepare --target-dir=/backups/full 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 2.51,
+              "out": "2026-09-14  8:20:25 0 [Note] InnoDB: Starting shutdown...\n[00] 2026-09-14 08:20:25 completed OK!\n"
+            },
+            {
+              "name": "mariadb-backup --backup (incremental)",
+              "cmd": "mariadb-backup --backup --user=root --password=rootpass --target-dir=/backups/inc1 --incremental-basedir=/backups/full 2>&1 | tail -3",
+              "rc": 0,
+              "seconds": 2.11,
+              "out": "[00] 2026-09-14 08:20:27 Redo log (from LSN 45434 to 132094980) was copied.\n2026-09-14  8:20:27 0 [Note] InnoDB: Starting shutdown...\n[00] 2026-09-14 08:20:27 completed OK!\n"
+            },
+            {
+              "name": "mariadb-backup --prepare (apply incremental)",
+              "cmd": "mariadb-backup --prepare --target-dir=/backups/full --incremental-dir=/backups/inc1 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 2.07,
+              "out": "[00] 2026-09-14 08:20:29         ...done\n[00] 2026-09-14 08:20:29 completed OK!\n"
+            },
+            {
+              "name": "START SLAVE UNTIL master_gtid_pos",
+              "cmd": "SET GLOBAL gtid_slave_pos = ''; CHANGE MASTER TO master_host='primary', master_port=3306, master_user='repl', master_password='replpass', master_use_gtid=slave_pos; START SLAVE UNTIL master_gtid_pos='1-1-85'",
+              "rc": 0,
+              "seconds": 0.01,
+              "out": ""
+            }
+          ],
+          "incremental": {
+            "seconds": 2.11,
+            "bytes": 245352729
+          },
+          "xtrabackup_binlog_info": "",
+          "probe_rows_after_incremental_restore": 1000,
+          "seconds": 137.2,
+          "description": "physical hot backup chain restored in a scratch container, PITR by GTID replication"
+        },
+        "flashback": {
+          "status": "ok",
+          "kind": "flashback",
+          "tool": "mariadb-binlog --flashback",
+          "backup_seconds": 0.077,
+          "backup_bytes": 10361,
+          "backup_mb": 0.0,
+          "restore_seconds": 0.128,
+          "verify": {
+            "match": true,
+            "tables": 1,
+            "rows": 1000,
+            "mismatch": [],
+            "note": "probe table only (in-place undo, no restore)"
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_after_delete": 500,
+            "probe_rows_after_flashback": 1000,
+            "probe_rows_expected": 1000,
+            "binlog": "binlog.000002:110919247-110925970"
+          },
+          "notes": "ROW-format binlog events of the bad transaction inverted with --flashback and replayed on the primary (no restore needed)",
+          "error": null,
+          "steps": [
+            {
+              "name": "mariadb-binlog --flashback",
+              "cmd": "mariadb-binlog --flashback --start-position=110919247 --stop-position=110925970 /var/lib/mysql/binlog.000002 > /backups/undo.sql",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "apply undo",
+              "cmd": "mariadb -uroot -prootpass lab < /backups/undo.sql",
+              "rc": 0,
+              "seconds": 0.13,
+              "out": ""
+            }
+          ],
+          "seconds": 0.3,
+          "description": "in-place undo of a bad DELETE from the ROW binlog"
+        }
+      },
+      "order": [
+        "mariadb_dump",
+        "mariadb_backup",
+        "flashback"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 1.47,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "mariadb_dump",
+          "mariadb_backup",
+          "flashback"
+        ],
+        "pitr_ok": [
+          "mariadb_backup",
+          "flashback"
+        ]
+      },
+      "_seconds": 148.1
+    },
+    "logging": {
+      "sink": "slow query log file (long_query_time)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "binlog_format": "ROW",
+        "general_log": "OFF",
+        "general_log_file": "b95fd00d57aa.log",
+        "innodb_print_all_deadlocks": "ON",
+        "log_bin": "ON",
+        "log_error": "/var/log/mysql/error.log",
+        "log_output": "FILE",
+        "log_queries_not_using_indexes": "OFF",
+        "log_slow_verbosity": "query_plan,explain",
+        "log_warnings": "3",
+        "long_query_time": "0.100000",
+        "min_examined_row_limit": "0",
+        "performance_schema": "ON",
+        "server_audit_events": "CONNECT,QUERY_DDL",
+        "server_audit_file_path": "/var/log/mysql/audit.log",
+        "server_audit_logging": "ON",
+        "slow_query_log": "ON",
+        "slow_query_log_file": "/var/log/mysql/slow.log"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "slow query log file (long_query_time)",
+        "slow_query_ms": 301.4,
+        "slow_logged": true,
+        "seen_after_s": 0.15,
+        "sample": "# Time: 260914  8:22:37\n# User@Host: lab[lab] @  [172.26.0.1]\n# Thread_id: 147  Schema: lab  QC_hit: No\n# Query_time: 0.300134  Lock_time: 0.000000  Rows_sent: 1  Rows_examined: 0\n# Rows_affected: 0  Bytes_sent: 74\n#\n# explain: id\tselect_type\ttable\ttype\tpossible_keys\tkey\tkey_len\tref\trows\tr_rows\tfiltered\tr_filtered\tExtra\n# explain: 1\tSIMPLE\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNULL\tNo tables used\n#\nuse `lab`;\nSET timestamp=1789374157;\nSELECT SLEEP(0.3) AS rdlab_mk_d0810a281f;",
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "server_audit plugin (CONNECT, QUERY_DDL) -> audit.log",
+        "setup": "configured at startup (compose command / lab.cnf)",
+        "event_found": true,
+        "seen_after_s": 0.07,
+        "sample": "20260914 08:22:37,b95fd00d57aa,lab,172.26.0.1,148,2051,QUERY,lab,'CREATE TABLE audit_rdlab_mk_035c5c66bd (id INTEGER)',0",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 21223,
+          "p50_ms": 0.359488,
+          "p99_ms": 0.7221366000000002,
+          "errors": 0
+        },
+        "full_logging": "SET GLOBAL long_query_time = 0 (every statement written to the slow log, new connections)",
+        "full": {
+          "qps": 18233,
+          "p50_ms": 0.39193849999999997,
+          "p99_ms": 1.0960638200000001,
+          "errors": 0
+        },
+        "log_bytes_written": 33687152,
+        "bytes_per_statement": 461.9,
+        "overhead_pct": 14.1,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-mdb-primary": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1595,
+          "docker_logs_lines": 23
+        },
+        "rdlab-mdb-replica": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1319,
+          "docker_logs_lines": 19
+        },
+        "rdlab-mdb-maxscale": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 212,
+          "docker_logs_lines": 6
+        }
+      },
+      "extra": {
+        "performance_schema_top5": [
+          {
+            "calls": 155439,
+            "total_ms": 23524.5,
+            "avg_ms": 0.151,
+            "digest": "SELECT ID , NAME , `email` FROM `customers` WHERE ID = ? "
+          },
+          {
+            "calls": 1,
+            "total_ms": 2769.5,
+            "avg_ms": 2769.493,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE EVENTS FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY ?"
+          },
+          {
+            "calls": 1,
+            "total_ms": 1350.9,
+            "avg_ms": 1350.919,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `order_items` FIELDS TERMINATED BY ? OPTIONALLY ENCLOS"
+          },
+          {
+            "calls": 1,
+            "total_ms": 468.0,
+            "avg_ms": 467.986,
+            "digest": "LOAD DATA LOCAL INFILE ? INTO TABLE `orders` FIELDS TERMINATED BY ? OPTIONALLY ENCLOSED BY"
+          },
+          {
+            "calls": 1,
+            "total_ms": 354.0,
+            "avg_ms": 353.971,
+            "digest": "SELECT SQL_NO_CACHE `id` , `customer_id` , `event_type` , `occurred_at` , `payload` , `val"
+          }
+        ]
+      },
+      "collected": [
+        "results/mariadb/logs/mdb-primary__var_log_mysql_slow.log",
+        "results/mariadb/logs/mdb-primary__var_log_mysql_error.log",
+        "results/mariadb/logs/mdb-primary__var_log_mysql_audit.log"
+      ],
+      "_seconds": 15.2
+    }
+  },
+  "harness_log": "results/logs/mariadb/20260914-112004-29ef68.log",
+  "server_version": "11.8.9-MariaDB-ubu2404-log",
+  "finished": "2026-09-14T08:22:52+00:00"
+}

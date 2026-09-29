@@ -1,0 +1,30 @@
+physical_plan | ┌───────────────────────────┐
+│    UNGROUPED_AGGREGATE    │
+│    ────────────────────   │
+│        Aggregates:        │
+│     count(DISTINCT #0)    │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│        customer_id        │
+│                           │
+│       ~205,812 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          SEQ_SCAN         │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.events      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│        customer_id        │
+│                           │
+│          Filters:         │
+│  occurred_at>='2025-01-01 │
+│    00:00:00'::TIMESTAMP   │
+│                           │
+│       ~205,812 rows       │
+└───────────────────────────┘

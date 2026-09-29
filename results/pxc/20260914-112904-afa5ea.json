@@ -1,0 +1,194 @@
+{
+  "engine": "pxc",
+  "display": "Percona XtraDB Cluster 8.4 (Galera)",
+  "category": "multi-master (Galera)",
+  "dialect": "mysql",
+  "driver": "pymysql",
+  "image": "percona/percona-xtradb-cluster:8.4",
+  "run_id": "20260914-112904-afa5ea",
+  "started": "2026-09-14T08:29:04+00:00",
+  "scale": 0.3,
+  "notes": "3-node Galera cluster (MySQL 8.4 base): synchronous replication by write-set certification, every node writable; cross-node write conflicts surface as deadlock errors at COMMIT. HAProxy round-robins connections over the nodes.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "mysqldump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "mysqldump --single-transaction",
+          "backup_seconds": 1.2,
+          "backup_bytes": 45365007,
+          "backup_mb": 43.3,
+          "restore_seconds": 17.85,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.5
+          },
+          "pitr": {},
+          "notes": "single-transaction consistent snapshot, plain SQL restored serially with the mysql client",
+          "error": null,
+          "steps": [
+            {
+              "name": "mysqldump",
+              "cmd": "mysqldump -uroot -prootpass --single-transaction --routines --triggers --events  lab > /backups/lab.sql",
+              "rc": 0,
+              "seconds": 1.2,
+              "out": "\nmysqldump: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.01,
+              "out": ""
+            },
+            {
+              "name": "restore",
+              "cmd": "mysql -uroot -prootpass lab_restore < /backups/lab.sql",
+              "rc": 0,
+              "seconds": 17.85,
+              "out": "\nmysql: [Warning] Using a password on the command line interface can be insecure.\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            }
+          ],
+          "seconds": 21.7,
+          "description": "logical dump restored into a second schema"
+        },
+        "xtrabackup": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "xtrabackup 8.4 full + incremental",
+          "backup_seconds": 4.45,
+          "backup_bytes": 201029229,
+          "backup_mb": 191.7,
+          "restore_seconds": 1.69,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.26
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "rows inserted after the full backup come from the incremental"
+          },
+          "notes": "XtraBackup 8.4 full + incremental (--apply-log-only on the base, final prepare with --incremental-dir), started standalone (wsrep off) in a scratch container",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/inc1",
+              "rc": 0,
+              "seconds": 0.12,
+              "out": ""
+            },
+            {
+              "name": "xtrabackup --backup (full)",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --backup --user=root --password=rootpass --socket=/tmp/mysql.sock --target-dir=/backups/full ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 4.45,
+              "out": "2026-09-14T08:29:32.648947-00:00 0 [Note] [MY-011825] [Xtrabackup] Transaction log of lsn (269026968) to (281507922) was copied.\n2026-09-14T08:29:32.860293-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            },
+            {
+              "name": "xtrabackup --backup (incremental)",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --backup --user=root --password=rootpass --socket=/tmp/mysql.sock --target-dir=/backups/inc1 --incremental-basedir=/backups/full ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 3.99,
+              "out": "2026-09-14T08:29:36.739859-00:00 0 [Note] [MY-011825] [Xtrabackup] Transaction log of lsn (281507932) to (281602870) was copied.\n2026-09-14T08:29:36.958571-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            },
+            {
+              "name": "xtrabackup --prepare --apply-log-only",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --prepare --apply-log-only --target-dir=/backups/full ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 3.44,
+              "out": "2026-09-14T08:29:40.474102-00:00 0 [Note] [MY-015020] [Server] MySQL Server: Plugins Shutdown - end.\n2026-09-14T08:29:40.474445-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            },
+            {
+              "name": "xtrabackup --prepare (incremental)",
+              "cmd": "__o=$(mktemp); ( /usr/bin/pxc_extra/pxb-8.4/bin/xtrabackup --prepare --target-dir=/backups/full --incremental-dir=/backups/inc1 ) > $__o 2>&1; __rc=$?; tail -n 2 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 5.27,
+              "out": "2026-09-14T08:29:45.748132-00:00 0 [Note] [MY-015020] [Server] MySQL Server: Plugins Shutdown - end.\n2026-09-14T08:29:45.748514-00:00 0 [Note] [MY-011825] [Xtrabackup] completed OK!\n"
+            }
+          ],
+          "incremental": {
+            "seconds": 3.99,
+            "bytes": 3014012
+          },
+          "seconds": 22.5,
+          "description": "physical hot backup chain restored standalone in a scratch container"
+        }
+      },
+      "order": [
+        "mysqldump",
+        "xtrabackup"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "35ac83bf2b2e114610721f09"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "79f947ee8911ba569f94fe46"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "ef5de25f9b0dfcdcf2d391d6"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 2.21,
+      "summary": {
+        "strategies": 2,
+        "ok": 2,
+        "verified": [
+          "mysqldump",
+          "xtrabackup"
+        ],
+        "pitr_ok": [
+          "xtrabackup"
+        ]
+      },
+      "_seconds": 46.5
+    }
+  },
+  "harness_log": "results/logs/pxc/20260914-112904-afa5ea.log",
+  "server_version": "8.4.10-10.1",
+  "finished": "2026-09-14T08:29:50+00:00"
+}

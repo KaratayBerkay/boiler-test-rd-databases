@@ -1,0 +1,430 @@
+{
+  "engine": "oracle",
+  "display": "Oracle 23ai Free",
+  "category": "row-store OLTP",
+  "dialect": "oracle",
+  "driver": "oracledb",
+  "image": "gvenzl/oracle-free:23-slim-faststart",
+  "run_id": "20260914-143123-7328fe",
+  "started": "2026-09-14T11:31:23+00:00",
+  "scale": 1.0,
+  "notes": "Oracle Database 23ai Free (slim image: no Oracle Text, so full-text search falls back to LIKE) in FREEPDB1 (user lab). Free edition caps: 2 CPU threads, 2 GB SGA/PGA, 12 GB data. Data Guard (physical standby) is not available in Free, so no replica in this stack.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 1.48,
+          "rows_per_s": 13522,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.01,
+          "rows_per_s": 16209,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.45,
+          "rows_per_s": 11126,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 5.57,
+          "rows_per_s": 35929,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 13.08,
+          "rows_per_s": 37277,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 74.78,
+          "rows_per_s": 13372,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.29,
+          "rows_per_s": 67841,
+          "method": "executemany (array binding, 20k/batch)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id NUMBER(10) NOT NULL,\n  name VARCHAR2(100) NOT NULL,\n  email VARCHAR2(150) NOT NULL,\n  country_code VARCHAR2(2) NOT NULL,\n  tier VARCHAR2(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs JSON,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id NUMBER(10) NOT NULL,\n  parent_id NUMBER(10),\n  name VARCHAR2(100) NOT NULL,\n  depth NUMBER(10) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id NUMBER(10) NOT NULL,\n  category_id NUMBER(10) NOT NULL,\n  sku VARCHAR2(20) NOT NULL,\n  name VARCHAR2(150) NOT NULL,\n  description VARCHAR2(4000) NOT NULL,\n  price NUMBER(12,2) NOT NULL,\n  attrs JSON,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id NUMBER(10) NOT NULL,\n  customer_id NUMBER(10) NOT NULL,\n  status VARCHAR2(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount NUMBER(14,2) NOT NULL,\n  shipping_country VARCHAR2(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id NUMBER(10) NOT NULL,\n  order_id NUMBER(10) NOT NULL,\n  product_id NUMBER(10) NOT NULL,\n  qty NUMBER(10) NOT NULL,\n  unit_price NUMBER(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id NUMBER(19) NOT NULL,\n  customer_id NUMBER(10) NOT NULL,\n  event_type VARCHAR2(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload JSON,\n  value_num NUMBER(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id NUMBER(10) NOT NULL,\n  warehouse_id NUMBER(10) NOT NULL,\n  qty NUMBER(10) NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 0.3,
+      "load_seconds": 95.84,
+      "fts_setup": [
+        "FAILED CREATE INDEX ix_products_ctx ON products (description) INDEXTYPE IS CTXSYS.CONTEXT: ORA-29833: The indextype does not exist.\nHelp: https://docs.oracle.com/error-help/db/ora-29833/ -> LIKE fallback used"
+      ],
+      "after_load": [
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'CUSTOMERS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'CATEGORIES'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'PRODUCTS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDERS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'ORDER_ITEMS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'EVENTS'); END;",
+        "BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER, 'INVENTORY'); END;"
+      ],
+      "post_seconds": 3.82,
+      "server_version": "Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free\nVersion 23.26.3.0.0",
+      "_seconds": 100.0
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "datapump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "expdp / impdp REMAP_SCHEMA",
+          "backup_seconds": 80.42,
+          "backup_bytes": 120774656,
+          "backup_mb": 115.2,
+          "restore_seconds": 46.82,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 2.39
+          },
+          "pitr": {},
+          "notes": "Data Pump schema export through a directory object on the shared volume, imported into another schema (REMAP_SCHEMA)",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -f /backups/lab.dmp /backups/exp.log /backups/imp.log",
+              "rc": 0,
+              "seconds": 0.09,
+              "out": ""
+            },
+            {
+              "name": "directory object",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nCREATE OR REPLACE DIRECTORY rdlab_bk AS '/backups';\nGRANT READ, WRITE ON DIRECTORY rdlab_bk TO lab;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.16,
+              "out": ""
+            },
+            {
+              "name": "expdp SCHEMAS=lab",
+              "cmd": "__o=$(mktemp); ( expdp system/rootpass@localhost/FREEPDB1 SCHEMAS=lab DIRECTORY=rdlab_bk DUMPFILE=lab.dmp LOGFILE=exp.log REUSE_DUMPFILES=YES ) > $__o 2>&1; __rc=$?; tail -n 4 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 80.42,
+              "out": "Dump file set for SYSTEM.SYS_EXPORT_SCHEMA_01 is:\n  /backups/lab.dmp\nJob \"SYSTEM\".\"SYS_EXPORT_SCHEMA_01\" successfully completed at Mon Sep 14 11:34:23 2026 elapsed 0 00:01:14\n\n"
+            },
+            {
+              "name": "create restore user",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nBEGIN EXECUTE IMMEDIATE 'DROP USER lab_restore CASCADE'; EXCEPTION WHEN OTHERS THEN NULL; END;\n/\nCREATE USER lab_restore IDENTIFIED BY labpass QUOTA UNLIMITED ON USERS;\nGRANT CONNECT, RESOURCE, CREATE VIEW TO lab_restore;\n",
+              "rc": 0,
+              "seconds": 0.29,
+              "out": ""
+            },
+            {
+              "name": "impdp REMAP_SCHEMA",
+              "cmd": "__o=$(mktemp); ( impdp system/rootpass@localhost/FREEPDB1 SCHEMAS=lab REMAP_SCHEMA=lab:lab_restore DIRECTORY=rdlab_bk DUMPFILE=lab.dmp LOGFILE=imp.log TABLE_EXISTS_ACTION=REPLACE ) > $__o 2>&1; __rc=$?; tail -n 4 $__o; rm -f $__o; exit $__rc",
+              "rc": 5,
+              "seconds": 46.82,
+              "out": "Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT\nProcessing object type SCHEMA_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS\nJob \"SYSTEM\".\"SYS_IMPORT_SCHEMA_01\" completed with 1 error(s) at Mon Sep 14 11:35:11 2026 elapsed 0 00:00:41\n\n"
+            },
+            {
+              "name": "drop restore user",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nDROP USER lab_restore CASCADE;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 1.39,
+              "out": ""
+            }
+          ],
+          "seconds": 131.6,
+          "description": "Data Pump schema export imported into a second schema"
+        },
+        "rman": {
+          "status": "n/a",
+          "kind": "physical",
+          "tool": "RMAN BACKUP DATABASE PLUS ARCHIVELOG",
+          "backup_seconds": null,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "RMAN binary is not part of gvenzl/oracle-free:*-slim*; with the full image: `ALTER DATABASE ARCHIVELOG` (mount), `RMAN> CONFIGURE CONTROLFILE AUTOBACKUP ON; BACKUP AS COMPRESSED BACKUPSET DATABASE PLUS ARCHIVELOG;` and `RECOVER DATABASE UNTIL TIME` for PITR",
+          "error": null,
+          "steps": [
+            {
+              "name": "log mode",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nSELECT log_mode FROM v$database;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "NOARCHIVELOG\n"
+            }
+          ],
+          "log_mode": "NOARCHIVELOG",
+          "seconds": 0.2,
+          "description": "physical backup with RMAN (not in the slim image)"
+        },
+        "flashback": {
+          "status": "ok",
+          "kind": "flashback",
+          "tool": "AS OF TIMESTAMP / FLASHBACK TABLE / TO BEFORE DROP",
+          "backup_seconds": 0.0,
+          "backup_bytes": 0,
+          "backup_mb": 0.0,
+          "restore_seconds": 0.633,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 2.2
+          },
+          "pitr": {
+            "match": true,
+            "target": "SCN 2336029",
+            "probe_rows_after_delete": 0,
+            "stale_read_rows": 1000,
+            "probe_rows_after_flashback_table": 1000,
+            "probe_rows_after_flashback_before_drop": 1000,
+            "flashback_table_s": 0.633,
+            "flashback_drop_s": 0.068,
+            "undo_retention_s": "900"
+          },
+          "notes": "undo-based: Flashback Query reads the old version, FLASHBACK TABLE TO SCN rewrites the current one, the recycle bin brings a dropped table back (within undo_retention)",
+          "error": null,
+          "steps": [
+            {
+              "name": "grant dbms_flashback",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nALTER SESSION SET CONTAINER = FREEPDB1;\nGRANT EXECUTE ON DBMS_FLASHBACK TO lab;\nGRANT FLASHBACK ANY TABLE TO lab;\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": ""
+            },
+            {
+              "name": "undo_retention",
+              "cmd": "cat <<'SQL' | sqlplus -s / as sysdba\nSET HEADING OFF FEEDBACK OFF PAGESIZE 0 LINESIZE 300 TRIMSPOOL ON\nWHENEVER SQLERROR EXIT SQL.SQLCODE\nSELECT value FROM v$parameter WHERE name = 'undo_retention';\nEXIT\nSQL",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "900\n"
+            }
+          ],
+          "seconds": 10.8,
+          "description": "undo-based point-in-time recovery of a table"
+        }
+      },
+      "order": [
+        "datapump",
+        "rman",
+        "flashback"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "4a888f58899a2f70788da7bb"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "ad1200819054541a290d760e"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "4a464f152822de911e305bef"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 2.1,
+      "summary": {
+        "strategies": 3,
+        "ok": 2,
+        "verified": [
+          "datapump",
+          "flashback"
+        ],
+        "pitr_ok": [
+          "flashback"
+        ]
+      },
+      "_seconds": 144.8
+    },
+    "logging": {
+      "sink": "session SQL trace (DBMS_SESSION.SESSION_TRACE_ENABLE -> .trc) + V$SQL elapsed_time/executions",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "Diag Trace": "/opt/oracle/diag/rdbms/free/FREE/trace",
+        "Diag Alert": "/opt/oracle/diag/rdbms/free/FREE/alert",
+        "Default Trace File": "/opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_1008.trc",
+        "timed_statistics": "TRUE",
+        "log_archive_dest_1": "",
+        "undo_retention": "900",
+        "unified_audit_common_systemlog": "",
+        "audit_trail": "NONE",
+        "sql_trace": "FALSE",
+        "statistics_level": "TYPICAL",
+        "log_mode": "NOARCHIVELOG",
+        "unified_auditing": "TRUE"
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "session SQL trace (DBMS_SESSION.SESSION_TRACE_ENABLE -> .trc) + V$SQL elapsed_time/executions",
+        "slow_query_ms": 225.9,
+        "slow_logged": true,
+        "seen_after_s": 0.32,
+        "sample": "rdlab_mk_28831b2fd3 FROM events e1 JOIN events e2 ON e1.customer_id = e2.customer_id WHERE e1.id < 100000 AND e2.id < 100000\nEND OF STMT\nPARSE #130221096510688:c=14172,e=14897,p=0,cr=35,cu=3,mis=1,r=0,dep=0,og=1,plh=1077804998,tim=339845568517\nWAIT #130221096510688: nam='Allocate UGA memory from OS' ela=17 Bytes=65536 where=1 p3=0 obj#=4294967295 tim=339845568638\nEXEC #130221096510688:c=111,e=111,p=0,cr=0,cu=0,mis=0,r=0,dep=0,og=1,plh=1077804998,tim=339845568687\nWAIT #130221096510688: nam='Alloc",
+        "trace_file": "/opt/oracle/diag/rdbms/free/FREE/trace/FREE_ora_1039_rdlab.trc",
+        "trace_elapsed_ms": 160.11,
+        "v$sql": {
+          "executions": 1,
+          "elapsed_ms_total": 175.0,
+          "sql": "SELECT COUNT(*) AS rdlab_mk_28831b2fd3 FROM events e1 JOIN events e2 ON e1.customer_id = e"
+        },
+        "duration_ms": 175.0,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "unified auditing: AUDIT POLICY rdlab_pol (CREATE/DROP TABLE, DELETE ON lab.inventory) -> UNIFIED_AUDIT_TRAIL",
+        "setup": "CREATE AUDIT POLICY rdlab_pol ACTIONS CREATE TABLE, DROP TABLE, DELETE ON lab.inventory; AUDIT POLICY rdlab_pol",
+        "event_found": true,
+        "seen_after_s": 0.26,
+        "sample": "11:35:30.551 LAB CREATE TABLE LAB.AUDIT_RDLAB_MK_64D2142499",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 11987,
+          "p50_ms": 0.638192,
+          "p99_ms": 1.14901464,
+          "errors": 0
+        },
+        "full_logging": "DBMS_MONITOR.DATABASE_TRACE_ENABLE (SQL trace for every session -> one .trc per server process)",
+        "full": {
+          "qps": 9087,
+          "p50_ms": 0.689506,
+          "p99_ms": 1.1457513599999993,
+          "errors": 0
+        },
+        "log_bytes_written": 334222,
+        "bytes_per_statement": 9.2,
+        "overhead_pct": 24.2,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-oracle": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 62472,
+          "docker_logs_lines": 1105
+        }
+      },
+      "extra": {
+        "v$sql_top5": [
+          {
+            "executions": "106084",
+            "elapsed_ms": "4291",
+            "sql": "SELECT id, name, email FROM customers WHERE id = :1"
+          },
+          {
+            "executions": "1",
+            "elapsed_ms": "175",
+            "sql": "SELECT COUNT(*) AS rdlab_mk_28831b2fd3 FROM events e1 JOIN events e2 ON e1.custo"
+          },
+          {
+            "executions": "1",
+            "elapsed_ms": "93",
+            "sql": "SELECT id, name, email, country_code, tier, created_at, attrs FROM customers ORD"
+          },
+          {
+            "executions": "1",
+            "elapsed_ms": "91",
+            "sql": "SELECT id, customer_id, event_type, occurred_at, payload, value_num FROM events"
+          },
+          {
+            "executions": "1",
+            "elapsed_ms": "75",
+            "sql": "SELECT COUNT(*) FROM events"
+          }
+        ],
+        "unified_audit_rows": "2"
+      },
+      "collected": [
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_alert_FREE.log",
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_FREE_ora_1037_rdlab.trc",
+        "results/oracle/logs/oracle__opt_oracle_diag_rdbms_free_FREE_trace_FREE_ora_1039_rdlab.trc"
+      ],
+      "_seconds": 20.1
+    }
+  },
+  "harness_log": "results/logs/oracle/20260914-143123-7328fe.log",
+  "server_version": "Oracle AI Database 26ai Free Release 23.26.3.0.0 - Develop, Learn, and Run for Free\nVersion 23.26.3.0.0",
+  "finished": "2026-09-14T11:35:48+00:00"
+}

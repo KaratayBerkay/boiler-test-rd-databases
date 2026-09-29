@@ -1,0 +1,29 @@
+Limit  (cost=9563.96..9564.09 rows=50 width=60) (actual time=14069.048..14069.056 rows=50.00 loops=1)
+  ->  Sort  (cost=9563.96..9564.46 rows=200 width=60) (actual time=14069.047..14069.051 rows=50.00 loops=1)
+        Sort Key: (sum(remote_scan.revenue)) DESC, remote_scan.country_code, remote_scan.month_start
+        Sort Method: quicksort  Memory: 30kB
+        ->  GroupAggregate  (cost=8304.82..9557.32 rows=200 width=60) (actual time=14042.911..14068.981 rows=78.00 loops=1)
+              Group Key: remote_scan.country_code, remote_scan.month_start
+              ->  Sort  (cost=8304.82..8554.82 rows=100000 width=56) (actual time=14042.795..14049.696 rows=84255.00 loops=1)
+                    Sort Key: remote_scan.country_code, remote_scan.month_start, remote_scan.orders
+                    Sort Method: quicksort  Memory: 7022kB
+                    ->  Custom Scan (Citus Adaptive)  (cost=0.00..0.00 rows=100000 width=56) (actual time=13865.964..13870.287 rows=84255.00 loops=1)
+                          Task Count: 24
+                          Tuple data received from nodes: 2137 kB
+                          Tasks Shown: None, not supported for re-partition queries
+                          ->  MapMergeJob
+                                Map Task Count: 24
+                                Merge Task Count: 24
+                                ->  MapMergeJob
+                                      Map Task Count: 32
+                                      Merge Task Count: 24
+                                ->  MapMergeJob
+                                      Map Task Count: 32
+                                      Merge Task Count: 24
+                          ->  MapMergeJob
+                                Map Task Count: 32
+                                Merge Task Count: 24
+Planning:
+  Buffers: shared hit=7
+Planning Time: 8.402 ms
+Execution Time: 14082.877 ms

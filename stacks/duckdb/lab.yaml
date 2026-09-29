@@ -1,0 +1,28 @@
+display: DuckDB
+category: embedded analytical (columnar)
+dialect: duckdb
+driver: duckdb
+image: (embedded, python duckdb package)
+project: rdlab-duckdb
+scale: 1
+notes: >-
+  Embedded columnar/vectorised OLAP engine; single process (multiple cursors share one database handle),
+  parallel query execution, no replication.
+docs:
+  - https://duckdb.org/docs/guides/performance/overview
+  - https://duckdb.org/docs/sql/statements/profiling
+targets:
+  - name: embedded
+    role: primary
+    host: local
+    port: 0
+    user: ""
+    password: ""
+    database: data/duckdb/lab.duckdb
+backup:
+  dir: data/duckdb/backups
+  strategies: [export_database, copy_from_database]
+logging:
+  slow_ms: 100
+features:
+  connection_storm: false

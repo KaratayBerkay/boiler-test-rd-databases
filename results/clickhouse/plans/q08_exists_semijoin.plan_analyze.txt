@@ -1,0 +1,64 @@
+query_log: duration_ms=21 read_rows=366000 read_bytes=5567495 memory=6851282 result_rows=200
+(Expression)
+ExpressionTransform
+  (Limit)
+  Limit
+    (Sorting)
+    MergingSortedTransform 3 → 1
+      MergeSortingTransform × 3
+        LimitsCheckingTransform × 3
+          PartialSortingTransform × 3
+            (Expression)
+            ExpressionTransform × 3
+              (Join)
+              ColumnPermuteTransform × 3
+                Resize 1 → 3
+                  FillingRightJoinSide
+                    Resize 6 → 3
+                      DelayedPorts 6 → 6
+                        JoiningTransform 2 → 1
+                          DelayedJoinedBlocksWorkerTransform
+                            SimpleSquashingTransform
+                              JoiningTransform 2 → 1
+                                DelayedJoinedBlocksWorkerTransform
+                                  SimpleSquashingTransform
+                                    JoiningTransform 2 → 1
+                                      DelayedJoinedBlocksWorkerTransform
+                                        SimpleSquashingTransform
+                                          DelayedJoinedBlocksTransform 0 → 3
+                                            (Expression)
+                                            ExpressionTransform × 3
+                                              (Expression)
+                                              ExpressionTransform × 3
+                                                (ReadFromMergeTree)
+                                                MergeTreeSelect(pool: ReadPool, algorithm: Thread) × 3 0 → 1
+                                            (Expression)
+                                            ExpressionTransform
+                                              (BuildRuntimeFilter)
+                                              BuildRuntimeFilterTransform
+                                                (Expression)
+                                                ExpressionTransform
+                                                  (Join)
+                                                  FillingRightJoinSide
+                                                    Resize 2 → 1
+                                                      DelayedPorts 2 → 2
+                                                        JoiningTransform 2 → 1
+                                                          DelayedJoinedBlocksWorkerTransform
+                                                            SimpleSquashingTransform
+                                                              DelayedJoinedBlocksTransform 0 → 1
+                                                                (Expression)
+                                                                ExpressionTransform
+                                                                  (Expression)
+                                                                  ExpressionTransform
+                                                                    (ReadFromMergeTree)
+                                                                    MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1
+                                                                (Expression)
+                                                                ExpressionTransform
+                                                                  (BuildRuntimeFilter)
+                                                                  BuildRuntimeFilterTransform
+                                                                    (Expression)
+                                                                    ExpressionTransform
+                                                                      (Expression)
+                                                                      ExpressionTransform
+                                                                        (ReadFromMergeTree)
+                                                                        MergeTreeSelect(pool: ReadPoolInOrder, algorithm: InOrder) 0 → 1

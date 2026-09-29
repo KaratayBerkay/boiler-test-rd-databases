@@ -1,0 +1,463 @@
+{
+  "engine": "clickhouse",
+  "display": "ClickHouse",
+  "category": "analytical (columnar)",
+  "dialect": "clickhouse",
+  "driver": "clickhouse-connect",
+  "image": "clickhouse/clickhouse-server:latest",
+  "run_id": "20260914-114121-0e765c",
+  "started": "2026-09-14T08:41:21+00:00",
+  "scale": 0.3,
+  "notes": "Two replicas of one shard using ReplicatedMergeTree with ClickHouse Keeper; DDL runs ON CLUSTER. No transactions, no foreign keys; secondary \"indexes\" are data-skipping (bloom filter) indexes; UPDATE/DELETE are asynchronous mutations.",
+  "phases": {
+    "load": {
+      "scale": 0.3,
+      "tables": {
+        "customers": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.22,
+          "rows_per_s": 27072,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.09,
+          "rows_per_s": 2160,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "products": {
+          "rows": 1500,
+          "counted": 1500,
+          "expected": 1500,
+          "seconds": 0.15,
+          "rows_per_s": 10248,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 60000,
+          "counted": 60000,
+          "expected": 60000,
+          "seconds": 1.2,
+          "rows_per_s": 50137,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 147072,
+          "counted": 147072,
+          "expected": 147072,
+          "seconds": 1.0,
+          "rows_per_s": 147027,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "events": {
+          "rows": 300000,
+          "counted": 300000,
+          "expected": 300000,
+          "seconds": 5.38,
+          "rows_per_s": 55750,
+          "method": "client.insert (native batches)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 6000,
+          "counted": 6000,
+          "expected": 6000,
+          "seconds": 0.16,
+          "rows_per_s": 38282,
+          "method": "client.insert (native batches)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers ON CLUSTER lab_cluster (\n  id Int32,\n  name String,\n  email String,\n  country_code String,\n  tier String,\n  created_at DateTime64(6),\n  attrs Nullable(String)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/customers', '{replica}') ORDER BY (id)",
+        "CREATE TABLE categories ON CLUSTER lab_cluster (\n  id Int32,\n  parent_id Nullable(Int32),\n  name String,\n  depth Int32\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/categories', '{replica}') ORDER BY (id)",
+        "CREATE TABLE products ON CLUSTER lab_cluster (\n  id Int32,\n  category_id Int32,\n  sku String,\n  name String,\n  description String,\n  price Decimal(12,2),\n  attrs Nullable(String),\n  active Bool\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/products', '{replica}') ORDER BY (id)",
+        "CREATE TABLE orders ON CLUSTER lab_cluster (\n  id Int32,\n  customer_id Int32,\n  status String,\n  ordered_at DateTime64(6),\n  total_amount Decimal(14,2),\n  shipping_country String\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/orders', '{replica}') ORDER BY (id)",
+        "CREATE TABLE order_items ON CLUSTER lab_cluster (\n  id Int32,\n  order_id Int32,\n  product_id Int32,\n  qty Int32,\n  unit_price Decimal(12,2)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/order_items', '{replica}') ORDER BY (id)",
+        "CREATE TABLE events ON CLUSTER lab_cluster (\n  id Int64,\n  customer_id Int32,\n  event_type String,\n  occurred_at DateTime64(6),\n  payload Nullable(String),\n  value_num Decimal(12,4)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/events', '{replica}') ORDER BY (id)",
+        "CREATE TABLE inventory ON CLUSTER lab_cluster (\n  product_id Int32,\n  warehouse_id Int32,\n  qty Int32,\n  updated_at DateTime64(6)\n) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/{database}/inventory', '{replica}') ORDER BY (product_id, warehouse_id)",
+        "ALTER TABLE products ADD INDEX ix_products_category_id (category_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE products MATERIALIZE INDEX ix_products_category_id",
+        "ALTER TABLE orders ADD INDEX ix_orders_customer_id (customer_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE orders MATERIALIZE INDEX ix_orders_customer_id",
+        "ALTER TABLE order_items ADD INDEX ix_order_items_order_id (order_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE order_items MATERIALIZE INDEX ix_order_items_order_id",
+        "ALTER TABLE order_items ADD INDEX ix_order_items_product_id (product_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE order_items MATERIALIZE INDEX ix_order_items_product_id",
+        "ALTER TABLE events ADD INDEX ix_events_customer_id (customer_id) TYPE bloom_filter GRANULARITY 4",
+        "ALTER TABLE events MATERIALIZE INDEX ix_events_customer_id"
+      ],
+      "errors": [],
+      "schema_seconds": 2.12,
+      "load_seconds": 8.23,
+      "fts_setup": [],
+      "after_load": [],
+      "post_seconds": 0.0,
+      "server_version": "ClickHouse 26.8.2.7",
+      "_seconds": 10.4
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "backup_disk": {
+          "status": "error",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE TO Disk('backups', ...)",
+          "backup_seconds": 0.07,
+          "backup_bytes": 14055152,
+          "backup_mb": 13.4,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "DatabaseError: Received ClickHouse exception, code: 253, server response: Code: 253. DB::Exception: Replica /clickhouse/tables/01/lab/customers/replicas/ch1 already exists: While creating table lab_restore.customers. (REPLICA_ALREADY_EXISTS) (for url http://127.0.0.1:18123)",
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/inc1 /backups/cluster",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE TO Disk",
+              "cmd": "BACKUP DATABASE lab TO Disk('backups', 'full')",
+              "rc": 0,
+              "seconds": 0.07,
+              "out": ""
+            },
+            {
+              "name": "drop old restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore SYNC",
+              "rc": 0,
+              "seconds": 0.03,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_restore",
+              "cmd": "RESTORE DATABASE lab AS lab_restore FROM Disk('backups', 'full')",
+              "rc": 1,
+              "seconds": 0.07,
+              "out": "DatabaseError: Received ClickHouse exception, code: 253, server response: Code: 253. DB::Exception: Replica /clickhouse/tables/01/lab/customers/replicas/ch1 already exists: While creating table lab_restore.customers. (REPLICA_ALREADY_EXISTS) (for url http://127.0.0.1:18123)"
+            }
+          ],
+          "system_backups": {
+            "status": "BACKUP_CREATED",
+            "num_files": 130,
+            "total_size": 14055152,
+            "num_entries": 103,
+            "uncompressed_size": 14072978,
+            "compressed_size": 14072978,
+            "error": "",
+            "start": "2026-09-14 08:41:33.081137",
+            "end": "2026-09-14 08:41:33.129180"
+          },
+          "dir_bytes": 14179474,
+          "seconds": 0.3,
+          "description": "native backup of parts + metadata, restored as a new database"
+        },
+        "backup_cluster": {
+          "status": "error",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE ON CLUSTER",
+          "backup_seconds": 0.51,
+          "backup_bytes": 28110304,
+          "backup_mb": 26.8,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "DatabaseError: Received ClickHouse exception, code: 253, server response: Code: 253. DB::Exception: Replica /clickhouse/tables/01/lab/order_items/replicas/ch1 already exists: While creating table lab_restore2.order_items. (REPLICA_ALREADY_EXISTS) (for url http://127.0.0.1:18123)",
+          "steps": [
+            {
+              "name": "BACKUP DATABASE ON CLUSTER",
+              "cmd": "BACKUP DATABASE lab ON CLUSTER lab_cluster TO Disk('backups', 'cluster')",
+              "rc": 0,
+              "seconds": 0.51,
+              "out": ""
+            },
+            {
+              "name": "drop old restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore2 SYNC",
+              "rc": 0,
+              "seconds": 0.02,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_restore2",
+              "cmd": "RESTORE DATABASE lab AS lab_restore2 FROM Disk('backups', 'cluster')",
+              "rc": 1,
+              "seconds": 0.07,
+              "out": "DatabaseError: Received ClickHouse exception, code: 253, server response: Code: 253. DB::Exception: Replica /clickhouse/tables/01/lab/order_items/replicas/ch1 already exists: While creating table lab_restore2.order_items. (REPLICA_ALREADY_EXISTS) (for url http://127.0.0.1:18123)"
+            }
+          ],
+          "system_backups": {
+            "status": "BACKUP_CREATED",
+            "num_files": 260,
+            "total_size": 28110304,
+            "num_entries": 104,
+            "uncompressed_size": 14107666,
+            "compressed_size": 14107666,
+            "error": "",
+            "start": "2026-09-14 08:41:33.336756",
+            "end": "2026-09-14 08:41:33.819496"
+          },
+          "dir_bytes": 14238738,
+          "seconds": 0.7,
+          "description": "cluster-coordinated backup (shards once, replicas share)"
+        },
+        "incremental": {
+          "status": "error",
+          "kind": "incremental",
+          "tool": "BACKUP ... SETTINGS base_backup",
+          "backup_seconds": 0.08,
+          "backup_bytes": 14064717,
+          "backup_mb": 13.4,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "DatabaseError: Received ClickHouse exception, code: 253, server response: Code: 253. DB::Exception: Replica /clickhouse/tables/01/lab/backup_probe/replicas/ch1 already exists: While creating table lab_restore3.backup_probe. (REPLICA_ALREADY_EXISTS) (for url http://127.0.0.1:18123)",
+          "steps": [
+            {
+              "name": "BACKUP ... base_backup",
+              "cmd": "BACKUP DATABASE lab TO Disk('backups', 'inc1') SETTINGS base_backup = Disk('backups', 'full')",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "drop old restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore3 SYNC",
+              "rc": 0,
+              "seconds": 0.02,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_restore3",
+              "cmd": "RESTORE DATABASE lab AS lab_restore3 FROM Disk('backups', 'inc1')",
+              "rc": 1,
+              "seconds": 0.07,
+              "out": "DatabaseError: Received ClickHouse exception, code: 253, server response: Code: 253. DB::Exception: Replica /clickhouse/tables/01/lab/backup_probe/replicas/ch1 already exists: While creating table lab_restore3.backup_probe. (REPLICA_ALREADY_EXISTS) (for url http://127.0.0.1:18123)"
+            }
+          ],
+          "system_backups": {
+            "status": "BACKUP_CREATED",
+            "num_files": 153,
+            "total_size": 14064717,
+            "num_entries": 14,
+            "uncompressed_size": 34135,
+            "compressed_size": 34135,
+            "error": "",
+            "start": "2026-09-14 08:41:34.516273",
+            "end": "2026-09-14 08:41:34.563950"
+          },
+          "dir_bytes": 66903,
+          "seconds": 0.7,
+          "description": "incremental on top of the full backup"
+        }
+      },
+      "order": [
+        "backup_disk",
+        "backup_cluster",
+        "incremental"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "bde4b36d53228ad1212bb943"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "eb602730c3feb5ead2ea4025"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9cde6b51376675a09bc87c0a"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "2a6fdffe76ce0fe94d748f2f"
+        }
+      },
+      "fingerprint_seconds": 0.68,
+      "summary": {
+        "strategies": 3,
+        "ok": 0,
+        "verified": [],
+        "pitr_ok": []
+      },
+      "_seconds": 2.7
+    },
+    "logging": {
+      "sink": "system.query_log (every query; slow = WHERE query_duration_ms >= threshold)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "logger.level": "information",
+        "logger.log": "/var/log/clickhouse-server/clickhouse-server.log",
+        "logger.errorlog": "/var/log/clickhouse-server/clickhouse-server.err.log",
+        "logger.size": "100M",
+        "logger.count": "3",
+        "logger.console": "1",
+        "logger.formatting.type": "json",
+        "log_queries": "1",
+        "log_queries_min_type": "QUERY_START",
+        "log_queries_min_query_duration_ms": "0",
+        "log_processors_profiles": "1",
+        "log_profile_events": "1",
+        "log_query_settings": "1",
+        "log_query_threads": "0",
+        "log_comment": "",
+        "system_log_tables": [
+          "metric_log",
+          "part_log",
+          "query_log",
+          "session_log",
+          "text_log",
+          "trace_log"
+        ]
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "system.query_log (every query; slow = WHERE query_duration_ms >= threshold)",
+        "slow_query_ms": 332.5,
+        "slow_logged": true,
+        "seen_after_s": 0.86,
+        "sample": "event_time=2026-09-14 08:41:35 query_duration_ms=302 user=lab kind=Select read_rows=1 memory=4300524 query=SELECT sleep(0.3) AS rdlab_mk_f9f3339a9a\n FORMAT Native",
+        "duration_ms": 302,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "system.query_log (user, client, query_kind, tables) + system.session_log",
+        "setup": "query_log is always on",
+        "event_found": true,
+        "seen_after_s": 0.8,
+        "sample": "event_time=2026-09-14 08:41:37 user=lab client= kind=Create query=CREATE TABLE audit_rdlab_mk_133fda7303 (id INTEGER)",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 1822,
+          "p50_ms": 4.281772,
+          "p99_ms": 7.1374143199999995,
+          "errors": 0
+        },
+        "full_logging": "SET log_queries = 1 (per session; every query is written to system.query_log)",
+        "full": {
+          "qps": 1832,
+          "p50_ms": 4.272611,
+          "p99_ms": 7.353688419999998,
+          "errors": 0
+        },
+        "log_bytes_written": 2081642,
+        "bytes_per_statement": 284.1,
+        "overhead_pct": -0.5,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-ch-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 209070,
+          "docker_logs_lines": 402
+        },
+        "rdlab-ch-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 120199,
+          "docker_logs_lines": 284
+        }
+      },
+      "extra": {
+        "query_log_rows": 15243,
+        "query_log_top5": [
+          {
+            "calls": 7327,
+            "avg_ms": 2.03,
+            "total_ms": 14865,
+            "query": "SELECT id, name, email FROM customers WHERE id = 1950\n FORMAT Native"
+          },
+          {
+            "calls": 5,
+            "avg_ms": 741.4,
+            "total_ms": 3707,
+            "query": "SYSTEM FLUSH LOGS"
+          },
+          {
+            "calls": 3,
+            "avg_ms": 326.0,
+            "total_ms": 978,
+            "query": "INSERT INTO `events` (`id`, `customer_id`, `event_type`, `occurred_at`, `payload`, `value_"
+          },
+          {
+            "calls": 1,
+            "avg_ms": 483.0,
+            "total_ms": 483,
+            "query": "BACKUP DATABASE lab ON CLUSTER lab_cluster TO Disk('backups', 'cluster')"
+          },
+          {
+            "calls": 1,
+            "avg_ms": 302.0,
+            "total_ms": 302,
+            "query": "SELECT sleep(0.3) AS rdlab_mk_f9f3339a9a\n FORMAT Native"
+          }
+        ],
+        "session_log": {
+          "LoginSuccess": 14883,
+          "Logout": 14882
+        }
+      },
+      "collected": [
+        "results/clickhouse/logs/ch-1__var_log_clickhouse-server_clickhouse-server.log",
+        "results/clickhouse/logs/ch-1__var_log_clickhouse-server_clickhouse-server.err.log"
+      ],
+      "_seconds": 18.2
+    }
+  },
+  "harness_log": "results/logs/clickhouse/20260914-114121-0e765c.log",
+  "server_version": "ClickHouse 26.8.2.7",
+  "finished": "2026-09-14T08:41:53+00:00"
+}

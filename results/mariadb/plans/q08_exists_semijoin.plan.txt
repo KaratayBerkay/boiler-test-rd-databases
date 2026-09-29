@@ -1,0 +1,4 @@
+1 | PRIMARY | c | index | PRIMARY | PRIMARY | 4 | None | 200 | Using where
+1 | PRIMARY | <subquery2> | eq_ref | distinct_key | distinct_key | 4 | func | 1 | 
+2 | MATERIALIZED | o | ALL | ix_orders_customer_id | None | None | None | 194613 | Using where
+3 | MATERIALIZED | e | ALL | ix_events_customer_id | None | None | None | 988682 | Using where

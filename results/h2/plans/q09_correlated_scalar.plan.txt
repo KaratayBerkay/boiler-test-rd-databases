@@ -1,0 +1,14 @@
+SELECT
+    "p"."id",
+    "p"."price",
+    (SELECT
+        AVG("p2"."price")
+    FROM "public"."products" "p2"
+        /* public.CONSTRAINT_INDEX_C: category_id = p.category_id */
+    WHERE "p2"."category_id" = "p"."category_id") AS "cat_avg"
+FROM "public"."products" "p"
+    /* public.PRIMARY_KEY_C */
+WHERE "p"."active" = TRUE
+ORDER BY 1
+FETCH FIRST 500 ROWS ONLY
+/* index sorted */

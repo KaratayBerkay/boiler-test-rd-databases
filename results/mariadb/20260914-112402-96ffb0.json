@@ -1,0 +1,268 @@
+{
+  "engine": "mariadb",
+  "display": "MariaDB 11",
+  "category": "row-store OLTP",
+  "dialect": "mariadb",
+  "driver": "pymysql",
+  "image": "mariadb:11",
+  "run_id": "20260914-112402-96ffb0",
+  "started": "2026-09-14T08:24:02+00:00",
+  "scale": 0.3,
+  "notes": "MariaDB 11.8 LTS. Replica configured by the official image (MARIADB_MASTER_HOST) using GTID slave_pos; MaxScale readwritesplit routes SELECTs to the replica and performs automatic failover (mariadbmon) when the primary dies.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "mariadb_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "mariadb-dump --single-transaction",
+          "backup_seconds": 0.79,
+          "backup_bytes": 45885712,
+          "backup_mb": 43.8,
+          "restore_seconds": 6.81,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 1.41
+          },
+          "pitr": {},
+          "notes": "single-transaction snapshot with the GTID position recorded in the dump header",
+          "error": null,
+          "steps": [
+            {
+              "name": "mariadb-dump",
+              "cmd": "mariadb-dump -uroot -prootpass --single-transaction --routines --triggers --events --gtid lab > /backups/lab.sql",
+              "rc": 0,
+              "seconds": 0.79,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.0,
+              "out": ""
+            },
+            {
+              "name": "restore",
+              "cmd": "mariadb -uroot -prootpass lab_restore < /backups/lab.sql",
+              "rc": 0,
+              "seconds": 6.81,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 0.02,
+              "out": ""
+            }
+          ],
+          "seconds": 9.1,
+          "description": "logical dump restored into a second schema"
+        },
+        "mariadb_backup": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "mariadb-backup full + incremental, --prepare",
+          "backup_seconds": 2.59,
+          "backup_bytes": 351744967,
+          "backup_mb": 335.5,
+          "restore_seconds": 2.69,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 520772,
+            "mismatch": [],
+            "seconds": 2.03
+          },
+          "pitr": {
+            "match": true,
+            "method": "START SLAVE UNTIL master_gtid_pos='1-1-136' from 1-1-135",
+            "replay_seconds": 0.31,
+            "reached_target_gtid": true,
+            "gtid_slave_pos": "1-1-136",
+            "probe_rows_recovered": 1000,
+            "probe_rows_expected": 1000,
+            "slave_status": {
+              "Last_IO_Error": "",
+              "Last_SQL_Error": "",
+              "Slave_IO_Running": "No",
+              "Slave_SQL_Running": "No",
+              "Seconds_Behind_Master": "None",
+              "Master_Host": "primary",
+              "Gtid_IO_Pos": "1-1-136",
+              "Using_Gtid": "Slave_Pos",
+              "Last_Error": ""
+            }
+          },
+          "notes": "physical hot backup + incremental chain (--prepare, then --prepare --incremental-dir), started in a scratch container; PITR by GTID replication from the primary up to the GTID before the DELETE",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/full /backups/inc1",
+              "rc": 0,
+              "seconds": 0.11,
+              "out": ""
+            },
+            {
+              "name": "mariadb-backup --backup (full)",
+              "cmd": "mariadb-backup --backup --user=root --password=rootpass --target-dir=/backups/full 2>&1 | tail -3",
+              "rc": 0,
+              "seconds": 2.59,
+              "out": "[00] 2026-09-14 08:24:15 Redo log (from LSN 45434 to 192302078) was copied.\n2026-09-14  8:24:15 0 [Note] InnoDB: Starting shutdown...\n[00] 2026-09-14 08:24:15 completed OK!\n"
+            },
+            {
+              "name": "mariadb-backup --prepare (full)",
+              "cmd": "mariadb-backup --prepare --target-dir=/backups/full 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 4.29,
+              "out": "2026-09-14  8:24:19 0 [Note] InnoDB: Starting shutdown...\n[00] 2026-09-14 08:24:20 completed OK!\n"
+            },
+            {
+              "name": "mariadb-backup --backup (incremental)",
+              "cmd": "mariadb-backup --backup --user=root --password=rootpass --target-dir=/backups/inc1 --incremental-basedir=/backups/full 2>&1 | tail -3",
+              "rc": 0,
+              "seconds": 2.25,
+              "out": "[00] 2026-09-14 08:24:22 Redo log (from LSN 45434 to 192355556) was copied.\n2026-09-14  8:24:22 0 [Note] InnoDB: Starting shutdown...\n[00] 2026-09-14 08:24:22 completed OK!\n"
+            },
+            {
+              "name": "mariadb-backup --prepare (apply incremental)",
+              "cmd": "mariadb-backup --prepare --target-dir=/backups/full --incremental-dir=/backups/inc1 2>&1 | tail -2",
+              "rc": 0,
+              "seconds": 2.59,
+              "out": "[00] 2026-09-14 08:24:24         ...done\n[00] 2026-09-14 08:24:25 completed OK!\n"
+            },
+            {
+              "name": "START SLAVE UNTIL master_gtid_pos",
+              "cmd": "SET GLOBAL gtid_slave_pos = '1-1-135'; CHANGE MASTER TO master_host='primary', master_port=3306, master_user='repl', master_password='replpass', master_use_gtid=slave_pos; START SLAVE UNTIL master_gtid_pos='1-1-136'",
+              "rc": 0,
+              "seconds": 0.02,
+              "out": ""
+            }
+          ],
+          "incremental": {
+            "seconds": 2.25,
+            "bytes": 305580539
+          },
+          "backup_binlog_info": "binlog.000002\t189318608\t1-1-135",
+          "gtid_backup": "1-1-135",
+          "gtid_before_delete": "1-1-136",
+          "probe_rows_after_chain_restore": {
+            "expected": 500,
+            "actual": 500
+          },
+          "seconds": 21.5,
+          "description": "physical hot backup chain restored in a scratch container, PITR by GTID replication"
+        },
+        "flashback": {
+          "status": "ok",
+          "kind": "flashback",
+          "tool": "mariadb-binlog --flashback",
+          "backup_seconds": 0.089,
+          "backup_bytes": 10365,
+          "backup_mb": 0.0,
+          "restore_seconds": 0.166,
+          "verify": {
+            "match": true,
+            "tables": 1,
+            "rows": 1000,
+            "mismatch": [],
+            "note": "probe table only (in-place undo, no restore)"
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_after_delete": 500,
+            "probe_rows_after_flashback": 1000,
+            "probe_rows_expected": 1000,
+            "binlog": "binlog.000002:189383756-189390479"
+          },
+          "notes": "ROW-format binlog events of the bad transaction inverted with --flashback and replayed on the primary (no restore needed)",
+          "error": null,
+          "steps": [
+            {
+              "name": "mariadb-binlog --flashback",
+              "cmd": "mariadb-binlog --flashback --start-position=189383756 --stop-position=189390479 /var/lib/mysql/binlog.000002 > /backups/undo.sql",
+              "rc": 0,
+              "seconds": 0.09,
+              "out": ""
+            },
+            {
+              "name": "apply undo",
+              "cmd": "mariadb -uroot -prootpass lab < /backups/undo.sql",
+              "rc": 0,
+              "seconds": 0.17,
+              "out": ""
+            }
+          ],
+          "seconds": 0.4,
+          "description": "in-place undo of a bad DELETE from the ROW binlog"
+        }
+      },
+      "order": [
+        "mariadb_dump",
+        "mariadb_backup",
+        "flashback"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 1.39,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "mariadb_dump",
+          "mariadb_backup",
+          "flashback"
+        ],
+        "pitr_ok": [
+          "mariadb_backup",
+          "flashback"
+        ]
+      },
+      "_seconds": 32.4
+    }
+  },
+  "harness_log": "results/logs/mariadb/20260914-112402-96ffb0.log",
+  "server_version": "11.8.9-MariaDB-ubu2404-log",
+  "finished": "2026-09-14T08:24:34+00:00"
+}

@@ -1,0 +1,45 @@
+physical_plan | ┌───────────────────────────┐
+│      STREAMING_LIMIT      │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│__internal_decompress_integ│
+│     ral_integer(#1, 1)    │
+│             #2            │
+│                           │
+│       ~200,064 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          ORDER_BY         │
+│    ────────────────────   │
+│ lab.main.orders.ordered_at│
+│             ASC           │
+│   lab.main.orders.id ASC  │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│__internal_compress_integra│
+│     l_usmallint(#1, 1)    │
+│             #2            │
+│                           │
+│       ~200,064 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          SEQ_SCAN         │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.orders      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│             id            │
+│        customer_id        │
+│         ordered_at        │
+│                           │
+│       ~200,064 rows       │
+└───────────────────────────┘

@@ -1,0 +1,2 @@
+1 | PRIMARY | <derived3> | ALL | None | None | None | None | 222120 | Using where; Using temporary; Using filesort
+3 | DERIVED | events | ALL | ix_events_customer_id | None | None | None | 988682 | Using where; Using temporary

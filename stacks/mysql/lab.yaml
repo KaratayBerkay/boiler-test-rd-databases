@@ -1,0 +1,61 @@
+display: MySQL 9
+category: row-store OLTP
+dialect: mysql
+driver: pymysql
+image: mysql:9
+project: rdlab-mysql
+scale: 1
+notes: >-
+  MySQL 9.x (innovation track). GTID-based asynchronous replication with SOURCE_AUTO_POSITION, replica in
+  super_read_only; ProxySQL 3 splits SELECTs to the reader hostgroup (source+replica) and everything else to the source.
+docs:
+  - https://hub.docker.com/_/mysql
+  - https://dev.mysql.com/doc/refman/9.0/en/replication-gtids.html
+  - https://proxysql.com/documentation/
+oneshot: [volumes-init, init]
+targets:
+  - name: primary
+    role: primary
+    host: 127.0.0.1
+    port: 13306
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-my-source
+    admin_user: root
+    admin_password: rootpass
+  - name: replica
+    role: replica
+    host: 127.0.0.1
+    port: 13307
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-my-replica
+    admin_user: root
+    admin_password: rootpass
+  - name: proxysql
+    role: proxy
+    host: 127.0.0.1
+    port: 16033
+    user: lab
+    password: labpass
+    database: lab
+    container: rdlab-my-proxysql
+    splits_reads: true
+replication:
+  kind: GTID async (binlog row)
+  promote:
+    method: engine
+    target: replica
+backup:
+  dir: /backups
+  volume: my-backups
+  restore_port: 13309
+  source_host: source
+  strategies: [mysqlsh_dump, mysqldump, clone]
+logging:
+  dir: /var/log/mysql
+  slow_ms: 100
+features:
+  settle_seconds: 3

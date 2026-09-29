@@ -1,0 +1,7 @@
+Eval[customer_id, id AS order_id, ordered_at, total_amount] (rows=22177)
+  └ Rename[customer_id, id, ordered_at, total_amount] AS t (rows=22177)
+    └ Eval[customer_id, id, ordered_at, total_amount] (rows=22177)
+      └ OrderBy[customer_id ASC ordered_at DESC] (rows=22177)
+        └ Filter[(row_number() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC id DESC) AS rn <= 3)] (rows=22177)
+          └ WindowAgg[customer_id, id, ordered_at, total_amount] | [row_number() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC id DESC)] (rows=66600)
+            └ Collect[doc.orders | [customer_id, id, ordered_at, total_amount] | (customer_id <= 100)] (rows=66600)

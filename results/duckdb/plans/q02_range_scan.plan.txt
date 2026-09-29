@@ -1,0 +1,56 @@
+physical_plan | ┌───────────────────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             #0            │
+│             #1            │
+│             #2            │
+│             #3            │
+│                           │
+│         ~500 rows         │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│           TOP_N           │
+│    ────────────────────   │
+│          Top: 500         │
+│                           │
+│         Order By:         │
+│           #4 ASC          │
+│   lab.main.orders.id ASC  │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│         PROJECTION        │
+│    ────────────────────   │
+│             id            │
+│        customer_id        │
+│           status          │
+│        total_amount       │
+│         ordered_at        │
+│                           │
+│        ~40,013 rows       │
+└─────────────┬─────────────┘
+┌─────────────┴─────────────┐
+│          SEQ_SCAN         │
+│    ────────────────────   │
+│           Table:          │
+│      lab.main.orders      │
+│                           │
+│   Type: Sequential Scan   │
+│                           │
+│        Projections:       │
+│         ordered_at        │
+│           status          │
+│             id            │
+│        customer_id        │
+│        total_amount       │
+│                           │
+│          Filters:         │
+│ ordered_at>='2025-03-01 00│
+│   :00:00'::TIMESTAMP AND  │
+│  ordered_at<'2025-03-08 00│
+│   :00:00'::TIMESTAMP AND  │
+│  optional: Dynamic Filter │
+│        (ordered_at)       │
+│     status='delivered'    │
+│                           │
+│        ~40,013 rows       │
+└───────────────────────────┘

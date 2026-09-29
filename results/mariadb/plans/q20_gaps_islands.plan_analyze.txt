@@ -1,0 +1,90 @@
+{
+  "query_optimization": {
+    "r_total_time_ms": 0.125645855
+  },
+  "query_block": {
+    "select_id": 1,
+    "cost": 159.9814822,
+    "r_loops": 1,
+    "r_total_time_ms": 394.2705467,
+    "filesort": {
+      "sort_key": "w.customer_id",
+      "r_loops": 1,
+      "r_total_time_ms": 0.172438019,
+      "r_used_priority_queue": false,
+      "r_output_rows": 2000,
+      "r_buffer_size": "41KiB",
+      "r_sort_mode": "sort_key,rowid",
+      "temporary_table": {
+        "nested_loop": [
+          {
+            "table": {
+              "table_name": "<derived3>",
+              "access_type": "ALL",
+              "loops": 1,
+              "r_loops": 1,
+              "rows": 222120,
+              "r_rows": 99904,
+              "cost": 9.935343352,
+              "r_table_time_ms": 5.080692027,
+              "r_other_time_ms": 68.49435509,
+              "filtered": 100,
+              "r_total_filtered": 99.86086643,
+              "attached_condition": "case when w.prev_at is null or timestampdiff(SECOND,w.prev_at,w.occurred_at) > 1800 then 1 else 0 end = 1",
+              "r_filtered": 99.86086643,
+              "materialized": {
+                "query_block": {
+                  "select_id": 3,
+                  "cost": 166.8906164,
+                  "r_loops": 1,
+                  "r_total_time_ms": 352.1196657,
+                  "window_functions_computation": {
+                    "sorts": [
+                      {
+                        "filesort": {
+                          "sort_key": "`events`.customer_id, `events`.occurred_at, `events`.`id`",
+                          "r_loops": 1,
+                          "r_total_time_ms": 34.41220499,
+                          "r_used_priority_queue": false,
+                          "r_output_rows": 99904,
+                          "r_sort_passes": 1,
+                          "r_buffer_size": "2048KiB",
+                          "r_sort_mode": "sort_key,rowid"
+                        }
+                      }
+                    ],
+                    "temporary_table": {
+                      "nested_loop": [
+                        {
+                          "table": {
+                            "table_name": "events",
+                            "access_type": "ALL",
+                            "possible_keys": ["ix_events_customer_id"],
+                            "loops": 1,
+                            "r_loops": 1,
+                            "rows": 988682,
+                            "r_rows": 1000000,
+                            "cost": 166.8906164,
+                            "r_table_time_ms": 190.831483,
+                            "r_other_time_ms": 53.62381334,
+                            "r_engine_stats": {
+                              "pages_accessed": 6646
+                            },
+                            "filtered": 22.46627235,
+                            "r_total_filtered": 9.9904,
+                            "attached_condition": "`events`.customer_id <= 2000",
+                            "r_filtered": 9.9904
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

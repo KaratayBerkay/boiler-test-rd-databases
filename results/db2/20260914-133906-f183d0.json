@@ -1,0 +1,186 @@
+{
+  "engine": "db2",
+  "display": "IBM Db2 12.1 CE",
+  "category": "row-store OLTP",
+  "dialect": "db2",
+  "driver": "ibm_db",
+  "image": "icr.io/db2_community/db2:latest",
+  "run_id": "20260914-133906-f183d0",
+  "started": "2026-09-14T10:39:06+00:00",
+  "scale": 0.3,
+  "notes": "Db2 Community Edition (privileged container, ~5 minutes first start). HADR (primary/standby log shipping) exists but needs two instances with matching configuration and a takeover procedure; not automated in this stack.",
+  "phases": {
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "offline_full": {
+          "status": "error",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE ... COMPRESS (offline) / RESTORE ... INTO",
+          "backup_seconds": 8.43,
+          "backup_bytes": 137095336,
+          "backup_mb": 130.7,
+          "restore_seconds": 12.42,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "InternalError: ibm_db_dbi::InternalError: [IBM][CLI Driver] SQL1117N A connection to or activation of database \"LABR\" cannot be made because of ROLL-FORWARD PENDING. SQLSTATE=57019 SQLCODE=-1117",
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /backups/*.001 /backups/logs /backups/lt && mkdir -p /backups/logs /backups/lt && chmod 777 /backups/logs /backups/lt",
+              "rc": 0,
+              "seconds": 0.08,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE (offline)",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'for i in 1 2 3 4 5 6; do db2 force applications all >/dev/null; sleep 1; db2 deactivate db lab >/dev/null; if db2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"'; then break; fi; sleep 2; done' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 8.43,
+              "out": "backup db lab to /backups compress without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103913\n\n\n"
+            },
+            {
+              "name": "RESTORE DATABASE ... INTO labr",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab from /backups taken at 20260914103913 into labr replace existing without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 12.42,
+              "out": "restore db lab from /backups taken at 20260914103913 into labr replace existing without prompting\nDB20000I  The RESTORE DATABASE command completed successfully.\n\n"
+            }
+          ],
+          "timestamp": "20260914103913",
+          "seconds": 21.0,
+          "description": "offline full image restored into a new database"
+        },
+        "online_incremental": {
+          "status": "error",
+          "kind": "incremental",
+          "tool": "LOGARCHMETH1 + BACKUP ONLINE INCREMENTAL + RESTORE INCREMENTAL AUTOMATIC",
+          "backup_seconds": 8.74,
+          "backup_bytes": 400459944,
+          "backup_mb": 381.9,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "",
+          "error": "RuntimeError: RESTORE INCREMENTAL chain INTO labi + ROLLFORWARD failed rc=4: rollforward db labi to end of logs and complete overflow log path (/backups/lt) SQL1273N An operation reading the logs on database \"LABI\" cannot continue because of a missing log file \"S0000138.LOG\" on database partition \"0\" and log stream \"0\".",
+          "steps": [
+            {
+              "name": "LOGARCHMETH1 + TRACKMOD, offline backup",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'update db cfg for lab using LOGARCHMETH1 DISK:/backups/logs/ TRACKMOD ON'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\nfor i in 1 2 3 4 5 6; do db2 force applications all >/dev/null; sleep 1; db2 deactivate db lab >/dev/null; if db2 -v '\"'\"'backup db lab to /backups compress without prompting'\"'\"'; then break; fi; sleep 2; done' ) > $__o 2>&1; __rc=$?;",
+              "rc": 0,
+              "seconds": 8.56,
+              "out": "\nbackup db lab to /backups compress without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103934\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCLUDE LOGS",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online to /backups compress include logs without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 8.74,
+              "out": "backup db lab online to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103942\n\n\n"
+            },
+            {
+              "name": "BACKUP DATABASE ONLINE INCREMENTAL",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'backup db lab online incremental to /backups compress include logs without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc' ) > $__o 2>&1; __rc=$?; tail -n 6 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 6.94,
+              "out": "backup db lab online incremental to /backups compress include logs without prompting\n\nBackup successful. The timestamp for this backup image is : 20260914103949\n\n\n"
+            },
+            {
+              "name": "logtarget dir",
+              "cmd": "rm -rf /backups/lt && mkdir -p /backups/lt && chmod 777 /backups/lt",
+              "rc": 0,
+              "seconds": 0.06,
+              "out": ""
+            },
+            {
+              "name": "RESTORE INCREMENTAL chain INTO labi + ROLLFORWARD",
+              "cmd": "__o=$(mktemp); ( su - db2inst1 -c 'db2 -v '\"'\"'restore db lab incremental from /backups taken at 20260914103949 into labi logtarget /backups/lt replace existing without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\ndb2 -v '\"'\"'restore db lab incremental from /backups taken at 20260914103942 into labi without prompting'\"'\"'; __rc=$?; [ $__rc -le 2 ] || exit $__rc\ndb2 -v '\"'\"'restore db lab",
+              "rc": 4,
+              "seconds": 22.13,
+              "out": "\nrollforward db labi to end of logs and complete overflow log path (/backups/lt)\nSQL1273N  An operation reading the logs on database \"LABI\" cannot continue \nbecause of a missing log file \"S0000138.LOG\" on database partition \"0\" and log \nstream \"0\".\n\n"
+            }
+          ],
+          "archive_base_timestamp": "20260914103934",
+          "online_full_timestamp": "20260914103942",
+          "incremental": {
+            "timestamp": "20260914103949",
+            "seconds": 6.94,
+            "bytes": 97042432
+          },
+          "seconds": 46.7,
+          "description": "online full + incremental chain restored with rollforward"
+        },
+        "pitr": {
+          "status": "n/a",
+          "kind": "pitr",
+          "tool": "ARCHIVE LOG + ROLLFORWARD ... TO <timestamp>",
+          "backup_seconds": null,
+          "backup_bytes": null,
+          "backup_mb": null,
+          "restore_seconds": null,
+          "verify": {},
+          "pitr": {},
+          "notes": "needs the online incremental chain",
+          "error": null,
+          "steps": [],
+          "seconds": 0.0,
+          "description": "point-in-time rollforward from archived logs"
+        }
+      },
+      "order": [
+        "offline_full",
+        "online_incremental",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "722deb01a44d06934fe2155a"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "86d483590462358a1656764d"
+        },
+        "products": {
+          "count": 1500,
+          "sample": 1500,
+          "checksum": "fba5f898a15c5df229824160"
+        },
+        "orders": {
+          "count": 60000,
+          "sample": 20000,
+          "checksum": "b5d8b2d0bf165d4ca1153f21"
+        },
+        "order_items": {
+          "count": 147072,
+          "sample": 20000,
+          "checksum": "0ddb4f9ede330178cdbec14c"
+        },
+        "events": {
+          "count": 300000,
+          "sample": 20000,
+          "checksum": "9e27c0bdad190bb1208692bf"
+        },
+        "inventory": {
+          "count": 6000,
+          "sample": 6000,
+          "checksum": "5203826630895c79378d2c39"
+        }
+      },
+      "fingerprint_seconds": 3.25,
+      "summary": {
+        "strategies": 3,
+        "ok": 0,
+        "verified": [],
+        "pitr_ok": []
+      },
+      "_seconds": 72.1
+    }
+  },
+  "harness_log": "results/logs/db2/20260914-133906-f183d0.log",
+  "server_version": "DB2 v12.1.5.0",
+  "finished": "2026-09-14T10:40:19+00:00"
+}

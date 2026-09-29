@@ -1,0 +1,11 @@
+GroupAggregate  (cost=5953.80..6553.96 rows=13 width=11) (actual time=27.889..69.073 rows=13.00 loops=1)
+  Group Key: shipping_country
+  Buffers: shared hit=592
+  ->  Sort  (cost=5953.80..6103.80 rows=60000 width=9) (actual time=27.202..33.343 rows=60000.00 loops=1)
+        Sort Key: shipping_country
+        Sort Method: quicksort  Memory: 3406kB
+        Buffers: shared hit=592
+        ->  Seq Scan on orders  (cost=0.00..1192.00 rows=60000 width=9) (actual time=0.013..8.134 rows=60000.00 loops=1)
+              Buffers: shared hit=592
+Planning Time: 0.043 ms
+Execution Time: 69.104 ms

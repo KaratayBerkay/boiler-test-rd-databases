@@ -1,0 +1,7 @@
+SelectedRecord
+    Async Top K lo: 50 workers: 27
+      filter: (description like %bluetooth% and description like %waterproof%)
+      keys: [id]
+        PageFrame
+            Row forward scan
+            Frame forward scan on: products

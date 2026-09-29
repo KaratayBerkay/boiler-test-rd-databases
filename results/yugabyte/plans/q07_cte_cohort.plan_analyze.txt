@@ -1,0 +1,41 @@
+GroupAggregate  (cost=1013035.35..1076784.37 rows=200 width=24) (actual time=748.606..810.190 rows=22 loops=1)
+  Group Key: (date_trunc('month'::text, first_orders.first_at))
+  ->  Sort  (cost=1013035.35..1028971.98 rows=6374652 width=16) (actual time=709.916..727.193 rows=143628 loops=1)
+        Sort Key: (date_trunc('month'::text, first_orders.first_at))
+        Sort Method: external merge  Disk: 3664kB
+        ->  Hash Right Join  (cost=51780.20..74685.88 rows=6374652 width=16) (actual time=507.439..650.982 rows=143628 loops=1)
+              Hash Cond: (o.customer_id = first_orders.customer_id)
+              Join Filter: ((date_trunc('month'::text, o.ordered_at)) > date_trunc('month'::text, first_orders.first_at))
+              Rows Removed by Join Filter: 20000
+              ->  HashAggregate  (cost=31734.69..36180.64 rows=199426 width=12) (actual time=241.474..285.527 rows=163618 loops=1)
+                    Group Key: o.customer_id, date_trunc('month'::text, o.ordered_at)
+                    Planned Partitions: 4  Batches: 5  Memory Usage: 8241kB  Disk Usage: 3456kB
+                    ->  Seq Scan on orders o  (cost=23.10..18922.19 rows=200000 width=12) (actual time=1.405..121.383 rows=200000 loops=1)
+                          Storage Table Read Requests: 196
+                          Storage Table Read Execution Time: 54.851 ms
+                          Storage Table Read Ops: 196
+                          Storage Table Rows Scanned: 200000
+              ->  Hash  (cost=19805.77..19805.77 rows=19179 width=12) (actual time=265.926..265.928 rows=20000 loops=1)
+                    Buckets: 32768  Batches: 1  Memory Usage: 1116kB
+                    ->  Subquery Scan on first_orders  (cost=19422.19..19805.77 rows=19179 width=12) (actual time=244.325..256.370 rows=20000 loops=1)
+                          ->  HashAggregate  (cost=19422.19..19613.98 rows=19179 width=12) (actual time=244.323..248.140 rows=20000 loops=1)
+                                Group Key: orders.customer_id
+                                Batches: 1  Memory Usage: 2577kB
+                                ->  Seq Scan on orders  (cost=23.10..18422.19 rows=200000 width=12) (actual time=1.457..142.031 rows=200000 loops=1)
+                                      Storage Table Read Requests: 196
+                                      Storage Table Read Execution Time: 97.297 ms
+                                      Storage Table Read Ops: 196
+                                      Storage Table Rows Scanned: 200000
+Planning Time: 0.268 ms
+Execution Time: 813.648 ms
+Storage Read Requests: 392
+Storage Read Execution Time: 152.148 ms
+Storage Read Ops: 392
+Storage Rows Scanned: 400000
+Catalog Read Requests: 0
+Catalog Read Ops: 0
+Catalog Write Requests: 0
+Storage Write Requests: 0
+Storage Flush Requests: 0
+Storage Execution Time: 152.148 ms
+Peak Memory Usage: 18343 kB

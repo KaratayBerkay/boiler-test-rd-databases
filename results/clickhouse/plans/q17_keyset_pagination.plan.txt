@@ -1,0 +1,25 @@
+Output: id, customer_id, ordered_at
+
+JoinLazyColumnsStep
+├──Limit (preliminary LIMIT)
+│  │  Limit 50
+│  │  Offset 0
+│  └──Sorting (Sorting for ORDER BY)
+│     │  Sort description: ordered_at ASC, id ASC
+│     │  Limit 50
+│     └──Filter
+│        │  Filter column: ordered_at > '2025-01-01 00:00:00.000000' OR ordered_at = '2025-01-01 00:00:00.000000' AND id > 0
+│        └──ReadFromMergeTree (lab.orders)
+│              Read type: Default
+│              Parts: 1 | Granules: 7
+│              Output: ordered_at, _part_offset, _part_starting_offset, id
+│              Prewhere filter
+│              Prewhere filter column:  __topKFilter(ordered_at)
+│              Indexes:
+│                PrimaryKey
+│                  Condition: true
+│                  Parts: 1/1
+│                  Granules: 7/7
+│                Ranges: 1
+└──LazilyReadFromMergeTree
+      Lazily read columns: customer_id

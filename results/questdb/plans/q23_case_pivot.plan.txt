@@ -1,0 +1,15 @@
+Encode sort light
+  keys: [country_code]
+    GroupBy vectorized: false
+      keys: [country_code]
+      values: [sum(switch(status,'delivered',1,0)),sum(switch(status,'cancelled',1,0)),sum(switch(status,'returned',1,0)),avg(total_amount)]
+        SelectedRecord
+            Hash Join Light
+              condition: c.id=o.customer_id
+                PageFrame
+                    Row forward scan
+                    Frame forward scan on: orders
+                Hash
+                    PageFrame
+                        Row forward scan
+                        Frame forward scan on: customers

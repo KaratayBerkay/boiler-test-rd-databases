@@ -1,0 +1,684 @@
+{
+  "engine": "cockroach",
+  "display": "CockroachDB",
+  "category": "distributed SQL",
+  "dialect": "cockroach",
+  "driver": "psycopg",
+  "image": "cockroachdb/cockroach:latest",
+  "run_id": "20260914-140518-63014b",
+  "started": "2026-09-14T11:05:18+00:00",
+  "scale": 1.0,
+  "notes": "3-node insecure cluster; every range replicated 3x via Raft, any node serves reads and writes (no promotion needed). HAProxy round-robins connections across nodes (the recommended production pattern). Insecure mode: no passwords.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 1.23,
+          "rows_per_s": 16199,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.02,
+          "rows_per_s": 11449,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.62,
+          "rows_per_s": 8076,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 32.64,
+          "rows_per_s": 6128,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 95.55,
+          "rows_per_s": 5103,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 74.77,
+          "rows_per_s": 13374,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.76,
+          "rows_per_s": 26218,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs JSONB,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSONB,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload JSONB,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 5.28,
+      "load_seconds": 206.8,
+      "fts_setup": [
+        "CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description))"
+      ],
+      "after_load": [
+        "ANALYZE customers",
+        "ANALYZE categories",
+        "ANALYZE products",
+        "ANALYZE orders",
+        "ANALYZE order_items",
+        "ANALYZE events",
+        "ANALYZE inventory"
+      ],
+      "post_seconds": 8.06,
+      "server_version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+      "_seconds": 220.2
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "full": {
+          "status": "ok",
+          "kind": "physical",
+          "tool": "BACKUP DATABASE INTO 'nodelocal://1/lab' WITH revision_history",
+          "backup_seconds": 3.42,
+          "backup_bytes": 77226133,
+          "backup_mb": 73.6,
+          "restore_seconds": 3.94,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 3.65
+          },
+          "pitr": {},
+          "notes": "distributed backup job (every node exports its ranges as SSTs) with MVCC revision history; restored under a new database name",
+          "error": null,
+          "steps": [
+            {
+              "name": "prepare",
+              "cmd": "rm -rf /cockroach/cockroach-data/extern/lab",
+              "rc": 0,
+              "seconds": 0.09,
+              "out": ""
+            },
+            {
+              "name": "BACKUP DATABASE (full, revision_history)",
+              "cmd": "BACKUP DATABASE lab INTO 'nodelocal://1/lab' WITH revision_history",
+              "rc": 0,
+              "seconds": 3.42,
+              "out": ""
+            },
+            {
+              "name": "drop lab_restore if exists",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore CASCADE",
+              "rc": 0,
+              "seconds": 0.0,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_restore",
+              "cmd": "RESTORE DATABASE lab FROM LATEST IN 'nodelocal://1/lab' WITH new_db_name = 'lab_restore'",
+              "rc": 0,
+              "seconds": 3.94,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore CASCADE",
+              "rc": 0,
+              "seconds": 0.67,
+              "out": ""
+            }
+          ],
+          "show_backup": {
+            "tables": [
+              {
+                "table": "customers",
+                "type": "full",
+                "rows": 20000,
+                "size_bytes": 2919315
+              },
+              {
+                "table": "categories",
+                "type": "full",
+                "rows": 200,
+                "size_bytes": 5408
+              },
+              {
+                "table": "products",
+                "type": "full",
+                "rows": 5000,
+                "size_bytes": 5725501
+              },
+              {
+                "table": "orders",
+                "type": "full",
+                "rows": 200000,
+                "size_bytes": 11662272
+              },
+              {
+                "table": "order_items",
+                "type": "full",
+                "rows": 487606,
+                "size_bytes": 29493258
+              },
+              {
+                "table": "events",
+                "type": "full",
+                "rows": 1000000,
+                "size_bytes": 106566350
+              },
+              {
+                "table": "inventory",
+                "type": "full",
+                "rows": 20000,
+                "size_bytes": 455970
+              }
+            ],
+            "size_bytes": 156828074,
+            "jobs": [
+              [
+                "BACKUP",
+                "succeeded",
+                "None",
+                "BACKUP DATABASE lab INTO '/2026/09/14-110901.43' IN 'nodelo \u2026 = true)",
+                "2026-09-14 11:09:01+00",
+                "2026-09-14 11:09:04+00"
+              ]
+            ]
+          },
+          "seconds": 11.9,
+          "description": "distributed full backup restored under a new name"
+        },
+        "incremental": {
+          "status": "ok",
+          "kind": "incremental",
+          "tool": "BACKUP DATABASE INTO LATEST IN",
+          "backup_seconds": 0.47,
+          "backup_bytes": 138436,
+          "backup_mb": 0.1,
+          "restore_seconds": 5.62,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 3.44
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_expected": 1000,
+            "probe_rows_restored": 1000,
+            "note": "table created after the full backup comes from the incremental layer"
+          },
+          "notes": "incremental layer appended to the same collection (INTO LATEST IN); RESTORE FROM LATEST applies full + incrementals",
+          "error": null,
+          "steps": [
+            {
+              "name": "BACKUP DATABASE INTO LATEST (incremental)",
+              "cmd": "BACKUP DATABASE lab INTO LATEST IN 'nodelocal://1/lab' WITH revision_history",
+              "rc": 0,
+              "seconds": 0.47,
+              "out": ""
+            },
+            {
+              "name": "drop lab_restore2 if exists",
+              "cmd": "DROP DATABASE IF EXISTS lab_restore2 CASCADE",
+              "rc": 0,
+              "seconds": 0.0,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_restore2",
+              "cmd": "RESTORE DATABASE lab FROM LATEST IN 'nodelocal://1/lab' WITH new_db_name = 'lab_restore2'",
+              "rc": 0,
+              "seconds": 5.62,
+              "out": ""
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore2 CASCADE",
+              "rc": 0,
+              "seconds": 0.76,
+              "out": ""
+            }
+          ],
+          "show_backup": {
+            "tables": [
+              {
+                "table": "customers",
+                "type": "full",
+                "rows": 20000,
+                "size_bytes": 2919315
+              },
+              {
+                "table": "categories",
+                "type": "full",
+                "rows": 200,
+                "size_bytes": 5408
+              },
+              {
+                "table": "products",
+                "type": "full",
+                "rows": 5000,
+                "size_bytes": 5725501
+              },
+              {
+                "table": "orders",
+                "type": "full",
+                "rows": 200000,
+                "size_bytes": 11662272
+              },
+              {
+                "table": "order_items",
+                "type": "full",
+                "rows": 487606,
+                "size_bytes": 29493258
+              },
+              {
+                "table": "events",
+                "type": "full",
+                "rows": 1000000,
+                "size_bytes": 106566350
+              },
+              {
+                "table": "inventory",
+                "type": "full",
+                "rows": 20000,
+                "size_bytes": 455970
+              },
+              {
+                "table": "customers",
+                "type": "incremental",
+                "rows": 0,
+                "size_bytes": 0
+              },
+              {
+                "table": "categories",
+                "type": "incremental",
+                "rows": 0,
+                "size_bytes": 0
+              },
+              {
+                "table": "products",
+                "type": "incremental",
+                "rows": 0,
+                "size_bytes": 0
+              },
+              {
+                "table": "orders",
+                "type": "incremental",
+                "rows": 0,
+                "size_bytes": 0
+              },
+              {
+                "table": "order_items",
+                "type": "incremental",
+                "rows": 0,
+                "size_bytes": 0
+              },
+              {
+                "table": "events",
+                "type": "incremental",
+                "rows": 0,
+                "size_bytes": 0
+              },
+              {
+                "table": "inventory",
+                "type": "incremental",
+                "rows": 0,
+                "size_bytes": 0
+              },
+              {
+                "table": "backup_probe",
+                "type": "incremental",
+                "rows": 1000,
+                "size_bytes": 18636
+              }
+            ],
+            "size_bytes": 156846710,
+            "jobs": [
+              [
+                "BACKUP",
+                "succeeded",
+                "None",
+                "BACKUP DATABASE lab INTO '/2026/09/14-110901.43' IN 'nodelo \u2026 = true)",
+                "2026-09-14 11:09:14+00",
+                "2026-09-14 11:09:14+00"
+              ],
+              [
+                "RESTORE",
+                "succeeded",
+                "None",
+                "RESTORE DATABASE lab FROM '/2026/09/14-110901.43' IN 'nodel \u2026 store')",
+                "2026-09-14 11:09:04+00",
+                "2026-09-14 11:09:08+00"
+              ],
+              [
+                "BACKUP",
+                "succeeded",
+                "None",
+                "BACKUP DATABASE lab INTO '/2026/09/14-110901.43' IN 'nodelo \u2026 = true)",
+                "2026-09-14 11:09:01+00",
+                "2026-09-14 11:09:04+00"
+              ]
+            ]
+          },
+          "seconds": 11.5,
+          "description": "incremental layer on the same collection"
+        },
+        "pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "RESTORE ... AS OF SYSTEM TIME",
+          "backup_seconds": 0.38,
+          "backup_bytes": 136393,
+          "backup_mb": 0.1,
+          "restore_seconds": 3.14,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 4.05
+          },
+          "pitr": {
+            "match": true,
+            "target": "AS OF SYSTEM TIME '1789384154249581281.0000000000'",
+            "probe_rows_after_delete": 0,
+            "probe_rows_recovered": 1000,
+            "probe_rows_expected": 1000,
+            "stale_read_rows": 1000
+          },
+          "notes": "revision_history keeps every MVCC version in the backup chain; RESTORE ... AS OF SYSTEM TIME picks the state before the DELETE",
+          "error": null,
+          "steps": [
+            {
+              "name": "BACKUP INTO LATEST (captures the DELETE)",
+              "cmd": "BACKUP DATABASE lab INTO LATEST IN 'nodelocal://1/lab' WITH revision_history",
+              "rc": 0,
+              "seconds": 0.38,
+              "out": ""
+            },
+            {
+              "name": "drop lab_pitr if exists",
+              "cmd": "DROP DATABASE IF EXISTS lab_pitr CASCADE",
+              "rc": 0,
+              "seconds": 0.0,
+              "out": ""
+            },
+            {
+              "name": "RESTORE DATABASE AS lab_pitr",
+              "cmd": "RESTORE DATABASE lab FROM LATEST IN 'nodelocal://1/lab' AS OF SYSTEM TIME '1789384154249581281.0000000000' WITH new_db_name = 'lab_pitr'",
+              "rc": 0,
+              "seconds": 3.14,
+              "out": ""
+            },
+            {
+              "name": "drop pitr db",
+              "cmd": "DROP DATABASE lab_pitr CASCADE",
+              "rc": 0,
+              "seconds": 0.77,
+              "out": ""
+            }
+          ],
+          "stale_read": {
+            "as_of": "1789384154249581281.0000000000",
+            "rows": 1000,
+            "current_rows": 0
+          },
+          "seconds": 9.1,
+          "description": "point-in-time restore from the revision history"
+        }
+      },
+      "order": [
+        "full",
+        "incremental",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "c14c8d8d7120620e54c397dd"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "859456648e457cc274b43135"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "2c9fbbefbfeefd4f1ec3e06b"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 2.34,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "full",
+          "incremental",
+          "pitr"
+        ],
+        "pitr_ok": [
+          "incremental",
+          "pitr"
+        ]
+      },
+      "_seconds": 35.0
+    },
+    "logging": {
+      "sink": "slow_query events (SQL_EXEC/SQL_PERF channels -> logs/cockroach-sql-exec.log, json) via sql.log.slow_query.latency_threshold",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "sql.log.slow_query.latency_threshold": 0.1,
+        "sql.log.slow_query.experimental_full_table_scans.enabled": false,
+        "sql.log.admin_audit.enabled": true,
+        "sql.log.user_audit": "",
+        "sql.log.all_statements.enabled": false,
+        "sql.trace.stmt.enable_threshold": 0.0,
+        "sql.log.slow_query.internal_queries.enabled": false,
+        "sql.stats.flush.enabled": true,
+        "server.auth_log.sql_connections.enabled": true,
+        "server.auth_log.sql_sessions.enabled": true,
+        "log_files": [
+          "cockroach-sql-audit.crdb1.root.2026-09-14T11_05_05Z.000001.log",
+          "cockroach-sql-audit.log",
+          "cockroach-sql-exec.crdb1.root.2026-09-14T11_05_24Z.000001.log",
+          "cockroach-sql-exec.log",
+          "cockroach-stderr.crdb1.root.2026-09-14T11_05_03Z.000001.log",
+          "cockroach-stderr.log"
+        ]
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "slow_query events (SQL_EXEC/SQL_PERF channels -> logs/cockroach-sql-exec.log, json) via sql.log.slow_query.latency_threshold",
+        "slow_query_ms": 303.3,
+        "slow_logged": true,
+        "seen_after_s": 0.67,
+        "sample": "{\"channel\": \"SQL_EXEC\", \"EventType\": \"slow_query\", \"User\": \"root\", \"ApplicationName\": \"rdlab\", \"Statement\": \"SELECT pg_sleep(\\u20390.3\\u203a) AS rdlab_mk_03237ed440\", \"Age\": 301.0365, \"NumRows\": 1}",
+        "duration_ms": 301.0365,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "SENSITIVE_ACCESS channel: sql.log.admin_audit + ALTER TABLE ... EXPERIMENTAL_AUDIT SET READ WRITE",
+        "setup": "sql.log.admin_audit.enabled + ALTER TABLE inventory EXPERIMENTAL_AUDIT SET READ WRITE",
+        "event_found": true,
+        "seen_after_s": 0.08,
+        "sample": "{\"channel\": \"SENSITIVE_ACCESS\", \"EventType\": \"admin_query\", \"User\": \"root\", \"Statement\": \"CREATE TABLE lab.public.audit_rdlab_mk_d53984473f (id INT8 PRIMARY KEY)\", \"TableName\": null, \"AccessMode\": null}",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 5260,
+          "p50_ms": 1.511498,
+          "p99_ms": 2.3468684,
+          "errors": 0
+        },
+        "full_logging": "SET CLUSTER SETTING sql.log.slow_query.latency_threshold = '1us' (every statement logged as a slow_query event)",
+        "full": {
+          "qps": 6049,
+          "p50_ms": 1.298685,
+          "p99_ms": 2.0533284499999995,
+          "errors": 0
+        },
+        "log_bytes_written": 37517484,
+        "bytes_per_statement": 1550.6,
+        "overhead_pct": -15.0,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-crdb-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2105,
+          "docker_logs_lines": 43
+        },
+        "rdlab-crdb-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2132,
+          "docker_logs_lines": 43
+        },
+        "rdlab-crdb-3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2132,
+          "docker_logs_lines": 43
+        },
+        "rdlab-crdb-haproxy": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 79,
+          "docker_logs_lines": 2
+        }
+      },
+      "extra": {
+        "statement_statistics_top5": [
+          {
+            "query": "SELECT id, name, email FROM customers WHERE id = _",
+            "calls": 56592.0,
+            "mean_ms": 0.625
+          },
+          {
+            "query": "INSERT INTO backup_probe(id, ts_ms) VALUES (_, __more__)",
+            "calls": 1000.0,
+            "mean_ms": 0.718
+          },
+          {
+            "query": "INSERT INTO system.job_info(job_id, info_key, written, value) VALUES (_, _, now(), _)",
+            "calls": 54.0,
+            "mean_ms": 0.607
+          },
+          {
+            "query": "SELECT claim_session_id FROM system.jobs WHERE id = _",
+            "calls": 36.0,
+            "mean_ms": 1.391
+          },
+          {
+            "query": "INSERT INTO system.jobs(id, created, status, claim_session_id, claim_instance_id, job_type",
+            "calls": 3.0,
+            "mean_ms": 2.128
+          }
+        ]
+      },
+      "collected": [
+        "results/cockroach/logs/crdb-1__cockroach_cockroach-data_logs_cockroach-sql-audit.log",
+        "results/cockroach/logs/crdb-1__cockroach_cockroach-data_logs_cockroach.log",
+        "results/cockroach/logs/crdb-1__cockroach_cockroach-data_logs_cockroach-sql-exec.log"
+      ],
+      "_seconds": 24.3
+    }
+  },
+  "harness_log": "results/logs/cockroach/20260914-140518-63014b.log",
+  "server_version": "CockroachDB CCL v26.2.6 (x86_64-pc-linux-gnu, built 2026/08/24 17:36:16, go1.25.13)",
+  "finished": "2026-09-14T11:09:58+00:00"
+}

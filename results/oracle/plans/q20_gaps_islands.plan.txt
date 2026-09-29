@@ -1,0 +1,20 @@
+Plan hash value: 2353310399
+ 
+---------------------------------------------------------------------------------------
+| Id  | Operation            | Name   | Rows  | Bytes |TempSpc| Cost (%CPU)| Time     |
+---------------------------------------------------------------------------------------
+|   0 | SELECT STATEMENT     |        |  2013 | 58377 |       |  5325   (1)| 00:00:01 |
+|   1 |  SORT GROUP BY NOSORT|        |  2013 | 58377 |       |  5325   (1)| 00:00:01 |
+|*  2 |   VIEW               |        |   100K|  2832K|       |  5325   (1)| 00:00:01 |
+|   3 |    WINDOW SORT       |        |   100K|  2050K|  3152K|  5325   (1)| 00:00:01 |
+|*  4 |     TABLE ACCESS FULL| EVENTS |   100K|  2050K|       |  4677   (1)| 00:00:01 |
+---------------------------------------------------------------------------------------
+ 
+Predicate Information (identified by operation id):
+---------------------------------------------------
+ 
+   2 - filter(CASE  WHEN ("PREV_AT" IS NULL OR 
+              (CAST(INTERNAL_FUNCTION("OCCURRED_AT") AS 
+              DATE)-CAST(INTERNAL_FUNCTION("PREV_AT") AS DATE))*86400>1800) THEN 1 ELSE 0 
+              END =1)
+   4 - filter("CUSTOMER_ID"<=2000)

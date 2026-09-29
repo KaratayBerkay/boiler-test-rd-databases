@@ -1,0 +1,2676 @@
+{
+  "engine": "yugabyte",
+  "display": "YugabyteDB",
+  "category": "distributed SQL",
+  "dialect": "yugabyte",
+  "driver": "psycopg",
+  "image": "yugabytedb/yugabyte:latest",
+  "run_id": "20260914-141055-683cb4",
+  "started": "2026-09-14T11:10:55+00:00",
+  "scale": 1.0,
+  "notes": "3 nodes via yugabyted, replication factor 3 (Raft per tablet), PostgreSQL-compatible YSQL layer on every node (any node serves reads and writes; no promotion). Auth disabled for the lab.",
+  "phases": {
+    "load": {
+      "scale": 1.0,
+      "tables": {
+        "customers": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.56,
+          "rows_per_s": 35837,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "categories": {
+          "rows": 200,
+          "counted": 200,
+          "expected": 200,
+          "seconds": 0.03,
+          "rows_per_s": 7632,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "products": {
+          "rows": 5000,
+          "counted": 5000,
+          "expected": 5000,
+          "seconds": 0.25,
+          "rows_per_s": 20161,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "orders": {
+          "rows": 200000,
+          "counted": 200000,
+          "expected": 200000,
+          "seconds": 8.72,
+          "rows_per_s": 22940,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "order_items": {
+          "rows": 487606,
+          "counted": 487606,
+          "expected": 487606,
+          "seconds": 23.08,
+          "rows_per_s": 21128,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "events": {
+          "rows": 1000000,
+          "counted": 1000000,
+          "expected": 1000000,
+          "seconds": 25.82,
+          "rows_per_s": 38732,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        },
+        "inventory": {
+          "rows": 20000,
+          "counted": 20000,
+          "expected": 20000,
+          "seconds": 0.29,
+          "rows_per_s": 69547,
+          "method": "COPY FROM STDIN (raw csv stream)",
+          "ok": true
+        }
+      },
+      "ddl": [
+        "CREATE TABLE customers (\n  id INTEGER NOT NULL,\n  name VARCHAR(100) NOT NULL,\n  email VARCHAR(150) NOT NULL,\n  country_code VARCHAR(2) NOT NULL,\n  tier VARCHAR(10) NOT NULL,\n  created_at TIMESTAMP(6) NOT NULL,\n  attrs JSONB,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE categories (\n  id INTEGER NOT NULL,\n  parent_id INTEGER,\n  name VARCHAR(100) NOT NULL,\n  depth INTEGER NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE products (\n  id INTEGER NOT NULL,\n  category_id INTEGER NOT NULL,\n  sku VARCHAR(20) NOT NULL,\n  name VARCHAR(150) NOT NULL,\n  description TEXT NOT NULL,\n  price DECIMAL(12,2) NOT NULL,\n  attrs JSONB,\n  active BOOLEAN NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (category_id) REFERENCES categories (id)\n)",
+        "CREATE TABLE orders (\n  id INTEGER NOT NULL,\n  customer_id INTEGER NOT NULL,\n  status VARCHAR(12) NOT NULL,\n  ordered_at TIMESTAMP(6) NOT NULL,\n  total_amount DECIMAL(14,2) NOT NULL,\n  shipping_country VARCHAR(2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (customer_id) REFERENCES customers (id)\n)",
+        "CREATE TABLE order_items (\n  id INTEGER NOT NULL,\n  order_id INTEGER NOT NULL,\n  product_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  unit_price DECIMAL(12,2) NOT NULL,\n  PRIMARY KEY (id),\n  FOREIGN KEY (order_id) REFERENCES orders (id),\n  FOREIGN KEY (product_id) REFERENCES products (id)\n)",
+        "CREATE TABLE events (\n  id BIGINT NOT NULL,\n  customer_id INTEGER NOT NULL,\n  event_type VARCHAR(20) NOT NULL,\n  occurred_at TIMESTAMP(6) NOT NULL,\n  payload JSONB,\n  value_num DECIMAL(12,4) NOT NULL,\n  PRIMARY KEY (id)\n)",
+        "CREATE TABLE inventory (\n  product_id INTEGER NOT NULL,\n  warehouse_id INTEGER NOT NULL,\n  qty INTEGER NOT NULL,\n  updated_at TIMESTAMP(6) NOT NULL,\n  PRIMARY KEY (product_id, warehouse_id)\n)",
+        "CREATE UNIQUE INDEX ux_customers_email ON customers (email)",
+        "CREATE INDEX ix_products_category_id ON products (category_id)",
+        "CREATE INDEX ix_orders_customer_id ON orders (customer_id)",
+        "CREATE INDEX ix_order_items_order_id ON order_items (order_id)",
+        "CREATE INDEX ix_order_items_product_id ON order_items (product_id)",
+        "CREATE INDEX ix_events_customer_id ON events (customer_id)"
+      ],
+      "errors": [],
+      "schema_seconds": 9.3,
+      "load_seconds": 59.61,
+      "fts_setup": [
+        "CREATE INDEX ix_products_fts ON products USING GIN (to_tsvector('english', description))"
+      ],
+      "after_load": [
+        "ANALYZE customers",
+        "ANALYZE categories",
+        "ANALYZE products",
+        "ANALYZE orders",
+        "ANALYZE order_items",
+        "ANALYZE events",
+        "ANALYZE inventory"
+      ],
+      "post_seconds": 5.78,
+      "server_version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/llvm-project.git efca861cc42178cc4c555d605b36c79d7d121cc1), 64-bit",
+      "_seconds": 74.7
+    },
+    "capabilities": {
+      "materialized_view": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(13,)]",
+        "ms": 853.8
+      },
+      "partitioning": {
+        "status": "supported",
+        "note": "",
+        "ms": 712.0
+      },
+      "generated_column": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(42,)]",
+        "ms": 519.6
+      },
+      "identity": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 757.8
+      },
+      "returning": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 7)]",
+        "ms": 572.6
+      },
+      "sequence": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 343.5
+      },
+      "arrays": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([1, 2, 3, 4],)]",
+        "ms": 51.2
+      },
+      "vector_type": {
+        "status": "supported",
+        "note": "requires pgvector extension",
+        "sample": "[(2.449489742783178,)]",
+        "ms": 543.7
+      },
+      "statement_timeout": {
+        "status": "supported",
+        "note": "expects SQLSTATE 57014",
+        "error_code": "57014",
+        "detail": "QueryCanceled: canceling statement due to statement timeout",
+        "ms": 225.9
+      },
+      "filter_clause": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(140061,)]",
+        "ms": 391.6
+      },
+      "distinct_on": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1, 157974), (2, 70522)]",
+        "ms": 255.1
+      },
+      "qualify": {
+        "status": "unsupported",
+        "note": "",
+        "error": "SyntaxError: syntax error at or near \"ROW_NUMBER\" LINE 1: SELECT id FROM orders QUALIFY ROW_NUMBER() OVER (ORDER BY id... ^",
+        "error_code": "42601",
+        "ms": 22.9
+      },
+      "check_constraint": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23514",
+        "detail": "CheckViolation: new row for relation \"ck_lab\" violates check constraint \"ck_lab_v_check\" DETAIL: Failing row contains (0).",
+        "ms": 491.6
+      },
+      "fk_enforced": {
+        "status": "supported",
+        "note": "",
+        "error_code": "23503",
+        "detail": "ForeignKeyViolation: insert or update on table \"order_items\" violates foreign key constraint \"order_items_product_id_fkey\" DETAIL: Key (product_id)=(999999999) is not present in table \"products\".",
+        "ms": 145.8
+      },
+      "savepoint": {
+        "status": "supported",
+        "note": "expects 1",
+        "sample": "[(1,)]",
+        "ms": 495.4
+      },
+      "temporal_query": {
+        "status": "unsupported",
+        "note": "time-travel",
+        "error": "SyntaxError: syntax error at or near \"SYSTEM\" LINE 1: SELECT COUNT(*) FROM orders AS OF SYSTEM TIME '-5s' ^",
+        "error_code": "42601",
+        "ms": 27.4
+      },
+      "json_aggregate": {
+        "status": "supported",
+        "note": "",
+        "sample": "[([{'id': 1, 'name': 'Category 1'}, {'id': 2, 'name': 'Category 2'}, {'id': 3, 'name': 'Category 3'}],)]",
+        "ms": 90.0
+      },
+      "isolation_serializable": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 24.1
+      },
+      "isolation_repeatable_read": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 22.0
+      },
+      "isolation_read_uncommitted": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(1,)]",
+        "ms": 20.8
+      },
+      "regex_match": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(528,)]",
+        "ms": 57.4
+      },
+      "cte_dml": {
+        "status": "supported",
+        "note": "",
+        "sample": "[(0,)]",
+        "ms": 59.6
+      },
+      "server_cursor": {
+        "status": "supported",
+        "note": "in-transaction cursor",
+        "ms": 417.5
+      },
+      "_seconds": 7.1
+    },
+    "bench": {
+      "q00_ping": {
+        "title": "Round-trip floor (SELECT 1)",
+        "tags": [
+          "baseline"
+        ],
+        "kind": "read",
+        "sql": "SELECT 1 ",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.2,
+          "p50": 0.224,
+          "p90": 0.258,
+          "p95": 0.279,
+          "p99": 1.493,
+          "max": 1.981,
+          "mean": 0.288,
+          "stdev": 0.315,
+          "first_ms": 2.405
+        },
+        "rows": 1,
+        "checksum": "5604f98c4812d1ac62789414",
+        "error": null,
+        "error_code": null,
+        "plan": "Result *RESULT*  (cost=0.00..0.01 rows=1 width=4)",
+        "plan_analyze": "Result *RESULT*  (cost=0.00..0.01 rows=1 width=4) (actual time=0.001..0.001 rows=1 loops=1)\nPlanning Time: 0.029 ms\nExecution Time: 0.097 ms\nStorage Read Requests: 0\nStorage Read Ops: 0\nStorage Rows Scanned: 0\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 0.000 ms\nPeak Memory Usage: 64 kB"
+      },
+      "q01_pk_lookup": {
+        "title": "Primary-key point lookup",
+        "tags": [
+          "baseline",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name, email, country_code, tier FROM customers WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 0.385,
+          "p50": 0.477,
+          "p90": 1.082,
+          "p95": 1.121,
+          "p99": 1.299,
+          "max": 1.365,
+          "mean": 0.573,
+          "stdev": 0.251,
+          "first_ms": 30.341
+        },
+        "rows": 1,
+        "checksum": "f7f556fe269e8be8f488a17a",
+        "error": null,
+        "error_code": null,
+        "plan": "Index Scan using customers_pkey on customers  (cost=23.09..23.25 rows=1 width=43)\n  Index Cond: (id = '4403'::smallint)",
+        "plan_analyze": "Index Scan using customers_pkey on customers  (cost=23.09..23.25 rows=1 width=43) (actual time=0.228..0.230 rows=1 loops=1)\n  Index Cond: (id = '4403'::smallint)\n  Storage Table Read Requests: 1\n  Storage Table Read Execution Time: 0.168 ms\n  Storage Table Read Ops: 1\n  Storage Table Rows Scanned: 1\nPlanning Time: 0.053 ms\nExecution Time: 0.293 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 0.168 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 1\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 0.168 ms\nPeak Memory Usage: 72 kB"
+      },
+      "q02_range_scan": {
+        "title": "Range scan on unindexed timestamp + status filter",
+        "tags": [
+          "scan",
+          "filter",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, status, total_amount FROM orders WHERE ordered_at >= TIMESTAMP '2025-03-01 00:00:00' AND ordered_at < TIMESTAMP '2025-03-08 00:00:00' AND status = 'delivered' ORDER BY ordered_at, id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 157.856,
+          "p50": 170.621,
+          "p90": 179.652,
+          "p95": 182.658,
+          "p99": 185.062,
+          "max": 185.663,
+          "mean": 171.088,
+          "stdev": 8.11,
+          "first_ms": 341.36
+        },
+        "rows": 500,
+        "checksum": "25830183403aac58e051d345",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=13393.87..13395.12 rows=500 width=31)\n  ->  Sort  (cost=13393.87..13397.02 rows=1259 width=31)\n        Sort Key: ordered_at, id\n        ->  Seq Scan on orders  (cost=23.10..13331.13 rows=1259 width=31)\n              Storage Filter: ((ordered_at >= '2025-03-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-03-08 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))",
+        "plan_analyze": "Limit  (cost=13393.87..13395.12 rows=500 width=31) (actual time=165.014..165.497 rows=500 loops=1)\n  ->  Sort  (cost=13393.87..13397.02 rows=1259 width=31) (actual time=165.011..165.084 rows=500 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: top-N heapsort  Memory: 90kB\n        ->  Seq Scan on orders  (cost=23.10..13331.13 rows=1259 width=31) (actual time=105.982..163.015 rows=1372 loops=1)\n              Storage Filter: ((ordered_at >= '2025-03-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-03-08 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))\n              Storage Table Read Requests: 2\n              Storage Table Read Execution Time: 160.219 ms\n              Storage Table Read Ops: 2\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.175 ms\nExecution Time: 165.998 ms\nStorage Read Requests: 2\nStorage Read Execution Time: 160.219 ms\nStorage Read Ops: 2\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 160.219 ms\nPeak Memory Usage: 292 kB"
+      },
+      "q03_join_agg": {
+        "title": "3-way join + GROUP BY month/country + ORDER BY revenue",
+        "tags": [
+          "join",
+          "aggregate",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, DATE_TRUNC('month', o.ordered_at) AS month_start, COUNT(DISTINCT o.id) AS orders, SUM(oi.qty * oi.unit_price) AS revenue FROM orders o JOIN customers c ON c.id = o.customer_id JOIN order_items oi ON oi.order_id = o.id WHERE o.status = 'delivered' AND o.ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND o.ordered_at < TIMESTAMP '2025-07-01 00:00:00' GROUP BY c.country_code, DATE_TRUNC('month', o.ordered_at) ORDER BY revenue DESC, c.country_code, month_start LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1211.076,
+          "p50": 1341.096,
+          "p90": 1383.506,
+          "p95": 1399.941,
+          "p99": 1413.089,
+          "max": 1416.376,
+          "mean": 1335.981,
+          "stdev": 54.638,
+          "first_ms": 1498.062
+        },
+        "rows": 50,
+        "checksum": "4b01a7659958ecf823e8a1bc",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=72057.09..72057.21 rows=50 width=51)\n  ->  Sort  (cost=72057.09..72271.01 rows=85570 width=51)\n        Sort Key: (sum(((oi.qty)::numeric * oi.unit_price))) DESC, c.country_code, (date_trunc('month'::text, o.ordered_at))\n        ->  GroupAggregate  (cost=66433.49..69214.51 rows=85570 width=51)\n              Group Key: c.country_code, (date_trunc('month'::text, o.ordered_at))\n              ->  Sort  (cost=66433.49..66647.41 rows=85570 width=25)\n                    Sort Key: c.country_code, (date_trunc('month'::text, o.ordered_at))\n                    ->  YB Batched Nested Loop Join  (cost=2273.23..57375.74 rows=85570 width=25)\n                          Join Filter: (o.id = oi.order_id)\n                          ->  Hash Join  (cost=2221.04..17247.17 rows=35098 width=15)\n                                Hash Cond: (o.customer_id = c.id)\n                                ->  Seq Scan on orders o  (cost=23.10..14566.63 rows=35098 width=16)\n                                      Storage Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))\n                                ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7)\n                                      ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7)\n                          ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=52.20..1125.53 rows=3120 width=14)\n                                Index Cond: (order_id = ANY (ARRAY[o.id, $1, $2, ..., $1023]))",
+        "plan_analyze": "Limit  (cost=72057.09..72057.21 rows=50 width=51) (actual time=1477.767..1477.787 rows=50 loops=1)\n  ->  Sort  (cost=72057.09..72271.01 rows=85570 width=51) (actual time=1477.765..1477.771 rows=50 loops=1)\n        Sort Key: (sum(((oi.qty)::numeric * oi.unit_price))) DESC, c.country_code, (date_trunc('month'::text, o.ordered_at))\n        Sort Method: quicksort  Memory: 31kB\n        ->  GroupAggregate  (cost=66433.49..69214.51 rows=85570 width=51) (actual time=1396.667..1477.622 rows=78 loops=1)\n              Group Key: c.country_code, (date_trunc('month'::text, o.ordered_at))\n              ->  Sort  (cost=66433.49..66647.41 rows=85570 width=25) (actual time=1396.163..1411.807 rows=84255 loops=1)\n                    Sort Key: c.country_code, (date_trunc('month'::text, o.ordered_at))\n                    Sort Method: external merge  Disk: 3384kB\n                    ->  YB Batched Nested Loop Join  (cost=2273.23..57375.74 rows=85570 width=25) (actual time=37.741..1250.838 rows=84255 loops=1)\n                          Join Filter: (o.id = oi.order_id)\n                          ->  Hash Join  (cost=2221.04..17247.17 rows=35098 width=15) (actual time=27.875..84.772 rows=34679 loops=1)\n                                Hash Cond: (o.customer_id = c.id)\n                                ->  Seq Scan on orders o  (cost=23.10..14566.63 rows=35098 width=16) (actual time=6.611..23.933 rows=34679 loops=1)\n                                      Storage Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((status)::text = 'delivered'::text))\n                                      Storage Table Read Requests: 34\n                                      Storage Table Read Execution Time: 7.335 ms\n                                      Storage Table Read Ops: 34\n                                      Storage Table Rows Scanned: 200000\n                                ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7) (actual time=21.043..21.044 rows=20000 loops=1)\n                                      Buckets: 32768  Batches: 1  Memory Usage: 1038kB\n                                      ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7) (actual time=1.093..12.851 rows=20000 loops=1)\n                                            Storage Table Read Requests: 20\n                                            Storage Table Read Execution Time: 8.124 ms\n                                            Storage Table Read Ops: 20\n                                            Storage Table Rows Scanned: 20000\n                          ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=52.20..1125.53 rows=3120 width=14) (actual time=12.251..27.782 rows=2478 loops=34)\n                                Index Cond: (order_id = ANY (ARRAY[o.id, $1, $2, ..., $1023]))\n                                Storage Table Read Requests: 3\n                                Storage Table Read Execution Time: 15.389 ms\n                                Storage Table Read Ops: 3\n                                Storage Table Rows Scanned: 2478\n                                Storage Index Read Requests: 3\n                                Storage Index Read Execution Time: 4.248 ms\n                                Storage Index Read Ops: 3\n                                Storage Index Rows Scanned: 2478\nPlanning Time: 1.366 ms\nExecution Time: 1479.243 ms\nStorage Read Requests: 258\nStorage Read Execution Time: 683.101 ms\nStorage Read Ops: 258\nStorage Rows Scanned: 388510\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 683.101 ms\nPeak Memory Usage: 8851 kB"
+      },
+      "q04_window_rank": {
+        "title": "Top-3 products per category (ROW_NUMBER over aggregate)",
+        "tags": [
+          "window",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT category_id, product_id, revenue, rn FROM (SELECT p.category_id, oi.product_id, SUM(oi.qty * oi.unit_price) AS revenue, ROW_NUMBER() OVER (PARTITION BY p.category_id ORDER BY SUM(oi.qty * oi.unit_price) DESC, oi.product_id) AS rn FROM order_items oi JOIN products p ON p.id = oi.product_id GROUP BY p.category_id, oi.product_id) t WHERE rn <= 3 ORDER BY category_id, rn",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 640.428,
+          "p50": 793.843,
+          "p90": 831.385,
+          "p95": 843.45,
+          "p99": 853.102,
+          "max": 855.515,
+          "mean": 765.601,
+          "stdev": 76.52,
+          "first_ms": 738.431
+        },
+        "rows": 600,
+        "checksum": "241b3d6c8eab613160251060",
+        "error": null,
+        "error_code": null,
+        "plan": "Incremental Sort  (cost=166708.81..232255.39 rows=487606 width=48)\n  Sort Key: p.category_id, (row_number() OVER (?))\n  Presorted Key: p.category_id\n  ->  WindowAgg  (cost=166413.14..177384.28 rows=487606 width=48)\n        Run Condition: (row_number() OVER (?) <= 3)\n        ->  Sort  (cost=166413.14..167632.16 rows=487606 width=40)\n              Sort Key: p.category_id, (sum(((oi.qty)::numeric * oi.unit_price))) DESC, oi.product_id\n              ->  HashAggregate  (cost=95201.49..107010.69 rows=487606 width=40)\n                    Group Key: p.category_id, oi.product_id\n                    Planned Partitions: 32\n                    ->  Hash Join  (cost=596.61..56497.76 rows=487606 width=18)\n                          Hash Cond: (oi.product_id = p.id)\n                          ->  Seq Scan on order_items oi  (cost=23.10..49219.67 rows=487606 width=14)\n                          ->  Hash  (cost=511.01..511.01 rows=5000 width=8)\n                                ->  Seq Scan on products p  (cost=23.08..511.01 rows=5000 width=8)",
+        "plan_analyze": "Incremental Sort  (cost=166708.81..232255.39 rows=487606 width=48) (actual time=963.500..967.996 rows=600 loops=1)\n  Sort Key: p.category_id, (row_number() OVER (?))\n  Presorted Key: p.category_id\n  Full-sort Groups: 19  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB\n  ->  WindowAgg  (cost=166413.14..177384.28 rows=487606 width=48) (actual time=963.223..967.423 rows=600 loops=1)\n        Run Condition: (row_number() OVER (?) <= 3)\n        ->  Sort  (cost=166413.14..167632.16 rows=487606 width=40) (actual time=963.194..963.569 rows=5000 loops=1)\n              Sort Key: p.category_id, (sum(((oi.qty)::numeric * oi.unit_price))) DESC, oi.product_id\n              Sort Method: quicksort  Memory: 501kB\n              ->  HashAggregate  (cost=95201.49..107010.69 rows=487606 width=40) (actual time=957.073..959.003 rows=5000 loops=1)\n                    Group Key: p.category_id, oi.product_id\n                    Planned Partitions: 32  Batches: 1  Memory Usage: 2833kB\n                    ->  Hash Join  (cost=596.61..56497.76 rows=487606 width=18) (actual time=9.481..604.549 rows=487606 loops=1)\n                          Hash Cond: (oi.product_id = p.id)\n                          ->  Seq Scan on order_items oi  (cost=23.10..49219.67 rows=487606 width=14) (actual time=1.827..345.135 rows=487606 loops=1)\n                                Storage Table Read Requests: 477\n                                Storage Table Read Execution Time: 7.257 ms\n                                Storage Table Read Ops: 477\n                                Storage Table Rows Scanned: 487606\n                          ->  Hash  (cost=511.01..511.01 rows=5000 width=8) (actual time=7.629..7.630 rows=5000 loops=1)\n                                Buckets: 8192  Batches: 1  Memory Usage: 260kB\n                                ->  Seq Scan on products p  (cost=23.08..511.01 rows=5000 width=8) (actual time=1.665..5.923 rows=5000 loops=1)\n                                      Storage Table Read Requests: 5\n                                      Storage Table Read Execution Time: 4.920 ms\n                                      Storage Table Read Ops: 5\n                                      Storage Table Rows Scanned: 5000\nPlanning Time: 0.353 ms\nExecution Time: 968.391 ms\nStorage Read Requests: 482\nStorage Read Execution Time: 12.177 ms\nStorage Read Ops: 482\nStorage Rows Scanned: 492606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 12.177 ms\nPeak Memory Usage: 4613 kB"
+      },
+      "q05_window_running": {
+        "title": "Running total + LAG over daily revenue",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT d, daily, SUM(daily) OVER (ORDER BY d ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running, LAG(daily, 1) OVER (ORDER BY d) AS prev_day FROM (SELECT DATE_TRUNC('day', ordered_at) AS d, SUM(total_amount) AS daily FROM orders WHERE ordered_at >= TIMESTAMP '2025-01-01 00:00:00' AND ordered_at < TIMESTAMP '2025-04-01 00:00:00' GROUP BY DATE_TRUNC('day', ordered_at)) s ORDER BY d",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 271.357,
+          "p50": 297.728,
+          "p90": 307.0,
+          "p95": 312.827,
+          "p99": 317.489,
+          "max": 318.655,
+          "mean": 293.508,
+          "stdev": 15.035,
+          "first_ms": 305.01
+        },
+        "rows": 90,
+        "checksum": "d18d7920a3c2ac35a4a4429e",
+        "error": null,
+        "error_code": null,
+        "plan": "WindowAgg  (cost=15647.94..17192.04 rows=24705 width=104)\n  ->  WindowAgg  (cost=15647.94..16821.47 rows=24705 width=72)\n        ->  GroupAggregate  (cost=15647.94..16203.84 rows=24705 width=40)\n              Group Key: (date_trunc('day'::text, orders.ordered_at))\n              ->  Sort  (cost=15647.94..15709.72 rows=24710 width=14)\n                    Sort Key: (date_trunc('day'::text, orders.ordered_at))\n                    ->  Seq Scan on orders  (cost=23.10..13845.00 rows=24710 width=14)\n                          Storage Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-04-01 00:00:00'::timestamp without time zone))",
+        "plan_analyze": "WindowAgg  (cost=15647.94..17192.04 rows=24705 width=104) (actual time=297.143..323.815 rows=90 loops=1)\n  ->  WindowAgg  (cost=15647.94..16821.47 rows=24705 width=72) (actual time=296.618..323.547 rows=90 loops=1)\n        ->  GroupAggregate  (cost=15647.94..16203.84 rows=24705 width=40) (actual time=296.065..323.236 rows=90 loops=1)\n              Group Key: (date_trunc('day'::text, orders.ordered_at))\n              ->  Sort  (cost=15647.94..15709.72 rows=24710 width=14) (actual time=295.572..300.669 rows=24934 loops=1)\n                    Sort Key: (date_trunc('day'::text, orders.ordered_at))\n                    Sort Method: quicksort  Memory: 2132kB\n                    ->  Seq Scan on orders  (cost=23.10..13845.00 rows=24710 width=14) (actual time=12.393..271.589 rows=24934 loops=1)\n                          Storage Filter: ((ordered_at >= '2025-01-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-04-01 00:00:00'::timestamp without time zone))\n                          Storage Table Read Requests: 25\n                          Storage Table Read Execution Time: 221.875 ms\n                          Storage Table Read Ops: 25\n                          Storage Table Rows Scanned: 200000\nPlanning Time: 0.325 ms\nExecution Time: 324.330 ms\nStorage Read Requests: 25\nStorage Read Execution Time: 221.875 ms\nStorage Read Ops: 25\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 221.875 ms\nPeak Memory Usage: 3055 kB"
+      },
+      "q06_recursive_cte": {
+        "title": "Recursive CTE over category tree (path strings)",
+        "tags": [
+          "recursive-cte",
+          "hierarchy"
+        ],
+        "kind": "read",
+        "sql": "WITH RECURSIVE tree (id, parent_id, name, depth, path) AS (SELECT id, parent_id, name, 0, CAST(name AS VARCHAR(400)) FROM categories WHERE parent_id IS NULL UNION ALL SELECT c.id, c.parent_id, c.name, t.depth + 1, CAST(t.path || ' > ' || c.name AS VARCHAR(400)) FROM categories c JOIN tree t ON c.parent_id = t.id) SELECT id, depth, path FROM tree ORDER BY path",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 5.101,
+          "p50": 5.53,
+          "p90": 6.22,
+          "p95": 6.397,
+          "p99": 6.538,
+          "max": 6.574,
+          "mean": 5.697,
+          "stdev": 0.46,
+          "first_ms": 42.305
+        },
+        "rows": 200,
+        "checksum": "279fcdc7cfb9ab81bd1f742e",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=690.45..695.22 rows=1910 width=524)\n  Sort Key: tree.path\n  CTE tree\n    ->  Recursive Union  (cost=23.07..548.16 rows=1910 width=540)\n          ->  Seq Scan on categories  (cost=23.07..34.78 rows=10 width=540)\n                Storage Filter: (parent_id IS NULL)\n          ->  Hash Join  (cost=26.32..47.52 rows=190 width=540)\n                Hash Cond: (c.parent_id = t.id)\n                ->  Seq Scan on categories c  (cost=23.07..39.72 rows=200 width=20)\n                ->  Hash  (cost=2.00..2.00 rows=100 width=524)\n                      ->  WorkTable Scan on tree t  (cost=0.00..2.00 rows=100 width=524)\n  ->  CTE Scan on tree  (cost=0.00..38.20 rows=1910 width=524)",
+        "plan_analyze": "Sort  (cost=690.45..695.22 rows=1910 width=524) (actual time=5.824..5.868 rows=200 loops=1)\n  Sort Key: tree.path\n  Sort Method: quicksort  Memory: 42kB\n  CTE tree\n    ->  Recursive Union  (cost=23.07..548.16 rows=1910 width=540) (actual time=0.676..4.968 rows=200 loops=1)\n          ->  Seq Scan on categories  (cost=23.07..34.78 rows=10 width=540) (actual time=0.671..0.680 rows=10 loops=1)\n                Storage Filter: (parent_id IS NULL)\n                Storage Table Read Requests: 1\n                Storage Table Read Execution Time: 0.555 ms\n                Storage Table Read Ops: 1\n                Storage Table Rows Scanned: 200\n          ->  Hash Join  (cost=26.32..47.52 rows=190 width=540) (actual time=0.785..0.992 rows=48 loops=4)\n                Hash Cond: (c.parent_id = t.id)\n                ->  Seq Scan on categories c  (cost=23.07..39.72 rows=200 width=20) (actual time=0.593..0.702 rows=200 loops=4)\n                      Storage Table Read Requests: 1\n                      Storage Table Read Execution Time: 0.504 ms\n                      Storage Table Read Ops: 1\n                      Storage Table Rows Scanned: 200\n                ->  Hash  (cost=2.00..2.00 rows=100 width=524) (actual time=0.088..0.088 rows=50 loops=4)\n                      Buckets: 1024  Batches: 1  Memory Usage: 14kB\n                      ->  WorkTable Scan on tree t  (cost=0.00..2.00 rows=100 width=524) (actual time=0.002..0.016 rows=50 loops=4)\n  ->  CTE Scan on tree  (cost=0.00..38.20 rows=1910 width=524) (actual time=0.680..5.287 rows=200 loops=1)\nPlanning Time: 0.555 ms\nExecution Time: 6.353 ms\nStorage Read Requests: 5\nStorage Read Execution Time: 2.572 ms\nStorage Read Ops: 5\nStorage Rows Scanned: 1000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 2.572 ms\nPeak Memory Usage: 468 kB"
+      },
+      "q07_cte_cohort": {
+        "title": "Chained CTEs: cohort retention",
+        "tags": [
+          "cte",
+          "aggregate",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "WITH first_orders AS (SELECT customer_id, MIN(ordered_at) AS first_at FROM orders GROUP BY customer_id), cohorts AS (SELECT customer_id, DATE_TRUNC('month', first_at) AS cohort FROM first_orders), activity AS (SELECT o.customer_id, DATE_TRUNC('month', o.ordered_at) AS m FROM orders o GROUP BY o.customer_id, DATE_TRUNC('month', o.ordered_at)) SELECT c.cohort, COUNT(DISTINCT c.customer_id) AS cohort_size, COUNT(DISTINCT a.customer_id) AS active_later FROM cohorts c LEFT JOIN activity a ON a.customer_id = c.customer_id AND a.m > c.cohort GROUP BY c.cohort ORDER BY c.cohort",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 648.049,
+          "p50": 695.479,
+          "p90": 727.413,
+          "p95": 728.185,
+          "p99": 728.802,
+          "max": 728.957,
+          "mean": 692.957,
+          "stdev": 23.772,
+          "first_ms": 736.559
+        },
+        "rows": 22,
+        "checksum": "8560c89b626435e14906c6cd",
+        "error": null,
+        "error_code": null,
+        "plan": "GroupAggregate  (cost=1013035.35..1076784.37 rows=200 width=24)\n  Group Key: (date_trunc('month'::text, first_orders.first_at))\n  ->  Sort  (cost=1013035.35..1028971.98 rows=6374652 width=16)\n        Sort Key: (date_trunc('month'::text, first_orders.first_at))\n        ->  Hash Right Join  (cost=51780.20..74685.88 rows=6374652 width=16)\n              Hash Cond: (o.customer_id = first_orders.customer_id)\n              Join Filter: ((date_trunc('month'::text, o.ordered_at)) > date_trunc('month'::text, first_orders.first_at))\n              ->  HashAggregate  (cost=31734.69..36180.64 rows=199426 width=12)\n                    Group Key: o.customer_id, date_trunc('month'::text, o.ordered_at)\n                    Planned Partitions: 4\n                    ->  Seq Scan on orders o  (cost=23.10..18922.19 rows=200000 width=12)\n              ->  Hash  (cost=19805.77..19805.77 rows=19179 width=12)\n                    ->  Subquery Scan on first_orders  (cost=19422.19..19805.77 rows=19179 width=12)\n                          ->  HashAggregate  (cost=19422.19..19613.98 rows=19179 width=12)\n                                Group Key: orders.customer_id\n                                ->  Seq Scan on orders  (cost=23.10..18422.19 rows=200000 width=12)",
+        "plan_analyze": "GroupAggregate  (cost=1013035.35..1076784.37 rows=200 width=24) (actual time=748.606..810.190 rows=22 loops=1)\n  Group Key: (date_trunc('month'::text, first_orders.first_at))\n  ->  Sort  (cost=1013035.35..1028971.98 rows=6374652 width=16) (actual time=709.916..727.193 rows=143628 loops=1)\n        Sort Key: (date_trunc('month'::text, first_orders.first_at))\n        Sort Method: external merge  Disk: 3664kB\n        ->  Hash Right Join  (cost=51780.20..74685.88 rows=6374652 width=16) (actual time=507.439..650.982 rows=143628 loops=1)\n              Hash Cond: (o.customer_id = first_orders.customer_id)\n              Join Filter: ((date_trunc('month'::text, o.ordered_at)) > date_trunc('month'::text, first_orders.first_at))\n              Rows Removed by Join Filter: 20000\n              ->  HashAggregate  (cost=31734.69..36180.64 rows=199426 width=12) (actual time=241.474..285.527 rows=163618 loops=1)\n                    Group Key: o.customer_id, date_trunc('month'::text, o.ordered_at)\n                    Planned Partitions: 4  Batches: 5  Memory Usage: 8241kB  Disk Usage: 3456kB\n                    ->  Seq Scan on orders o  (cost=23.10..18922.19 rows=200000 width=12) (actual time=1.405..121.383 rows=200000 loops=1)\n                          Storage Table Read Requests: 196\n                          Storage Table Read Execution Time: 54.851 ms\n                          Storage Table Read Ops: 196\n                          Storage Table Rows Scanned: 200000\n              ->  Hash  (cost=19805.77..19805.77 rows=19179 width=12) (actual time=265.926..265.928 rows=20000 loops=1)\n                    Buckets: 32768  Batches: 1  Memory Usage: 1116kB\n                    ->  Subquery Scan on first_orders  (cost=19422.19..19805.77 rows=19179 width=12) (actual time=244.325..256.370 rows=20000 loops=1)\n                          ->  HashAggregate  (cost=19422.19..19613.98 rows=19179 width=12) (actual time=244.323..248.140 rows=20000 loops=1)\n                                Group Key: orders.customer_id\n                                Batches: 1  Memory Usage: 2577kB\n                                ->  Seq Scan on orders  (cost=23.10..18422.19 rows=200000 width=12) (actual time=1.457..142.031 rows=200000 loops=1)\n                                      Storage Table Read Requests: 196\n                                      Storage Table Read Execution Time: 97.297 ms\n                                      Storage Table Read Ops: 196\n                                      Storage Table Rows Scanned: 200000\nPlanning Time: 0.268 ms\nExecution Time: 813.648 ms\nStorage Read Requests: 392\nStorage Read Execution Time: 152.148 ms\nStorage Read Ops: 392\nStorage Rows Scanned: 400000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 152.148 ms\nPeak Memory Usage: 18343 kB"
+      },
+      "q08_exists_semijoin": {
+        "title": "EXISTS / NOT EXISTS semi- and anti-joins",
+        "tags": [
+          "subquery",
+          "semijoin"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id, c.email FROM customers c WHERE EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.ordered_at >= TIMESTAMP '2025-11-01 00:00:00') AND NOT EXISTS (SELECT 1 FROM events e WHERE e.customer_id = c.id AND e.event_type = 'churn') ORDER BY c.id LIMIT 200",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 507.098,
+          "p50": 762.872,
+          "p90": 859.686,
+          "p95": 866.325,
+          "p99": 871.636,
+          "max": 872.964,
+          "mean": 721.059,
+          "stdev": 140.957,
+          "first_ms": 660.611
+        },
+        "rows": 200,
+        "checksum": "3393099c5307bc3cee17321d",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=17348.09..23343.04 rows=200 width=25)\n  ->  YB Batched Nested Loop Anti Join  (cost=17348.09..277888.73 rows=8692 width=25)\n        Join Filter: (e.customer_id = c.id)\n        Sort Keys: c.id\n        ->  Merge Join  (cost=17295.89..17569.19 rows=16932 width=25)\n              Merge Cond: (c.id = o.customer_id)\n              ->  Sort  (cost=3678.84..3728.84 rows=20000 width=25)\n                    Sort Key: c.id\n                    ->  Seq Scan on customers c  (cost=23.09..2250.07 rows=20000 width=25)\n              ->  Sort  (cost=13617.04..13645.93 rows=11555 width=4)\n                    Sort Key: o.customer_id\n                    ->  HashAggregate  (cost=12721.75..12837.30 rows=11555 width=4)\n                          Group Key: o.customer_id\n                          ->  Seq Scan on orders o  (cost=23.10..12679.42 rows=16932 width=4)\n                                Storage Filter: (ordered_at >= '2025-11-01 00:00:00'::timestamp without time zone)\n        ->  Index Scan using ix_events_customer_id on events e  (cost=52.20..15737.14 rows=501 width=4)\n              Index Cond: (customer_id = ANY (ARRAY[c.id, $1, $2, ..., $1023]))\n              Storage Filter: ((event_type)::text = 'churn'::text)",
+        "plan_analyze": "Limit  (cost=17348.09..23343.04 rows=200 width=25) (actual time=480.375..480.461 rows=200 loops=1)\n  ->  YB Batched Nested Loop Anti Join  (cost=17348.09..277888.73 rows=8692 width=25) (actual time=480.373..480.392 rows=200 loops=1)\n        Join Filter: (e.customer_id = c.id)\n        Sort Keys: c.id\n        ->  Merge Join  (cost=17295.89..17569.19 rows=16932 width=25) (actual time=291.842..293.170 rows=411 loops=1)\n              Merge Cond: (c.id = o.customer_id)\n              ->  Sort  (cost=3678.84..3728.84 rows=20000 width=25) (actual time=26.557..26.768 rows=713 loops=1)\n                    Sort Key: c.id\n                    Sort Method: quicksort  Memory: 2167kB\n                    ->  Seq Scan on customers c  (cost=23.09..2250.07 rows=20000 width=25) (actual time=1.356..16.714 rows=20000 loops=1)\n                          Storage Table Read Requests: 20\n                          Storage Table Read Execution Time: 12.096 ms\n                          Storage Table Read Ops: 20\n                          Storage Table Rows Scanned: 20000\n              ->  Sort  (cost=13617.04..13645.93 rows=11555 width=4) (actual time=265.268..265.349 rows=411 loops=1)\n                    Sort Key: o.customer_id\n                    Sort Method: quicksort  Memory: 385kB\n                    ->  HashAggregate  (cost=12721.75..12837.30 rows=11555 width=4) (actual time=252.111..255.175 rows=11206 loops=1)\n                          Group Key: o.customer_id\n                          Batches: 1  Memory Usage: 1169kB\n                          ->  Seq Scan on orders o  (cost=23.10..12679.42 rows=16932 width=4) (actual time=15.108..235.977 rows=16603 loops=1)\n                                Storage Filter: (ordered_at >= '2025-11-01 00:00:00'::timestamp without time zone)\n                                Storage Table Read Requests: 17\n                                Storage Table Read Execution Time: 229.547 ms\n                                Storage Table Read Ops: 17\n                                Storage Table Rows Scanned: 200000\n        ->  Index Scan using ix_events_customer_id on events e  (cost=52.20..15737.14 rows=501 width=4) (actual time=16.233..186.068 rows=168 loops=1)\n              Index Cond: (customer_id = ANY (ARRAY[c.id, $1, $2, ..., $1023]))\n              Storage Filter: ((event_type)::text = 'churn'::text)\n              Storage Table Read Requests: 21\n              Storage Table Read Execution Time: 170.160 ms\n              Storage Table Read Ops: 21\n              Storage Table Rows Scanned: 20688\n              Storage Index Read Requests: 21\n              Storage Index Read Execution Time: 3.908 ms\n              Storage Index Read Ops: 21\n              Storage Index Rows Scanned: 20688\nPlanning Time: 1.154 ms\nExecution Time: 481.075 ms\nStorage Read Requests: 79\nStorage Read Execution Time: 415.712 ms\nStorage Read Ops: 79\nStorage Rows Scanned: 261376\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 415.712 ms\nPeak Memory Usage: 5931 kB"
+      },
+      "q09_correlated_scalar": {
+        "title": "Correlated scalar subquery per row",
+        "tags": [
+          "subquery",
+          "correlated"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 580.278,
+          "p50": 657.844,
+          "p90": 691.928,
+          "p95": 695.217,
+          "p99": 697.848,
+          "max": 698.506,
+          "mean": 656.0,
+          "stdev": 33.896,
+          "first_ms": 674.231
+        },
+        "rows": 500,
+        "checksum": "6bc68625c58e84ac582dbee2",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=768.71..29651.01 rows=500 width=42)\n  ->  Result  (cost=768.71..245228.46 rows=4232 width=42)\n        ->  Sort  (cost=768.71..779.29 rows=4232 width=14)\n              Sort Key: p.id\n              ->  Seq Scan on products p  (cost=23.08..557.84 rows=4232 width=14)\n                    Storage Filter: active\n        SubPlan 1\n          ->  Aggregate  (cost=57.74..57.75 rows=1 width=32)\n                ->  Index Scan using ix_products_category_id on products p2  (cost=52.16..57.68 rows=25 width=6)\n                      Index Cond: (category_id = p.category_id)",
+        "plan_analyze": "Limit  (cost=768.71..29651.01 rows=500 width=42) (actual time=15.566..660.101 rows=500 loops=1)\n  ->  Result  (cost=768.71..245228.46 rows=4232 width=42) (actual time=15.563..659.441 rows=500 loops=1)\n        ->  Sort  (cost=768.71..779.29 rows=4232 width=14) (actual time=14.207..14.613 rows=500 loops=1)\n              Sort Key: p.id\n              Sort Method: top-N heapsort  Memory: 65kB\n              ->  Seq Scan on products p  (cost=23.08..557.84 rows=4232 width=14) (actual time=2.000..9.080 rows=4232 loops=1)\n                    Storage Filter: active\n                    Storage Table Read Requests: 5\n                    Storage Table Read Execution Time: 1.902 ms\n                    Storage Table Read Ops: 5\n                    Storage Table Rows Scanned: 5000\n        SubPlan 1\n          ->  Aggregate  (cost=57.74..57.75 rows=1 width=32) (actual time=1.283..1.283 rows=1 loops=500)\n                ->  Index Scan using ix_products_category_id on products p2  (cost=52.16..57.68 rows=25 width=6) (actual time=1.155..1.215 rows=26 loops=500)\n                      Index Cond: (category_id = p.category_id)\n                      Storage Table Read Requests: 1\n                      Storage Table Read Execution Time: 0.341 ms\n                      Storage Table Read Ops: 1\n                      Storage Table Rows Scanned: 26\n                      Storage Index Read Requests: 1\n                      Storage Index Read Execution Time: 0.663 ms\n                      Storage Index Read Ops: 1\n                      Storage Index Rows Scanned: 26\nPlanning Time: 0.335 ms\nExecution Time: 660.833 ms\nStorage Read Requests: 1005\nStorage Read Execution Time: 503.650 ms\nStorage Read Ops: 1005\nStorage Rows Scanned: 31250\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 503.650 ms\nPeak Memory Usage: 248 kB"
+      },
+      "q10_lateral_topn": {
+        "title": "LATERAL / CROSS APPLY top-N per customer",
+        "tags": [
+          "lateral",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.id AS customer_id, o.id AS order_id, o.ordered_at, o.total_amount FROM customers c CROSS JOIN LATERAL (SELECT o2.id, o2.ordered_at, o2.total_amount FROM orders o2 WHERE o2.customer_id = c.id ORDER BY o2.ordered_at DESC, o2.id DESC LIMIT 3) o WHERE c.id <= 100 ORDER BY c.id, o.ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 104.523,
+          "p50": 150.021,
+          "p90": 155.788,
+          "p95": 156.971,
+          "p99": 157.918,
+          "max": 158.154,
+          "mean": 140.177,
+          "stdev": 17.6,
+          "first_ms": 140.792
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=6788.62..6789.37 rows=300 width=22)\n  Sort Key: c.id, o2.ordered_at DESC\n  ->  Nested Loop  (cost=77.86..6776.27 rows=300 width=22)\n        ->  Seq Scan on customers c  (cost=23.09..1292.45 rows=100 width=4)\n              Storage Filter: (id <= 100)\n        ->  Limit  (cost=54.77..54.78 rows=3 width=18)\n              ->  Sort  (cost=54.77..54.80 rows=10 width=18)\n                    Sort Key: o2.ordered_at DESC, o2.id DESC\n                    ->  Index Scan using ix_orders_customer_id on orders o2  (cost=52.19..54.64 rows=10 width=18)\n                          Index Cond: (customer_id = c.id)",
+        "plan_analyze": "Sort  (cost=6788.62..6789.37 rows=300 width=22) (actual time=165.938..165.979 rows=300 loops=1)\n  Sort Key: c.id, o2.ordered_at DESC\n  Sort Method: quicksort  Memory: 43kB\n  ->  Nested Loop  (cost=77.86..6776.27 rows=300 width=22) (actual time=25.440..165.300 rows=300 loops=1)\n        ->  Seq Scan on customers c  (cost=23.09..1292.45 rows=100 width=4) (actual time=23.966..24.144 rows=100 loops=1)\n              Storage Filter: (id <= 100)\n              Storage Table Read Requests: 1\n              Storage Table Read Execution Time: 23.832 ms\n              Storage Table Read Ops: 1\n              Storage Table Rows Scanned: 20000\n        ->  Limit  (cost=54.77..54.78 rows=3 width=18) (actual time=1.402..1.404 rows=3 loops=100)\n              ->  Sort  (cost=54.77..54.80 rows=10 width=18) (actual time=1.397..1.398 rows=3 loops=100)\n                    Sort Key: o2.ordered_at DESC, o2.id DESC\n                    Sort Method: top-N heapsort  Memory: 25kB\n                    ->  Index Scan using ix_orders_customer_id on orders o2  (cost=52.19..54.64 rows=10 width=18) (actual time=1.269..1.301 rows=10 loops=100)\n                          Index Cond: (customer_id = c.id)\n                          Storage Table Read Requests: 1\n                          Storage Table Read Execution Time: 0.365 ms\n                          Storage Table Read Ops: 1\n                          Storage Table Rows Scanned: 10\n                          Storage Index Read Requests: 1\n                          Storage Index Read Execution Time: 0.742 ms\n                          Storage Index Read Ops: 1\n                          Storage Index Rows Scanned: 10\nPlanning Time: 0.472 ms\nExecution Time: 166.432 ms\nStorage Read Requests: 201\nStorage Read Execution Time: 134.563 ms\nStorage Read Ops: 201\nStorage Rows Scanned: 21996\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 134.563 ms\nPeak Memory Usage: 292 kB"
+      },
+      "q10b_topn_window": {
+        "title": "Top-N per customer via ROW_NUMBER (portable alternative to LATERAL)",
+        "tags": [
+          "window",
+          "topn"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, id AS order_id, ordered_at, total_amount FROM (SELECT customer_id, id, ordered_at, total_amount, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY ordered_at DESC, id DESC) AS rn FROM orders WHERE customer_id <= 100) t WHERE rn <= 3 ORDER BY customer_id, ordered_at DESC",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 118.367,
+          "p50": 122.231,
+          "p90": 151.058,
+          "p95": 151.094,
+          "p99": 151.122,
+          "max": 151.129,
+          "mean": 127.611,
+          "stdev": 11.851,
+          "first_ms": 163.018
+        },
+        "rows": 300,
+        "checksum": "e58f7a78270c6cde95ad9ccd",
+        "error": null,
+        "error_code": null,
+        "plan": "Subquery Scan on t  (cost=12331.55..12363.73 rows=990 width=22)\n  ->  WindowAgg  (cost=12331.55..12353.83 rows=990 width=30)\n        Run Condition: (row_number() OVER (?) <= 3)\n        ->  Sort  (cost=12331.55..12334.03 rows=990 width=22)\n              Sort Key: orders.customer_id, orders.ordered_at DESC, orders.id DESC\n              ->  Seq Scan on orders  (cost=23.10..12282.29 rows=990 width=22)\n                    Storage Filter: (customer_id <= 100)",
+        "plan_analyze": "Subquery Scan on t  (cost=12331.55..12363.73 rows=990 width=22) (actual time=118.093..122.156 rows=300 loops=1)\n  ->  WindowAgg  (cost=12331.55..12353.83 rows=990 width=30) (actual time=118.090..121.869 rows=300 loops=1)\n        Run Condition: (row_number() OVER (?) <= 3)\n        ->  Sort  (cost=12331.55..12334.03 rows=990 width=22) (actual time=118.049..118.197 rows=998 loops=1)\n              Sort Key: orders.customer_id, orders.ordered_at DESC, orders.id DESC\n              Sort Method: quicksort  Memory: 87kB\n              ->  Seq Scan on orders  (cost=23.10..12282.29 rows=990 width=22) (actual time=115.084..116.682 rows=998 loops=1)\n                    Storage Filter: (customer_id <= 100)\n                    Storage Table Read Requests: 1\n                    Storage Table Read Execution Time: 114.914 ms\n                    Storage Table Read Ops: 1\n                    Storage Table Rows Scanned: 200000\nPlanning Time: 0.277 ms\nExecution Time: 122.572 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 114.914 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 114.914 ms\nPeak Memory Usage: 275 kB"
+      },
+      "q11_grouping_sets": {
+        "title": "GROUPING SETS / ROLLUP multi-level aggregate",
+        "tags": [
+          "grouping-sets",
+          "aggregate"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, status, COUNT(*) AS n, SUM(total_amount) AS amt FROM orders WHERE ordered_at >= TIMESTAMP '2025-06-01 00:00:00' AND ordered_at < TIMESTAMP '2025-09-01 00:00:00' GROUP BY GROUPING SETS ((shipping_country, status), (shipping_country), ()) ORDER BY shipping_country, status",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 263.097,
+          "p50": 290.992,
+          "p90": 301.171,
+          "p95": 301.453,
+          "p99": 301.678,
+          "max": 301.735,
+          "mean": 286.67,
+          "stdev": 13.625,
+          "first_ms": 261.978
+        },
+        "rows": 79,
+        "checksum": "36792a55606ee54971e90f0e",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=14826.62..14826.82 rows=79 width=52)\n  Sort Key: shipping_country, status\n  ->  MixedAggregate  (cost=23.10..14824.13 rows=79 width=52)\n        Hash Key: shipping_country, status\n        Hash Key: shipping_country\n        Group Key: ()\n        ->  Seq Scan on orders  (cost=23.10..14249.08 rows=25514 width=18)\n              Storage Filter: ((ordered_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-09-01 00:00:00'::timestamp without time zone))",
+        "plan_analyze": "Sort  (cost=14826.62..14826.82 rows=79 width=52) (actual time=256.348..256.359 rows=79 loops=1)\n  Sort Key: shipping_country, status\n  Sort Method: quicksort  Memory: 31kB\n  ->  MixedAggregate  (cost=23.10..14824.13 rows=79 width=52) (actual time=256.091..256.150 rows=79 loops=1)\n        Hash Key: shipping_country, status\n        Hash Key: shipping_country\n        Group Key: ()\n        Batches: 1  Memory Usage: 96kB\n        ->  Seq Scan on orders  (cost=23.10..14249.08 rows=25514 width=18) (actual time=12.496..212.267 rows=25268 loops=1)\n              Storage Filter: ((ordered_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-09-01 00:00:00'::timestamp without time zone))\n              Storage Table Read Requests: 25\n              Storage Table Read Execution Time: 167.961 ms\n              Storage Table Read Ops: 25\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.224 ms\nExecution Time: 256.666 ms\nStorage Read Requests: 25\nStorage Read Execution Time: 167.961 ms\nStorage Read Ops: 25\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 167.961 ms\nPeak Memory Usage: 228 kB"
+      },
+      "q12_json_filter": {
+        "title": "Filter on JSON attributes (text + numeric extraction)",
+        "tags": [
+          "json"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, sku, price FROM products WHERE (attrs->>'color') = 'red' AND ((attrs->>'weight')::numeric) > 10 ORDER BY id LIMIT 100",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 10.895,
+          "p50": 11.404,
+          "p90": 11.833,
+          "p95": 12.038,
+          "p99": 12.201,
+          "max": 12.242,
+          "mean": 11.498,
+          "stdev": 0.365,
+          "first_ms": 42.315
+        },
+        "rows": 100,
+        "checksum": "4a5c02e3b80bd4de4fef695a",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=409.19..409.21 rows=8 width=22)\n  ->  Sort  (cost=409.19..409.21 rows=8 width=22)\n        Sort Key: id\n        ->  Seq Scan on products  (cost=23.08..409.07 rows=8 width=22)\n              Storage Filter: ((attrs ->> 'color'::text) = 'red'::text)\n              Filter: (((attrs ->> 'weight'::text))::numeric > '10'::numeric)",
+        "plan_analyze": "Limit  (cost=409.19..409.21 rows=8 width=22) (actual time=10.619..10.708 rows=100 loops=1)\n  ->  Sort  (cost=409.19..409.21 rows=8 width=22) (actual time=10.616..10.630 rows=100 loops=1)\n        Sort Key: id\n        Sort Method: top-N heapsort  Memory: 38kB\n        ->  Seq Scan on products  (cost=23.08..409.07 rows=8 width=22) (actual time=8.308..10.030 rows=443 loops=1)\n              Storage Filter: ((attrs ->> 'color'::text) = 'red'::text)\n              Filter: (((attrs ->> 'weight'::text))::numeric > '10'::numeric)\n              Rows Removed by Filter: 242\n              Storage Table Read Requests: 1\n              Storage Table Read Execution Time: 8.114 ms\n              Storage Table Read Ops: 1\n              Storage Table Rows Scanned: 5000\nPlanning Time: 0.171 ms\nExecution Time: 10.991 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 8.114 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 5000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 8.114 ms\nPeak Memory Usage: 251 kB"
+      },
+      "q13_fulltext": {
+        "title": "Full-text search on product descriptions",
+        "tags": [
+          "fulltext"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, name FROM products WHERE to_tsvector('english', description) @@ plainto_tsquery('english', 'bluetooth waterproof') ORDER BY id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 77.011,
+          "p50": 78.773,
+          "p90": 80.4,
+          "p95": 80.661,
+          "p99": 80.87,
+          "max": 80.922,
+          "mean": 78.752,
+          "stdev": 1.21,
+          "first_ms": 159.962
+        },
+        "rows": 50,
+        "checksum": "13c3c7dd358069b0c82817de",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=29.74..29.87 rows=50 width=24)\n  ->  Sort  (cost=29.74..30.42 rows=271 width=24)\n        Sort Key: id\n        ->  Index Scan using ix_products_fts on products  (cost=8.00..20.74 rows=271 width=24)\n              Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)",
+        "plan_analyze": "Limit  (cost=29.74..29.87 rows=50 width=24) (actual time=89.043..89.062 rows=50 loops=1)\n  ->  Sort  (cost=29.74..30.42 rows=271 width=24) (actual time=89.041..89.045 rows=50 loops=1)\n        Sort Key: id\n        Sort Method: top-N heapsort  Memory: 31kB\n        ->  Index Scan using ix_products_fts on products  (cost=8.00..20.74 rows=271 width=24) (actual time=6.678..88.770 rows=308 loops=1)\n              Index Cond: (to_tsvector('english'::regconfig, description) @@ '''bluetooth'' & ''waterproof'''::tsquery)\n              Rows Removed by Index Recheck: 856\n              Storage Table Read Requests: 2\n              Storage Table Read Execution Time: 4.825 ms\n              Storage Table Read Ops: 2\n              Storage Table Rows Scanned: 1164\n              Storage Index Read Requests: 2\n              Storage Index Read Execution Time: 1.703 ms\n              Storage Index Read Ops: 2\n              Storage Index Rows Scanned: 1164\nPlanning Time: 0.118 ms\nExecution Time: 89.187 ms\nStorage Read Requests: 4\nStorage Read Execution Time: 6.528 ms\nStorage Read Ops: 4\nStorage Rows Scanned: 2328\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 6.528 ms\nPeak Memory Usage: 1250 kB"
+      },
+      "q14_upsert": {
+        "title": "UPSERT (INSERT ... ON CONFLICT / ON DUPLICATE KEY / MERGE)",
+        "tags": [
+          "upsert",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO inventory (product_id, warehouse_id, qty, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP) ON CONFLICT (product_id, warehouse_id) DO UPDATE SET qty = inventory.qty + EXCLUDED.qty, updated_at = CURRENT_TIMESTAMP",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 2.159,
+          "p50": 2.753,
+          "p90": 3.232,
+          "p95": 3.286,
+          "p99": 3.563,
+          "max": 3.668,
+          "mean": 2.765,
+          "stdev": 0.349,
+          "first_ms": 24.527
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q15_merge": {
+        "title": "SQL-standard MERGE with matched/not-matched branches",
+        "tags": [
+          "merge",
+          "write"
+        ],
+        "kind": "write",
+        "sql": "MERGE INTO inventory i USING (SELECT CAST(? AS INTEGER) AS product_id, CAST(? AS INTEGER) AS warehouse_id, CAST(? AS INTEGER) AS qty ) s ON (i.product_id = s.product_id AND i.warehouse_id = s.warehouse_id) WHEN MATCHED THEN UPDATE SET qty = i.qty + s.qty, updated_at = CURRENT_TIMESTAMP WHEN NOT MATCHED THEN INSERT (product_id, warehouse_id, qty, updated_at) VALUES (s.product_id, s.warehouse_id, s.qty, CURRENT_TIMESTAMP)",
+        "status": "unsupported",
+        "timing": {
+          "n": 0,
+          "first_ms": null
+        },
+        "rows": null,
+        "checksum": null,
+        "error": "FeatureNotSupported: This statement not supported yet HINT: Please report the issue on https://github.com/YugaByte/yugabyte-db/issues",
+        "error_code": null
+      },
+      "q16_offset_pagination": {
+        "title": "Deep OFFSET pagination (anti-pattern)",
+        "tags": [
+          "pagination",
+          "order"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 327.102,
+          "p50": 364.819,
+          "p90": 374.76,
+          "p95": 377.503,
+          "p99": 379.697,
+          "max": 380.246,
+          "mean": 359.163,
+          "stdev": 16.486,
+          "first_ms": 374.955
+        },
+        "rows": 50,
+        "checksum": "2575fcd308f21ea1f314e1e3",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=37121.78..37121.91 rows=50 width=16)\n  ->  Sort  (cost=36871.78..37371.78 rows=200000 width=16)\n        Sort Key: ordered_at, id\n        ->  Seq Scan on orders  (cost=23.10..19261.42 rows=200000 width=16)",
+        "plan_analyze": "Limit  (cost=37121.78..37121.91 rows=50 width=16) (actual time=366.077..366.109 rows=50 loops=1)\n  ->  Sort  (cost=36871.78..37371.78 rows=200000 width=16) (actual time=322.192..335.445 rows=100050 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: external merge  Disk: 5112kB\n        ->  Seq Scan on orders  (cost=23.10..19261.42 rows=200000 width=16) (actual time=1.535..149.767 rows=200000 loops=1)\n              Storage Table Read Requests: 196\n              Storage Table Read Execution Time: 87.501 ms\n              Storage Table Read Ops: 196\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.093 ms\nExecution Time: 367.298 ms\nStorage Read Requests: 196\nStorage Read Execution Time: 87.501 ms\nStorage Read Ops: 196\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 87.501 ms\nPeak Memory Usage: 5869 kB"
+      },
+      "q17_keyset_pagination": {
+        "title": "Keyset pagination (expanded predicate)",
+        "tags": [
+          "pagination",
+          "order",
+          "index"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 309.714,
+          "p50": 344.903,
+          "p90": 351.181,
+          "p95": 351.617,
+          "p99": 351.967,
+          "max": 352.054,
+          "mean": 337.945,
+          "stdev": 14.616,
+          "first_ms": 333.562
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=20312.69..20312.81 rows=50 width=16)\n  ->  Sort  (cost=20312.69..20562.39 rows=99880 width=16)\n        Sort Key: ordered_at, id\n        ->  Seq Scan on orders  (cost=23.10..16994.75 rows=99880 width=16)\n              Storage Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))",
+        "plan_analyze": "Limit  (cost=20312.69..20312.81 rows=50 width=16) (actual time=332.002..332.048 rows=50 loops=1)\n  ->  Sort  (cost=20312.69..20562.39 rows=99880 width=16) (actual time=331.999..332.007 rows=50 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: top-N heapsort  Memory: 29kB\n        ->  Seq Scan on orders  (cost=23.10..16994.75 rows=99880 width=16) (actual time=3.787..232.805 rows=99956 loops=1)\n              Storage Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))\n              Storage Table Read Requests: 98\n              Storage Table Read Execution Time: 177.982 ms\n              Storage Table Read Ops: 98\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.199 ms\nExecution Time: 332.310 ms\nStorage Read Requests: 98\nStorage Read Execution Time: 177.982 ms\nStorage Read Ops: 98\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 177.982 ms\nPeak Memory Usage: 92 kB"
+      },
+      "q17b_keyset_rowvalue": {
+        "title": "Keyset pagination with row-value comparison",
+        "tags": [
+          "pagination",
+          "row-value"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 236.006,
+          "p50": 269.796,
+          "p90": 278.771,
+          "p95": 279.202,
+          "p99": 279.548,
+          "max": 279.634,
+          "mean": 264.001,
+          "stdev": 15.333,
+          "first_ms": 285.456
+        },
+        "rows": 50,
+        "checksum": "253a068bcaa2b97d773f9408",
+        "error": null,
+        "error_code": null,
+        "plan": "Limit  (cost=23579.33..23579.46 rows=50 width=16)\n  ->  Sort  (cost=23579.33..23829.03 rows=99879 width=16)\n        Sort Key: ordered_at, id\n        ->  Seq Scan on orders  (cost=23.10..20261.42 rows=99879 width=16)\n              Filter: (ROW(ordered_at, id) > ROW('2025-01-01 00:00:00'::timestamp without time zone, 0))",
+        "plan_analyze": "Limit  (cost=23579.33..23579.46 rows=50 width=16) (actual time=274.626..274.669 rows=50 loops=1)\n  ->  Sort  (cost=23579.33..23829.03 rows=99879 width=16) (actual time=274.623..274.631 rows=50 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: top-N heapsort  Memory: 29kB\n        ->  Seq Scan on orders  (cost=23.10..20261.42 rows=99879 width=16) (actual time=1.595..186.615 rows=99956 loops=1)\n              Filter: (ROW(ordered_at, id) > ROW('2025-01-01 00:00:00'::timestamp without time zone, 0))\n              Rows Removed by Filter: 100044\n              Storage Table Read Requests: 196\n              Storage Table Read Execution Time: 93.897 ms\n              Storage Table Read Ops: 196\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.177 ms\nExecution Time: 274.902 ms\nStorage Read Requests: 196\nStorage Read Execution Time: 93.897 ms\nStorage Read Ops: 196\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 93.897 ms\nPeak Memory Usage: 92 kB"
+      },
+      "q18_count_distinct": {
+        "title": "COUNT(DISTINCT) over 1M-row table",
+        "tags": [
+          "aggregate",
+          "distinct",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(DISTINCT customer_id) AS uniq FROM events WHERE occurred_at >= TIMESTAMP '2025-01-01 00:00:00'",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1474.176,
+          "p50": 1515.402,
+          "p90": 1574.438,
+          "p95": 1616.841,
+          "p99": 1650.764,
+          "max": 1659.245,
+          "mean": 1527.693,
+          "stdev": 52.126,
+          "first_ms": 1260.07
+        },
+        "rows": 1,
+        "checksum": "90b6590b502938b6c5b68960",
+        "error": null,
+        "error_code": null,
+        "plan": "Aggregate  (cost=77001.56..77001.57 rows=1 width=8)\n  ->  Seq Scan on events  (cost=23.10..75768.62 rows=493173 width=4)\n        Storage Filter: (occurred_at >= '2025-01-01 00:00:00'::timestamp without time zone)",
+        "plan_analyze": "Aggregate  (cost=77001.56..77001.57 rows=1 width=8) (actual time=1528.920..1528.922 rows=1 loops=1)\n  ->  Seq Scan on events  (cost=23.10..75768.62 rows=493173 width=4) (actual time=2.277..1060.762 rows=499245 loops=1)\n        Storage Filter: (occurred_at >= '2025-01-01 00:00:00'::timestamp without time zone)\n        Storage Table Read Requests: 488\n        Storage Table Read Execution Time: 869.422 ms\n        Storage Table Read Ops: 488\n        Storage Table Rows Scanned: 1000000\nPlanning Time: 0.059 ms\nExecution Time: 1529.042 ms\nStorage Read Requests: 488\nStorage Read Execution Time: 869.422 ms\nStorage Read Ops: 488\nStorage Rows Scanned: 1000000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 869.422 ms\nPeak Memory Usage: 4760 kB"
+      },
+      "q19_anti_join": {
+        "title": "Anti-join via LEFT JOIN ... IS NULL",
+        "tags": [
+          "antijoin",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 710.275,
+          "p50": 887.634,
+          "p90": 911.124,
+          "p95": 916.819,
+          "p99": 921.376,
+          "max": 922.515,
+          "mean": 867.009,
+          "stdev": 59.048,
+          "first_ms": 857.201
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=50338.56..50338.57 rows=1 width=4)\n  Sort Key: p.id\n  ->  Hash Right Join  (cost=575.63..50338.55 rows=1 width=4)\n        Hash Cond: (oi.product_id = p.id)\n        Filter: (oi.id IS NULL)\n        ->  Seq Scan on order_items oi  (cost=23.10..43081.44 rows=487606 width=8)\n        ->  Hash  (cost=490.03..490.03 rows=5000 width=4)\n              ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4)",
+        "plan_analyze": "Sort  (cost=50338.56..50338.57 rows=1 width=4) (actual time=814.157..814.161 rows=0 loops=1)\n  Sort Key: p.id\n  Sort Method: quicksort  Memory: 25kB\n  ->  Hash Right Join  (cost=575.63..50338.55 rows=1 width=4) (actual time=814.098..814.101 rows=0 loops=1)\n        Hash Cond: (oi.product_id = p.id)\n        Filter: (oi.id IS NULL)\n        Rows Removed by Filter: 487606\n        ->  Seq Scan on order_items oi  (cost=23.10..43081.44 rows=487606 width=8) (actual time=1.353..419.756 rows=487606 loops=1)\n              Storage Table Read Requests: 477\n              Storage Table Read Execution Time: 237.890 ms\n              Storage Table Read Ops: 477\n              Storage Table Rows Scanned: 487606\n        ->  Hash  (cost=490.03..490.03 rows=5000 width=4) (actual time=6.973..6.975 rows=5000 loops=1)\n              Buckets: 8192  Batches: 1  Memory Usage: 240kB\n              ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4) (actual time=1.142..3.003 rows=5000 loops=1)\n                    Storage Table Read Requests: 5\n                    Storage Table Read Execution Time: 1.057 ms\n                    Storage Table Read Ops: 5\n                    Storage Table Rows Scanned: 5000\nPlanning Time: 0.407 ms\nExecution Time: 814.424 ms\nStorage Read Requests: 482\nStorage Read Execution Time: 238.947 ms\nStorage Read Ops: 482\nStorage Rows Scanned: 492606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 238.947 ms\nPeak Memory Usage: 543 kB"
+      },
+      "q19b_not_exists": {
+        "title": "Anti-join via NOT EXISTS",
+        "tags": [
+          "antijoin",
+          "subquery"
+        ],
+        "kind": "read",
+        "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 1958.882,
+          "p50": 2090.482,
+          "p90": 2147.35,
+          "p95": 2160.789,
+          "p99": 2171.539,
+          "max": 2174.227,
+          "mean": 2083.858,
+          "stdev": 58.329,
+          "first_ms": 2163.814
+        },
+        "rows": 0,
+        "checksum": "b8e1dda3ac0aa3820ad2990b",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=44825.29..44825.29 rows=1 width=4)\n  Sort Key: p.id\n  ->  YB Batched Nested Loop Anti Join  (cost=49.18..44825.28 rows=1 width=4)\n        Join Filter: (oi.product_id = p.id)\n        ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4)\n        ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=26.10..7831.33 rows=99882 width=4)\n              Index Cond: (product_id = ANY (ARRAY[p.id, $1, $2, ..., $1023]))",
+        "plan_analyze": "Sort  (cost=44825.29..44825.29 rows=1 width=4) (actual time=2002.977..2002.979 rows=0 loops=1)\n  Sort Key: p.id\n  Sort Method: quicksort  Memory: 25kB\n  ->  YB Batched Nested Loop Anti Join  (cost=49.18..44825.28 rows=1 width=4) (actual time=2002.917..2002.918 rows=0 loops=1)\n        Join Filter: (oi.product_id = p.id)\n        ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4) (actual time=1.262..3.298 rows=5000 loops=1)\n              Storage Table Read Requests: 5\n              Storage Table Read Execution Time: 1.236 ms\n              Storage Table Read Ops: 5\n              Storage Table Rows Scanned: 5000\n        ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=26.10..7831.33 rows=99882 width=4) (actual time=5.038..277.934 rows=97521 loops=5)\n              Index Cond: (product_id = ANY (ARRAY[p.id, $1, $2, ..., $1023]))\n              Heap Fetches: 0\n              Storage Index Read Requests: 96\n              Storage Index Read Execution Time: 177.629 ms\n              Storage Index Read Ops: 96\n              Storage Index Rows Scanned: 97521\nPlanning Time: 2.896 ms\nExecution Time: 2003.901 ms\nStorage Read Requests: 483\nStorage Read Execution Time: 889.382 ms\nStorage Read Ops: 483\nStorage Rows Scanned: 492606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 889.382 ms\nPeak Memory Usage: 1626 kB"
+      },
+      "q20_gaps_islands": {
+        "title": "Sessionisation (gaps-and-islands with LAG)",
+        "tags": [
+          "window",
+          "date"
+        ],
+        "kind": "read",
+        "sql": "SELECT customer_id, COUNT(*) AS sessions FROM (SELECT customer_id, occurred_at, prev_at, CASE WHEN prev_at IS NULL OR EXTRACT(EPOCH FROM (occurred_at - prev_at)) > 1800 THEN 1 ELSE 0 END AS new_session FROM (SELECT customer_id, occurred_at, LAG(occurred_at) OVER (PARTITION BY customer_id ORDER BY occurred_at, id) AS prev_at FROM events WHERE customer_id <= 2000) w) s WHERE new_session = 1 GROUP BY customer_id ORDER BY customer_id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 866.246,
+          "p50": 888.13,
+          "p90": 909.69,
+          "p95": 917.843,
+          "p99": 924.366,
+          "max": 925.996,
+          "mean": 889.789,
+          "stdev": 16.665,
+          "first_ms": 936.602
+        },
+        "rows": 2000,
+        "checksum": "b67aebfccd1364168b7121f3",
+        "error": null,
+        "error_code": null,
+        "plan": "GroupAggregate  (cost=77576.49..81857.82 rows=498 width=12)\n  Group Key: w.customer_id\n  ->  Subquery Scan on w  (cost=77576.49..81850.33 rows=503 width=4)\n        Filter: (CASE WHEN ((w.prev_at IS NULL) OR (EXTRACT(epoch FROM (w.occurred_at - w.prev_at)) > '1800'::numeric)) THEN 1 ELSE 0 END = 1)\n        ->  WindowAgg  (cost=77576.49..79839.11 rows=100561 width=28)\n              ->  Sort  (cost=77576.49..77827.89 rows=100561 width=20)\n                    Sort Key: events.customer_id, events.occurred_at, events.id\n                    ->  Seq Scan on events  (cost=23.10..67156.02 rows=100561 width=20)\n                          Storage Filter: (customer_id <= 2000)",
+        "plan_analyze": "GroupAggregate  (cost=77576.49..81857.82 rows=498 width=12) (actual time=843.254..1060.808 rows=2000 loops=1)\n  Group Key: w.customer_id\n  ->  Subquery Scan on w  (cost=77576.49..81850.33 rows=503 width=4) (actual time=842.984..1027.301 rows=99765 loops=1)\n        Filter: (CASE WHEN ((w.prev_at IS NULL) OR (EXTRACT(epoch FROM (w.occurred_at - w.prev_at)) > '1800'::numeric)) THEN 1 ELSE 0 END = 1)\n        Rows Removed by Filter: 139\n        ->  WindowAgg  (cost=77576.49..79839.11 rows=100561 width=28) (actual time=842.980..968.189 rows=99904 loops=1)\n              ->  Sort  (cost=77576.49..77827.89 rows=100561 width=20) (actual time=842.936..860.553 rows=99904 loops=1)\n                    Sort Key: events.customer_id, events.occurred_at, events.id\n                    Sort Method: external merge  Disk: 3344kB\n                    ->  Seq Scan on events  (cost=23.10..67156.02 rows=100561 width=20) (actual time=6.816..684.594 rows=99904 loops=1)\n                          Storage Filter: (customer_id <= 2000)\n                          Storage Table Read Requests: 98\n                          Storage Table Read Execution Time: 639.984 ms\n                          Storage Table Read Ops: 98\n                          Storage Table Rows Scanned: 1000000\nPlanning Time: 0.364 ms\nExecution Time: 1062.235 ms\nStorage Read Requests: 98\nStorage Read Execution Time: 639.984 ms\nStorage Read Ops: 98\nStorage Rows Scanned: 1000000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 639.984 ms\nPeak Memory Usage: 5541 kB"
+      },
+      "q21_percentile": {
+        "title": "Median (PERCENTILE_CONT) per country",
+        "tags": [
+          "aggregate",
+          "percentile"
+        ],
+        "kind": "read",
+        "sql": "SELECT shipping_country, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY total_amount) AS median FROM orders GROUP BY shipping_country ORDER BY shipping_country",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 379.232,
+          "p50": 396.049,
+          "p90": 406.015,
+          "p95": 407.764,
+          "p99": 409.163,
+          "max": 409.512,
+          "mean": 395.907,
+          "stdev": 7.774,
+          "first_ms": 415.256
+        },
+        "rows": 13,
+        "checksum": "aed577b8503f2718cc990366",
+        "error": null,
+        "error_code": null,
+        "plan": "GroupAggregate  (cost=41633.34..43633.50 rows=13 width=11)\n  Group Key: shipping_country\n  ->  Sort  (cost=41633.34..42133.34 rows=200000 width=9)\n        Sort Key: shipping_country\n        ->  Seq Scan on orders  (cost=23.10..20604.20 rows=200000 width=9)",
+        "plan_analyze": "GroupAggregate  (cost=41633.34..43633.50 rows=13 width=11) (actual time=278.226..452.719 rows=13 loops=1)\n  Group Key: shipping_country\n  ->  Sort  (cost=41633.34..42133.34 rows=200000 width=9) (actual time=274.786..303.599 rows=200000 loops=1)\n        Sort Key: shipping_country\n        Sort Method: external merge  Disk: 3920kB\n        ->  Seq Scan on orders  (cost=23.10..20604.20 rows=200000 width=9) (actual time=1.566..179.593 rows=200000 loops=1)\n              Storage Table Read Requests: 196\n              Storage Table Read Execution Time: 36.686 ms\n              Storage Table Read Ops: 196\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.062 ms\nExecution Time: 453.549 ms\nStorage Read Requests: 196\nStorage Read Execution Time: 36.686 ms\nStorage Read Ops: 196\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 36.686 ms\nPeak Memory Usage: 5749 kB"
+      },
+      "q22_string_agg": {
+        "title": "String aggregation (STRING_AGG / GROUP_CONCAT / LISTAGG)",
+        "tags": [
+          "aggregate",
+          "string"
+        ],
+        "kind": "read",
+        "sql": "SELECT o.id, STRING_AGG(p.sku, ',' ORDER BY p.sku) AS skus FROM orders o JOIN order_items oi ON oi.order_id = o.id JOIN products p ON p.id = oi.product_id WHERE o.id <= 500 GROUP BY o.id ORDER BY o.id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 136.489,
+          "p50": 145.526,
+          "p90": 152.027,
+          "p95": 152.799,
+          "p99": 153.417,
+          "max": 153.571,
+          "mean": 146.338,
+          "stdev": 4.744,
+          "first_ms": 207.388
+        },
+        "rows": 500,
+        "checksum": "0855739e106ec553308a2be1",
+        "error": null,
+        "error_code": null,
+        "plan": "GroupAggregate  (cost=13103.97..13118.16 rows=461 width=36)\n  Group Key: o.id\n  ->  Sort  (cost=13103.97..13106.78 rows=1124 width=16)\n        Sort Key: o.id\n        ->  YB Batched Nested Loop Join  (cost=98.37..13047.02 rows=1124 width=16)\n              Join Filter: (oi.product_id = p.id)\n              ->  YB Batched Nested Loop Join  (cost=75.29..12766.50 rows=1124 width=8)\n                    Join Filter: (o.id = oi.order_id)\n                    ->  Seq Scan on orders o  (cost=23.10..12255.98 rows=461 width=4)\n                          Storage Filter: (id <= 500)\n                    ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=52.20..502.61 rows=1405 width=8)\n                          Index Cond: (order_id = ANY (ARRAY[o.id, $1, $2, ..., $1023]))\n              ->  Index Scan using products_pkey on products p  (cost=23.08..242.76 rows=1024 width=16)\n                    Index Cond: (id = ANY (ARRAY[oi.product_id, $1025, $1026, ..., $2047]))",
+        "plan_analyze": "GroupAggregate  (cost=13103.97..13118.16 rows=461 width=36) (actual time=146.296..176.737 rows=500 loops=1)\n  Group Key: o.id\n  ->  Sort  (cost=13103.97..13106.78 rows=1124 width=16) (actual time=146.195..146.447 rows=1209 loops=1)\n        Sort Key: o.id\n        Sort Method: quicksort  Memory: 115kB\n        ->  YB Batched Nested Loop Join  (cost=98.37..13047.02 rows=1124 width=16) (actual time=137.662..144.803 rows=1209 loops=1)\n              Join Filter: (oi.product_id = p.id)\n              ->  YB Batched Nested Loop Join  (cost=75.29..12766.50 rows=1124 width=8) (actual time=129.542..134.089 rows=1209 loops=1)\n                    Join Filter: (o.id = oi.order_id)\n                    ->  Seq Scan on orders o  (cost=23.10..12255.98 rows=461 width=4) (actual time=113.051..113.271 rows=500 loops=1)\n                          Storage Filter: (id <= 500)\n                          Storage Table Read Requests: 1\n                          Storage Table Read Execution Time: 112.928 ms\n                          Storage Table Read Ops: 1\n                          Storage Table Rows Scanned: 200000\n                    ->  Index Scan using ix_order_items_order_id on order_items oi  (cost=52.20..502.61 rows=1405 width=8) (actual time=15.421..18.277 rows=1209 loops=1)\n                          Index Cond: (order_id = ANY (ARRAY[o.id, $1, $2, ..., $1023]))\n                          Storage Table Read Requests: 2\n                          Storage Table Read Execution Time: 9.686 ms\n                          Storage Table Read Ops: 2\n                          Storage Table Rows Scanned: 1209\n                          Storage Index Read Requests: 2\n                          Storage Index Read Execution Time: 5.320 ms\n                          Storage Index Read Ops: 2\n                          Storage Index Rows Scanned: 1209\n              ->  Index Scan using products_pkey on products p  (cost=23.08..242.76 rows=1024 width=16) (actual time=2.956..3.517 rows=551 loops=2)\n                    Index Cond: (id = ANY (ARRAY[oi.product_id, $1025, $1026, ..., $2047]))\n                    Storage Table Read Requests: 1\n                    Storage Table Read Execution Time: 1.957 ms\n                    Storage Table Read Ops: 1\n                    Storage Table Rows Scanned: 551\nPlanning Time: 5.185 ms\nExecution Time: 178.724 ms\nStorage Read Requests: 7\nStorage Read Execution Time: 131.848 ms\nStorage Read Ops: 7\nStorage Rows Scanned: 203520\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 131.848 ms\nPeak Memory Usage: 3335 kB"
+      },
+      "q23_case_pivot": {
+        "title": "Conditional aggregation pivot",
+        "tags": [
+          "aggregate",
+          "pivot",
+          "join"
+        ],
+        "kind": "read",
+        "sql": "SELECT c.country_code, SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END) AS delivered, SUM(CASE WHEN o.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled, SUM(CASE WHEN o.status = 'returned' THEN 1 ELSE 0 END) AS returned, AVG(o.total_amount) AS avg_amount FROM orders o JOIN customers c ON c.id = o.customer_id GROUP BY c.country_code ORDER BY c.country_code",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 276.62,
+          "p50": 282.927,
+          "p90": 290.184,
+          "p95": 291.486,
+          "p99": 292.527,
+          "max": 292.788,
+          "mean": 283.705,
+          "stdev": 5.119,
+          "first_ms": 318.229
+        },
+        "rows": 13,
+        "checksum": "aead62a734254ac91c59d5af",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=31398.85..31398.89 rows=13 width=59)\n  Sort Key: c.country_code\n  ->  HashAggregate  (cost=31398.45..31398.61 rows=13 width=59)\n        Group Key: c.country_code\n        ->  Hash Join  (cost=2221.04..27398.45 rows=200000 width=18)\n              Hash Cond: (o.customer_id = c.id)\n              ->  Seq Scan on orders o  (cost=23.10..22450.51 rows=200000 width=19)\n              ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7)\n                    ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7)",
+        "plan_analyze": "Sort  (cost=31398.85..31398.89 rows=13 width=59) (actual time=393.075..393.078 rows=13 loops=1)\n  Sort Key: c.country_code\n  Sort Method: quicksort  Memory: 26kB\n  ->  HashAggregate  (cost=31398.45..31398.61 rows=13 width=59) (actual time=393.029..393.038 rows=13 loops=1)\n        Group Key: c.country_code\n        Batches: 1  Memory Usage: 24kB\n        ->  Hash Join  (cost=2221.04..27398.45 rows=200000 width=18) (actual time=20.387..277.826 rows=200000 loops=1)\n              Hash Cond: (o.customer_id = c.id)\n              ->  Seq Scan on orders o  (cost=23.10..22450.51 rows=200000 width=19) (actual time=1.413..159.888 rows=200000 loops=1)\n                    Storage Table Read Requests: 196\n                    Storage Table Read Execution Time: 2.941 ms\n                    Storage Table Read Ops: 196\n                    Storage Table Rows Scanned: 200000\n              ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7) (actual time=18.939..18.941 rows=20000 loops=1)\n                    Buckets: 32768  Batches: 1  Memory Usage: 1038kB\n                    ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7) (actual time=1.066..10.472 rows=20000 loops=1)\n                          Storage Table Read Requests: 20\n                          Storage Table Read Execution Time: 5.641 ms\n                          Storage Table Read Ops: 20\n                          Storage Table Rows Scanned: 20000\nPlanning Time: 0.274 ms\nExecution Time: 393.238 ms\nStorage Read Requests: 216\nStorage Read Execution Time: 8.582 ms\nStorage Read Ops: 216\nStorage Rows Scanned: 220000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 8.582 ms\nPeak Memory Usage: 1534 kB"
+      },
+      "q24_or_predicate": {
+        "title": "OR across two indexed columns",
+        "tags": [
+          "filter",
+          "or"
+        ],
+        "kind": "read",
+        "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 20,
+          "min": 1.078,
+          "p50": 1.475,
+          "p90": 1.988,
+          "p95": 2.166,
+          "p99": 2.222,
+          "max": 2.236,
+          "mean": 1.544,
+          "stdev": 0.379,
+          "first_ms": 3.917
+        },
+        "rows": 9,
+        "checksum": "2824519d2259b93ed09b9c7a",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=78.08..78.11 rows=11 width=4)\n  Sort Key: id\n  ->  YB Bitmap Table Scan on orders  (cost=76.26..77.89 rows=11 width=4)\n        ->  BitmapOr  (cost=50.16..50.16 rows=11 width=0)\n              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..26.95 rows=10 width=0)\n                    Index Cond: (customer_id = '14824'::smallint)\n              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..23.21 rows=1 width=0)\n                    Index Cond: (id = 146741)",
+        "plan_analyze": "Sort  (cost=78.08..78.11 rows=11 width=4) (actual time=0.902..0.904 rows=13 loops=1)\n  Sort Key: id\n  Sort Method: quicksort  Memory: 25kB\n  ->  YB Bitmap Table Scan on orders  (cost=76.26..77.89 rows=11 width=4) (actual time=0.860..0.865 rows=13 loops=1)\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 0.212 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 13\n        ->  BitmapOr  (cost=50.16..50.16 rows=11 width=0) (actual time=0.613..0.613 rows=13 loops=1)\n              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..26.95 rows=10 width=0) (actual time=0.403..0.403 rows=12 loops=1)\n                    Index Cond: (customer_id = '14824'::smallint)\n                    Storage Index Read Requests: 1\n                    Storage Index Read Execution Time: 0.334 ms\n                    Storage Index Read Ops: 1\n                    Storage Index Rows Scanned: 12\n              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..23.21 rows=1 width=0) (actual time=0.206..0.206 rows=1 loops=1)\n                    Index Cond: (id = 146741)\n                    Storage Table Read Requests: 1\n                    Storage Table Read Execution Time: 0.150 ms\n                    Storage Table Read Ops: 1\n                    Storage Table Rows Scanned: 1\nPlanning Time: 0.166 ms\nExecution Time: 1.043 ms\nStorage Read Requests: 3\nStorage Read Execution Time: 0.696 ms\nStorage Read Ops: 3\nStorage Rows Scanned: 26\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 0.696 ms\nPeak Memory Usage: 186 kB"
+      },
+      "q25_in_list": {
+        "title": "IN list with 500 literals",
+        "tags": [
+          "filter",
+          "in-list"
+        ],
+        "kind": "read",
+        "sql": "SELECT id, total_amount FROM orders WHERE id IN (47, 281, 457, 869, 942, 950, 1298, 3027, 3073, 3269, 3737, 4023, 4216, 4413, 4589, 4762, 4833, 4939, 5265, 5718, 5897, 6511, 7606, 8169, 8453, 9031, 9687, 10378, 10923, 10974, 11327, 11479, 11859, 12255, 12654, 12840, 12970, 13207, 13312, 13532, 14258, 14524, 15081, 15902, 16269, 16854, 17034, 17315, 17465, 18380, 18540, 18983, 19173, 19517, 19560, 19706, 20028, 20045, 20117, 20309, 21123, 21953, 21992, 22037, 22147, 22148, 22307, 22507, 23218, 23452, 23529, 23673, 23781, 23817, 23880, 24103, 24275, 26089, 26663, 27468, 27504, 27862, 28693, 29538, 29583, 31065, 31390, 31469, 31696, 31898, 32998, 33358, 33374, 33876, 33963, 34032, 34762, 34890, 34981, 36326, 36519, 36595, 36627, 36886, 37157, 37714, 37946, 38647, 39038, 39156, 39181, 40699, 41297, 41699, 42323, 42378, 42795, 43866, 44765, 45796, 46636, 47487, 47593, 47962, 48063, 48589, 49665, 49768, 50439, 51313, 51981, 52069, 52233, 52686, 52893, 52991, 53330, 53797, 53968, 54493, 55008, 55052, 55237, 56409, 56614, 57068, 57113, 57679, 58303, 59915, 60180, 60278, 60487, 60656, 61030, 61548, 62505, 62565, 62686, 63495, 63986, 64081, 64110, 64404, 65059, 65131, 65359, 65654, 66112, 66379, 66569, 67003, 67042, 67727, 67793, 68202, 68303, 68632, 68655, 69008, 69152, 69251, 69325, 69615, 69617, 69660, 70218, 70427, 70458, 70497, 70527, 70842, 70896, 70916, 71047, 71283, 72131, 72750, 73120, 73155, 73288, 73568, 73859, 73908, 74496, 74854, 74875, 75028, 75319, 75914, 75978, 76012, 76247, 76824, 77452, 78060, 78551, 78863, 79155, 79756, 79802, 79956, 80684, 81147, 81704, 81787, 81794, 82734, 82858, 83700, 84813, 85079, 85495, 85734, 86227, 86855, 86973, 87251, 87906, 88658, 88677, 88907, 89642, 89838, 90090, 90168, 90965, 91109, 93477, 94255, 94410, 94558, 95458, 95732, 96550, 97576, 97872, 98594, 98729, 98794, 99846, 100042, 100286, 100359, 100811, 101410, 102110, 102279, 102635, 102997, 103046, 103280, 103306, 103382, 104402, 104730, 104794, 104869, 106090, 106279, 106417, 106486, 107712, 108209, 108498, 108755, 109100, 109514, 110692, 111464, 111495, 112047, 112132, 112212, 112524, 112917, 113204, 113293, 114358, 116835, 116871, 116880, 117193, 117821, 117955, 118165, 118191, 118329, 118748, 118955, 119787, 120317, 120443, 120676, 121809, 122133, 122249, 123781, 123980, 124065, 124220, 124425, 124456, 125570, 126464, 126664, 127291, 127350, 127439, 128266, 128350, 128405, 128896, 129486, 129550, 129660, 129762, 130306, 130519, 130586, 131096, 131231, 131797, 131851, 131963, 132218, 132314, 132525, 132555, 132630, 132808, 132825, 133365, 133946, 134287, 134475, 134804, 134948, 135407, 135643, 137300, 137381, 137408, 137886, 138128, 138376, 138724, 138734, 139221, 139315, 140300, 140667, 143107, 143413, 143599, 143938, 143977, 144208, 144281, 144455, 144983, 145268, 145720, 146099, 146415, 148836, 149024, 149322, 149579, 150545, 152430, 153109, 153508, 153827, 153925, 154450, 156385, 156967, 157210, 158169, 159431, 161197, 161737, 162191, 162831, 162976, 163559, 163958, 164162, 164452, 164566, 164803, 165053, 165065, 165386, 165589, 165883, 166315, 166452, 166718, 167018, 168497, 168530, 168613, 168617, 168950, 169291, 170376, 170422, 170796, 171133, 171966, 171972, 172101, 172372, 172575, 172832, 173534, 174386, 175342, 175779, 176162, 176202, 177133, 177203, 178433, 178675, 179017, 179227, 179955, 180029, 180288, 180409, 181453, 181584, 181637, 181752, 183611, 183777, 184376, 185264, 185827, 185995, 186001, 186434, 186915, 187436, 187694, 188632, 188922, 189834, 190627, 191063, 191191, 191982, 192173, 192375, 193145, 193658, 193733, 193942, 193963, 194220, 194830, 195489, 195518, 195950, 196154, 196519, 196750, 196801, 197162, 197308, 197360, 198091, 198123, 198297, 199033, 199098, 199664) ORDER BY id",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 4.419,
+          "p50": 5.313,
+          "p90": 6.018,
+          "p95": 6.093,
+          "p99": 6.153,
+          "max": 6.169,
+          "mean": 5.313,
+          "stdev": 0.528,
+          "first_ms": 8.906
+        },
+        "rows": 500,
+        "checksum": "6d4faaf6d2fe77e33d59f27d",
+        "error": null,
+        "error_code": null,
+        "plan": "Sort  (cost=151.35..152.60 rows=500 width=10)\n  Sort Key: id\n  ->  Index Scan using orders_pkey on orders  (cost=23.10..128.93 rows=500 width=10)\n        Index Cond: (id = ANY ('{47,281,457,869,942,950,1298,3027,3073,3269,3737,4023,4216,4413,4589,4762,4833,4939,5265,5718,5897,6511,7606,8169,8453,9031,9687,10378,10923,10974,11327,11479,11859,12255,12654,12840,12970,13207,13312,13532,14258,14524,15081,15902,16269,16854,17034,17315,17465,18380,18540,18983,19173,19517,19560,19706,20028,20045,20117,20309,21123,21953,21992,22037,22147,22148,22307,22507,23218,23452,23529,23673,23781,23817,23880,24103,24275,26089,26663,27468,27504,27862,28693,29538,29583,31065,31390,31469,31696,31898,32998,33358,33374,33876,33963,34032,34762,34890,34981,36326,36519,36595,36627,36886,37157,37714,37946,38647,39038,39156,39181,40699,41297,41699,42323,42378,42795,43866,44765,45796,46636,47487,47593,47962,48063,48589,49665,49768,50439,51313,51981,52069,52233,52686,52893,52991,53330,53797,53968,54493,55008,55052,55237,56409,56614,57068,57113,57679,58303,59915,60180,60278,60487,60656,61030,61548,62505,62565,62686,63495,63986,64081,64110,64404,65059,65131,65359,65654,66112,66379,66569,67003,67042,67727,67793,68202,68303,68632,68655,69008,69152,69251,69325,69615,69617,69660,70218,70427,70458,70497,70527,70842,70896,70916,71047,71283,72131,72750,73120,73155,73288,73568,73859,73908,74496,74854,74875,75028,75319,75914,75978,76012,76247,76824,77452,78060,78551,78863,79155,79756,79802,79956,80684,81147,81704,81787,81794,82734,82858,83700,84813,85079,85495,85734,86227,86855,86973,87251,87906,88658,88677,88907,89642,89838,90090,90168,90965,91109,93477,94255,94410,94558,95458,95732,96550,97576,97872,98594,98729,98794,99846,100042,100286,100359,100811,101410,102110,102279,102635,102997,103046,103280,103306,103382,104402,104730,104794,104869,106090,106279,106417,106486,107712,108209,108498,108755,109100,109514,110692,111464,111495,112047,112132,112212,112524,112917,113204,113293,114358,116835,116871,116880,117193,117821,117955,118165,118191,118329,118748,118955,119787,120317,120443,120676,121809,122133,122249,123781,123980,124065,124220,124425,124456,125570,126464,126664,127291,127350,127439,128266,128350,128405,128896,129486,129550,129660,129762,130306,130519,130586,131096,131231,131797,131851,131963,132218,132314,132525,132555,132630,132808,132825,133365,133946,134287,134475,134804,134948,135407,135643,137300,137381,137408,137886,138128,138376,138724,138734,139221,139315,140300,140667,143107,143413,143599,143938,143977,144208,144281,144455,144983,145268,145720,146099,146415,148836,149024,149322,149579,150545,152430,153109,153508,153827,153925,154450,156385,156967,157210,158169,159431,161197,161737,162191,162831,162976,163559,163958,164162,164452,164566,164803,165053,165065,165386,165589,165883,166315,166452,166718,167018,168497,168530,168613,168617,168950,169291,170376,170422,170796,171133,171966,171972,172101,172372,172575,172832,173534,174386,175342,175779,176162,176202,177133,177203,178433,178675,179017,179227,179955,180029,180288,180409,181453,181584,181637,181752,183611,183777,184376,185264,185827,185995,186001,186434,186915,187436,187694,188632,188922,189834,190627,191063,191191,191982,192173,192375,193145,193658,193733,193942,193963,194220,194830,195489,195518,195950,196154,196519,196750,196801,197162,197308,197360,198091,198123,198297,199033,199098,199664}'::integer[]))",
+        "plan_analyze": "Sort  (cost=151.35..152.60 rows=500 width=10) (actual time=5.220..5.276 rows=500 loops=1)\n  Sort Key: id\n  Sort Method: quicksort  Memory: 52kB\n  ->  Index Scan using orders_pkey on orders  (cost=23.10..128.93 rows=500 width=10) (actual time=3.674..4.635 rows=500 loops=1)\n        Index Cond: (id = ANY ('{47,281,457,869,942,950,1298,3027,3073,3269,3737,4023,4216,4413,4589,4762,4833,4939,5265,5718,5897,6511,7606,8169,8453,9031,9687,10378,10923,10974,11327,11479,11859,12255,12654,12840,12970,13207,13312,13532,14258,14524,15081,15902,16269,16854,17034,17315,17465,18380,18540,18983,19173,19517,19560,19706,20028,20045,20117,20309,21123,21953,21992,22037,22147,22148,22307,22507,23218,23452,23529,23673,23781,23817,23880,24103,24275,26089,26663,27468,27504,27862,28693,29538,29583,31065,31390,31469,31696,31898,32998,33358,33374,33876,33963,34032,34762,34890,34981,36326,36519,36595,36627,36886,37157,37714,37946,38647,39038,39156,39181,40699,41297,41699,42323,42378,42795,43866,44765,45796,46636,47487,47593,47962,48063,48589,49665,49768,50439,51313,51981,52069,52233,52686,52893,52991,53330,53797,53968,54493,55008,55052,55237,56409,56614,57068,57113,57679,58303,59915,60180,60278,60487,60656,61030,61548,62505,62565,62686,63495,63986,64081,64110,64404,65059,65131,65359,65654,66112,66379,66569,67003,67042,67727,67793,68202,68303,68632,68655,69008,69152,69251,69325,69615,69617,69660,70218,70427,70458,70497,70527,70842,70896,70916,71047,71283,72131,72750,73120,73155,73288,73568,73859,73908,74496,74854,74875,75028,75319,75914,75978,76012,76247,76824,77452,78060,78551,78863,79155,79756,79802,79956,80684,81147,81704,81787,81794,82734,82858,83700,84813,85079,85495,85734,86227,86855,86973,87251,87906,88658,88677,88907,89642,89838,90090,90168,90965,91109,93477,94255,94410,94558,95458,95732,96550,97576,97872,98594,98729,98794,99846,100042,100286,100359,100811,101410,102110,102279,102635,102997,103046,103280,103306,103382,104402,104730,104794,104869,106090,106279,106417,106486,107712,108209,108498,108755,109100,109514,110692,111464,111495,112047,112132,112212,112524,112917,113204,113293,114358,116835,116871,116880,117193,117821,117955,118165,118191,118329,118748,118955,119787,120317,120443,120676,121809,122133,122249,123781,123980,124065,124220,124425,124456,125570,126464,126664,127291,127350,127439,128266,128350,128405,128896,129486,129550,129660,129762,130306,130519,130586,131096,131231,131797,131851,131963,132218,132314,132525,132555,132630,132808,132825,133365,133946,134287,134475,134804,134948,135407,135643,137300,137381,137408,137886,138128,138376,138724,138734,139221,139315,140300,140667,143107,143413,143599,143938,143977,144208,144281,144455,144983,145268,145720,146099,146415,148836,149024,149322,149579,150545,152430,153109,153508,153827,153925,154450,156385,156967,157210,158169,159431,161197,161737,162191,162831,162976,163559,163958,164162,164452,164566,164803,165053,165065,165386,165589,165883,166315,166452,166718,167018,168497,168530,168613,168617,168950,169291,170376,170422,170796,171133,171966,171972,172101,172372,172575,172832,173534,174386,175342,175779,176162,176202,177133,177203,178433,178675,179017,179227,179955,180029,180288,180409,181453,181584,181637,181752,183611,183777,184376,185264,185827,185995,186001,186434,186915,187436,187694,188632,188922,189834,190627,191063,191191,191982,192173,192375,193145,193658,193733,193942,193963,194220,194830,195489,195518,195950,196154,196519,196750,196801,197162,197308,197360,198091,198123,198297,199033,199098,199664}'::integer[]))\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 3.015 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 500\nPlanning Time: 2.166 ms\nExecution Time: 5.686 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 3.015 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 500\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 3.015 ms\nPeak Memory Usage: 519 kB"
+      },
+      "q26_nonsargable": {
+        "title": "Non-sargable predicate: YEAR()/MONTH() on column",
+        "tags": [
+          "filter",
+          "sargability",
+          "scan"
+        ],
+        "kind": "read",
+        "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+        "status": "ok",
+        "timing": {
+          "n": 10,
+          "min": 182.319,
+          "p50": 188.589,
+          "p90": 202.737,
+          "p95": 207.956,
+          "p99": 212.131,
+          "max": 213.174,
+          "mean": 191.672,
+          "stdev": 8.905,
+          "first_ms": 229.903
+        },
+        "rows": 1,
+        "checksum": "148f0dbfd98a13a8ca0d2d2d",
+        "error": null,
+        "error_code": null,
+        "plan": "Finalize Aggregate  (cost=13754.10..13754.11 rows=1 width=8)\n  ->  Seq Scan on orders  (cost=23.10..13754.08 rows=5 width=0)\n        Storage Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))\n        Partial Aggregate: true",
+        "plan_analyze": "Finalize Aggregate  (cost=13754.10..13754.11 rows=1 width=8) (actual time=186.070..186.071 rows=1 loops=1)\n  ->  Seq Scan on orders  (cost=23.10..13754.08 rows=5 width=0) (actual time=186.051..186.058 rows=1 loops=1)\n        Storage Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 185.892 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 200000\n        Partial Aggregate: true\nPlanning Time: 0.145 ms\nExecution Time: 186.262 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 185.892 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 185.892 ms\nPeak Memory Usage: 64 kB"
+      },
+      "q27_update_single": {
+        "title": "Single-row UPDATE (autocommit)",
+        "tags": [
+          "write",
+          "update"
+        ],
+        "kind": "write",
+        "sql": "UPDATE customers SET tier = ? WHERE id = ?",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.409,
+          "p50": 1.718,
+          "p90": 1.817,
+          "p95": 1.915,
+          "p99": 2.007,
+          "max": 2.025,
+          "mean": 1.694,
+          "stdev": 0.14,
+          "first_ms": 11.21
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q28_insert_single": {
+        "title": "Single-row INSERT (autocommit)",
+        "tags": [
+          "write",
+          "insert"
+        ],
+        "kind": "write",
+        "sql": "INSERT INTO events (id, customer_id, event_type, occurred_at, payload, value_num) VALUES (?, ?, 'bench', CURRENT_TIMESTAMP, NULL, ?)",
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 1.412,
+          "p50": 1.54,
+          "p90": 1.698,
+          "p95": 1.765,
+          "p99": 1.818,
+          "max": 1.839,
+          "mean": 1.567,
+          "stdev": 0.11,
+          "first_ms": 8.745
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "q29_txn_order": {
+        "title": "Multi-statement transaction: order + 2 items + inventory update",
+        "tags": [
+          "write",
+          "transaction"
+        ],
+        "kind": "txn",
+        "sql": [
+          "INSERT INTO orders (id, customer_id, status, ordered_at, total_amount, shipping_country) VALUES (?, ?, 'pending', CURRENT_TIMESTAMP, ?, 'US')",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "INSERT INTO order_items (id, order_id, product_id, qty, unit_price) VALUES (?, ?, ?, 1, ?)",
+          "UPDATE inventory SET qty = qty - 1, updated_at = CURRENT_TIMESTAMP WHERE product_id = ? AND warehouse_id = 1"
+        ],
+        "status": "ok",
+        "timing": {
+          "n": 30,
+          "min": 5.382,
+          "p50": 6.067,
+          "p90": 7.447,
+          "p95": 7.773,
+          "p99": 8.035,
+          "max": 8.064,
+          "mean": 6.286,
+          "stdev": 0.757,
+          "first_ms": 20.712
+        },
+        "rows": null,
+        "checksum": null,
+        "error": null,
+        "error_code": null
+      },
+      "_seconds": 166.9
+    },
+    "optimize": {
+      "opt01_composite_index": {
+        "title": "Range+equality filter on 1M-row table: no index vs composite index (both column orders)",
+        "what": "composite index column ordering: equality predicates first, then the range column",
+        "variants": [
+          {
+            "name": "no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 716.95,
+            "p95_ms": 728.524,
+            "rows": 1,
+            "plan_analyze": "Aggregate  (cost=68165.67..68165.68 rows=1 width=40) (actual time=721.713..721.714 rows=1 loops=1)\n  ->  Seq Scan on events  (cost=23.10..68149.99 rows=3136 width=6) (actual time=227.668..719.676 rows=3145 loops=1)\n        Storage Filter: ((occurred_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (occurred_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((event_type)::text = 'checkout'::text))\n        Storage Table Read Requests: 4\n        Storage Table Read Execution Time: 714.938 ms\n        Storage Table Read Ops: 4\n        Storage Table Rows Scanned: 1020000\nPlanning Time: 0.265 ms\nExecution Time: 721.953 ms\nStorage Read Requests: 4\nStorage Read Execution Time: 714.938 ms\nStorage Read Ops: 4\nStorage Rows Scanned: 1020000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 714.938 ms\nPeak Memory Usage: 64 kB"
+          },
+          {
+            "name": "index_(occurred_at,event_type)",
+            "note": "range column first",
+            "setup": [
+              "CREATE INDEX ix_ev_ts_type ON events (occurred_at, event_type)",
+              "ANALYZE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 726.757,
+            "p95_ms": 733.559,
+            "rows": 1,
+            "plan_analyze": "Aggregate  (cost=69527.27..69527.28 rows=1 width=40) (actual time=729.160..729.161 rows=1 loops=1)\n  ->  Seq Scan on events  (cost=23.10..69511.13 rows=3227 width=6) (actual time=221.204..726.073 rows=3145 loops=1)\n        Storage Filter: ((occurred_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (occurred_at < '2025-07-01 00:00:00'::timestamp without time zone) AND ((event_type)::text = 'checkout'::text))\n        Storage Table Read Requests: 4\n        Storage Table Read Execution Time: 719.016 ms\n        Storage Table Read Ops: 4\n        Storage Table Rows Scanned: 1020000\nPlanning Time: 0.160 ms\nExecution Time: 729.286 ms\nStorage Read Requests: 4\nStorage Read Execution Time: 719.016 ms\nStorage Read Ops: 4\nStorage Rows Scanned: 1020000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 719.016 ms\nPeak Memory Usage: 64 kB"
+          },
+          {
+            "name": "index_(event_type,occurred_at)",
+            "note": "equality column first (recommended)",
+            "setup": [
+              "CREATE INDEX ix_ev_type_ts ON events (event_type, occurred_at)",
+              "ANALYZE events"
+            ],
+            "sql": "SELECT COUNT(*) AS n, SUM(value_num) AS total FROM events WHERE event_type = 'checkout' AND occurred_at >= TIMESTAMP '2025-06-01 00:00:00' AND occurred_at < TIMESTAMP '2025-07-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 51.453,
+            "p95_ms": 54.155,
+            "rows": 1,
+            "plan_analyze": "Aggregate  (cost=1179.68..1179.69 rows=1 width=40) (actual time=50.590..50.591 rows=1 loops=1)\n  ->  Index Scan using ix_ev_type_ts on events  (cost=52.20..1163.49 rows=3237 width=6) (actual time=14.739..47.908 rows=3145 loops=1)\n        Index Cond: (((event_type)::text = 'checkout'::text) AND (occurred_at >= '2025-06-01 00:00:00'::timestamp without time zone) AND (occurred_at < '2025-07-01 00:00:00'::timestamp without time zone))\n        Storage Table Read Requests: 4\n        Storage Table Read Execution Time: 35.766 ms\n        Storage Table Read Ops: 4\n        Storage Table Rows Scanned: 3145\n        Storage Index Read Requests: 4\n        Storage Index Read Execution Time: 2.475 ms\n        Storage Index Read Ops: 4\n        Storage Index Rows Scanned: 3145\nPlanning Time: 0.277 ms\nExecution Time: 50.808 ms\nStorage Read Requests: 8\nStorage Read Execution Time: 38.241 ms\nStorage Read Ops: 8\nStorage Rows Scanned: 6290\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 38.241 ms\nPeak Memory Usage: 65 kB"
+          }
+        ],
+        "best_variant": "index_(event_type,occurred_at)",
+        "speedup_vs_first": 13.93
+      },
+      "opt02_covering_index": {
+        "title": "Range fetch on order_items: plain index vs covering/INCLUDE index (index-only scan)",
+        "what": "covering index lets the engine answer from the index without heap/table lookups",
+        "variants": [
+          {
+            "name": "plain_index_order_id",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 311.832,
+            "p95_ms": 333.863,
+            "rows": 2430,
+            "plan_analyze": "Sort  (cost=31093.68..31099.68 rows=2400 width=12) (actual time=302.703..303.030 rows=2460 loops=1)\n  Sort Key: order_id, product_id\n  Sort Method: quicksort  Memory: 231kB\n  ->  Seq Scan on order_items  (cost=23.10..30958.93 rows=2400 width=12) (actual time=125.824..299.763 rows=2460 loops=1)\n        Storage Filter: ((order_id >= 163290) AND (order_id < 164290))\n        Storage Table Read Requests: 3\n        Storage Table Read Execution Time: 298.395 ms\n        Storage Table Read Ops: 3\n        Storage Table Rows Scanned: 487606\nPlanning Time: 0.150 ms\nExecution Time: 304.440 ms\nStorage Read Requests: 3\nStorage Read Execution Time: 298.395 ms\nStorage Read Ops: 3\nStorage Rows Scanned: 487606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 298.395 ms\nPeak Memory Usage: 455 kB"
+          },
+          {
+            "name": "covering_include",
+            "note": "INCLUDE columns (PG/MSSQL); falls back to composite index elsewhere",
+            "setup": [
+              "CREATE INDEX ix_oi_cover ON order_items (order_id) INCLUDE (product_id, qty)",
+              "ANALYZE order_items"
+            ],
+            "sql": "SELECT order_id, product_id, qty FROM order_items WHERE order_id >= ? AND order_id < ? ORDER BY order_id, product_id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 309.044,
+            "p95_ms": 335.622,
+            "rows": 2430,
+            "plan_analyze": "Sort  (cost=24630.19..24636.67 rows=2592 width=12) (actual time=302.228..302.565 rows=2460 loops=1)\n  Sort Key: order_id, product_id\n  Sort Method: quicksort  Memory: 231kB\n  ->  Index Only Scan using ix_oi_cover on order_items  (cost=26.10..24483.23 rows=2592 width=12) (actual time=121.606..299.828 rows=2460 loops=1)\n        Storage Filter: ((order_id >= 163290) AND (order_id < 164290))\n        Heap Fetches: 0\n        Storage Index Read Requests: 3\n        Storage Index Read Execution Time: 297.826 ms\n        Storage Index Read Ops: 3\n        Storage Index Rows Scanned: 487606\nPlanning Time: 0.265 ms\nExecution Time: 304.051 ms\nStorage Read Requests: 3\nStorage Read Execution Time: 297.826 ms\nStorage Read Ops: 3\nStorage Rows Scanned: 487606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 297.826 ms\nPeak Memory Usage: 455 kB"
+          }
+        ],
+        "best_variant": "covering_include",
+        "speedup_vs_first": 1.01
+      },
+      "opt03_sargable_predicate": {
+        "title": "YEAR()/MONTH() on column vs range predicate, then with index on ordered_at",
+        "what": "predicates must be written so the index can be used (no functions on the indexed column)",
+        "variants": [
+          {
+            "name": "nonsargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 199.66,
+            "p95_ms": 220.227,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=13754.10..13754.11 rows=1 width=8) (actual time=189.768..189.769 rows=1 loops=1)\n  ->  Seq Scan on orders  (cost=23.10..13754.08 rows=5 width=0) (actual time=189.750..189.757 rows=1 loops=1)\n        Storage Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 189.585 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 200000\n        Partial Aggregate: true\nPlanning Time: 0.166 ms\nExecution Time: 189.992 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 189.585 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 189.585 ms\nPeak Memory Usage: 64 kB"
+          },
+          {
+            "name": "sargable_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 118.882,
+            "p95_ms": 139.691,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=13015.89..13015.90 rows=1 width=8) (actual time=119.450..119.451 rows=1 loops=1)\n  ->  Seq Scan on orders  (cost=23.10..12994.83 rows=8424 width=0) (actual time=119.433..119.439 rows=1 loops=1)\n        Storage Filter: ((ordered_at >= '2025-05-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-06-01 00:00:00'::timestamp without time zone))\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 119.281 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 200000\n        Partial Aggregate: true\nPlanning Time: 0.151 ms\nExecution Time: 119.648 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 119.281 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 119.281 ms\nPeak Memory Usage: 64 kB"
+          },
+          {
+            "name": "sargable_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE ordered_at >= TIMESTAMP '2025-05-01 00:00:00' AND ordered_at < TIMESTAMP '2025-06-01 00:00:00'",
+            "ok": true,
+            "error": null,
+            "p50_ms": 108.564,
+            "p95_ms": 112.033,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=10294.31..10294.32 rows=1 width=8) (actual time=110.650..110.652 rows=1 loops=1)\n  ->  Index Only Scan using ix_orders_ordered_at on orders  (cost=26.10..10273.55 rows=8301 width=0) (actual time=110.624..110.634 rows=1 loops=1)\n        Storage Filter: ((ordered_at >= '2025-05-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-06-01 00:00:00'::timestamp without time zone))\n        Heap Fetches: 0\n        Storage Index Read Requests: 1\n        Storage Index Read Execution Time: 110.472 ms\n        Storage Index Read Ops: 1\n        Storage Index Rows Scanned: 200000\n        Partial Aggregate: true\nPlanning Time: 0.271 ms\nExecution Time: 110.867 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 110.472 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 110.472 ms\nPeak Memory Usage: 65 kB"
+          },
+          {
+            "name": "nonsargable_with_index",
+            "note": "function on column cannot use the index",
+            "setup": [
+              "CREATE INDEX ix_orders_ordered_at ON orders (ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT COUNT(*) FROM orders WHERE EXTRACT(YEAR FROM ordered_at) = 2025 AND EXTRACT(MONTH FROM ordered_at) = 5",
+            "ok": true,
+            "error": null,
+            "p50_ms": 190.869,
+            "p95_ms": 196.121,
+            "rows": 1,
+            "plan_analyze": "Finalize Aggregate  (cost=10026.15..10026.16 rows=1 width=8) (actual time=188.245..188.246 rows=1 loops=1)\n  ->  Index Only Scan using ix_orders_ordered_at on orders  (cost=26.10..10026.13 rows=5 width=0) (actual time=188.226..188.233 rows=1 loops=1)\n        Storage Filter: ((EXTRACT(year FROM ordered_at) = '2025'::numeric) AND (EXTRACT(month FROM ordered_at) = '5'::numeric))\n        Heap Fetches: 0\n        Storage Index Read Requests: 1\n        Storage Index Read Execution Time: 188.069 ms\n        Storage Index Read Ops: 1\n        Storage Index Rows Scanned: 200000\n        Partial Aggregate: true\nPlanning Time: 0.270 ms\nExecution Time: 188.477 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 188.069 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 188.069 ms\nPeak Memory Usage: 65 kB"
+          }
+        ],
+        "best_variant": "sargable_with_index",
+        "speedup_vs_first": 1.84
+      },
+      "opt04_pagination": {
+        "title": "OFFSET vs keyset pagination, with and without index on (ordered_at, id)",
+        "what": "keyset pagination cost is independent of page depth; OFFSET still scans and discards rows",
+        "variants": [
+          {
+            "name": "offset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 354.519,
+            "p95_ms": 382.178,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=37121.78..37121.91 rows=50 width=16) (actual time=368.933..368.955 rows=50 loops=1)\n  ->  Sort  (cost=36871.78..37371.78 rows=200000 width=16) (actual time=326.007..338.925 rows=100050 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: external merge  Disk: 5112kB\n        ->  Seq Scan on orders  (cost=23.10..19261.42 rows=200000 width=16) (actual time=1.480..154.742 rows=200000 loops=1)\n              Storage Table Read Requests: 196\n              Storage Table Read Execution Time: 93.481 ms\n              Storage Table Read Ops: 196\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.099 ms\nExecution Time: 370.154 ms\nStorage Read Requests: 196\nStorage Read Execution Time: 93.481 ms\nStorage Read Ops: 196\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 93.481 ms\nPeak Memory Usage: 5869 kB"
+          },
+          {
+            "name": "keyset_no_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 351.509,
+            "p95_ms": 363.96,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=20296.47..20296.59 rows=50 width=16) (actual time=316.064..316.113 rows=50 loops=1)\n  ->  Sort  (cost=20296.47..20545.34 rows=99550 width=16) (actual time=316.061..316.070 rows=50 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: top-N heapsort  Memory: 29kB\n        ->  Seq Scan on orders  (cost=23.10..16989.49 rows=99550 width=16) (actual time=3.863..230.191 rows=99956 loops=1)\n              Storage Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))\n              Storage Table Read Requests: 98\n              Storage Table Read Execution Time: 182.529 ms\n              Storage Table Read Ops: 98\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.254 ms\nExecution Time: 316.342 ms\nStorage Read Requests: 98\nStorage Read Execution Time: 182.529 ms\nStorage Read Ops: 98\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 182.529 ms\nPeak Memory Usage: 92 kB"
+          },
+          {
+            "name": "offset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders ORDER BY ordered_at, id LIMIT 50 OFFSET 100000",
+            "ok": true,
+            "error": null,
+            "p50_ms": 365.566,
+            "p95_ms": 379.898,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=37121.78..37121.91 rows=50 width=16) (actual time=349.243..349.265 rows=50 loops=1)\n  ->  Sort  (cost=36871.78..37371.78 rows=200000 width=16) (actual time=307.905..320.286 rows=100050 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: external merge  Disk: 5112kB\n        ->  Seq Scan on orders  (cost=23.10..19261.42 rows=200000 width=16) (actual time=1.180..143.104 rows=200000 loops=1)\n              Storage Table Read Requests: 196\n              Storage Table Read Execution Time: 81.769 ms\n              Storage Table Read Ops: 196\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.100 ms\nExecution Time: 350.518 ms\nStorage Read Requests: 196\nStorage Read Execution Time: 81.769 ms\nStorage Read Ops: 196\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 81.769 ms\nPeak Memory Usage: 5869 kB"
+          },
+          {
+            "name": "keyset_with_index",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at > TIMESTAMP '2025-01-01 00:00:00' OR (ordered_at = TIMESTAMP '2025-01-01 00:00:00' AND id > 0)) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 333.428,
+            "p95_ms": 347.99,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=20304.14..20304.26 rows=50 width=16) (actual time=311.969..312.018 rows=50 loops=1)\n  ->  Sort  (cost=20304.14..20553.40 rows=99706 width=16) (actual time=311.966..311.975 rows=50 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: top-N heapsort  Memory: 29kB\n        ->  Seq Scan on orders  (cost=23.10..16991.97 rows=99706 width=16) (actual time=2.407..225.935 rows=99956 loops=1)\n              Storage Filter: ((ordered_at > '2025-01-01 00:00:00'::timestamp without time zone) OR ((ordered_at = '2025-01-01 00:00:00'::timestamp without time zone) AND (id > 0)))\n              Storage Table Read Requests: 98\n              Storage Table Read Execution Time: 177.740 ms\n              Storage Table Read Ops: 98\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.212 ms\nExecution Time: 312.217 ms\nStorage Read Requests: 98\nStorage Read Execution Time: 177.740 ms\nStorage Read Ops: 98\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 177.740 ms\nPeak Memory Usage: 92 kB"
+          },
+          {
+            "name": "keyset_rowvalue_with_index",
+            "note": "row-value comparison (SQL standard) - lets the optimizer seek directly into the composite index",
+            "setup": [
+              "CREATE INDEX ix_orders_ts_id ON orders (ordered_at, id)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id, ordered_at FROM orders WHERE (ordered_at, id) > (TIMESTAMP '2025-01-01 00:00:00', 0) ORDER BY ordered_at, id LIMIT 50",
+            "ok": true,
+            "error": null,
+            "p50_ms": 262.372,
+            "p95_ms": 279.717,
+            "rows": 50,
+            "plan_analyze": "Limit  (cost=23595.38..23595.50 rows=50 width=16) (actual time=271.847..271.890 rows=50 loops=1)\n  ->  Sort  (cost=23595.38..23846.28 rows=100362 width=16) (actual time=271.844..271.851 rows=50 loops=1)\n        Sort Key: ordered_at, id\n        Sort Method: top-N heapsort  Memory: 29kB\n        ->  Seq Scan on orders  (cost=23.10..20261.42 rows=100362 width=16) (actual time=1.657..184.776 rows=99956 loops=1)\n              Filter: (ROW(ordered_at, id) > ROW('2025-01-01 00:00:00'::timestamp without time zone, 0))\n              Rows Removed by Filter: 100044\n              Storage Table Read Requests: 196\n              Storage Table Read Execution Time: 92.634 ms\n              Storage Table Read Ops: 196\n              Storage Table Rows Scanned: 200000\nPlanning Time: 0.193 ms\nExecution Time: 272.148 ms\nStorage Read Requests: 196\nStorage Read Execution Time: 92.634 ms\nStorage Read Ops: 196\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 92.634 ms\nPeak Memory Usage: 100 kB"
+          }
+        ],
+        "best_variant": "keyset_rowvalue_with_index",
+        "speedup_vs_first": 1.35
+      },
+      "opt05_correlated_vs_join": {
+        "title": "Correlated scalar subquery vs derived-table JOIN",
+        "what": "optimizers differ in de-correlating subqueries; an explicit aggregate join is portable and predictable",
+        "variants": [
+          {
+            "name": "correlated_subquery",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, (SELECT AVG(p2.price) FROM products p2 WHERE p2.category_id = p.category_id) AS cat_avg FROM products p WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 632.469,
+            "p95_ms": 687.247,
+            "rows": 500,
+            "plan_analyze": "Limit  (cost=768.71..29651.01 rows=500 width=42) (actual time=16.966..611.471 rows=500 loops=1)\n  ->  Result  (cost=768.71..245228.46 rows=4232 width=42) (actual time=16.963..610.827 rows=500 loops=1)\n        ->  Sort  (cost=768.71..779.29 rows=4232 width=14) (actual time=15.616..16.021 rows=500 loops=1)\n              Sort Key: p.id\n              Sort Method: top-N heapsort  Memory: 65kB\n              ->  Seq Scan on products p  (cost=23.08..557.84 rows=4232 width=14) (actual time=2.009..10.072 rows=4232 loops=1)\n                    Storage Filter: active\n                    Storage Table Read Requests: 5\n                    Storage Table Read Execution Time: 1.921 ms\n                    Storage Table Read Ops: 5\n                    Storage Table Rows Scanned: 5000\n        SubPlan 1\n          ->  Aggregate  (cost=57.74..57.75 rows=1 width=32) (actual time=1.183..1.183 rows=1 loops=500)\n                ->  Index Scan using ix_products_category_id on products p2  (cost=52.16..57.68 rows=25 width=6) (actual time=1.063..1.120 rows=26 loops=500)\n                      Index Cond: (category_id = p.category_id)\n                      Storage Table Read Requests: 1\n                      Storage Table Read Execution Time: 0.309 ms\n                      Storage Table Read Ops: 1\n                      Storage Table Rows Scanned: 26\n                      Storage Index Read Requests: 1\n                      Storage Index Read Execution Time: 0.614 ms\n                      Storage Index Read Ops: 1\n                      Storage Index Rows Scanned: 26\nPlanning Time: 0.413 ms\nExecution Time: 612.223 ms\nStorage Read Requests: 1005\nStorage Read Execution Time: 463.154 ms\nStorage Read Ops: 1005\nStorage Rows Scanned: 31250\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 463.154 ms\nPeak Memory Usage: 248 kB"
+          },
+          {
+            "name": "join_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id, p.price, a.cat_avg FROM products p JOIN (SELECT category_id, AVG(price) AS cat_avg FROM products GROUP BY category_id) a ON a.category_id = p.category_id WHERE p.active = TRUE ORDER BY p.id LIMIT 500",
+            "ok": true,
+            "error": null,
+            "p50_ms": 21.945,
+            "p95_ms": 25.843,
+            "rows": 500,
+            "plan_analyze": "Limit  (cost=1456.40..1457.65 rows=500 width=42) (actual time=23.598..23.864 rows=500 loops=1)\n  ->  Sort  (cost=1456.40..1466.98 rows=4232 width=42) (actual time=23.595..23.642 rows=500 loops=1)\n        Sort Key: p.id\n        Sort Method: top-N heapsort  Memory: 91kB\n        ->  Hash Join  (cost=1188.71..1245.53 rows=4232 width=42) (actual time=19.596..20.837 rows=4232 loops=1)\n              Hash Cond: (products.category_id = p.category_id)\n              ->  HashAggregate  (cost=577.97..580.47 rows=200 width=36) (actual time=10.333..10.551 rows=200 loops=1)\n                    Group Key: products.category_id\n                    Batches: 1  Memory Usage: 160kB\n                    ->  Seq Scan on products  (cost=23.08..552.97 rows=5000 width=10) (actual time=1.312..6.638 rows=5000 loops=1)\n                          Storage Table Read Requests: 5\n                          Storage Table Read Execution Time: 1.249 ms\n                          Storage Table Read Ops: 5\n                          Storage Table Rows Scanned: 5000\n              ->  Hash  (cost=557.84..557.84 rows=4232 width=14) (actual time=9.233..9.234 rows=4232 loops=1)\n                    Buckets: 8192  Batches: 1  Memory Usage: 263kB\n                    ->  Seq Scan on products p  (cost=23.08..557.84 rows=4232 width=14) (actual time=1.944..6.668 rows=4232 loops=1)\n                          Storage Filter: active\n                          Storage Table Read Requests: 5\n                          Storage Table Read Execution Time: 1.857 ms\n                          Storage Table Read Ops: 5\n                          Storage Table Rows Scanned: 5000\nPlanning Time: 0.483 ms\nExecution Time: 24.265 ms\nStorage Read Requests: 10\nStorage Read Execution Time: 3.105 ms\nStorage Read Ops: 10\nStorage Rows Scanned: 10000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 3.105 ms\nPeak Memory Usage: 793 kB"
+          }
+        ],
+        "best_variant": "join_rewrite",
+        "speedup_vs_first": 28.82
+      },
+      "opt06_antijoin_forms": {
+        "title": "Anti-join: LEFT JOIN IS NULL vs NOT EXISTS vs NOT IN",
+        "what": "NOT EXISTS is the safest anti-join; NOT IN changes semantics with NULLs and may block hash anti-join plans",
+        "variants": [
+          {
+            "name": "left_join_is_null",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p LEFT JOIN order_items oi ON oi.product_id = p.id WHERE oi.id IS NULL ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 858.875,
+            "p95_ms": 886.273,
+            "rows": 0,
+            "plan_analyze": "Sort  (cost=50335.31..50335.32 rows=1 width=4) (actual time=832.339..832.342 rows=0 loops=1)\n  Sort Key: p.id\n  Sort Method: quicksort  Memory: 25kB\n  ->  Hash Right Join  (cost=575.63..50335.30 rows=1 width=4) (actual time=832.272..832.275 rows=0 loops=1)\n        Hash Cond: (oi.product_id = p.id)\n        Filter: (oi.id IS NULL)\n        Rows Removed by Filter: 487606\n        ->  Seq Scan on order_items oi  (cost=23.10..43081.44 rows=487606 width=8) (actual time=1.964..432.213 rows=487606 loops=1)\n              Storage Table Read Requests: 477\n              Storage Table Read Execution Time: 252.597 ms\n              Storage Table Read Ops: 477\n              Storage Table Rows Scanned: 487606\n        ->  Hash  (cost=490.03..490.03 rows=5000 width=4) (actual time=7.310..7.312 rows=5000 loops=1)\n              Buckets: 8192  Batches: 1  Memory Usage: 240kB\n              ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4) (actual time=1.548..3.390 rows=5000 loops=1)\n                    Storage Table Read Requests: 5\n                    Storage Table Read Execution Time: 1.456 ms\n                    Storage Table Read Ops: 5\n                    Storage Table Rows Scanned: 5000\nPlanning Time: 0.489 ms\nExecution Time: 832.623 ms\nStorage Read Requests: 482\nStorage Read Execution Time: 254.054 ms\nStorage Read Ops: 482\nStorage Rows Scanned: 492606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 254.054 ms\nPeak Memory Usage: 543 kB"
+          },
+          {
+            "name": "not_exists",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE NOT EXISTS (SELECT 1 FROM order_items oi WHERE oi.product_id = p.id) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2106.303,
+            "p95_ms": 2155.244,
+            "rows": 0,
+            "plan_analyze": "Sort  (cost=44799.23..44799.24 rows=1 width=4) (actual time=2174.136..2174.138 rows=0 loops=1)\n  Sort Key: p.id\n  Sort Method: quicksort  Memory: 25kB\n  ->  YB Batched Nested Loop Anti Join  (cost=49.18..44799.22 rows=1 width=4) (actual time=2174.067..2174.068 rows=0 loops=1)\n        Join Filter: (oi.product_id = p.id)\n        ->  Seq Scan on products p  (cost=23.08..490.03 rows=5000 width=4) (actual time=1.507..3.638 rows=5000 loops=1)\n              Storage Table Read Requests: 5\n              Storage Table Read Execution Time: 1.463 ms\n              Storage Table Read Ops: 5\n              Storage Table Rows Scanned: 5000\n        ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=26.10..7827.00 rows=99802 width=4) (actual time=5.964..309.965 rows=97521 loops=5)\n              Index Cond: (product_id = ANY (ARRAY[p.id, $1, $2, ..., $1023]))\n              Heap Fetches: 0\n              Storage Index Read Requests: 96\n              Storage Index Read Execution Time: 207.840 ms\n              Storage Index Read Ops: 96\n              Storage Index Rows Scanned: 97521\nPlanning Time: 3.395 ms\nExecution Time: 2175.087 ms\nStorage Read Requests: 483\nStorage Read Execution Time: 1040.663 ms\nStorage Read Ops: 483\nStorage Rows Scanned: 492606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 1040.663 ms\nPeak Memory Usage: 1625 kB"
+          },
+          {
+            "name": "not_in",
+            "note": "NOT IN is NULL-unsafe and often slower",
+            "setup": [],
+            "sql": "SELECT p.id FROM products p WHERE p.id NOT IN (SELECT oi.product_id FROM order_items oi) ORDER BY p.id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 106687.17,
+            "p95_ms": 107246.811,
+            "rows": 0,
+            "plan_analyze": "Sort  (cost=107459462.47..107459468.72 rows=2500 width=4) (actual time=405159.956..405159.957 rows=0 loops=1)\n  Sort Key: p.id\n  Sort Method: quicksort  Memory: 25kB\n  ->  Seq Scan on products p  (cost=49.18..107459321.37 rows=2500 width=4) (actual time=405159.919..405159.919 rows=0 loops=1)\n        Filter: (NOT (SubPlan 1))\n        Rows Removed by Filter: 5000\n        SubPlan 1\n          ->  Materialize  (cost=26.10..41790.60 rows=487606 width=4) (actual time=0.014..22.543 rows=244117 loops=5000)\n                ->  Index Only Scan using ix_order_items_product_id on order_items oi  (cost=26.10..37447.57 rows=487606 width=4) (actual time=2.153..209.614 rows=487502 loops=1)\n                      Heap Fetches: 0\n                      Storage Table Read Requests: 1\n                      Storage Table Read Execution Time: 1.104 ms\n                      Storage Table Read Ops: 2\n                      Storage Table Rows Scanned: 1024\n                      Storage Index Read Requests: 477\n                      Storage Index Read Execution Time: 7.065 ms\n                      Storage Index Read Ops: 477\n                      Storage Index Rows Scanned: 487606\nPlanning Time: 0.161 ms\nExecution Time: 405161.863 ms\nStorage Read Requests: 482\nStorage Read Execution Time: 8.271 ms\nStorage Read Ops: 482\nStorage Rows Scanned: 492606\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 8.271 ms\nPeak Memory Usage: 4991 kB"
+          }
+        ],
+        "best_variant": "left_join_is_null",
+        "speedup_vs_first": 1.0
+      },
+      "opt07_or_vs_union": {
+        "title": "OR across two different indexed columns vs UNION",
+        "what": "OR over different columns often forces a scan; UNION lets each branch use its own index (some optimizers do this automatically: bitmap OR / index merge)",
+        "variants": [
+          {
+            "name": "or_predicate",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM orders WHERE customer_id = ? OR id = ? ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 2.996,
+            "p95_ms": 3.121,
+            "rows": 13,
+            "plan_analyze": "Sort  (cost=78.08..78.11 rows=11 width=4) (actual time=2.424..2.426 rows=12 loops=1)\n  Sort Key: id\n  Sort Method: quicksort  Memory: 25kB\n  ->  YB Bitmap Table Scan on orders  (cost=76.26..77.89 rows=11 width=4) (actual time=2.364..2.371 rows=12 loops=1)\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 0.743 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 12\n        ->  BitmapOr  (cost=50.16..50.16 rows=11 width=0) (actual time=1.565..1.566 rows=12 loops=1)\n              ->  Bitmap Index Scan on ix_orders_customer_id  (cost=0.00..26.95 rows=10 width=0) (actual time=0.831..0.831 rows=11 loops=1)\n                    Index Cond: (customer_id = '3342'::smallint)\n                    Storage Index Read Requests: 1\n                    Storage Index Read Execution Time: 0.727 ms\n                    Storage Index Read Ops: 1\n                    Storage Index Rows Scanned: 11\n              ->  Bitmap Index Scan on orders_pkey  (cost=0.00..23.21 rows=1 width=0) (actual time=0.729..0.729 rows=1 loops=1)\n                    Index Cond: (id = 150456)\n                    Storage Table Read Requests: 1\n                    Storage Table Read Execution Time: 0.626 ms\n                    Storage Table Read Ops: 1\n                    Storage Table Rows Scanned: 1\nPlanning Time: 0.201 ms\nExecution Time: 2.610 ms\nStorage Read Requests: 3\nStorage Read Execution Time: 2.096 ms\nStorage Read Ops: 3\nStorage Rows Scanned: 24\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 2.096 ms\nPeak Memory Usage: 186 kB"
+          },
+          {
+            "name": "union_rewrite",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id FROM (SELECT id FROM orders WHERE customer_id = ? UNION SELECT id FROM orders WHERE id = ?) u ORDER BY id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 3.481,
+            "p95_ms": 3.759,
+            "rows": 13,
+            "plan_analyze": "Sort  (cost=78.24..78.27 rows=11 width=4) (actual time=2.381..2.384 rows=12 loops=1)\n  Sort Key: orders.id\n  Sort Method: quicksort  Memory: 25kB\n  ->  HashAggregate  (cost=77.83..77.94 rows=11 width=4) (actual time=2.307..2.312 rows=12 loops=1)\n        Group Key: orders.id\n        Batches: 1  Memory Usage: 24kB\n        ->  Append  (cost=52.19..77.80 rows=11 width=4) (actual time=1.501..2.285 rows=12 loops=1)\n              ->  Index Scan using ix_orders_customer_id on orders  (cost=52.19..54.44 rows=10 width=4) (actual time=1.498..1.513 rows=11 loops=1)\n                    Index Cond: (customer_id = '3342'::smallint)\n                    Storage Table Read Requests: 1\n                    Storage Table Read Execution Time: 0.617 ms\n                    Storage Table Read Ops: 1\n                    Storage Table Rows Scanned: 11\n                    Storage Index Read Requests: 1\n                    Storage Index Read Execution Time: 0.709 ms\n                    Storage Index Read Ops: 1\n                    Storage Index Rows Scanned: 11\n              ->  Index Scan using orders_pkey on orders orders_1  (cost=23.10..23.20 rows=1 width=4) (actual time=0.750..0.754 rows=1 loops=1)\n                    Index Cond: (id = 150456)\n                    Storage Table Read Requests: 1\n                    Storage Table Read Execution Time: 0.657 ms\n                    Storage Table Read Ops: 1\n                    Storage Table Rows Scanned: 1\nPlanning Time: 0.406 ms\nExecution Time: 2.636 ms\nStorage Read Requests: 3\nStorage Read Execution Time: 1.984 ms\nStorage Read Ops: 3\nStorage Rows Scanned: 23\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 1.984 ms\nPeak Memory Usage: 164 kB"
+          }
+        ],
+        "best_variant": "or_predicate",
+        "speedup_vs_first": 1.0
+      },
+      "opt08_partial_index": {
+        "title": "Filtered/partial index for a selective status value",
+        "what": "partial indexes are tiny and fast for hot subsets (queues, pending rows)",
+        "variants": [
+          {
+            "name": "no_partial_index",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 141.625,
+            "p95_ms": 150.022,
+            "rows": 644,
+            "plan_analyze": "Sort  (cost=13295.62..13297.27 rows=662 width=16) (actual time=140.103..140.184 rows=644 loops=1)\n  Sort Key: ordered_at, id\n  Sort Method: quicksort  Memory: 60kB\n  ->  Seq Scan on orders  (cost=23.10..13264.60 rows=662 width=16) (actual time=138.923..139.187 rows=644 loops=1)\n        Storage Filter: ((ordered_at >= '2025-09-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-10-01 00:00:00'::timestamp without time zone) AND ((status)::text = 'pending'::text))\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 138.761 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 200000\nPlanning Time: 0.248 ms\nExecution Time: 140.808 ms\nStorage Read Requests: 1\nStorage Read Execution Time: 138.761 ms\nStorage Read Ops: 1\nStorage Rows Scanned: 200000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 138.761 ms\nPeak Memory Usage: 187 kB"
+          },
+          {
+            "name": "full_index_(status,ordered_at)",
+            "note": "",
+            "setup": [
+              "CREATE INDEX ix_orders_status_ts ON orders (status, ordered_at)",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 8.174,
+            "p95_ms": 8.843,
+            "rows": 644,
+            "plan_analyze": "Incremental Sort  (cost=52.53..296.43 rows=657 width=16) (actual time=6.177..8.113 rows=644 loops=1)\n  Sort Key: ordered_at, id\n  Presorted Key: ordered_at\n  Full-sort Groups: 21  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB\n  ->  Index Scan using ix_orders_status_ts on orders  (cost=52.19..266.86 rows=657 width=16) (actual time=6.042..6.761 rows=644 loops=1)\n        Index Cond: (((status)::text = 'pending'::text) AND (ordered_at >= '2025-09-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-10-01 00:00:00'::timestamp without time zone))\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 4.054 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 644\n        Storage Index Read Requests: 1\n        Storage Index Read Execution Time: 1.333 ms\n        Storage Index Read Ops: 1\n        Storage Index Rows Scanned: 644\nPlanning Time: 0.304 ms\nExecution Time: 8.805 ms\nStorage Read Requests: 2\nStorage Read Execution Time: 5.386 ms\nStorage Read Ops: 2\nStorage Rows Scanned: 1288\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 5.386 ms\nPeak Memory Usage: 443 kB"
+          },
+          {
+            "name": "partial_index_pending",
+            "note": "only PG / SQLite / SQL Server (filtered) / MSSQL",
+            "setup": [
+              "CREATE INDEX ix_orders_pending_ts ON orders (ordered_at) WHERE status = 'pending'",
+              "ANALYZE orders"
+            ],
+            "sql": "SELECT id, customer_id FROM orders WHERE status = 'pending' AND ordered_at >= TIMESTAMP '2025-09-01 00:00:00' AND ordered_at < TIMESTAMP '2025-10-01 00:00:00' ORDER BY ordered_at, id",
+            "ok": true,
+            "error": null,
+            "p50_ms": 25.405,
+            "p95_ms": 29.684,
+            "rows": 644,
+            "plan_analyze": "Sort  (cost=1168.91..1170.49 rows=633 width=16) (actual time=24.633..24.728 rows=644 loops=1)\n  Sort Key: ordered_at, id\n  Sort Method: quicksort  Memory: 60kB\n  ->  Index Scan using ix_orders_pending_ts on orders  (cost=52.18..1139.45 rows=633 width=16) (actual time=23.156..23.774 rows=644 loops=1)\n        Storage Index Filter: ((ordered_at >= '2025-09-01 00:00:00'::timestamp without time zone) AND (ordered_at < '2025-10-01 00:00:00'::timestamp without time zone))\n        Storage Table Read Requests: 1\n        Storage Table Read Execution Time: 4.153 ms\n        Storage Table Read Ops: 1\n        Storage Table Rows Scanned: 644\n        Storage Index Read Requests: 1\n        Storage Index Read Execution Time: 18.397 ms\n        Storage Index Read Ops: 1\n        Storage Index Rows Scanned: 15881\nPlanning Time: 0.298 ms\nExecution Time: 25.410 ms\nStorage Read Requests: 2\nStorage Read Execution Time: 22.550 ms\nStorage Read Ops: 2\nStorage Rows Scanned: 16525\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 22.550 ms\nPeak Memory Usage: 484 kB"
+          }
+        ],
+        "best_variant": "full_index_(status,ordered_at)",
+        "speedup_vs_first": 17.33
+      },
+      "opt09_stats_refresh": {
+        "title": "Plan quality with stale vs fresh statistics (after bulk insert)",
+        "what": "row-count estimates drive join/scan choices; refresh statistics after bulk changes",
+        "variants": [
+          {
+            "name": "after_bulk_insert_no_analyze",
+            "note": "",
+            "setup": [],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 655.71,
+            "p95_ms": 661.829,
+            "rows": 13,
+            "plan_analyze": "Sort  (cost=67376.53..67376.57 rows=13 width=11) (actual time=662.760..662.765 rows=13 loops=1)\n  Sort Key: c.country_code\n  Sort Method: quicksort  Memory: 25kB\n  ->  HashAggregate  (cost=67376.16..67376.29 rows=13 width=11) (actual time=662.672..662.679 rows=13 loops=1)\n        Group Key: c.country_code\n        Batches: 1  Memory Usage: 24kB\n        ->  Hash Join  (cost=2221.04..67277.39 rows=19754 width=3) (actual time=65.631..643.707 rows=20000 loops=1)\n              Hash Cond: (e.customer_id = c.id)\n              ->  Seq Scan on events e  (cost=23.10..64807.83 rows=19754 width=4) (actual time=33.283..589.837 rows=20000 loops=1)\n                    Storage Filter: ((event_type)::text = 'bench_stats'::text)\n                    Storage Table Read Requests: 20\n                    Storage Table Read Execution Time: 581.342 ms\n                    Storage Table Read Ops: 20\n                    Storage Table Rows Scanned: 1020000\n              ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7) (actual time=32.253..32.255 rows=20000 loops=1)\n                    Buckets: 32768  Batches: 1  Memory Usage: 1038kB\n                    ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7) (actual time=1.739..13.549 rows=20000 loops=1)\n                          Storage Table Read Requests: 20\n                          Storage Table Read Execution Time: 3.068 ms\n                          Storage Table Read Ops: 20\n                          Storage Table Rows Scanned: 20000\nPlanning Time: 0.606 ms\nExecution Time: 663.179 ms\nStorage Read Requests: 40\nStorage Read Execution Time: 584.410 ms\nStorage Read Ops: 40\nStorage Rows Scanned: 1040000\nCatalog Read Requests: 0\nCatalog Read Ops: 0\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 584.410 ms\nPeak Memory Usage: 1508 kB"
+          },
+          {
+            "name": "after_analyze",
+            "note": "",
+            "setup": [
+              "ANALYZE events"
+            ],
+            "sql": "SELECT c.country_code, COUNT(*) AS n FROM events e JOIN customers c ON c.id = e.customer_id WHERE e.event_type = 'bench_stats' GROUP BY c.country_code ORDER BY c.country_code",
+            "ok": true,
+            "error": null,
+            "p50_ms": 654.226,
+            "p95_ms": 658.132,
+            "rows": 13,
+            "plan_analyze": "Sort  (cost=67334.52..67334.55 rows=13 width=11) (actual time=650.154..650.159 rows=13 loops=1)\n  Sort Key: c.country_code\n  Sort Method: quicksort  Memory: 25kB\n  ->  HashAggregate  (cost=67334.15..67334.28 rows=13 width=11) (actual time=650.066..650.073 rows=13 loops=1)\n        Group Key: c.country_code\n        Batches: 1  Memory Usage: 24kB\n        ->  Hash Join  (cost=2221.04..67239.74 rows=18882 width=3) (actual time=63.873..630.914 rows=20000 loops=1)\n              Hash Cond: (e.customer_id = c.id)\n              ->  Seq Scan on events e  (cost=23.10..64782.11 rows=18904 width=4) (actual time=32.566..578.513 rows=20000 loops=1)\n                    Storage Filter: ((event_type)::text = 'bench_stats'::text)\n                    Storage Table Read Requests: 20\n                    Storage Table Read Execution Time: 570.409 ms\n                    Storage Table Read Ops: 20\n                    Storage Table Rows Scanned: 1020000\n              ->  Hash  (cost=1947.94..1947.94 rows=20000 width=7) (actual time=31.203..31.204 rows=20000 loops=1)\n                    Buckets: 32768  Batches: 1  Memory Usage: 1038kB\n                    ->  Seq Scan on customers c  (cost=23.09..1947.94 rows=20000 width=7) (actual time=1.711..12.879 rows=20000 loops=1)\n                          Storage Table Read Requests: 20\n                          Storage Table Read Execution Time: 2.333 ms\n                          Storage Table Read Ops: 20\n                          Storage Table Rows Scanned: 20000\nPlanning Time: 3.559 ms\nExecution Time: 650.470 ms\nStorage Read Requests: 40\nStorage Read Execution Time: 572.741 ms\nStorage Read Ops: 40\nStorage Rows Scanned: 1040000\nCatalog Read Requests: 2\nCatalog Read Execution Time: 2.192 ms\nCatalog Read Ops: 2\nCatalog Write Requests: 0\nStorage Write Requests: 0\nStorage Flush Requests: 0\nStorage Execution Time: 574.934 ms\nPeak Memory Usage: 1492 kB"
+          }
+        ],
+        "best_variant": "after_analyze",
+        "speedup_vs_first": 1.0
+      },
+      "opt10_batch_inserts": {
+        "title": "Insert batching: 1-row autocommit vs executemany(1000) vs multi-row VALUES(1000), one transaction",
+        "what": "round-trips and per-statement commits dominate small writes; batching amortises both",
+        "variants": [
+          {
+            "name": "autocommit_1_row",
+            "rows": 3000,
+            "seconds": 8.978,
+            "rows_per_s": 334,
+            "error": null
+          },
+          {
+            "name": "txn_executemany_1000",
+            "rows": 3000,
+            "seconds": 4.191,
+            "rows_per_s": 716,
+            "error": null
+          },
+          {
+            "name": "txn_multirow_values_1000",
+            "rows": 3000,
+            "seconds": 0.322,
+            "rows_per_s": 9310,
+            "error": null
+          }
+        ]
+      },
+      "opt11_prepared_statements": {
+        "title": "Prepared vs unprepared point lookups (psycopg prepare=True)",
+        "what": "server-side prepared statements skip parse/plan per execution",
+        "variants": [
+          {
+            "name": "unprepared",
+            "p50_ms": 1.0894,
+            "p99_ms": 1.4383,
+            "n": 300,
+            "error": null
+          },
+          {
+            "name": "prepared",
+            "p50_ms": 0.8751,
+            "p99_ms": 1.1973,
+            "n": 300,
+            "error": null
+          },
+          {
+            "name": "unprepared_again",
+            "p50_ms": 1.1681,
+            "p99_ms": 1.4511,
+            "n": 300,
+            "error": null
+          }
+        ]
+      },
+      "_seconds": 1277.1
+    },
+    "connections": {
+      "max_connections": 500,
+      "connect_latency": {
+        "primary": {
+          "target": "primary",
+          "n": 30,
+          "ms": {
+            "n": 30,
+            "min": 18.32621,
+            "p50": 20.5538265,
+            "p90": 21.475427200000002,
+            "p95": 21.68395345,
+            "p99": 21.970741710000002,
+            "max": 22.07636,
+            "mean": 20.538030199999998,
+            "stdev": 0.7933885617401437
+          },
+          "errors": [],
+          "error_count": 0
+        }
+      },
+      "storm": {
+        "primary": [
+          {
+            "target": "primary",
+            "requested": 10,
+            "opened": 10,
+            "failed": 0,
+            "wall_ms_to_open_all": 50.1,
+            "connect_ms": {
+              "n": 10,
+              "min": 18.88971,
+              "p50": 20.7240845,
+              "p90": 21.8862997,
+              "p95": 22.54451785,
+              "p99": 23.071092370000002,
+              "max": 23.202736,
+              "mean": 20.5976145,
+              "stdev": 1.2969396246061922
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 50,
+            "opened": 50,
+            "failed": 0,
+            "wall_ms_to_open_all": 101.4,
+            "connect_ms": {
+              "n": 50,
+              "min": 33.357837,
+              "p50": 48.621723,
+              "p90": 60.114228100000005,
+              "p95": 60.71959595,
+              "p99": 69.93303691999998,
+              "max": 74.560936,
+              "mean": 47.713583959999994,
+              "stdev": 8.51436365409428
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 100,
+            "opened": 100,
+            "failed": 0,
+            "wall_ms_to_open_all": 170.3,
+            "connect_ms": {
+              "n": 100,
+              "min": 52.913229,
+              "p50": 72.82234550000001,
+              "p90": 80.032632,
+              "p95": 81.07832875,
+              "p99": 84.19502290999999,
+              "max": 84.722783,
+              "mean": 72.87885564,
+              "stdev": 5.833416104955222
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 200,
+            "opened": 200,
+            "failed": 0,
+            "wall_ms_to_open_all": 334.1,
+            "connect_ms": {
+              "n": 200,
+              "min": 56.913875,
+              "p50": 126.4430155,
+              "p90": 151.20019689999998,
+              "p95": 158.32769439999996,
+              "p99": 170.00436170999996,
+              "max": 186.972968,
+              "mean": 128.60060003,
+              "stdev": 17.504572673890234
+            },
+            "error_codes": {},
+            "sample_error": null
+          },
+          {
+            "target": "primary",
+            "requested": 510,
+            "opened": 496,
+            "failed": 14,
+            "wall_ms_to_open_all": 783.0,
+            "connect_ms": {
+              "n": 496,
+              "min": 38.400064,
+              "p50": 301.074762,
+              "p90": 362.0028835,
+              "p95": 392.34683575,
+              "p99": 433.30982415000005,
+              "max": 452.498305,
+              "mean": 297.5081579616936,
+              "stdev": 64.5047391999959
+            },
+            "error_codes": {
+              "53300": 14
+            },
+            "sample_error": "OperationalError: connection failed: connection to server at \"127.0.0.1\", port 15433 failed: FATAL: sorry, too many clients already"
+          }
+        ]
+      },
+      "concurrency": {
+        "primary": [
+          {
+            "workers": 1,
+            "targets": [
+              "primary"
+            ],
+            "queries": 3604,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 901,
+            "latency_ms": {
+              "n": 3604,
+              "min": 0.344252,
+              "p50": 1.136756,
+              "p90": 1.3317976000000002,
+              "p95": 1.3721265999999999,
+              "p99": 1.4267056299999998,
+              "max": 62.574974,
+              "mean": 1.1066253307436182,
+              "stdev": 1.0495534397572757
+            },
+            "first_error": null,
+            "workers_reported": 1
+          },
+          {
+            "workers": 4,
+            "targets": [
+              "primary"
+            ],
+            "queries": 17348,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 4337,
+            "latency_ms": {
+              "n": 17348,
+              "min": 0.317408,
+              "p50": 0.955654,
+              "p90": 1.1212602,
+              "p95": 1.16873955,
+              "p99": 1.2611558999999994,
+              "max": 55.938552,
+              "mean": 0.9190725737837214,
+              "stdev": 0.8484289516213063
+            },
+            "first_error": null,
+            "workers_reported": 4
+          },
+          {
+            "workers": 16,
+            "targets": [
+              "primary"
+            ],
+            "queries": 122985,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 30746,
+            "latency_ms": {
+              "n": 122985,
+              "min": 0.377215,
+              "p50": 0.502841,
+              "p90": 0.5743434000000001,
+              "p95": 0.6178607999999999,
+              "p99": 0.7161533600000001,
+              "max": 40.475262,
+              "mean": 0.5186743340651299,
+              "stdev": 0.450833887674735
+            },
+            "first_error": null,
+            "workers_reported": 16
+          },
+          {
+            "workers": 32,
+            "targets": [
+              "primary"
+            ],
+            "queries": 142633,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 35658,
+            "latency_ms": {
+              "n": 142633,
+              "min": 0.427695,
+              "p50": 0.849935,
+              "p90": 1.1587296,
+              "p95": 1.2714939999999997,
+              "p99": 1.5488578799999995,
+              "max": 57.053357,
+              "mean": 0.8957183148429887,
+              "stdev": 0.8219518771940298
+            },
+            "first_error": null,
+            "workers_reported": 32
+          },
+          {
+            "workers": 64,
+            "targets": [
+              "primary"
+            ],
+            "queries": 145664,
+            "errors": 0,
+            "seconds": 4.0,
+            "qps": 36416,
+            "latency_ms": {
+              "n": 145664,
+              "min": 0.475378,
+              "p50": 1.635167,
+              "p90": 2.476156,
+              "p95": 2.77785375,
+              "p99": 3.5095687999999994,
+              "max": 101.143411,
+              "mean": 1.7563670669829197,
+              "stdev": 1.8802298340835921
+            },
+            "first_error": null,
+            "workers_reported": 64
+          }
+        ]
+      },
+      "pool_saturation": {
+        "pool_size": 8,
+        "workers": 32,
+        "queries": 9711,
+        "qps": 2419,
+        "checkout_wait_ms": {
+          "n": 9711,
+          "min": 0.001975,
+          "p50": 0.00609,
+          "p90": 0.00894,
+          "p95": 0.009528,
+          "p99": 0.012862999999999973,
+          "max": 4008.056033,
+          "mean": 9.896604877664505,
+          "stdev": 198.7049901450501
+        },
+        "exec_ms": {
+          "n": 9711,
+          "min": 0.436401,
+          "p50": 2.940337,
+          "p90": 5.556825,
+          "p95": 6.4812080000000005,
+          "p99": 8.6633384,
+          "max": 24.643604,
+          "mean": 3.292488842652662,
+          "stdev": 1.7749194671746833
+        }
+      },
+      "transactions": {
+        "write_conflict_repeatable_read": {
+          "t1_update_after_t2_commit": "rejected",
+          "error_code": "40001",
+          "error": "SerializationFailure: could not serialize access due to concurrent update (query layer retry isn't possible because this is not the first command in the transaction. Consider using READ COMMITTED isolation level.) DETAIL: 20168048-2680-43d3-829b-63d30c7fb471 conflict with concurrently committed data",
+          "ms": 14.0,
+          "t2": {
+            "outcome": "committed",
+            "ms": 67.0
+          },
+          "final_balance": 90
+        },
+        "write_conflict_serializable": {
+          "t2_update_blocked_by_t1_read": true,
+          "t1_update_after_t2_commit": "succeeded",
+          "ms": 116.9,
+          "t2": {
+            "outcome": "error",
+            "error_code": "40P01",
+            "error": "DeadlockDetected: deadlock detected (query layer retry isn't possible because this is not the first command in the transaction. Consider using READ COMMITTED isolation level.) DETAIL: Transaction 866090a1-1d98-4aa5-8bad-505cb8187689 aborted due to a deadlock: <1789256096774908>688a2523-9e54-4bb6-a17",
+            "ms": 3115.7
+          },
+          "final_balance": 90
+        },
+        "deadlock": {
+          "detected": true,
+          "victim": [
+            "t1"
+          ],
+          "error_codes": {
+            "t1": "40P01"
+          },
+          "detection_ms": 351.7,
+          "timeline_s": {
+            "t2": 0.05,
+            "t1": 0.352
+          }
+        }
+      },
+      "_seconds": 46.5
+    },
+    "loadtest": {
+      "batch_rows": 1000,
+      "seconds_per_run": 15.0,
+      "containers": [
+        "rdlab-yb-1",
+        "rdlab-yb-2",
+        "rdlab-yb-3"
+      ],
+      "runs": [
+        {
+          "workers": 4,
+          "target": "primary",
+          "mode": "values",
+          "rows": 536000,
+          "batches": 536,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 35733,
+          "batch_ms": {
+            "n": 536,
+            "min": 58.186326,
+            "p50": 110.749541,
+            "p90": 130.8082625,
+            "p95": 138.45064425,
+            "p99": 152.9285174,
+            "max": 217.600829,
+            "mean": 109.17336822201493,
+            "stdev": 20.237070124946047
+          },
+          "first_error": null,
+          "workers_reported": 4,
+          "container_usage": {
+            "rdlab-yb-1": {
+              "cpu_cores_avg": 2.931,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4871,
+              "mem_end_mb": 2495,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.283
+            },
+            "rdlab-yb-2": {
+              "cpu_cores_avg": 1.452,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2250,
+              "mem_end_mb": 2236,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 1.626
+            },
+            "rdlab-yb-3": {
+              "cpu_cores_avg": 1.945,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2347,
+              "mem_end_mb": 2340,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 2.179
+            }
+          }
+        },
+        {
+          "workers": 16,
+          "target": "primary",
+          "mode": "values",
+          "rows": 1225000,
+          "batches": 1225,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 81667,
+          "batch_ms": {
+            "n": 1225,
+            "min": 118.088509,
+            "p50": 188.337537,
+            "p90": 253.07432040000003,
+            "p95": 265.0669608,
+            "p99": 291.81853308,
+            "max": 308.551876,
+            "mean": 193.7449469355102,
+            "stdev": 39.08646692489567
+          },
+          "first_error": null,
+          "workers_reported": 16,
+          "container_usage": {
+            "rdlab-yb-1": {
+              "cpu_cores_avg": 5.354,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4871,
+              "mem_end_mb": 2774,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 6.241
+            },
+            "rdlab-yb-2": {
+              "cpu_cores_avg": 2.799,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2589,
+              "mem_end_mb": 2557,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.263
+            },
+            "rdlab-yb-3": {
+              "cpu_cores_avg": 3.901,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 2873,
+              "mem_end_mb": 2873,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 4.547
+            }
+          }
+        },
+        {
+          "workers": 32,
+          "target": "primary",
+          "mode": "values",
+          "rows": 1015000,
+          "batches": 1015,
+          "errors": 0,
+          "seconds": 15.0,
+          "rows_per_s": 67667,
+          "batch_ms": {
+            "n": 1015,
+            "min": 210.45566,
+            "p50": 391.315078,
+            "p90": 522.7400636,
+            "p95": 654.8657372,
+            "p99": 2668.28110834,
+            "max": 2825.364152,
+            "mean": 474.77551247389164,
+            "stdev": 395.508707208832
+          },
+          "first_error": null,
+          "workers_reported": 32,
+          "container_usage": {
+            "rdlab-yb-1": {
+              "cpu_cores_avg": 5.201,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 4871,
+              "mem_end_mb": 3261,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 6.379
+            },
+            "rdlab-yb-2": {
+              "cpu_cores_avg": 3.26,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 3161,
+              "mem_end_mb": 3159,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 3.999
+            },
+            "rdlab-yb-3": {
+              "cpu_cores_avg": 3.474,
+              "cpu_limit_cores": null,
+              "cpu_pct_of_limit": null,
+              "mem_peak_mb": 3530,
+              "mem_end_mb": 3530,
+              "mem_limit_mb": null,
+              "cpu_cores_avg_during_inserts": 4.261
+            }
+          }
+        }
+      ],
+      "best": {
+        "target": "primary",
+        "mode": "values",
+        "workers": 16,
+        "rows_per_s": 81667
+      },
+      "_seconds": 212.9
+    },
+    "replication": {
+      "kind": "Raft per tablet, RF=3 (multi-active)",
+      "topology": {
+        "primary": {
+          "role_reported": "primary",
+          "role_configured": "primary",
+          "version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/",
+          "status": {
+            "in_recovery": false,
+            "error": "Timed out waiting for Table Creation"
+          }
+        },
+        "node2": {
+          "role_reported": "primary",
+          "role_configured": "node",
+          "version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/",
+          "status": {
+            "in_recovery": false,
+            "error": "Timed out waiting for Table Creation"
+          }
+        },
+        "node3": {
+          "role_reported": "primary",
+          "role_configured": "node",
+          "version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/",
+          "status": {
+            "in_recovery": false,
+            "error": "Timed out waiting for Table Creation"
+          }
+        }
+      },
+      "visibility_lag": {
+        "node2": {
+          "replica": "node2",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 1.3542730011977255,
+            "p50": 1.710881493636407,
+            "p90": 1.8726836249697953,
+            "p95": 1.9078444398473948,
+            "p99": 38.35489853023323,
+            "max": 53.23626101016998,
+            "mean": 3.409070299433855,
+            "stdev": 9.253817371313794
+          }
+        },
+        "node3": {
+          "replica": "node3",
+          "n": 30,
+          "visible": 30,
+          "timeouts": 0,
+          "lag_ms": {
+            "n": 30,
+            "min": 0.9406830067746341,
+            "p50": 1.2787969899363816,
+            "p90": 1.550325000425801,
+            "p95": 1.6857852024259043,
+            "p99": 36.1094373420929,
+            "max": 50.15221898793243,
+            "mean": 2.9212600706766048,
+            "stdev": 8.77228036609761
+          }
+        }
+      },
+      "write_rejection": {
+        "node2": {
+          "replica": "node2",
+          "writes_rejected": false,
+          "note": "replica accepted a write (multi-master / node-level writable)"
+        },
+        "node3": {
+          "replica": "node3",
+          "writes_rejected": false,
+          "note": "replica accepted a write (multi-master / node-level writable)"
+        }
+      },
+      "lag_under_load": {
+        "rows": 20000,
+        "batch": 500,
+        "write_seconds": 28.08,
+        "rows_per_s": 712,
+        "catchup_ms_after_last_commit": {
+          "node2": 85.5,
+          "node3": 87.8
+        },
+        "samples": []
+      },
+      "read_scaling": {
+        "primary_only": {
+          "targets": [
+            "primary"
+          ],
+          "workers": 32,
+          "queries": 143041,
+          "qps": 35760,
+          "errors": 0,
+          "latency_ms": {
+            "n": 143041,
+            "min": 0.390192,
+            "p50": 0.848627,
+            "p90": 1.14709,
+            "p95": 1.256174,
+            "p99": 1.519890000000001,
+            "max": 56.210077,
+            "mean": 0.8932786073433491,
+            "stdev": 0.8250700284159972
+          }
+        },
+        "primary_plus_replicas": {
+          "targets": [
+            "primary",
+            "node2",
+            "node3"
+          ],
+          "workers": 32,
+          "queries": 117764,
+          "qps": 29441,
+          "errors": 0,
+          "latency_ms": {
+            "n": 117764,
+            "min": 0.472391,
+            "p50": 1.037468,
+            "p90": 1.4169717,
+            "p95": 1.5531810499999998,
+            "p99": 1.873280639999999,
+            "max": 62.257997,
+            "mean": 1.0853048680666417,
+            "stdev": 0.9672753896284898
+          }
+        },
+        "gain": 0.82
+      },
+      "failover": {
+        "kind": "Raft per tablet, RF=3 (multi-active)",
+        "killed": "primary",
+        "probe_table": "repl_probe",
+        "stopped_at": 0.0,
+        "write_error_after_kill": "ConnectionTimeout: connection timeout expired",
+        "write_attempts_until_success": 5,
+        "last_error_before_success": "InternalError_: GetTableSchemaRpc(table_identifier: table_id: \"0000400000003000800000000000416c\", num_attempts: 4, check_only: 0) timed out after deadline expired, passed 120.005s of 120.000s",
+        "downtime_ms": null,
+        "new_primary": "node2",
+        "verified_via": "node2",
+        "new_primary_role": "node",
+        "new_primary_status": {
+          "error": "GetTableSchemaRpc(table_identifier: table_id: \"00004000000030008001000000000a83\", num_attempts: 4, check_only: 0) timed out after deadline expired, passed 120.008s of 120.000s\nLINE 1: SELECT pg_is_in_recovery()\n               ^"
+        },
+        "old_primary_restarted": true,
+        "note": "old primary restarted but NOT re-joined (diverged timeline); stack should be recreated for reuse"
+      },
+      "_seconds": 910.0
+    },
+    "backup": {
+      "backup_dir": "/backups",
+      "strategies": {
+        "ysql_dump": {
+          "status": "ok",
+          "kind": "logical",
+          "tool": "ysql_dump | ysqlsh",
+          "backup_seconds": 9.58,
+          "backup_bytes": 123687246,
+          "backup_mb": 118.0,
+          "restore_seconds": 140.6,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 5.24
+          },
+          "pitr": {},
+          "notes": "plain SQL dump (ysql_dump keeps YB-specific DDL such as SPLIT INTO); restored serially with ysqlsh",
+          "error": null,
+          "steps": [
+            {
+              "name": "ysql_dump",
+              "cmd": "cd /home/yugabyte && postgres/bin/ysql_dump -h yb1 -U yugabyte -d lab -f /backups/lab.sql",
+              "rc": 0,
+              "seconds": 9.58,
+              "out": ""
+            },
+            {
+              "name": "create restore db",
+              "cmd": "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'lab_restore' AND pid <> pg_backend_pid(); DROP DATABASE IF EXISTS lab_restore; CREATE DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 1.36,
+              "out": ""
+            },
+            {
+              "name": "ysqlsh -f (restore)",
+              "cmd": "__o=$(mktemp); ( cd /home/yugabyte && bin/ysqlsh -h yb1 -U yugabyte -d lab_restore -q -v ON_ERROR_STOP=0 -f /backups/lab.sql ) > $__o 2>&1; __rc=$?; tail -n 5 $__o; rm -f $__o; exit $__rc",
+              "rc": 0,
+              "seconds": 140.6,
+              "out": " pg_restore_relation_stats \n---------------------------\n t\n(1 row)\n\n"
+            },
+            {
+              "name": "drop restore db",
+              "cmd": "DROP DATABASE lab_restore",
+              "rc": 0,
+              "seconds": 2.43,
+              "out": ""
+            }
+          ],
+          "seconds": 159.3,
+          "description": "logical dump restored into a second database"
+        },
+        "snapshot": {
+          "status": "ok",
+          "kind": "snapshot",
+          "tool": "yb-admin create_database_snapshot / restore_snapshot",
+          "backup_seconds": 4.98,
+          "backup_bytes": 101451,
+          "backup_mb": 0.1,
+          "restore_seconds": 1.43,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 5.24
+          },
+          "pitr": {
+            "match": true,
+            "probe_rows_after_delete": 0,
+            "probe_rows_after_restore": 1000,
+            "probe_rows_expected": 1000
+          },
+          "notes": "cluster-wide consistent snapshot (hybrid-time), restored in place; off-cluster copy = export_snapshot metadata + tablet snapshot files",
+          "error": null,
+          "steps": [
+            {
+              "name": "create_database_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 create_database_snapshot ysql.lab",
+              "rc": 0,
+              "seconds": 0.27,
+              "out": "Started snapshot creation: 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769\n"
+            },
+            {
+              "name": "export_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 export_snapshot 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769 /backups/lab.snapshot",
+              "rc": 0,
+              "seconds": 0.15,
+              "out": "Exporting snapshot 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769 (2) to file /backups/lab.snapshot\nSnapshot metadata was saved into file: /backups/lab.snapshot\n"
+            },
+            {
+              "name": "restore_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 restore_snapshot 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769",
+              "rc": 0,
+              "seconds": 0.16,
+              "out": "Started restoring snapshot: 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769\nRestoration id: 3ee2f90d-4318-4c87-8152-87f30f491a7b\n"
+            },
+            {
+              "name": "delete_snapshot",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 delete_snapshot 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769",
+              "rc": 0,
+              "seconds": 0.15,
+              "out": "Deleted snapshot: 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769\n"
+            }
+          ],
+          "snapshot_id": "1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769",
+          "export_snapshot": "Exporting snapshot 1bc4cf05-dd56-4a2f-b0d0-99b9c5fee769 (2) to file /backups/lab.snapshot\nSnapshot metadata was saved into file: /backups/lab.snapshot",
+          "note_size": "the snapshot itself is copy-on-write tablet files on every node; export_snapshot writes only the metadata",
+          "seconds": 13.6,
+          "description": "distributed snapshot restored in place"
+        },
+        "pitr": {
+          "status": "ok",
+          "kind": "pitr",
+          "tool": "yb-admin create_snapshot_schedule / restore_snapshot_schedule",
+          "backup_seconds": 4.42,
+          "backup_bytes": 0,
+          "backup_mb": 0.0,
+          "restore_seconds": 3.28,
+          "verify": {
+            "match": true,
+            "tables": 7,
+            "rows": 1732806,
+            "mismatch": [],
+            "seconds": 4.95
+          },
+          "pitr": {
+            "match": true,
+            "target": "2026-09-14 11:15:16.043547",
+            "probe_rows_after_delete": 0,
+            "probe_rows_recovered": 1000,
+            "probe_rows_expected": 1000
+          },
+          "notes": "snapshot schedule (1 min interval, 10 min retention) keeps history; restore_snapshot_schedule rolls the database back to the timestamp in place",
+          "error": null,
+          "steps": [
+            {
+              "name": "create_snapshot_schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 create_snapshot_schedule 1 10 ysql.lab",
+              "rc": 0,
+              "seconds": 0.14,
+              "out": "{\n    \"schedule_id\": \"7aecb97d-9fa2-4d5a-b751-cee72a9a3125\"\n}\n"
+            },
+            {
+              "name": "restore_snapshot_schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 restore_snapshot_schedule 7aecb97d-9fa2-4d5a-b751-cee72a9a3125 \"2026-09-14 11:15:16.043547\"",
+              "rc": 0,
+              "seconds": 0.87,
+              "out": "{\n    \"snapshot_id\": \"411edd73-d084-4bdd-a753-6a4fc87e4a13\",\n    \"restoration_id\": \"9d827795-2b21-42da-9729-05ca4d97a9e1\"\n}\n"
+            },
+            {
+              "name": "delete_snapshot_schedule",
+              "cmd": "cd /home/yugabyte && bin/yb-admin -master_addresses yb1:7100,yb2:7100,yb3:7100 delete_snapshot_schedule 7aecb97d-9fa2-4d5a-b751-cee72a9a3125",
+              "rc": 0,
+              "seconds": 0.13,
+              "out": "{\n    \"schedule_id\": \"7aecb97d-9fa2-4d5a-b751-cee72a9a3125\"\n}\n"
+            }
+          ],
+          "schedule_id": "7aecb97d-9fa2-4d5a-b751-cee72a9a3125",
+          "first_scheduled_snapshot": {
+            "id": "6841840c-eda1-4531-9792-6176846e904c",
+            "snapshot_time": "2026-09-14 11:15:12.702002"
+          },
+          "seconds": 18.0,
+          "description": "point-in-time restore from the snapshot schedule history"
+        }
+      },
+      "order": [
+        "ysql_dump",
+        "snapshot",
+        "pitr"
+      ],
+      "source_fingerprint": {
+        "customers": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "c14c8d8d7120620e54c397dd"
+        },
+        "categories": {
+          "count": 200,
+          "sample": 200,
+          "checksum": "6b182cc38a9605986fac72b6"
+        },
+        "products": {
+          "count": 5000,
+          "sample": 5000,
+          "checksum": "07e841680e53a9a4bb003312"
+        },
+        "orders": {
+          "count": 200000,
+          "sample": 20000,
+          "checksum": "4f9d46db3503e2f02c875bc2"
+        },
+        "order_items": {
+          "count": 487606,
+          "sample": 20000,
+          "checksum": "ea437df18defa9db084ee529"
+        },
+        "events": {
+          "count": 1000000,
+          "sample": 20000,
+          "checksum": "d9f66ab3891c7e4923de5aed"
+        },
+        "inventory": {
+          "count": 20000,
+          "sample": 20000,
+          "checksum": "93fe5ffe62cb37f61336c936"
+        }
+      },
+      "fingerprint_seconds": 4.94,
+      "summary": {
+        "strategies": 3,
+        "ok": 3,
+        "verified": [
+          "ysql_dump",
+          "snapshot",
+          "pitr"
+        ],
+        "pitr_ok": [
+          "snapshot",
+          "pitr"
+        ]
+      },
+      "_seconds": 196.1
+    },
+    "logging": {
+      "sink": "postgresql-*.log of the tserver (log_min_duration_statement via ysql_pg_conf_csv)",
+      "slow_threshold_ms": 100,
+      "settings": {
+        "logging_collector": "on",
+        "log_destination": "stderr",
+        "log_directory": "/home/yugabyte/yb_data/data/yb-data/tserver/logs",
+        "log_filename": "postgresql-%Y-%m-%d_%H%M%S.log",
+        "log_rotation_size": "10MB",
+        "log_rotation_age": "1d",
+        "log_min_duration_statement": "100ms",
+        "log_min_duration_sample": "-1",
+        "log_statement_sample_rate": "1",
+        "log_statement": "none",
+        "log_lock_waits": "on",
+        "log_temp_files": "0",
+        "log_checkpoints": "on",
+        "log_connections": "on",
+        "log_disconnections": "on",
+        "log_autovacuum_min_duration": "10min",
+        "log_line_prefix": "%m [%p] %u@%d app=%a ",
+        "log_error_verbosity": "default",
+        "shared_preload_libraries": "pg_stat_statements,yb_pg_metrics,pgaudit,pg_hint_plan,yb_xcluster_ddl_replication",
+        "track_io_timing": "off",
+        "archive_mode": "off",
+        "pgaudit_available": true,
+        "log_files": [
+          "postgresql-2026-09-14_111029.log"
+        ]
+      },
+      "slow_query": {
+        "threshold_ms": 100,
+        "sink": "postgresql-*.log of the tserver (log_min_duration_statement via ysql_pg_conf_csv)",
+        "slow_query_ms": 323.0,
+        "slow_logged": true,
+        "seen_after_s": 0.08,
+        "sample": "2026-09-14 11:15:26.852 UTC [4875] yugabyte@lab app=rdlab LOG:  duration: 306.170 ms  statement: SELECT pg_sleep(0.3) AS rdlab_mk_e4cc0b7528",
+        "duration_ms": 306.17,
+        "fast_logged": false
+      },
+      "audit": {
+        "mechanism": "ysql_log_statement=ddl (+ pgaudit extension available)",
+        "setup": "log_statement=ddl at database level",
+        "event_found": true,
+        "seen_after_s": 0.08,
+        "sample": "2026-09-14 11:15:27.092 UTC [4934] yugabyte@lab app=rdlab LOG:  statement: CREATE TABLE audit_rdlab_mk_f1c3435628 (id INTEGER)",
+        "status": "ok"
+      },
+      "overhead": {
+        "workload": "SELECT id, name, email FROM customers WHERE id = ?",
+        "workers": 8,
+        "seconds": 4,
+        "baseline": {
+          "qps": 15326,
+          "p50_ms": 0.4936815,
+          "p99_ms": 0.83142981,
+          "errors": 0
+        },
+        "full_logging": "ALTER DATABASE lab SET log_min_duration_statement = 0 (new connections log every statement)",
+        "full": {
+          "qps": 15555,
+          "p50_ms": 0.495478,
+          "p99_ms": 0.6990412,
+          "errors": 0
+        },
+        "log_bytes_written": 30123259,
+        "bytes_per_statement": 484.1,
+        "overhead_pct": -1.5,
+        "status": "ok"
+      },
+      "container_logging": {
+        "rdlab-yb-1": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 6127,
+          "docker_logs_lines": 4
+        },
+        "rdlab-yb-2": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 1990,
+          "docker_logs_lines": 6
+        },
+        "rdlab-yb-3": {
+          "driver": "json-file",
+          "options": {
+            "compress": "true",
+            "max-file": "3",
+            "max-size": "50m",
+            "tag": "{{.Name}}"
+          },
+          "host_log_bytes": null,
+          "docker_logs_bytes": 2042,
+          "docker_logs_lines": 6
+        }
+      },
+      "extra": {
+        "pg_stat_statements_top5": [
+          {
+            "calls": 1,
+            "total_ms": 36758.0,
+            "mean_ms": 36757.96,
+            "query": "CREATE INDEX ix_events_customer_id ON public.events USING lsm (customer_id HASH)"
+          },
+          {
+            "calls": 145833,
+            "total_ms": 26600.5,
+            "mean_ms": 0.18,
+            "query": "SELECT id, name, email FROM customers WHERE id = $1"
+          },
+          {
+            "calls": 1,
+            "total_ms": 25256.1,
+            "mean_ms": 25256.09,
+            "query": "COPY events (id, customer_id, event_type, occurred_at, payload, value_num) FROM STDIN (FOR"
+          },
+          {
+            "calls": 1,
+            "total_ms": 22760.3,
+            "mean_ms": 22760.26,
+            "query": "COPY order_items (id, order_id, product_id, qty, unit_price) FROM STDIN (FORMAT csv, HEADE"
+          },
+          {
+            "calls": 1,
+            "total_ms": 16799.8,
+            "mean_ms": 16799.81,
+            "query": "CREATE INDEX ix_order_items_order_id ON public.order_items USING lsm (order_id HASH)"
+          }
+        ]
+      },
+      "collected": [
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_postgresql-2026-09-14_111029.log",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_postgresql-2026-09-14_111540.log",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_postgresql-2026-09-14_111542.log",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_tserver_logs_yb-tserver.INFO",
+        "results/yugabyte/logs/yb-1__home_yugabyte_yb_data_data_yb-data_master_logs_yb-master.INFO"
+      ],
+      "_seconds": 19.1
+    }
+  },
+  "finished": "2026-09-14T11:15:45+00:00",
+  "harness_log": "results/logs/yugabyte/20260914-141055-683cb4.log",
+  "server_version": "PostgreSQL 15.12-YB-2026.1.1.2-b0 on x86_64-pc-linux-gnu, compiled by clang version 21.1.1 (https://github.com/yugabyte/llvm-project.git efca861cc42178cc4c555d605b36c79d7d121cc1), 64-bit"
+}
