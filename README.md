@@ -1,5 +1,13 @@
 # rd-databases — relational database lab
 
+## Kubernetes report sections
+
+- [Overview](docs/explanation-overview.md) — hero tiles (17/17 engines, 25 images, ~77 services, 5s self-heal) and the `RDLAB_PLATFORM=k3s` switch
+- [Pipeline](docs/explanation-pipeline.md) — how a stack gets to the cluster: Manifests and Images pipelines
+- [Time to Ready](docs/explanation-time-to-ready.md) — all 17 engines with topology, pods, and ready time grouped by tier
+- [Eight failures](docs/explanation-failures.md) — eight Kubernetes-only gotchas with fixes
+- [Frictions](docs/explanation-frictions.md) — registry/rootless facts, x-k8s hints, and the failover callout
+
 A reproducible lab that stands up **20 SQL engines in Docker Compose** (single nodes, primary/replica pairs, multi-master and sharded
 clusters, poolers and proxies), loads the same deterministic dataset into each, and measures six things per engine:
 
