@@ -1,5 +1,7 @@
 # rd-databases — relational database lab
 
+**[View Interactive Report](https://karatayberkay.github.io/boiler-test-rd-databases/rd-databases-report.html)**
+
 ## Kubernetes report sections
 
 - [Overview](docs/explanation-overview.md) — hero tiles (17/17 engines, 25 images, ~77 services, 5s self-heal) and the `RDLAB_PLATFORM=k3s` switch
